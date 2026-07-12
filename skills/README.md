@@ -4,7 +4,7 @@ Portable, self-improving skills for Claude Code. Every skill reads its `learning
 
 **To use in a project:** copy the `.md` into that project as `.claude/skills/<name>/SKILL.md` (folder name = skill name, file renamed to `SKILL.md`). The flat `.claude/skills/` layout is required for auto-invocation — these category subfolders exist only for organizing the portable copies.
 
-**Editing rule:** the auto-invocable copies in this project's `.claude/skills/` are the working originals. Edit there, then sync the portable copy here.
+**Canonical home:** the [`claude-dev-kit`](https://github.com/AftabIbrahimKazi/claude-dev-kit) repo (local clone: `My Projects/dev-kit/`). Improve skills there and commit; copies inside projects are installs. When editing a skill inside a project instead, port the improvement back to the repo — never let the two drift silently.
 
 ## models/ — driving each Claude model at full capacity
 | Skill | Purpose |

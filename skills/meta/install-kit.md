@@ -12,8 +12,8 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 2. **At end of every use:** append one dated bullet — source-location changes, a picking pattern the user prefers, an install step that was missing. Merge instead of duplicating; delete disproven bullets.
 
 ## Source locations (verify, don't assume)
-- **Skills library:** the `skills/` folder in the user's library project, organized in category subfolders (`models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`) with a README index. Known home: `My Projects/Astro/planatarium-2/skills/` — but glob for it if not found there; the user may move the library to its own repo. If found in multiple places, ask which is current and log the answer.
-- **Standards system:** the `coding-standards/` folder (has `index.md` at its root). Same discovery rule.
+- **Canonical home: the `claude-dev-kit` repo** — `My Projects/dev-kit/` locally, `github.com/AftabIbrahimKazi/claude-dev-kit` remote. It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
+- If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
 ## Step 1 — Offer the two modes
 Ask exactly one question (skip it if the user already said which):
