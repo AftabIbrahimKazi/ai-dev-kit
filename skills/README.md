@@ -4,7 +4,7 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 
 **To use in a project:** copy the `.md` into that project as `.claude/skills/<name>/SKILL.md` (folder name = skill name, file renamed to `SKILL.md`). The flat `.claude/skills/` layout is required for auto-invocation — these category subfolders exist only for organizing the portable copies.
 
-**Canonical home:** the [`ai-dev-kit`](https://github.com/AftabIbrahimKazi/ai-dev-kit) repo (local clone: `My Projects/dev-kit/`). Improve skills there and commit; copies inside projects are installs. When editing a skill inside a project instead, port the improvement back to the repo — never let the two drift silently.
+**Canonical home:** the [`ai-dev-kit`](https://github.com/AftabIbrahimKazi/ai-dev-kit) repo (local clone: `My Projects/ai-dev-kit/`). Improve skills there and commit; copies inside projects are installs. When editing a skill inside a project instead, port the improvement back to the repo — never let the two drift silently.
 
 **Renames:** every skill rename/merge gets a row in [migrations/RENAMES.md](../migrations/RENAMES.md); the install-kit reads it to migrate old installs (carrying their `learnings.md` forward).
 

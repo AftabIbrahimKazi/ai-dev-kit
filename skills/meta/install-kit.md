@@ -12,7 +12,7 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 2. **At end of every use:** append one dated bullet — source-location changes, a picking pattern the user prefers, an install step that was missing. Merge instead of duplicating; delete disproven bullets.
 
 ## Source locations (verify, don't assume)
-- **Canonical home: the `ai-dev-kit` repo** — `My Projects/dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
+- **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
 - If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
 ## Step 1 — Offer the two modes
