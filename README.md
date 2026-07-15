@@ -1,8 +1,8 @@
 <div align="center">
 
-# Claude Dev Kit
+# AI Dev Kit
 
-**A self-improving skills library and layered coding-standards system for AI-assisted development with Claude Code.**
+**A self-improving skills library and layered coding-standards system for AI-assisted development — Claude Code, OpenCode, and any agent that reads markdown.**
 
 One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
@@ -14,7 +14,7 @@ One clone. Drop two folders into any project. Every session works your way — a
 
 | Folder | System | Docs |
 |---|---|---|
-| [`skills/`](skills/) | A library of self-improving Claude Code skills — model protocols, workflow discipline, persistent memory, parallel-session coordination, stack-specific patterns | [skills/README.md](skills/README.md) — full catalog with per-skill purpose |
+| [`skills/`](skills/) | A library of self-improving agent skills — model protocols (Claude lineup + open-weight fleet), workflow discipline, persistent memory, parallel-session coordination, stack-specific patterns | [skills/README.md](skills/README.md) — full catalog with per-skill purpose |
 | [`coding-standards/`](coding-standards/) | Universal, framework-agnostic coding standards in three layers (global rules → file-role partials → framework overrides), plus machine-enforcement lint configs | [coding-standards/index.md](coding-standards/index.md) — system map and reading order |
 
 The two systems are independent but designed to interlock: the `coding-standards` skill loads and enforces the standards chain; the `install-kit` skill installs both; the AI behavioral contract ([`coding-standards/ai-standards.md`](coding-standards/ai-standards.md)) governs every session, including the `[CX]` context-integrity signal and read-efficiency rules.
@@ -22,7 +22,7 @@ The two systems are independent but designed to interlock: the `coding-standards
 ## Install into a project
 
 1. Copy `skills/` — and `coding-standards/` if the project should carry the standards — into the project root.
-2. Open Claude Code in that project and say:
+2. Open Claude Code (or your AI coding tool) in that project and say:
 
    > read skills/README.md and install
 
@@ -70,4 +70,4 @@ coding-standards/
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The license's "software" wording legally covers this collection of markdown skills, standards, and configs — use, adapt, and redistribute freely with attribution.
