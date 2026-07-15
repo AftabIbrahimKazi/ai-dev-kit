@@ -1,5 +1,5 @@
 ---
-name: all-models
+name: claude-all-models
 description: Route tasks across the Claude lineup — model selection, delegation, cost/speed trade-offs, cache discipline. Trigger for any model-selection, routing, multi-model, or cost-optimization decision.
 ---
 

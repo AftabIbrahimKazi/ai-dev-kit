@@ -2,14 +2,16 @@
 
 Copy these into a project's `handover/` folder when the user activates parallel mode. Fill placeholders; delete example rows.
 
+Also copy `protocol.md` from this skill's folder to `handover/PROTOCOL.md` — it is the tool-agnostic coordination protocol (session-start modes, incremental handover writing, stale-lock recovery, graceful handoff) that the AGENTS.md and CLAUDE.md pointers below reference.
+
 ## board.md
 ```markdown
 # Lane Board
-Updated continuously by active sessions. Dev clears `done` rows.
+Updated continuously by active sessions. Dev clears `done` rows. `Files` lists every path the task will touch — new claims require every listed file to be free in `locks.md` (see `handover/PROTOCOL.md`).
 
-| Role | Task | Status | Started |
-|---|---|---|---|
-| frontend | venus overlay counters | in-progress | 2026-07-12 |
+| Role | Task | Files | Status | Started |
+|---|---|---|---|---|
+| frontend | venus overlay counters | src/overlay.js, src/overlay.css | in-progress | 2026-07-12 |
 ```
 Statuses: `in-progress` · `awaiting-review` · `blocked (reason)` · `done`
 
@@ -49,3 +51,27 @@ chain passes, responsive at all breakpoints, console clean.>
 Same structure as the classic handover.md (see the `handover` skill), scoped
 to this role's lane: current state, last session, decisions & why, known
 issues, next steps, don't touch.
+
+## AGENTS.md (project root — for non-Claude tools)
+Copy to the project root when the project is shared with other AI tools
+(OpenCode, Codex, etc). Replace `{{project-name}}`.
+```markdown
+# AGENTS.md — {{project-name}}
+
+Instructions for AI coding agents (OpenCode, Codex, and any other tool) working in this repo. This repo is shared by multiple AI tools running sequentially or in parallel.
+
+## Parallel-Session Coordination (mandatory)
+
+Before claiming or resuming **any** task in the parallel-session system (`handover/` — board, locks, per-role handover notes), read `handover/PROTOCOL.md` and follow it. It defines session-start modes (new claim vs. resume), incremental handover writing, stale-lock recovery, and graceful handoff. Do not edit any file that is part of shared or locked work without going through that protocol first.
+
+## Project standards
+
+Project context, active coding standards, and the behavioural contract live in `CLAUDE.md` at the project root and `coding-standards/` — read them at session start.
+```
+
+## CLAUDE.md section (insert into the project's CLAUDE.md)
+```markdown
+## Parallel-Session Coordination
+
+Before claiming or resuming any task in the parallel-session system (`handover/` — board, locks, per-role handovers), read `handover/PROTOCOL.md` and follow it. Never touch a file that is part of shared or locked work without going through that protocol first.
+```

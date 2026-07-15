@@ -27,7 +27,7 @@ The model skills pick the gear; this skill drives it. Every rule targets the act
 ## Delegation discipline
 - **Fan-out grunt work goes to cheap subagents** (search across many files, per-item checks, bulk classification) — keep the premium model as orchestrator.
 - Give subagents only the slice of context they need, never the whole session.
-- Escalate on demonstrated failure, not anticipated difficulty (see the `all-models` skill for routing).
+- Escalate on demonstrated failure, not anticipated difficulty (see the `claude-all-models` skill for routing).
 
 ## Session shape
 - Front-load the expensive thinking: plan once at high effort, execute the plan at working effort.

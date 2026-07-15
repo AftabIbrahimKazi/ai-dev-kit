@@ -52,3 +52,4 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - [ ] Self-improvement loop present
 - [ ] Under ~120 lines; no section that merely restates another
 - [ ] Facts (APIs, prices, versions) verified against current docs, not memory — stale facts are worse than none
+- [ ] Renaming or merging a skill? Add a row to `migrations/RENAMES.md` (repo root) in the same change and update every cross-reference (grep the whole library for the old name) — a rename without a ledger row strands existing installs

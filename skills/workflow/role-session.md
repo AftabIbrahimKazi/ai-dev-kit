@@ -16,11 +16,13 @@ The user runs multiple parallel Claude sessions, each a job role with one task, 
 ## The coordination files (in `handover/`)
 ```
 handover/
-  board.md       ← lane dashboard: one row per active task (role, task, status)
+  PROTOCOL.md    ← cross-tool coordination protocol (see protocol.md in this skill's folder)
+  board.md       ← lane dashboard: one row per active task (role, task, files, status)
   locks.md       ← file claims + git token/queue (formats below)
   roles/<role>.md← charter: mission, owned paths, forbidden paths, definition of done
   <role>.md      ← per-role handover (state, next steps) — replaces single handover.md
 ```
+`PROTOCOL.md` is the tool-agnostic layer for repos shared with other AI tools (OpenCode, Codex, …): session-start modes (new claim vs. resume), incremental handover writing, stale-lock recovery, graceful handoff. Follow it alongside the lane rules below.
 `locks.md` format:
 ```
 git: free                      ← or: held by <role> (<task>)
@@ -33,7 +35,7 @@ Statuses: `editing` → `awaiting-review` → (rows deleted on completion).
 
 ## Session lifecycle
 
-**1. Boot.** Confirm your role with the user if not stated. Read: your charter (`roles/<role>.md`), `board.md`, your `<role>.md` handover, `locks.md`. Add/update your board row (`role | task | in-progress`). Stay strictly inside charter-owned paths; needing a forbidden path = stop and ask the dev, never trespass.
+**1. Boot.** Confirm your role with the user if not stated. Read: your charter (`roles/<role>.md`), `board.md`, your `<role>.md` handover, `locks.md`. Add/update your board row (`role | task | files | in-progress`) — the `Files` column lists every path the task will touch; before a **new** claim, verify every listed file is free in `locks.md` (per `handover/PROTOCOL.md`). Stay strictly inside charter-owned paths; needing a forbidden path = stop and ask the dev, never trespass.
 
 **2. Claim before edit — never before.** At the moment you are about to make your first edit (NOT during plan mode / analysis / discussion — reading anything, including locked files, is always free):
 - Add a row per file you'll edit, status `editing`, timestamped.

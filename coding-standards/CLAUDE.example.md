@@ -87,6 +87,14 @@ Never edit a file without loading its standard chain first.
 
 ---
 
+## Parallel-Session Coordination
+
+(Remove this section if the project does not use the parallel-session system.)
+
+Before claiming or resuming any task in the parallel-session system (`handover/` — board, locks, per-role handovers), read `handover/PROTOCOL.md` and follow it. Never touch a file that is part of shared or locked work without going through that protocol first.
+
+---
+
 ## Project State
 
 For current project state, completed work, known issues, and next steps read `handover.md` in the project root.

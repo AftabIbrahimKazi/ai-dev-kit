@@ -14,7 +14,7 @@ One clone. Drop two folders into any project. Every session works your way — a
 
 | Folder | System | Docs |
 |---|---|---|
-| [`skills/`](skills/) | 22 self-improving Claude Code skills — model protocols, workflow discipline, persistent memory, parallel-session coordination, stack-specific patterns | [skills/README.md](skills/README.md) — full catalog with per-skill purpose |
+| [`skills/`](skills/) | A library of self-improving Claude Code skills — model protocols, workflow discipline, persistent memory, parallel-session coordination, stack-specific patterns | [skills/README.md](skills/README.md) — full catalog with per-skill purpose |
 | [`coding-standards/`](coding-standards/) | Universal, framework-agnostic coding standards in three layers (global rules → file-role partials → framework overrides), plus machine-enforcement lint configs | [coding-standards/index.md](coding-standards/index.md) — system map and reading order |
 
 The two systems are independent but designed to interlock: the `coding-standards` skill loads and enforces the standards chain; the `install-kit` skill installs both; the AI behavioral contract ([`coding-standards/ai-standards.md`](coding-standards/ai-standards.md)) governs every session, including the `[CX]` context-integrity signal and read-efficiency rules.
@@ -43,13 +43,15 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 ```
 skills/
   README.md        ← catalog + install instructions (start here)
-  models/          ← per-Claude-model protocols + fleet routing
+  models/          ← per-model protocols + fleet routing (claude/ lineup, opencode/ open-weight)
   workflow/        ← handover, debugging, planning, budget, commits, perf, parallel sessions
   standards/       ← the coding-standards enforcement skill
   memory/          ← repo-committed memory + knowledge gardening
   stack/           ← Three.js, Astro
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
   meta/            ← skill-writer (quality bar), install-kit (installer)
+migrations/
+  RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
 coding-standards/
   index.md         ← system map: layers, reading order, file-to-role mapping (start here)
   *-standards.md   ← global rules per discipline (css, html, js/ts, git, seo, a11y, qa, ai, …)
