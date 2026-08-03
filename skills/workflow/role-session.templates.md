@@ -7,7 +7,7 @@ Also copy `protocol.md` from this skill's folder to `handover/PROTOCOL.md` — i
 ## board.md
 ```markdown
 # Lane Board
-Updated continuously by active sessions. Dev clears `done` rows. `Files` lists every path the task will touch — new claims require every listed file to be free in `locks.md` (see `handover/PROTOCOL.md`).
+Updated continuously by active sessions. **Each session clears its own row on completion** — the board shows live work only, never a history of finished tasks. `Files` lists every path the task will touch — new claims require every listed file to be free in `locks.md` (see `handover/PROTOCOL.md`).
 
 | Role | Task | Files | Status | Started |
 |---|---|---|---|---|
@@ -50,7 +50,10 @@ chain passes, responsive at all breakpoints, console clean.>
 ## <role>.md (per-role handover)
 Same structure as the classic handover.md (see the `handover` skill), scoped
 to this role's lane: current state, last session, decisions & why, known
-issues, next steps, don't touch.
+issues, next steps, don't touch. Its **120-line ceiling and routing table
+apply per role file** — decisions go to `memory-bank/`, session narrative
+stays in git, only current state lives here. One `## Last session` block,
+overwritten; never stacked dated sections.
 
 ## AGENTS.md (project root — for non-Claude tools)
 Copy to the project root when the project is shared with other AI tools

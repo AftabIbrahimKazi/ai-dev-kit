@@ -38,6 +38,7 @@ Capture at these moments (not on a timer):
 - **A non-obvious problem is solved** (took >30 min or >2 failed hypotheses) → `solutions/`: symptom → cause → fix, written so the *next* occurrence is recognized in one read.
 - **External/domain context surfaces** that code can't express (client requirement, API quirk, design intent) → `context/`.
 - **User says "remember this"** → capture; if it's actually a preference or cross-project fact, route it to the appropriate layer instead and say so.
+- **A handover note is over its ceiling** → it is demoting to you. Decisions and solved mysteries become entries here; session narrative is **not** accepted (git already holds it) and must be dropped, not parked. See the `handover` skill's routing table. In parallel mode the demoting session holds `memory-bank/INDEX.md` in `locks.md` while writing — the bank is shared and owned by no role.
 
 Rules: distill — never paste transcripts, diffs, or code blocks longer than 5 lines (link `file:line` instead). Check the index for an existing entry to update before creating; delete entries proven wrong; add the index line in the same step as the file (an unindexed memory is invisible). Link related entries by filename.
 

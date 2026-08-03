@@ -46,9 +46,40 @@ Ordered, concrete, small enough to start immediately. First item = the exact res
 Things that look wrong but are intentional; fragile areas.
 ```
 
+## Where knowledge goes (check before writing a line)
+
+Handover is loaded in full at every session start, so anything parked here is a tax paid forever. Three destinations exist — route deliberately instead of defaulting to the file you happen to have open:
+
+| Content | Destination | Why |
+|---|---|---|
+| What is true **right now**; the exact resume point | **handover** (this file) | Needed cold, every session |
+| A decision and its reasoning; a solved mystery; a non-obvious "why" | **`memory-bank/`** | Durable, indexed, loaded only when its hook matches |
+| What happened, session by session; what changed in a file | **git history** | Already recorded, free, complete |
+
+The test is tense, and it is mechanical: **if a sentence is past-tense narrative, it does not belong in handover** — only the single `## Last session` block may be, and only in outcome terms. Everything else past-tense is either a memory-bank fact or already in git.
+
+## Size ceiling — enforced, not aspirational
+
+**Hard ceiling: 120 lines.** Past that the file has stopped being a resume aid and become an archive that every future session pays for.
+
+"Delete aggressively" is a judgment call, and judgment loses to append pressure — at session end you are already editing this file, so everything drifts into it. The ceiling is the guard that doesn't depend on discipline.
+
+**When over the ceiling, demote — don't just delete:**
+1. Decisions and solved mysteries → distil into `memory-bank/` one-fact files (+ their `INDEX.md` line, same step).
+2. Session narrative → drop it. Git already has it; do not copy it anywhere.
+3. Fixed bugs, shipped work, completed steps → delete outright.
+4. What remains is current state and the resume point. That is the whole job.
+
+Invoke the `memory-gardener` skill to do this if the file is far over; it owns the pruning pass.
+
 ## Rules
 - **Outcome language, not process language.** "Venus overlay counters animate on scroll-enter" — not "edited VenusIntroCounters.ts".
-- **Delete aggressively.** Anything shipped, fixed, or stale comes out. The file's value is inversely proportional to its length past ~1 page.
 - **Never duplicate what git already records** — link commits instead of describing them.
+- **One `## Last session` block, overwritten each time.** Never stack dated session sections; that is the single failure mode that turns this file into a log. If you find several, collapse them — the older ones are git history and memory-bank facts.
 - **Absolute dates**, never "yesterday"/"last week".
 - If the project already has a handover file in a different format, adopt and improve its format rather than replacing it wholesale.
+
+### Parallel mode specifics
+- The ceiling is **per role file**, not for the folder — each session reads only its own `<role>.md`, so that is the number that matters.
+- **`board.md`: clear `done` rows as part of finishing**, not "when convenient". A board that accumulates completed rows is the same unbounded-growth bug in a different file.
+- **`memory-bank/` is shared across roles and owned by none.** Before demoting into it from a role session, claim `memory-bank/INDEX.md` in `locks.md` like any other shared file — concurrent demotions otherwise collide on the index. Release it in the same step you write.

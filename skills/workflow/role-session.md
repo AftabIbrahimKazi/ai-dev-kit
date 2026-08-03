@@ -54,7 +54,12 @@ Statuses: `editing` → `awaiting-review` → (rows deleted on completion).
 - Commit per the project's git standard (pre-commit skill applies). No push/pull — that is the dev's, always manual.
 - Release: set `git: free` immediately after committing. Holding the token is a seconds-long act; never work while holding it.
 
-**6. Complete.** Delete your lock rows, update your `<role>.md` handover (outcome, decisions, next steps for this role), update your board row to `done` (dev clears done rows when convenient), capture any memory-bank-worthy knowledge. Session's job is finished.
+**6. Complete.** Delete your lock rows, update your `<role>.md` handover (outcome, decisions, next steps for this role), clear your board row, capture any memory-bank-worthy knowledge. Session's job is finished.
+
+Three boundedness rules apply here. Each exists because these files are read at every session start, so anything parked in them is charged to every future session:
+- **Your `<role>.md` obeys the `handover` skill's 120-line ceiling and its routing table** (current state → handover · decisions and solved mysteries → `memory-bank/` · what happened → git, never copied). The ceiling is per role file, since each session reads only its own. Over it, run `memory-gardener`.
+- **Clear your own `done` board row as part of completing** — don't leave it for the dev. A board that accumulates finished rows is the same unbounded-growth bug in a different file.
+- **`memory-bank/` is shared and owned by no role.** Claim `memory-bank/INDEX.md` in `locks.md` before demoting into it, and release in the same step — concurrent demotions from two roles otherwise collide on the index.
 
 ## Session-mode notes
 - **Plan mode:** planning is read-only — no lock claims, no board writes until the plan is approved and execution starts. Claims happen at first edit (rule 2 already enforces this).
