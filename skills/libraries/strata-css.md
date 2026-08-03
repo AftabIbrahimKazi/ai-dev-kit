@@ -1,40 +1,76 @@
 ---
 name: strata-css
-description: Strata CSS (user's own strata-css framework) — usage, debugging, fixing at source; verifies against the live repo as it evolves. Trigger on using, installing, styling with, debugging, or developing strata-css / Strata classes / strata.config.js.
+description: Strata CSS (user's own strata-css framework) — what utilities exist, safe CSS→utility conversion, debugging, fixing at source. Trigger on using, installing, styling with, migrating to, debugging, or developing strata-css / Strata classes / strata.config.js, or converting CSS to Strata utilities.
 ---
 
 # Strata CSS — Author's-Own-Framework Protocol
 
-Strata is the user's framework: npm package `strata-css` (NOT `strata` — that's an unrelated package), repo at `My Projects/Frameworks/strata`. Because the user owns it, bugs found while using it are *fixable at the source*, and this skill must never argue with the repo — the repo wins over anything remembered here.
+Strata is the user's framework: npm package `strata-css` (NOT `strata` — unrelated package), repo at `My Projects/Frameworks/strata`. The user owns it, so bugs found while using it are *fixable at source*. The repo always wins over anything written here.
 
-## Adaptive rule — the repo is the source of truth
-This skill's hardcoded facts WILL go stale as the framework gets updates. Before relying on any specific class name, config option, or behavior:
-1. Check the version in play: project's `node_modules/strata-css/package.json` vs the repo's `package.json` + `CHANGELOG.md`. If they differ, the CHANGELOG entries in between are the delta to respect.
-2. For any API detail (class names, config keys, `data-st-*` states, theme names): confirm in the repo — `README.md`, `docs/`, or `src/` — rather than from this file or memory.
-3. If the repo contradicts this skill, follow the repo AND log the correction in `learnings.md` (see loop below) so the skill self-heals.
+## Never hand-derive coverage — run the script
 
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — new/changed framework behavior discovered, a bug found (and whether it was filed/fixed at source), a usage pattern that worked. Record the framework version alongside version-sensitive facts. Merge instead of duplicating; delete bullets obsoleted by framework updates.
+The single biggest time sink is rediscovering "does Strata have a utility for property X?" by reading `registry.js` by hand. Don't. Run the companion script from any project with strata-css installed:
 
-## Core model (verified against repo — re-verify on version change)
-- **Bootstrap-style components + Tailwind-style JIT:** component classes (`btn-primary`, `card`, `navbar`) work zero-config; JIT generates only the CSS actually used.
-- **No `!important` anywhere; `@layer` handles specificity** — custom project CSS always wins automatically. Never "fix" a Strata style with `!important`; if custom CSS *doesn't* win, that's a layering bug worth investigating at the source.
-- **State via `data-st-*` attributes**, not class toggling in JS — follow that pattern in consuming code.
-- **Themes:** built-in light / dark / dim + unlimited custom themes.
-- **Arbitrary values:** `mt-[24px]`, `bg-[#ff0000]`, `w-[347px]`.
-- **Config:** `strata.config.js`; scaffold via `npx strata-css init`; PostCSS plugin architecture.
-- Repo layout: `src/` (framework source), `packages/`, `dist/`, `docs/` (open `docs/index.html` directly — no build step), `test/`, `benchmark/`, `CHANGELOG.md`, `ROADMAP.md`, `CONTRIBUTING.md`, `BRANCHING.md`.
+```bash
+node .claude/skills/strata-css/coverage.js            # all properties
+node .claude/skills/strata-css/coverage.js padding    # filter
+node .claude/skills/strata-css/coverage.js --zero     # what has NO utility / named-only
+```
 
-## Using Strata in a project
-- Check how the project consumes it first: full framework vs a utility-layer subset (some projects vendor only a slice — e.g. component tokens mirrored into their own variables file). Match the existing consumption pattern.
-- Prefer component classes for standard UI, utilities for one-off adjustments, project CSS for anything genuinely custom — in that order.
-- A utility that "doesn't exist" may just not be in the JIT output yet — confirm the class appears in generated CSS before concluding it's unsupported.
-- Respect the consuming project's own conventions (prefixes, token files) where they wrap Strata.
+It reads the **installed** registry, so output always matches the version in play — nothing to go stale. It reports, per property: `[arb]` arbitrary bracket, `[arb-bp]` breakpoint-scoped arbitrary, named, and breakpoint-scoped named. **A property absent from its output has no utility at all and must stay real CSS.**
 
-## When Strata itself misbehaves (owner's privilege)
-1. Reproduce minimally — ideally in the repo's `examples/` or `docs/` showcase.
-2. Diagnose in `src/`, not in the consuming project — a workaround in the project is a last resort and must be flagged as tech debt pointing at the real fix.
-3. Fixing at source: follow the repo's `CONTRIBUTING.md` + `BRANCHING.md`, run `test/` and `benchmark/` before considering it done, and add a `CHANGELOG.md` entry per its format.
-4. New feature ideas surfaced by real usage → check `ROADMAP.md` first (may already be planned), then propose there rather than bolting on ad hoc.
-5. After any source fix: rebuild/republish flow is the user's call — surface "fixed in repo, needs publish + version bump in consumers" explicitly.
+It also auto-detects **silent no-ops** — class shapes that match a registry pattern, compile without error, and emit nothing. Trust the script's list over any list written here.
+
+> `require('strata-css/src/registry/registry.js')` fails — the package's `exports` map blocks that subpath. Resolve an absolute path into `node_modules/` instead (the script already does).
+
+## Your Bootstrap/Tailwind intuitions are a liability here
+
+Strata deliberately mirrors Bootstrap naming (`d-flex`, `p-3`, `ms-auto`). That does **not** mean recalled knowledge transfers — and the resemblance makes wrong guesses feel confident. Two proven divergences:
+
+- **Silent no-ops come from exactly this.** The spacing regex accepts `[trblxyes]`, the *union* of physical naming (`t r b l` — Tailwind and Bootstrap 4) and logical naming (`x y e s` — Bootstrap 5), but only `t b x y e s` are implemented. So `pl-[…]`, `pr-[…]`, `ml-[…]`, `mr-[…]` — precisely the Tailwind spellings — match the pattern, compile clean, and emit nothing. Use `ps`/`pe`/`ms`/`me`.
+- **`!important` is inverted.** Bootstrap generates its utilities with `!important` (many project standards therefore ban them). Strata's identically-named utilities have none — specificity is handled by `@layer`. Guidance written for Bootstrap will steer you wrong on a Strata project in both directions.
+
+Unlike Bootstrap and Tailwind, Strata is private: none of its API is in the model's prior knowledge. Every class must come from the installed source, i.e. from `coverage.js` — never from recall, and never from "this is what Bootstrap/Tailwind calls it."
+
+## Rules that never go stale
+
+Structural, not version-specific. These caused every real bug in past migrations:
+
+1. **Pseudo-classes, pseudo-elements and state selectors can never become utilities.** Strata has no state-variant syntax (no `hover:` prefix). `:hover`, `:focus`, `:focus-visible`, `:active`, `:disabled`, `::before`, `::after`, `::placeholder`, `[data-*]` states — permanently real CSS. Don't re-investigate this each time.
+2. **Unlayered CSS always beats layered utilities**, regardless of specificity or source order — per the cascade-layers spec. Strata's utilities live in `@layer`; component-colocated `.css` files usually compile unlayered. So `d-lg-none` can *never* override a component's own `display` rule. Fix with a modifier class in that same file (same cascade scope), not a utility.
+3. **A base utility + a breakpoint utility on the same property is a landmine** — e.g. base `d-grid` plus `d-sm-flex`. Sometimes the breakpoint one doesn't win. Verify in a browser before trusting it, never on build-green alone.
+4. **Shorthand vs per-side.** `border-[…]` sets all four sides; per-side needs `border-top-[…]` etc. Check the script before assuming a per-side form exists.
+5. **Arbitrary values use `_` for spaces**: `p-[1rem_2rem]`, `border-[1px_solid_var(--x)]`. `var()` works inside brackets.
+6. **`!`-prefixed variants emit `!important`** (`!m-0`). Many projects ban these — check the project's CSS rules first.
+7. **Named scales are fixed and small.** Spacing steps are `0 · .25 · .5 · 1 · 1.5 · 3rem`. A token that doesn't land on a step has no named utility — use the arbitrary form or leave it as CSS. Never silently snap to the nearest step; that's a visual change, not a refactor.
+
+## Converting a project's CSS to utilities
+
+- **Scope first.** Only base-state declarations on plain single-class selectors are candidates. Everything in rule 1 is permanently out.
+- **Grep every consumer of a class before editing** — not just the file that "owns" the CSS. Shared class names are the #1 cause of regressions in these passes: the CSS sits in one file, the class is applied in several.
+- **Prefer one scripted strip-from-CSS + insert-into-markup pass** over manual per-file edits, for exactly that reason.
+- **Delete any `.css` file that ends up empty** and remove its `import`. Leave no empty rules or dead imports.
+- **Build-green is not verification.** A dropped or silently-no-op'd utility compiles fine. Confirm visually (screenshots at the relevant breakpoints) or by computed style. Past bugs here were invisible to `npm run build`.
+
+## Core model (re-verify on version change)
+
+- Bootstrap-style components + Tailwind-style JIT: `btn-primary`, `card`, `navbar` work zero-config; only used CSS is generated.
+- Breakpoints follow Bootstrap: `sm` 576 · `md` 768 · `lg` 992 · `xl` 1200 · `xxl` 1400 — mobile-first `min-width`, cascading upward. A project using its own threshold (e.g. 1024) silently disagrees with every `-lg-` utility; align them.
+- `ms`/`me` map to margin-**left**/**right** (physical, despite the start/end naming).
+- State via `data-st-*` attributes; themes light / dark / dim + custom.
+- Config `strata.config.js`, scaffold `npx strata-css init`, PostCSS plugin. In Next.js the default content glob already covers `src/`, so no config file is needed — just the PostCSS plugin plus the three `@strata` directives.
+- Repo layout: `src/`, `packages/`, `docs/` (open `docs/index.html` directly), `test/`, `benchmark/`, `CHANGELOG.md`, `ROADMAP.md`, `CONTRIBUTING.md`, `BRANCHING.md`.
+
+## When Strata itself is the problem (owner's privilege)
+
+1. Reproduce minimally — ideally in the repo's `examples/` or `docs/`.
+2. Diagnose in `src/`, not in the consuming project. A project-side workaround is a last resort and must be flagged as debt pointing at the real fix.
+3. Fix per `CONTRIBUTING.md` + `BRANCHING.md`; run `test/` and `benchmark/`; add a `CHANGELOG.md` entry.
+4. Feature ideas → check `ROADMAP.md` first, propose there rather than bolting on ad hoc.
+5. After a source fix, surface "fixed in repo, needs publish + version bump in consumers" explicitly — that call is the user's.
+
+## Self-improvement
+
+1. **At start:** read `learnings.md` in this skill's folder if present; apply what's relevant.
+2. **At end:** append one dated bullet — changed behavior, a bug found (and whether filed/fixed at source), a pattern that worked. Record the framework version next to version-sensitive facts. Merge rather than duplicate; delete bullets the framework has obsoleted.
+3. If the repo contradicts this file, follow the repo and correct this file so it self-heals.

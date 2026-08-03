@@ -29,7 +29,7 @@ For each selected skill, copy the library file to the target project as:
 ```
 Rules:
 - **Flat layout is mandatory** — `.claude/skills/<name>/SKILL.md`, never category subfolders (Claude Code won't discover them).
-- **Companion files install alongside:** a library file named `<skill>.<companion>.md` (e.g. `role-session.templates.md`) is copied into the same skill folder as `<companion>.md` (e.g. `.claude/skills/role-session/templates.md`).
+- **Companion files install alongside:** a library file named `<skill>.<companion>.<ext>` (e.g. `role-session.templates.md`, `strata-css.coverage.js`) is copied into the same skill folder as `<companion>.<ext>` (e.g. `.claude/skills/role-session/templates.md`, `.claude/skills/strata-css/coverage.js`). Companions are not always markdown — executable helpers ship this way too, so copy them verbatim and preserve the extension.
 - The category folders exist only in the library; they disappear on install.
 - **Never copy `learnings.md` files** — learnings are per-project experience; each project starts its own.
 - If a skill already exists in the target: compare; if identical, skip silently; if different, show a one-line diff summary and ask (the target may have local learnings-promoted edits worth keeping).
