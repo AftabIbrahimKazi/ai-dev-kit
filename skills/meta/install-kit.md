@@ -20,7 +20,7 @@ Ask exactly one question (skip it if the user already said which):
 - **Everything** — all skills + the full coding-standards system.
 - **Pick** — list the catalog by category (name + one-line purpose from the library README) and let the user choose categories and/or individual skills, plus a yes/no on the standards system.
 
-When the user picks, advise but don't push: note skills that travel together (`coding-standards` skill pairs with the standards folder; `memory-gardener` pairs with `memory-bank`; Claude model skills pair with `claude-all-models`; open-model skills pair with `opencode-all-models`), and note stack skills that don't fit the target project's stack.
+When the user picks, advise but don't push: note skills that travel together (`coding-standards` skill pairs with the standards folder; `memory-gardener` pairs with `memory-bank`; Claude model skills pair with `claude-all-models`; open-model skills pair with `opencode-all-models`; `e2e-scaffold` pairs with `coding-standards/qa/e2e-testing.md` — the skill scaffolds the fixtures/config layer, the standard defines the discipline for keeping it current), and note stack skills that don't fit the target project's stack.
 
 ## Step 2 — Install skills
 For each selected skill, copy the library file to the target project as:

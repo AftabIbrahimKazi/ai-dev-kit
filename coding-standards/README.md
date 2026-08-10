@@ -24,11 +24,13 @@ A universal, portable coding standards system for use with Claude Code and any A
 | `seo-standards.md` | SEO — titles, meta, structure, schema |
 | `performance-standards.md` | Assets, scripts, CSS, Core Web Vitals |
 | `accessibility-standards.md` | WCAG 2.1 AA — keyboard, ARIA, contrast, forms |
-| `qa-standards.md` | Logic checks, security, branch gates, bug reporting |
+| `qa/` | QA umbrella — `index.md` plus one file per concern (definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting) |
 | `ai-standards.md` | AI behaviour — hallucination detection, token efficiency |
 | `frameworks/astro.md` | Astro-specific additions and overrides |
 | `frameworks/astro/` | Astro file-role partials |
 | `frameworks/bootstrap.md` | Bootstrap conflicts, violations, workarounds |
+| `frameworks/strata-css.md` | Strata CSS — mandatory utility-first framework, coverage discipline |
+| `tooling/` | Machine enforcement — lint configs that enforce the checkable rules |
 | `CLAUDE.example.md` | Template for your project's CLAUDE.md — see setup below |
 
 ---

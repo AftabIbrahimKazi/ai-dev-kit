@@ -40,7 +40,7 @@ If `[CX]` is ever missing from a response the session has lost context. Stop imm
 | SEO standard | `coding-standards/seo-standards.md` |
 | Performance standard | `coding-standards/performance-standards.md` |
 | Accessibility standard | `coding-standards/accessibility-standards.md` |
-| QA standard | `coding-standards/qa-standards.md` |
+| QA standard | `coding-standards/qa/index.md` |
 | AI standard | `coding-standards/ai-standards.md` |
 | Framework | `coding-standards/frameworks/[framework].md` (remove if not applicable) |
 | CSS Framework | `coding-standards/frameworks/[bootstrap OR other].md` (remove if not applicable) |

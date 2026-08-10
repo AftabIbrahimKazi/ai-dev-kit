@@ -34,6 +34,19 @@ The `frameworks/` folder contains framework-specific additions or overrides. A f
 
 ---
 
+## QA Is an Umbrella, Not One File
+
+QA spans several unrelated concerns (definition of done, branch gates, logic
+checks, security, E2E testing, bug reporting) rather than varying by file
+role like CSS/HTML/script do. It follows its own index pattern rather than
+the file-role-subfolder pattern above — see [qa/index.md](qa/index.md) for
+its reading order and rule-ID scheme. Any standard that grows past a single
+flat file (multiple unrelated concerns, not multiple file roles) should
+follow this same index-plus-siblings shape rather than the file-role
+subfolder shape.
+
+---
+
 ## Script Standard Selection
 
 A project uses exactly one script standard. The project's `CLAUDE.md` or `handover.md` declares which applies.
@@ -105,10 +118,11 @@ When editing a file, identify its role first, then load the correct partial from
 | [seo-standards.md](seo-standards.md) | SEO — titles, meta, structure, schema |
 | [performance-standards.md](performance-standards.md) | Performance — assets, scripts, CSS, Core Web Vitals |
 | [accessibility-standards.md](accessibility-standards.md) | Accessibility — WCAG 2.1 AA, keyboard, ARIA, contrast |
-| [qa-standards.md](qa-standards.md) | QA — logic checks, security, branch gates, bug reporting |
+| [qa/index.md](qa/index.md) | QA umbrella — definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
 | [ai-standards.md](ai-standards.md) | AI behaviour — hallucination detection, token efficiency |
 | [frameworks/astro.md](frameworks/astro.md) | Astro-specific additions and overrides |
 | [frameworks/bootstrap.md](frameworks/bootstrap.md) | Bootstrap conflicts, violations, and workarounds |
+| [frameworks/strata-css.md](frameworks/strata-css.md) | Strata CSS — mandatory utility-first framework, coverage discipline |
 | [tooling/](tooling/README.md) | Machine enforcement — lint configs that enforce the checkable rules |
 
 ---

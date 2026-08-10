@@ -45,6 +45,7 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, message format, version bump |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
 | [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, file locks, git token queue (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
+| [e2e-scaffold](workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
 
 ## standards/ — convention systems
 | Skill | Purpose |
