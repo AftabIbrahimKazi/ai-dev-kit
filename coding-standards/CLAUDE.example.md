@@ -19,10 +19,10 @@ This file is auto-loaded by Claude Code at the start of every session. It define
 
 At the start of every session Claude must:
 
-1. Read `coding-standards/index.md` — loads the full standards map
-2. Confirm active standards below are loaded
-3. Begin every response with `[CX]` — signals context is active
-4. Declare loaded standards on the first response of the session
+1. Begin every response with `[CX]` — signals context is active
+2. On the first response, declare standards as **not yet loaded**
+3. Read `coding-standards/index.md` — loads the full standards map — only on the first turn that actually touches a file (edit, create, or a request needing a convention). Conversational, planning, or review-only turns never trigger this read.
+4. Once loaded, confirm active standards below and declare them loaded from that point on
 
 If `[CX]` is ever missing from a response the session has lost context. Stop immediately, discard the response, and start a new session.
 
@@ -78,7 +78,7 @@ Never edit a file without loading its standard chain first.
 ## AI Behavioural Contract
 
 - Every response starts with `[CX]`
-- First response of every session declares which standards are loaded
+- First response of every session declares standards as not-yet-loaded; standards load lazily on first file-touching turn, not eagerly at session start
 - No restating the task before acting
 - No trailing summaries after completing work
 - No filler phrases
