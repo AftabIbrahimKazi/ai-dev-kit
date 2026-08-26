@@ -6,6 +6,12 @@
 
 One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
+---
+
+Listed under AI Hub → Skills on Three.js Resources — a curated directory for Three.js AI tools.
+
+[![Featured on Three.js Resources](https://img.shields.io/badge/Featured%20on-Three.js%20Resources-4CAF50?style=for-the-badge&logo=three.js&logoColor=white)](https://threejsresources.com/ai/skills/ai-dev-kit)
+
 </div>
 
 ---
