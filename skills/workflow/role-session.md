@@ -45,7 +45,7 @@ Statuses: `editing` → `awaiting-review` → (rows deleted on completion).
 
 **3. Work.** Normal discipline (standards chain, session-budget, debug-protocol all apply). Edits only within charter paths + claimed files.
 
-**4. Handoff for review.** Work complete and self-verified → flip your lock rows to `awaiting-review`, update board row to `awaiting-review`, tell the dev what to look at. Keep all locks — they protect the work through the review wait. If the dev requests changes, flip touched rows back to `editing` and continue.
+**4. Handoff for review.** Work complete and self-verified — run `pre-merge-gate` scoped to your own claimed files — then flip your lock rows to `awaiting-review`, update board row to `awaiting-review`, tell the dev what to look at. Keep all locks — they protect the work through the review wait. If the dev requests changes, flip touched rows back to `editing` and continue.
 
 **5. Commit — only with the token.** After dev approval:
 - Append your role to `git-queue` in `locks.md`.

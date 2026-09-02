@@ -19,6 +19,7 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 | [haiku-4-5](models/claude/haiku-4-5.md) | Haiku 4.5 — fan-out/classification workhorse, what never to route to it |
 | [claude-all-models](models/claude/claude-all-models.md) | Fleet routing — right model per task, escalation rules, cost discipline |
 | [opus-as-fable](models/claude/opus-as-fable.md) | Behavioral protocol pushing Opus 4.8 toward Fable-grade rigor |
+| [hooks-enforcement](models/claude/hooks-enforcement.md) | Optional Claude Code hooks assisting AI-01–AI-03 mechanically — Claude Code only |
 
 ### models/opencode/ — open-weight models driven through OpenCode
 | Skill | Purpose |
@@ -40,8 +41,10 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 |---|---|
 | [handover](workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining |
 | [debug-protocol](workflow/debug-protocol.md) | Reproduce → one hypothesis → cheapest disproof; no shotgun edits |
+| [intent-capture](workflow/intent-capture.md) | Goal + constraints + done-when before planning, for ambiguous asks |
 | [plan-first](workflow/plan-first.md) | 5-line plan + file list before multi-file work |
 | [session-budget](workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation |
+| [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit |
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, message format, version bump |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
 | [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, file locks, git token queue (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |

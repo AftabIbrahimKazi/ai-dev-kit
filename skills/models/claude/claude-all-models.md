@@ -44,3 +44,6 @@ Per-model depth lives in the sibling skills: `fable-5`, `opus-4-8`, `sonnet-5`, 
 - Batches API = 50% off anything non-latency-sensitive; pair with Haiku for the cheapest possible per-item cost.
 - Fable's fallback: ship `fallbacks: [{"model": "claude-opus-4-8"}]` so refusals degrade instead of failing.
 - Log which model produced what; when reviewing costs, cut by moving traffic down-gear before cutting features.
+
+## Regression eval — not yet built
+No harness exists to catch a skill or routing change regressing across the lineup. Not worth building speculatively. **Build it when:** the same skill shows behavior drift after 2+ routing/model changes to it — that's the signal a fixed prompt-set eval would have caught earlier and cheaper than debugging it live.
