@@ -4,6 +4,8 @@ These rules apply to every AI working on this project. They exist to protect dev
 
 Both the AI and the developer must read this file. The developer uses it to monitor AI behaviour. The AI uses it as a behavioural contract.
 
+This contract applies to every tool, enforced or not. Claude Code users: an optional mechanical assist for AI-01–AI-03 exists at `skills/models/claude/hooks-enforcement.md` — it does not replace this file or its rules.
+
 ---
 
 ## Context Integrity

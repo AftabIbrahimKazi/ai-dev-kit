@@ -18,6 +18,8 @@ A wrong interpretation on a big run wastes the whole run. Five lines of plan cos
 
 Below that threshold: just do the work. Planning a one-file edit is its own waste.
 
+For genuinely ambiguous intent specifically (two+ readings, no stated success condition), run `intent-capture` first — its Goal/Constraints/Done-when feed this plan's Approach line.
+
 ## The format (hard cap: 5 lines + file list)
 
 ```
