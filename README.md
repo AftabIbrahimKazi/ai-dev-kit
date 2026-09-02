@@ -2,9 +2,9 @@
 
 # AI Dev Kit
 
-**A self-improving skills library and layered coding-standards system for AI-assisted development — Claude Code, OpenCode, and any agent that reads markdown.**
+**A self-improving skills library and layered coding-standards system for AI-assisted development — Claude Code, OpenCode, and any coding agent that reads markdown.**
 
-One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
+Portable Claude Code skills, agent instructions, and framework-agnostic coding standards for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
 ---
 
@@ -43,14 +43,16 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 - **Standards as law, gaps flagged.** The standards system is declarative and testable; where it is silent, the AI flags the gap instead of inventing a rule ([RULE AI-12](coding-standards/ai-standards.md)).
 - **Sequential by default, parallel when you say so.** The `role-session` skill coordinates multiple parallel Claude sessions (role charters, file locks, git token queue) and switches itself off in projects without the parallel structure.
 - **Token-lean by design.** Skill descriptions are hard-capped, bodies stay under ~120 lines, read-efficiency rules are part of the standards, and the `memory-gardener` skill prunes accumulated knowledge.
+- **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
+- **Claude Code enhancements stay optional and isolated.** Where a Claude Code-only mechanism (like hook-based enforcement in `hooks-enforcement`) can mechanically assist a rule, it lives under `skills/models/claude/` as an opt-in add-on — the underlying contract in `coding-standards/ai-standards.md` works the same with or without it, on any tool.
 
 ## Repository layout
 
 ```
 skills/
   README.md        ← catalog + install instructions (start here)
-  models/          ← per-model protocols + fleet routing (claude/ lineup, opencode/ open-weight)
-  workflow/        ← handover, debugging, planning, budget, commits, perf, parallel sessions
+  models/          ← per-model protocols + fleet routing (claude/ lineup + Claude Code hooks, opencode/ open-weight)
+  workflow/        ← intent capture, planning, handover, debugging, budget, commits, pre-merge checks, perf, parallel sessions, e2e scaffolding
   standards/       ← the coding-standards enforcement skill
   memory/          ← repo-committed memory + knowledge gardening
   stack/           ← Three.js, Astro
