@@ -20,23 +20,40 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 
 The kit is two independent systems that share one install path. `skills/` teaches an AI coding agent *how to work* — session discipline, model-specific behavior, memory, coordination. `coding-standards/` teaches it *what correct code looks like* for this project — language rules, file-role conventions, framework overrides. Either can be adopted alone; together, the `coding-standards` skill is what loads and enforces the standards chain during a session, so a project that wants enforcement needs both folders.
 
+Every skill is a single portable markdown file with `name` + `description` frontmatter — the description is trigger-rich ("trigger when…") so it loads only when relevant — and reads a project-local, gitignored `learnings.md` sidecar at start and appends a lesson at end, so this repo stays the clean upstream while each install compounds its own experience. Every standard is testable and declarative, with wrong/right examples wherever a rule could be misread, and flags a gap (`RULE AI-12`) rather than inventing a rule where the standards are silent. They interlock at one seam: the `install-kit` skill installs both in one pass, and the `coding-standards` skill is what actually loads and walks the standards chain during a session — without it, `coding-standards/` is just reference documentation.
+
 ### `skills/` — the self-improving skills library
 
-Full catalog: [skills/README.md](skills/README.md). Every skill is a single portable markdown file with `name` + `description` frontmatter; the description is trigger-rich (explicit "trigger when…" phrasing) so an agent loads it only when it's actually relevant, keeping the always-resident cost low. Every skill also reads a project-local `learnings.md` sidecar at the start of a use and appends one distilled lesson at the end — those files are gitignored per project, so this repo stays the clean upstream while each installed copy compounds its own experience. The library is organized into seven categories:
+Full catalog: [skills/README.md](skills/README.md)
 
-- **`models/`** — protocols tuned to a specific model's actual behavior, not generic prompting advice. `models/claude/` covers the current Claude lineup (Fable 5, Opus 4.8, Sonnet 5, Haiku 4.5) plus fleet-routing rules for which model a task should go to, an `opus-as-fable` protocol for pushing Opus toward Fable-grade rigor, and an opt-in `hooks-enforcement` skill that uses Claude Code's hook mechanism to mechanically assist a few standards rules. `models/opencode/` does the same for the open-weight fleet driven through OpenCode — GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax, Devstral, MiMo, gpt-oss, and a local-small-models tier for anything ≤32B self-hosted via Ollama — with per-model notes on pricing tiers, context ceilings, and tasks that shouldn't be routed to them.
-- **`workflow/`** — session and process discipline, independent of any one model. This is where a non-trivial request gets structured: `intent-capture` pins down *what* was actually asked when a request is ambiguous, `plan-first` decides *how* before multi-file work starts, `interpretation-checkpoint` is a newer addition that catches drift in the parsed fine detail (files, parameters, values) on tasks with real blast radius, and `pre-merge-gate` / `pre-commit` close the loop before a diff ships. Alongside that pipeline: `handover` for cold session resumption, `debug-protocol` for reproduce-before-fix discipline, `session-budget` for token discipline, `perf-audit` for a measured performance pass, `role-session` for coordinating multiple parallel Claude sessions on the same repo (file locks, git token queue), and `e2e-scaffold` for one-time Playwright setup.
-- **`standards/`** — the `coding-standards` skill itself, which loads and enforces the layered standards chain described below before any edit.
-- **`memory/`** — persistent knowledge that survives a session: `memory-bank` for repo-committed decisions and context, `memory-gardener` for pruning and merging accumulated `learnings.md` files and memory banks so the knowledge compounds instead of sprawling.
-- **`stack/`** — technology-specific discipline, currently `threejs-scene` (shader, disposal, scroll-camera, and render-hygiene rules) and `astro-page` (convention-driven scaffolding that discovers and mirrors sibling patterns).
-- **`libraries/`** — skills scoped to the author's own libraries (`strata-css`, `triforge`), kept in the shared catalog because the same install/update discipline applies to them.
-- **`meta/`** — the library maintaining itself: `skill-writer` is the quality bar every skill is written against (trigger-rich descriptions, checkable and numerically-thresholded rules, a mandatory self-improvement loop, a ~120-line budget), and `install-kit` is the installer that copies chosen skills into a project's `.claude/skills/`.
+| Category | Covers | Representative skills |
+|---|---|---|
+| `models/claude/` | Protocols tuned to each Claude model's actual behavior | `fable-5`, `opus-4-8`, `sonnet-5`, `haiku-4-5`, `claude-all-models` (fleet routing), `opus-as-fable`, `hooks-enforcement` (opt-in Claude Code hooks) |
+| `models/opencode/` | Open-weight fleet driven through OpenCode | `opencode-all-models` (routing), GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax, Devstral, MiMo, gpt-oss, `local-small-models` (≤32B self-hosted) |
+| `workflow/` | Session/process discipline, model-independent | `intent-capture` → `plan-first` → `interpretation-checkpoint` → `pre-merge-gate` / `pre-commit` pipeline; plus `handover`, `debug-protocol`, `session-budget`, `perf-audit`, `role-session` (parallel sessions), `e2e-scaffold` |
+| `standards/` | Loads and enforces the coding-standards chain | `coding-standards` |
+| `memory/` | Persistent knowledge across sessions | `memory-bank` (repo-committed context/decisions), `memory-gardener` (prunes/merges learnings) |
+| `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
+| `libraries/` | The author's own libraries | `strata-css`, `triforge` |
+| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer) |
 
 ### `coding-standards/` — the layered standards system
 
-Full map: [coding-standards/index.md](coding-standards/index.md). The standards are universal and framework-agnostic by default, organized in three layers read top-down for any file being edited: **Layer 1** is a global rule file per discipline at the folder root (`css-standards.md`, `html-standards.md`, a script standard — `js-standards.md`, `ts-standards.md`, or `js-and-ts-standards.md` depending on the project, never more than one at a time); **Layer 2** is a matching subfolder of partials, one per file *role* within that discipline (a CSS token file has different laws than a CSS overlay file; a script's entry file differs from its orchestrator, controller, preset, or utility files); **Layer 3** is `frameworks/` (currently Astro, Bootstrap, Strata CSS), which extends or explicitly overrides a universal rule with an `OVERRIDES [filename] RULE [number]` notation. Beyond the file-role disciplines, `git-standards.md` and `versioning-standards.md` cover commit/branch/PR and package-versioning conventions, `seo-standards.md` and `accessibility-standards.md` cover cross-cutting concerns, `qa/` is an umbrella folder (not a single file) spanning definition-of-done, branch gates, logic/error checks, security, E2E testing, and bug reporting, and `ai-standards.md` is the AI behavioral contract that governs every session — hallucination detection, the `[CX]` context-integrity signal, and read-efficiency rules — regardless of which coding tool is running it. `tooling/` holds the lint configs that mechanically enforce whichever rules in the chain are checkable by a machine. Every rule in the system is meant to be testable and declarative (state what's required, not what's preferred), with wrong/right examples wherever a rule could be misread; where the standards are silent on a case, the AI is required to flag the gap rather than invent a rule (`RULE AI-12`).
+Full map: [coding-standards/index.md](coding-standards/index.md)
 
-The two systems interlock at one seam: the `install-kit` skill installs both in one pass, and the `coding-standards` skill is the thing that actually loads and walks the standards chain during a session — without it installed and invoked, `coding-standards/` is just reference documentation.
+| Layer | What it is | Location |
+|---|---|---|
+| 1 — Universal global rules | One rule file per discipline, applies to every file of that type | `css-standards.md`, `html-standards.md`, and one script standard (`js-`, `ts-`, or `js-and-ts-standards.md` — never more than one per project) |
+| 2 — Universal file-role rules | Partials for each file *role* within a discipline (e.g. a CSS token file vs. an overlay file; a script's entry vs. orchestrator vs. controller file) | matching `{discipline}-standards/` subfolder |
+| 3 — Framework rules | Extends or explicitly overrides a universal rule (`OVERRIDES [file] RULE [n]`) | `frameworks/` — currently Astro, Bootstrap, Strata CSS |
+
+| Cross-cutting | Covers |
+|---|---|
+| `git-standards.md`, `versioning-standards.md` | Commit/branch/PR conventions, package versioning |
+| `seo-standards.md`, `accessibility-standards.md` | SEO structure/schema; WCAG 2.1 AA |
+| `qa/` (umbrella folder, not one file) | Definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
+| `ai-standards.md` | The AI behavioral contract — hallucination detection, `[CX]` context-integrity signal, read-efficiency rules — for every session regardless of tool |
+| `tooling/` | Lint configs that mechanically enforce whichever rules above are machine-checkable |
 
 ## Install into a project
 
