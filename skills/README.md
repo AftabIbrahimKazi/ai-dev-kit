@@ -37,12 +37,15 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 | [local-small-models](models/opencode/local-small-models.md) | ≤32B local tier — Ollama setup rules, context floor, tool-call smoke test, task ceiling |
 
 ## workflow/ — session and process discipline
+Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-first` (decide *how*) → `interpretation-checkpoint` (verify the parsed detail, wide-blast-radius tasks only) → edit → `pre-merge-gate` → `pre-commit`.
+
 | Skill | Purpose |
 |---|---|
 | [handover](workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining |
 | [debug-protocol](workflow/debug-protocol.md) | Reproduce → one hypothesis → cheapest disproof; no shotgun edits |
 | [intent-capture](workflow/intent-capture.md) | Goal + constraints + done-when before planning, for ambiguous asks |
 | [plan-first](workflow/plan-first.md) | 5-line plan + file list before multi-file work |
+| [interpretation-checkpoint](workflow/interpretation-checkpoint.md) | Files/Changes/Assumptions breakdown for correction on multi-file, multi-parameter tasks |
 | [session-budget](workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation |
 | [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit |
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, message format, version bump |
