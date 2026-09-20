@@ -18,6 +18,7 @@ Location: `.claude/skills/<kebab-name>/SKILL.md` (auto-invocable) — optionally
 ---
 name: <kebab-case, matches folder>
 description: <see Description rules — this decides whether the skill ever fires>
+compat: universal            ← omit for universal (the default); see Tool-compatibility checkpoint
 ---
 
 # Title — one-line identity
@@ -26,6 +27,13 @@ One or two sentences: what failure mode this skill exists to prevent.
 ## Self-improvement (first and last)   ← every skill gets this loop
 ## <2–5 content sections>
 ```
+
+## Tool-compatibility checkpoint (mandatory for any tool-specific mechanism)
+Most of this library works on any markdown-reading agent — that's the point of the kit. A skill that depends on a mechanism only one tool has (Claude Code hooks, a specific CLI flag, a vendor-only API) must say so **structurally**, not just in prose, so `install-kit` can detect and flag it rather than every human reader having to notice a sentence buried in the body:
+- Add `compat: <tool>-only` to the frontmatter (e.g. `compat: claude-code-only`). Omit the field entirely for universal skills — that is the default, don't write `compat: universal` explicitly except in this template.
+- Open the body with one bold line naming the dependency: `**This is <tool>-only: <the specific mechanism it needs>.**`
+- State explicitly that any rule this skill assists must remain fully functional without it — a tool-specific skill may *add* mechanical assistance, never be a silent prerequisite for a universal rule.
+- `install-kit` reads `compat` at install time (see its Step 2) and flags/skips accordingly — a skill without this field is assumed to work everywhere, so leaving it off a genuinely tool-specific skill silently breaks that gate.
 
 ## Description rules (the highest-leverage 2 lines)
 The description is the ONLY thing the model sees when deciding to load the skill. It must contain:
@@ -50,6 +58,7 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - [ ] Every rule checkable; thresholds numeric
 - [ ] No project-specific hardcoding
 - [ ] Self-improvement loop present
+- [ ] Tool-specific mechanism? → has `compat: <tool>-only` in frontmatter + the bold dependency line, and any rule it assists still works without it
 - [ ] Under ~120 lines; no section that merely restates another
 - [ ] Facts (APIs, prices, versions) verified against current docs, not memory — stale facts are worse than none
 - [ ] Renaming or merging a skill? Add a row to `migrations/RENAMES.md` (repo root) in the same change and update every cross-reference (grep the whole library for the old name) — a rename without a ledger row strands existing installs

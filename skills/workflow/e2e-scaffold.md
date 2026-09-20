@@ -1,6 +1,6 @@
 ---
 name: e2e-scaffold
-description: Scaffold a reusable Playwright fixtures/config/smoke-test layer once per project, so every later test reuses it instead of being generated from scratch. Trigger on "set up e2e/playwright testing", "add playwright", or before writing the first Playwright spec in a project that doesn't have one yet.
+description: Scaffold a reusable Playwright fixtures/config/smoke-test layer once per project. Trigger on "set up e2e/playwright testing", "add playwright", or before the first Playwright spec in a project without one.
 ---
 
 # E2E Scaffold — Write the Plumbing Once, Reuse It Forever
@@ -40,92 +40,10 @@ Chromium browser binary is installed (`playwright install chromium`).
 
 ## Step 3 — Write the scaffold
 
-Create these three files, adapting the placeholders to what Step 2 found. Keep the
-fixtures file to **universal concerns only** — no feature-specific selectors, no
-guessed Page Object methods. Feature coverage is written later, per Step 5.
-
-`playwright.config.ts`:
-```ts
-import { defineConfig, devices } from '@playwright/test';
-
-const PORT = {{PORT}};
-const BASE_URL = `http://localhost:${PORT}`;
-
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [['list']],
-  use: {
-    baseURL: BASE_URL,
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-  },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
-  webServer: {
-    command: '{{DEV_COMMAND}}',
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
-});
-```
-
-`tests/e2e/fixtures.ts`:
-```ts
-import { test as base, expect, type Page, type Locator } from '@playwright/test';
-
-/**
- * Universal fixtures only. Feature-specific Page Objects (one *.pom.ts per feature
- * area) get added as fixtures here the first time that feature needs coverage —
- * never duplicated inline in a spec.
- */
-
-type Fixtures = {
-  app: Page;
-};
-
-export const test = base.extend<Fixtures>({
-  app: async ({ page }, use) => {
-    const consoleErrors: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') consoleErrors.push(msg.text());
-    });
-    page.on('pageerror', (err) => consoleErrors.push(err.message));
-
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    await use(page);
-
-    expect(consoleErrors, `Console errors on ${page.url()}:\n${consoleErrors.join('\n')}`).toEqual([]);
-  },
-});
-
-export { expect };
-
-/** Clips a screenshot to a locator's bounding box — avoids the element-screenshot
- *  timeout that continuously animated content (canvas/WebGL, live charts) triggers. */
-export async function screenshotClipped(page: Page, locator: Locator, path: string) {
-  const box = await locator.boundingBox();
-  if (!box) throw new Error('screenshotClipped: locator has no bounding box (not visible?)');
-  await page.screenshot({ path, clip: box });
-}
-```
-
-`tests/e2e/smoke.spec.ts`:
-```ts
-import { test, expect } from './fixtures';
-
-test('app boots and renders with no console errors', async ({ app }) => {
-  await expect(app.locator('body')).toBeVisible();
-  await expect(app).toHaveTitle(/.+/);
-});
-```
+Create the three files in `e2e-scaffold.templates.md` (same skill folder), adapting
+the `{{PORT}}`/`{{DEV_COMMAND}}` placeholders to what Step 2 found. Keep the fixtures
+file to **universal concerns only** — no feature-specific selectors, no guessed Page
+Object methods. Feature coverage is written later, per Step 5.
 
 ## Step 4 — Wire it up
 

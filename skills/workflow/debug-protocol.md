@@ -31,4 +31,4 @@ The expensive failure mode is "edit things until it works": it burns tokens, mas
 - **Two failed fixes → stop and revert to a clean state.** Accumulating half-fixes poisons the evidence. Re-run step 2 with what you learned.
 - **Signal pattern-matches a known failure → verify it's actually the same cause** before applying the known cure.
 - **An "impossible" observation means a wrong assumption** — list your assumptions and test the one you're most confident about first; that's usually the broken one.
-- If the user is describing/asking, deliver the diagnosis and stop — don't apply the fix until asked.
+- If the user is describing/asking, deliver the diagnosis and stop — don't apply the fix until asked. Gate behavior across session modes: see `mode-kernel`.

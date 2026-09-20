@@ -39,7 +39,9 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 ## workflow/ — session and process discipline
 | Skill | Purpose |
 |---|---|
-| [handover](workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining |
+| [handover](workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining; also hosts the agent-handover mechanism |
+| [agent-usage](workflow/agent-usage.md) | Default-never Agent-tool policy — two scope-anchored exceptions, an approval gate, chaining-pattern efficiency rules |
+| [mode-kernel](workflow/mode-kernel.md) | Central table for how agent-usage/debug-protocol/coding-standards/perf-audit's stop-and-wait gates behave per session mode |
 | [debug-protocol](workflow/debug-protocol.md) | Reproduce → one hypothesis → cheapest disproof; no shotgun edits |
 | [intent-capture](workflow/intent-capture.md) | Goal + constraints + done-when before planning, for ambiguous asks |
 | [plan-first](workflow/plan-first.md) | 5-line plan + file list before multi-file work |
@@ -60,12 +62,14 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 |---|---|
 | [memory-bank](memory/memory-bank.md) | Repo-committed project memory — decisions, context, solved mysteries |
 | [memory-gardener](memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds |
+| [skill-ablation](memory/skill-ablation.md) | Periodic archive-and-run-bare pass — restore only instructions real work proves are missing |
 
 ## stack/ — technology-specific
 | Skill | Purpose |
 |---|---|
 | [threejs-scene](stack/threejs-scene.md) | Three.js discipline — shaders, disposal, scroll cameras, render hygiene |
 | [astro-page](stack/astro-page.md) | Convention-driven Astro scaffolding — discover, mirror siblings, verify |
+| [shopify-toolkit-install](stack/shopify-toolkit-install.md) | Live-pull Shopify's own AI toolkit skills into a project — never forked into this kit |
 
 ## libraries/ — the user's own repos
 | Skill | Purpose |
