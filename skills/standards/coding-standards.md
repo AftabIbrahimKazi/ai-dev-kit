@@ -34,7 +34,7 @@ Then apply project-specific context (CLAUDE.md / handover: prefixes, token files
 - Before finishing any edit: self-check the diff against the loaded chain (prefixes, tokens vs hardcoded values, structure rules), not against generic best practice.
 
 ## Reviewing / retrofitting
-When asked to check compliance of existing files: load the chain for each file's role, report violations grouped by rule (rule → offending `file:line` list), ranked by severity per the standard's own wording (law vs recommendation). Don't fix unprompted — the audit is the deliverable unless asked to apply.
+When asked to check compliance of existing files: load the chain for each file's role, report violations grouped by rule (rule → offending `file:line` list), ranked by severity per the standard's own wording (law vs recommendation). Don't fix unprompted — the audit is the deliverable unless asked to apply. Gate behavior across session modes: see `mode-kernel`.
 
 ## Keeping the system healthy (owner's privilege)
 The standards system is itself a repo the user maintains and ports across projects. Improvements discovered in use (ambiguous wording, missing file-role, framework gap) should be surfaced as concrete proposed edits to the standards files — the user decides; never edit standards files as a side effect of feature work.

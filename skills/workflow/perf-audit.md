@@ -36,4 +36,4 @@ Performance work fails two ways: optimizing without measuring (fixing the wrong 
 - GC hitches: allocation inside the rAF tick.
 
 ## Step 4 — Report
-Ranked table, max ~7 rows: finding · measured size/impact · fix · effort (S/M/L). Lead with the single highest-impact item and offer to fix it. Don't fix unprompted — the audit is the deliverable unless asked to apply.
+Ranked table, max ~7 rows: finding · measured size/impact · fix · effort (S/M/L). Lead with the single highest-impact item and offer to fix it. Don't fix unprompted — the audit is the deliverable unless asked to apply. Gate behavior across session modes: see `mode-kernel`.

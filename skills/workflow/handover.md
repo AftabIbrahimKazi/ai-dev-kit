@@ -21,7 +21,7 @@ Cold-start context rebuilding is the biggest hidden token cost in long-running p
 3. If it doesn't exist, offer to create one after the first meaningful unit of work.
 
 ## On session end (or when asked to wrap up)
-Update `handover.md` — update in place, never append an ever-growing log. Structure:
+Update `handover.md` — update in place, never append an ever-growing log. First, check for any agent-handover files created this session (see "Agent handovers" below) and fold anything decision-worthy into the update. Structure:
 
 ```markdown
 # Handover — <project name>
@@ -71,6 +71,23 @@ The test is tense, and it is mechanical: **if a sentence is past-tense narrative
 4. What remains is current state and the resume point. That is the whole job.
 
 Invoke the `memory-gardener` skill to do this if the file is far over; it owns the pruning pass.
+
+## Agent handovers
+
+When `agent-usage`'s Reporting contract applies (a dispatched agent must write its full raw findings somewhere), those findings go here — never into `handover.md` directly, and never lost.
+
+**Folder convention:**
+- Classic mode: `.claude/agent-handovers/INDEX.md` + one dated file per agent run (`YYYY-MM-DD_task-slug.md`).
+- Multi-role mode: `handover/<role>/agent-handovers/INDEX.md` + files, owned exclusively by that role's folder — no lock-file entry needed (unlike `memory-bank/INDEX.md`, which is shared across roles and does need one).
+
+**Who writes them:** the dispatched agent itself, as part of finishing its task — full raw findings, not a summary written after the fact. Writing it yourself would reintroduce the cost the delegation was meant to avoid.
+
+**Consolidation — part of "On session end" above:** when updating `handover.md` (or a role's `handover/<role>.md`), also check whether any agent-handover files were created this session. Distill anything decision-worthy or state-relevant up into the normal sections, under the same ceiling and outcome-language rules as everything else — nothing raw gets copied in. Same distillation pattern already used for `memory-bank/`, just sourced from agent output instead of inline work.
+
+**Access rule — gated by concurrency, not by role:**
+- While two parallel role sessions are concurrently active, neither reads the other's `agent-handovers/` folder or `INDEX.md` — this prevents live cross-talk between sessions running at the same time.
+- Once a role's session has ended, its `agent-handovers/` folder becomes durable historical record, exactly like its `handover/<role>.md` — not deleted or archived away.
+- Any later session (same or different role, Classic or Multi-role) goes through that role's `handover.md` first — it is the mandatory curated gate. Only if `handover.md` references or hints at something needing more depth may the session then open that role's `agent-handovers/` files for backing detail. Never scan another (ended) role's `agent-handovers/INDEX.md` directly as a first move, independent of what that role's `handover.md` says.
 
 ## Rules
 - **Outcome language, not process language.** "Venus overlay counters animate on scroll-enter" — not "edited VenusIntroCounters.ts".

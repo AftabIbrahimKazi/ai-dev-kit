@@ -1,13 +1,16 @@
 ---
 name: hooks-enforcement
 description: Optional Claude Code hook config that mechanically assists AI-01–AI-03 instead of relying on prompt compliance alone. Trigger when installing into a Claude Code project already using coding-standards/ai-standards.md.
+compat: claude-code-only
 ---
 
 # Hooks Enforcement — Claude Code Only
 
+**This is Claude Code-only: it needs Claude Code's hook system (`SessionStart`, `PreToolUse` events in `.claude/settings.json`) — no other tool this kit targets has an equivalent.**
+
 `ai-standards.md`'s context-integrity rules (AI-01–AI-03) work by prompt compliance — the model polices itself, which degrades exactly when context pressure is highest. Claude Code hooks can inject deterministic reminders and block tool calls; they cannot verify prose output. This skill automates the *reminder*, not the *verification* — say so plainly rather than overselling it.
 
-**This is Claude Code-only.** `ai-standards.md` remains the authoritative, tool-agnostic contract regardless of whether this is installed — never make any rule depend on this skill being present.
+`ai-standards.md` remains the authoritative, tool-agnostic contract regardless of whether this is installed — never make any rule depend on this skill being present.
 
 ## Self-improvement (do this first and last)
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.

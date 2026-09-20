@@ -46,3 +46,6 @@ Collapse multiple dated sections into a single `## Last session`. In parallel mo
 
 ## Cadence
 Suggest a garden when any learnings file crosses ~30 bullets, when a handover file crosses its 120-line ceiling, or roughly every 10–15 sessions of active skill use. Gardening is cheap; reading bloat every session is not.
+
+## Relationship to skill-ablation
+This skill prunes and merges instructions that stay. It never asks whether an instruction should exist at all — a lean, well-merged skill can still be fully obsolete against the current model. `skill-ablation` runs that test periodically (archive everything, run bare, restore only on repeated evidence). If the same instruction keeps surviving garden passes untouched, that's a signal to run `skill-ablation` rather than keep gardening around it.

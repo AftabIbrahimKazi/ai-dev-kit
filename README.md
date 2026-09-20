@@ -46,16 +46,23 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 - **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
 - **Claude Code enhancements stay optional and isolated.** Where a Claude Code-only mechanism (like hook-based enforcement in `hooks-enforcement`) can mechanically assist a rule, it lives under `skills/models/claude/` as an opt-in add-on — the underlying contract in `coding-standards/ai-standards.md` works the same with or without it, on any tool.
 
+## Recent additions
+
+- **Agent-tool discipline.** [`agent-usage`](skills/workflow/agent-usage.md) defaults every session to inline work — no Agent-tool delegation — unless the user names an agent explicitly or a scope-anchored need is judged and approved first; [`mode-kernel`](skills/workflow/mode-kernel.md) is the shared table governing how that gate (and three other skills' own stop-and-wait gates) behaves across autonomous, planning, and background session modes.
+- **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated `CLAUDE.md`/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
+- **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's `.claude/skills/` at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
+- **Tool-compatibility checkpoint.** Any skill that depends on a mechanism only one AI coding tool provides (Claude Code hooks, for example) now declares it structurally via a `compat: <tool>-only` frontmatter field, checked automatically by `install-kit` at install time — so tool-specific features get flagged and kept out of incompatible projects instead of failing silently.
+
 ## Repository layout
 
 ```
 skills/
   README.md        ← catalog + install instructions (start here)
   models/          ← per-model protocols + fleet routing (claude/ lineup + Claude Code hooks, opencode/ open-weight)
-  workflow/        ← intent capture, planning, handover, debugging, budget, commits, pre-merge checks, perf, parallel sessions, e2e scaffolding
+  workflow/        ← intent capture, planning, handover, debugging, budget, commits, pre-merge checks, perf, agent-usage discipline, session-mode gating, parallel sessions, e2e scaffolding
   standards/       ← the coding-standards enforcement skill
-  memory/          ← repo-committed memory + knowledge gardening
-  stack/           ← Three.js, Astro
+  memory/          ← repo-committed memory, knowledge gardening, periodic skill ablation
+  stack/           ← Three.js, Astro, Shopify (live-pulled from Shopify's own toolkit, never forked)
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
   meta/            ← skill-writer (quality bar), install-kit (installer)
 migrations/

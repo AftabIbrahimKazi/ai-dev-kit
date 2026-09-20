@@ -83,6 +83,7 @@ Never edit a file without loading its standard chain first.
 - No trailing summaries after completing work
 - No filler phrases
 - No invented rules — gaps in standards are flagged to the developer
+- **Decision preference (all session modes, including autonomous/no-pause and planning modes):** favor token efficiency and correct results with minimal-to-no Agent tool use. This is a weighting input for autonomous judgment calls, not a restriction on making them — see the `agent-usage` and `mode-kernel` skills for the detailed decision logic this preference feeds into.
 - Full rules in `coding-standards/ai-standards.md`
 
 ---
