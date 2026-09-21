@@ -87,6 +87,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [skill-writer](meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
 | [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once or hand-picked |
+| [skill-scope](meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 
 ## Installing into a new project
 

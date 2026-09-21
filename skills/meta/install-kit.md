@@ -15,17 +15,21 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 - **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
 - If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
-## Baseline discipline skills
+## Skill scope — read before Step 1
 
-These apply to virtually any project regardless of stack, so install them by default in **every** mode (Everything, Pick, and Auto-detect) unless the user explicitly declines one: `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`.
+Every skill installed here falls into one of two mechanisms, defined canonically in the `skill-scope` skill — **read it now**, don't re-derive the classification. Summary:
+- **Permanent-pinned** (universal, or conditional on this project's stack/tooling/model) — decided once, here, at install.
+- **Per-session archivable** (task-instance-specific) — installed here too, but its per-session on/off toggle is `handover`'s job, not install-kit's. Install it now regardless; don't pre-filter it out at install time.
 
-In Pick mode, present these as a pre-checked baseline group separate from the stack/category catalog — the user is choosing what *else* to add, not re-deciding whether session discipline applies. State this explicitly rather than folding them silently into "whatever's relevant" category picking, since that phrasing is what let `session-budget` get missed in a real install.
+The user can override any pin decision, but only by stating it explicitly in this session — never infer an override from context or convenience.
 
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
 - **Everything** — all skills + the full coding-standards system.
-- **Pick** — baseline group pre-checked (above), plus the catalog by category (name + one-line purpose from the library README) for the user to choose categories and/or individual skills, plus a yes/no on the standards system.
-- **Auto-detect** — baseline group installs unconditionally; for everything else, scan the target project for a project guide doc (`README.md`, `CLAUDE.md`, `AGENTS.md`, `package.json`/`composer.json`/similar manifest, an existing `docs/` folder) to infer stack and needs (e.g. a Three.js dependency → `stack/threejs-scene`, an Astro config → `stack/astro-page`, a `strata` framework reference → `libraries/strata-css`, a Shopify theme structure → `stack/shopify-toolkit-install`). Present the inferred list with the evidence found (file + line/field) before installing, so the user can veto or add — never install a non-baseline skill silently on a guess.
+- **Pick** — the universal permanent-pinned group pre-checked (from `skill-scope`), plus the catalog by category (name + one-line purpose from the library README) for the user to choose categories and/or individual skills, plus a yes/no on the standards system.
+- **Auto-detect** — universal permanent-pinned group installs unconditionally; for the conditional-pinned group, scan the target project for a project guide doc (`README.md`, `CLAUDE.md`, `AGENTS.md`, `package.json`/`composer.json`/similar manifest, an existing `docs/` folder) against each skill's signal in `skill-scope`'s table (e.g. a Three.js dependency → `stack/threejs-scene`, an Astro config → `stack/astro-page`, a Shopify theme structure → `stack/shopify-toolkit-install`). Present the inferred list with the evidence found (file + line/field) before installing — cite the signal, never pin on a guess. Per-session-archivable skills still install unconditionally in this mode too; only their per-session toggle is deferred to `handover`.
+
+Before finalizing any mode, ask once whether the user wants to override anything the scan/pick produced (pin something the scan skipped, or explicitly exclude something it matched) — record any such override plainly in the install report, since it's the user's explicit statement that authorized it.
 
 If the target tool isn't already known (Claude Code, OpenCode, other), ask before any mode proceeds — Step 2's compat check needs it.
 
