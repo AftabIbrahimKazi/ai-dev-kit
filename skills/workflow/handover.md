@@ -21,9 +21,9 @@ Cold-start context rebuilding is the biggest hidden token cost in long-running p
 3. If it doesn't exist, offer to create one after the first meaningful unit of work.
 
 ## On session end (or when asked to wrap up)
-Don't ask what the next task is — this step stays passive. If the user states a next task while requesting the handover, use it to update "Skill scope for next session" below. If they don't, assume next session's skill needs are the same as this session's: leave the per-session-archivable set as currently pinned/archived, unchanged.
+Passive on next-task: never ask. If the user volunteers the next task, use it in "Skill scope for next session" below; otherwise leave the archivable set unchanged.
 
-Update `handover.md` — update in place, never append an ever-growing log. First, check for any agent-handover files created this session (see "Agent handovers" below) and fold anything decision-worthy into the update. Structure:
+Update `handover.md` in place — never append an ever-growing log. First fold in any agent-handover files from this session (see "Agent handovers"). Structure:
 
 ```markdown
 # Handover — <project name>
@@ -76,19 +76,15 @@ Invoke the `memory-gardener` skill to do this if the file is far over; it owns t
 
 ## Skill scope for next session
 
-Per `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`): at session end, given the stated next task, archive any of these the next task doesn't need to `.claude/skills-archive/<name>/` (move, don't delete — preserves local `learnings.md`). Never touch anything outside this set — permanent-pinned skills (universal or stack-conditional) are install-kit's territory, not handover's.
-
-Record the result in `handover.md`:
+Only touches `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), move any of these it doesn't need to `.claude/skills-archive/<name>/` — move, not delete, to preserve local `learnings.md`. Record it:
 
 ```markdown
 ## Archived skills (this session)
-Archived to `.claude/skills-archive/` — not needed for next task, restore if scope shifts:
+Archived to `.claude/skills-archive/` — restore if scope shifts:
 - perf-audit — .claude/skills-archive/perf-audit/
 ```
 
-If the user explicitly states an override for that session (e.g. "keep `perf-audit` pinned this time even though it's not a perf task"), honor it and note in this section that it was an explicit override, not the default toggle — never infer an override from context alone.
-
-The next session reads this list as part of step 1 (reading `handover.md`) and restores anything on the spot the moment scope makes it relevant, rather than working without it silently. If a skill keeps bouncing archive→restore across consecutive sessions, flag it — that's a signal it should move to permanent-pinned instead, via `install-kit`'s override step.
+An explicit user override (e.g. "keep `perf-audit` pinned anyway") is honored and noted as explicit, never inferred. The next session restores on the spot if scope shifts; a skill bouncing archive→restore repeatedly should move to permanent-pinned instead, via install-kit.
 
 ## Agent handovers
 
