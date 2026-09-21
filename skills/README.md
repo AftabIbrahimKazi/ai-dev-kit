@@ -39,6 +39,8 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 ## workflow/ — session and process discipline
 Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-first` (decide *how*) → `interpretation-checkpoint` (verify the parsed detail, wide-blast-radius tasks only) → edit → `pre-merge-gate` → `pre-commit`.
 
+**Baseline set** (install-kit installs these by default regardless of stack, unless declined): `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`. Not baseline: `perf-audit`, `role-session`, `e2e-scaffold` — situational, install-kit's Pick/Auto-detect catalog covers these on need.
+
 | Skill | Purpose |
 |---|---|
 | [handover](workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining; also hosts the agent-handover mechanism |

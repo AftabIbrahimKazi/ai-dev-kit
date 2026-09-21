@@ -15,12 +15,19 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 - **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
 - If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
-## Step 1 — Offer the two modes
+## Baseline discipline skills
+
+These apply to virtually any project regardless of stack, so install them by default in **every** mode (Everything, Pick, and Auto-detect) unless the user explicitly declines one: `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`.
+
+In Pick mode, present these as a pre-checked baseline group separate from the stack/category catalog — the user is choosing what *else* to add, not re-deciding whether session discipline applies. State this explicitly rather than folding them silently into "whatever's relevant" category picking, since that phrasing is what let `session-budget` get missed in a real install.
+
+## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
 - **Everything** — all skills + the full coding-standards system.
-- **Pick** — list the catalog by category (name + one-line purpose from the library README) and let the user choose categories and/or individual skills, plus a yes/no on the standards system.
+- **Pick** — baseline group pre-checked (above), plus the catalog by category (name + one-line purpose from the library README) for the user to choose categories and/or individual skills, plus a yes/no on the standards system.
+- **Auto-detect** — baseline group installs unconditionally; for everything else, scan the target project for a project guide doc (`README.md`, `CLAUDE.md`, `AGENTS.md`, `package.json`/`composer.json`/similar manifest, an existing `docs/` folder) to infer stack and needs (e.g. a Three.js dependency → `stack/threejs-scene`, an Astro config → `stack/astro-page`, a `strata` framework reference → `libraries/strata-css`, a Shopify theme structure → `stack/shopify-toolkit-install`). Present the inferred list with the evidence found (file + line/field) before installing, so the user can veto or add — never install a non-baseline skill silently on a guess.
 
-If the target tool isn't already known (Claude Code, OpenCode, other), ask before either mode proceeds — Step 2's compat check needs it.
+If the target tool isn't already known (Claude Code, OpenCode, other), ask before any mode proceeds — Step 2's compat check needs it.
 
 When the user picks, advise but don't push: note skills that travel together (`coding-standards` skill pairs with the standards folder; `memory-gardener` pairs with `memory-bank`; Claude model skills pair with `claude-all-models`; open-model skills pair with `opencode-all-models`; `e2e-scaffold` pairs with `coding-standards/qa/e2e-testing.md` — the skill scaffolds the fixtures/config layer, the standard defines the discipline for keeping it current; `intent-capture` pairs with `plan-first` — it feeds the plan's Goal/Approach line on ambiguous asks; `pre-merge-gate` pairs with `role-session` — it's the self-check run before flipping lock rows to `awaiting-review`; `hooks-enforcement` pairs with `coding-standards/ai-standards.md` — it's the Claude Code-only mechanical assist for that file's AI-01–AI-03; `agent-usage` pairs with `mode-kernel` — mode-kernel governs how agent-usage's approval gate (and debug-protocol's/coding-standards'/perf-audit's own stop-and-wait gates) behaves per session mode, install together; `agent-usage` also pairs with `handover` — its Reporting contract writes into handover's "Agent handovers" mechanism; `skill-ablation` pairs with `memory-gardener` — gardener prunes what stays, ablation periodically tests what should stay at all; run gardener first if learnings/handover are over cap), and note stack skills that don't fit the target project's stack.
 
