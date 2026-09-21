@@ -72,6 +72,22 @@ The test is tense, and it is mechanical: **if a sentence is past-tense narrative
 
 Invoke the `memory-gardener` skill to do this if the file is far over; it owns the pruning pass.
 
+## Skill scope for next session
+
+Per `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`): at session end, given the stated next task, archive any of these the next task doesn't need to `.claude/skills-archive/<name>/` (move, don't delete — preserves local `learnings.md`). Never touch anything outside this set — permanent-pinned skills (universal or stack-conditional) are install-kit's territory, not handover's.
+
+Record the result in `handover.md`:
+
+```markdown
+## Archived skills (this session)
+Archived to `.claude/skills-archive/` — not needed for next task, restore if scope shifts:
+- perf-audit — .claude/skills-archive/perf-audit/
+```
+
+If the user explicitly states an override for that session (e.g. "keep `perf-audit` pinned this time even though it's not a perf task"), honor it and note in this section that it was an explicit override, not the default toggle — never infer an override from context alone.
+
+The next session reads this list as part of step 1 (reading `handover.md`) and restores anything on the spot the moment scope makes it relevant, rather than working without it silently. If a skill keeps bouncing archive→restore across consecutive sessions, flag it — that's a signal it should move to permanent-pinned instead, via `install-kit`'s override step.
+
 ## Agent handovers
 
 When `agent-usage`'s Reporting contract applies (a dispatched agent must write its full raw findings somewhere), those findings go here — never into `handover.md` directly, and never lost.
