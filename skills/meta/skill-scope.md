@@ -29,7 +29,9 @@ Every skill in the library falls into exactly one of two mechanisms. The mechani
 ## Current classification
 
 ### Permanent-pinned — universal (installed always, never scanned for)
-`handover`, `coding-standards`, `session-budget`, `agent-usage`, `mode-kernel`, `pre-merge-gate`, `pre-commit`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`
+`skill-scope`, `handover`, `coding-standards`, `session-budget`, `agent-usage`, `mode-kernel`, `pre-merge-gate`, `pre-commit`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`
+
+`skill-scope` itself is pinned for a structural reason, not a task-agnostic-trigger reason: both `install-kit` and `handover` reference it by name at runtime in the target project, so its absence silently breaks both mechanisms. Never let it be deselected in Pick mode.
 
 Each fires on a task-agnostic event or is the mechanism doing the classifying itself — none can be predicted-absent from a stated next task.
 
