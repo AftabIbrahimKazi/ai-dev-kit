@@ -1,6 +1,6 @@
 ---
 name: skill-scope
-description: Canonical two-mechanism classification for every skill in the library — permanent-pinned (decided once at setup, AI-scanned, user-overridable only by explicit statement) vs. per-session archivable (toggled case by case from the stated next task). Referenced by install-kit (setup-stage scan) and handover (per-session toggle) — edit here, not in either.
+description: Canonical classification for every skill in the library — permanent-pinned (universal or stack-conditional, decided once at setup), per-session archivable (toggled from the stated next task), and opt-in addons (invisible until explicitly requested). Referenced by install-kit and handover — edit here, not in either.
 metadata:
   type: reference
 ---
@@ -59,9 +59,15 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 
 Each fires only on a specific task instance nameable in a next-task line, not a fixed property of the stack.
 
+### Opt-in addons (never offered by default; install only on explicit request)
+`system1-prefilter`
+
+Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
+
 ## Mechanism split (who actually moves files, and where the override hook lives)
 
 - **install-kit**, at install or explicit re-detect: installs all universal Permanent-pinned skills unconditionally; scans for conditional-pinned signals and installs matches, citing the signal found; asks once for anything not file-observable. Before finalizing, asks the user for any explicit overrides ("also always pin X" / "never pin Y even though the scan matched") and records them.
 - **handover**, every session end: given the stated next task, archives per-session-archivable skills the task doesn't need to `.claude/skills-archive/`, records the archived list + paths in `handover.md`. If the user explicitly states an override for that session ("keep `perf-audit` pinned this time even though it's not a perf task"), handover honors it and notes the override was explicit, not inferred.
+- **Opt-in addons** own their own setup — install-kit and handover never ask an addon's configuration questions on its behalf; they only route the request to that addon's own Setup section.
 
 Neither mechanism silently second-guesses the other, and neither silently second-guesses a user's explicit statement.
