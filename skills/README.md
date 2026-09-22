@@ -76,6 +76,11 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [astro-page](stack/astro-page.md) | Convention-driven Astro scaffolding — discover, mirror siblings, verify |
 | [shopify-toolkit-install](stack/shopify-toolkit-install.md) | Live-pull Shopify's own AI toolkit skills into a project — never forked into this kit |
 
+## addons/ — optional, user-opted capabilities
+| Skill | Purpose |
+|---|---|
+| [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Opt-in only, never in any default install. |
+
 ## libraries/ — the user's own repos
 | Skill | Purpose |
 |---|---|

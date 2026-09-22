@@ -26,6 +26,10 @@ Every skill in the library falls into exactly one of two mechanisms. The mechani
    - Specific task instance → **Per-session archivable**.
 2. For the conditional-pinned case, the AI scan must cite the file/signal it found before pinning — never pin on a guess.
 
+## A fourth category: opt-in addons
+
+Some skills aren't universal, aren't stack-detectable, and aren't task-instance-toggled — they exist only because the user explicitly chose to turn on an optional capability (an external dependency, a paid/keyed service). These are **user-opted addons**: invisible until explicitly requested at install or later, and once configured, stay pinned (the user's choice is durable, not re-derived per session or per stack-scan). `system1-prefilter` is the first of this kind.
+
 ## Current classification
 
 ### Permanent-pinned — universal (installed always, never scanned for)

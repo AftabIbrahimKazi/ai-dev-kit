@@ -12,7 +12,7 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 2. **At end of every use:** append one dated bullet — source-location changes, a picking pattern the user prefers, an install step that was missing. Merge instead of duplicating; delete disproven bullets.
 
 ## Source locations (verify, don't assume)
-- **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, with a README index) and `coding-standards/` (has `index.md` at its root).
+- **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, `addons/`, with a README index) and `coding-standards/` (has `index.md` at its root).
 - If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
 ## Skill scope — read before Step 1
@@ -22,6 +22,8 @@ Every skill installed here falls into one of two mechanisms, defined canonically
 - **Per-session archivable** (task-instance-specific) — installed here too, but its per-session on/off toggle is `handover`'s job, not install-kit's. Install it now regardless; don't pre-filter it out at install time.
 
 The user can override any pin decision, but only by stating it explicitly in this session — never infer an override from context or convenience.
+
+**Opt-in addons** (`addons/` — currently `system1-prefilter`) are a fourth category: never offered as part of Everything/Pick/Auto-detect by default, never stack-scanned. Offer them only when the user explicitly asks (at install or any later session) — then follow that addon's own Setup section for its install questions (e.g. `system1-prefilter` asks endpoint + API-key-variable questions itself). Once installed, treat as permanent-pinned — it's the user's own durable choice, not re-derived per session.
 
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
