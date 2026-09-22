@@ -35,7 +35,8 @@ Full catalog: [skills/README.md](skills/README.md)
 | `memory/` | Persistent knowledge across sessions | `memory-bank` (repo-committed context/decisions), `memory-gardener` (prunes/merges learnings) |
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
-| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer) |
+| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification) |
+| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering, requires a configured endpoint) |
 
 ### `coding-standards/` — the layered standards system
 
@@ -82,6 +83,7 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 - **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated `CLAUDE.md`/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
 - **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's `.claude/skills/` at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
 - **Tool-compatibility checkpoint.** Any skill that depends on a mechanism only one AI coding tool provides (Claude Code hooks, for example) now declares it structurally via a `compat: <tool>-only` frontmatter field, checked automatically by `install-kit` at install time — so tool-specific features get flagged and kept out of incompatible projects instead of failing silently.
+- **Opt-in addons.** [`system1-prefilter`](skills/addons/system1-prefilter.md) introduces a fourth skill-scope category — a capability that's never stack-detected or installed by default, only turned on when the user explicitly asks, then stays pinned as their own durable choice. `skill-scope` now tracks this category alongside permanent-pinned and per-session-archivable.
 
 ## Repository layout
 
@@ -94,7 +96,8 @@ skills/
   memory/          ← repo-committed memory, knowledge gardening, periodic skill ablation
   stack/           ← Three.js, Astro, Shopify (live-pulled from Shopify's own toolkit, never forked)
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
-  meta/            ← skill-writer (quality bar), install-kit (installer)
+  meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
+  addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter)
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
 coding-standards/
