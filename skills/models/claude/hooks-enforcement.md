@@ -1,6 +1,6 @@
 ---
 name: hooks-enforcement
-description: Optional Claude Code hook config that mechanically assists AI-01–AI-03 instead of relying on prompt compliance alone. Trigger when installing into a Claude Code project already using coding-standards/ai-standards.md.
+description: Optional Claude Code hook config that mechanically assists AI-01–AI-03, and separately hard-gates git commit on the pre-commit skill. Trigger when installing into a Claude Code project using ai-standards.md and/or pre-commit.
 compat: claude-code-only
 ---
 
@@ -46,6 +46,48 @@ This cannot confirm `[CX]` is honest — only that a proxy artifact exists. Resi
 The marker file is written by the **model**, as the last step of its AI-02 declaration — never by the hook itself, which only checks for it.
 
 Merge this into the target's `.claude/settings.json` — never overwrite an existing one.
+
+## Pre-commit gate (separate from AI-01–AI-03, same hook mechanism)
+
+Skill triggers that depend on the model noticing a moment in conversation ("this is the done-moment", "this is a bug worth investigating") cannot be hooked — there's no tool-call event to match on. `git commit` is different: it's an actual Bash call, so it's mechanically detectable. This gate hard-blocks it until `pre-commit`'s checklist has actually run.
+
+`PreToolUse` hook (matcher `Bash`) — blocks any Bash call containing `git commit` until the marker file exists:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash .claude/hooks/pre-commit-gate.sh" }] }
+    ]
+  }
+}
+```
+`PostToolUse` hook (matcher `Bash`) — clears the marker after any `git commit` call, so the next commit needs a fresh declaration:
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash .claude/hooks/pre-commit-clear.sh" }] }
+    ]
+  }
+}
+```
+Both scripts live in `.claude/hooks/` (companion files of this skill, install alongside it) and parse the hook's stdin JSON for `tool_input.command`, matching the substring `git commit`. **Known limitation:** substring matching means a Bash command whose *text* merely mentions "git commit" (e.g. `echo "run git commit next"`) also blocks — a false positive, not a false negative. Acceptable trade-off since the failure mode leans safe (over-blocks rather than under-blocks), but don't oversell this as precise command parsing.
+
+The marker (`.claude/.pre-commit-declared`) is written by the **model**, as the last step of actually running `pre-commit`'s checklist — never by the hook itself.
+
+## Reminder-only assist for non-hookable triggers
+
+`SessionStart` hook — for skills with no tool-call event to gate on (e.g. `debug-protocol`'s "two failed fixes" or "hunting a bug" trigger), inject a plain-text reminder instead of attempting to block anything:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "echo 'Reminder: debug-protocol applies when hunting a bug/regression, or after two failed fixes — invoke it explicitly instead of continuing ad hoc edits.'" }] }
+    ]
+  }
+}
+```
+This is a nudge, not enforcement — nothing stops the model from ignoring it, same limitation as the base AI-02 reminder above.
 
 ## Staleness guard
 Hook exit-code semantics (0 = allow, 2 = block with stderr shown to the model) and event names can change between Claude Code CLI versions. Confirm current behavior against the live Claude Code docs before relying on this in a production project — treat the block above as a starting point, not a guarantee.
