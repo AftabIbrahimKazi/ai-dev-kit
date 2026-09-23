@@ -75,6 +75,15 @@ Both scripts live in `.claude/hooks/` (companion files of this skill, install al
 
 The marker (`.claude/.pre-commit-declared`) is written by the **model**, as the last step of actually running `pre-commit`'s checklist — never by the hook itself.
 
+### What the gate checks, beyond the marker
+
+Once the marker exists, the gate script also runs two mechanical checks the `pre-commit` skill would otherwise re-derive by reasoning over `git diff` output every time — moving pure pattern-matching out of the model loop:
+
+1. **Debug leftovers in the staged diff** — greps added lines (`git diff --cached -U0`, excluding `.claude/**`) for `console.log(`, `console.debug(`, `debugger;`, `FIXME`. Blocks with the offending `file:line`s on match. Deliberately excludes bare `TODO` (too common as legitimate deferred work) and doesn't attempt `print(`/language-specific probes — extend the pattern in the script per project if needed.
+2. **Commit message format** — extracts the `-m "..."` argument and checks it against Conventional Commits (git-standards RULE G-06/G-07: `type: summary` with type in `feat|fix|patch|style|refactor|chore|docs|test|remove`) and the 50-char header limit (RULE G-08). This assumes the project's `git-standards.md` is still the kit default — if a project overrides commit format, either edit the regex in the script or drop this block.
+
+**Known regex-engine trap (fixed once, documented so it isn't reintroduced):** the diff-header exclusion line originally used plain `grep -v '^\+\+\+'` (BRE). GNU BRE treats `\+` as a quantifier, not a literal `+`, so `\+\+\+` parsed as a degenerate quantifier chain and matched *every* line starting with `+` — silently swallowing all staged additions, not just the `+++ b/file` diff header, and making the debug-leftover check permanently pass with no findings. Fixed by using `grep -vE '^\+\+\+'` (ERE, where `+` needs no escaping as a literal within `\+` under `-E` semantics is unambiguous). Verified via manual stdin-JSON test invocations of the script (bypassing the live PreToolUse gate itself, which intercepts any Bash call whose *text* contains "git commit" — including test payloads — per the substring-matching limitation above).
+
 ## Reminder-only assist for non-hookable triggers
 
 `SessionStart` hook — for skills with no tool-call event to gate on (e.g. `debug-protocol`'s "two failed fixes" or "hunting a bug" trigger), inject a plain-text reminder instead of attempting to block anything:
