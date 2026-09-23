@@ -1,6 +1,6 @@
 ---
 name: system1-prefilter
-description: Optional add-on — use a fast, provider-agnostic System-One-style typed-decision model (calibrated probabilities, no text generation) to prefilter candidates before full-content reads. Trigger only when this project has it configured (a reachable endpoint set up per "Setup" below) — never assume it's available, never install by default.
+description: Optional add-on — fast, provider-agnostic typed-decision model (calibrated probabilities, no text generation) to prefilter candidates before full-content reads, or answer the user's own binary/MCQ questions. Trigger only when configured (endpoint set up per Setup) — never assume available, never install by default.
 ---
 
 # System-1 Prefilter — Typed-Decision Add-On
@@ -31,8 +31,9 @@ A System-One-typed-decision provider takes a state string + one or more typed qu
 - Code-review triage (deep-review vs. quick-skim per changed file).
 - Test-selection (which tests are likely affected by a diff).
 - Skill triggering/installing decisions (is skill X applicable to this task/project).
+- The user's own binary/MCQ-shaped validation questions asked directly in chat (e.g. "did you do X", "is Y true", "should this be A or B") — **only** when the question is already binary/MCQ-shaped as asked. Validated live: a factual closed question (`noul: 0.97`, accepted, no Claude reasoning spent) vs. a design-judgment question forced into yes/no shape (`noul: 0.38`, below floor, escalated to manual reasoning anyway — round-trip cost paid on top of, not instead of, the thinking).
 
-**Never use for:** rubric/security/safety pass-fail checks (a real miss was found here — a plaintext-secret leak scored a wrong "pass" at 0.36 confidence) or picking directly between solution approaches (unproven, no validated test). For session-mode selection, only feed it decomposed yes/no factual sub-questions (e.g. "does this touch security/auth/payment logic") — the mode decision itself stays deterministic logic, never a direct model pick.
+**Never use for:** rubric/security/safety pass-fail checks (a real miss was found here — a plaintext-secret leak scored a wrong "pass" at 0.36 confidence); picking directly between solution approaches (unproven, no validated test); or open-ended questions answered by first inventing a candidate answer set to force MCQ/boolean shape — generating that candidate set already requires the same reasoning the shortcut is meant to save, so it both fails to save tokens and risks the candidate list quietly biasing the real answer. For session-mode selection, only feed it decomposed yes/no factual sub-questions (e.g. "does this touch security/auth/payment logic") — the mode decision itself stays deterministic logic, never a direct model pick.
 
 ## Question-shape rule
 
