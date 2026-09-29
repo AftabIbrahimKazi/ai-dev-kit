@@ -5,6 +5,8 @@ description: Claude Fable 5 (claude-fable-5) protocol — selection, prompting, 
 
 # Fable 5 — Maximum-Capability Protocol
 
+> Previous generation. Fable 5.1 (`fable-5-1`) succeeds it at the same price with breaking API changes (forced tool use rejected, preserved thinking) — prefer that skill for new work; use this one for projects pinned to `claude-fable-5`.
+
 Model ID: `claude-fable-5` · 1M context (default and max) · 128K max output · $10 in / $50 out per MTok — the most expensive tier. Every rule below exists to convert that cost into results a cheaper model can't produce.
 
 ## Staleness guard

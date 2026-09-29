@@ -1,39 +1,46 @@
 # Handover — ai-dev-kit
 
-Updated: 2026-09-02 · Branch: main
+Updated: 2026-09-29 · Branch: main
 
 ## Current state
-Pushed to `origin/main` as of commit `e6c86dd`. Working tree clean, local `main` matches remote exactly — no pending changes.
+
+Local `main` is at `e5a6e54` (matches `origin/main` as of the last push). **Uncommitted, not yet pushed:** the Claude 5.5 lineup update and the new `comment-style` skill below (5 new skill files + edits to `claude-all-models`, the three previous-gen skills, `install-kit`, `skills/README.md`, root `README.md`, `skill-scope.md`). Review `git diff` / `git status`, then commit.
 
 ## Last session
-Ran a feasibility study of the kit against an "AI-native SDLC" framework (discovery → spec/plan → build/test → governance), then staged and shipped 4 changes, each self-contained and independently verified:
-1. **`skills/workflow/intent-capture.md`** (new) — Goal/Constraints/Done-when protocol before `plan-first`, for genuinely ambiguous asks. Cross-referenced from `plan-first.md`.
-2. **`skills/workflow/pre-merge-gate.md`** (new) — self-check a diff against loaded standards before commit/handoff; scoped to files actually touched (in `role-session` mode, exactly the author's own lock rows — never a whole-tree diff). Wired into `role-session.md` step 4. Rule 2 names `skill-writer.md` as the applicable chain when the changed files are skills themselves, not application code.
-3. **`skills/models/claude/hooks-enforcement.md`** (new) — optional, Claude Code-only sample `SessionStart`/`PreToolUse` hook config that mechanically *assists* (never replaces) `ai-standards.md`'s AI-01–AI-03. Carries an explicit hard rule: never read/write/gate on any path under `handover/`, so it can't race `role-session`'s lock file.
-4. **`skills/models/claude/claude-all-models.md`** — appended a short "Regression eval — not yet built" section with a concrete trigger condition, deliberately not built yet.
 
-Companion edits: `skills/README.md` (3 new catalog rows), `install-kit.md` (opt-in hook-merge step + "travels together" advisories for the 3 new skills), `ai-standards.md` (2-line pointer only — RULE text is byte-identical, 0 deletions confirmed), `README.md` root (SEO framing + fixed a stale repo-layout description that predated these changes).
+Updated the kit for the Sonnet 5.5 / Opus 5.5 release, plus caught up two models the lineup had missed (Opus 5, Fable 5.1). Facts (IDs, pricing, API rules, behavioral prompts) came from the bundled `claude-api` skill's model-migration guide, cache dated 2026-09-25 — not from memory.
 
-Two independent audits ran against the actual diff (not prior summaries): a general exploration pass, and a dedicated Opus audit checking agnosticism, JSON validity, install mechanics, and the `role-session`/`handover/` isolation claims. All 8 checked goals passed; one advisory (rule 2's standards-chain naming) was found and fixed same-session.
+- **New skills** in `skills/models/claude/`: `sonnet-5-5`, `opus-5-5`, `opus-5`, `fable-5-1`. Same format as existing model skills (staleness guard, self-improvement, hard API rules, prompting patterns). No `compat` field — they encode model behavior and API rules, not tool mechanisms, so they stay universal like `sonnet-5`/`opus-4-8`. Only `hooks-enforcement` is `compat: claude-code-only`.
+- **`claude-all-models`**: lineup table now Fable 5.1 / Opus 5.5 / Sonnet 5.5 / Haiku 4.5, with a previous-generation line (Fable 5, Opus 5, Opus 4.8, Sonnet 5); API-difference section rewritten (forced `tool_choice` 400s on the 5.5/Fable 5.1 tier, `between_tools`, Opus 5.5 `medium` default effort, preserved thinking, `fallbacks: "default"` with beta `server-side-fallback-2026-07-01`).
+- **Previous-gen skills** (`fable-5`, `opus-4-8`, `sonnet-5`) kept for pinned projects, each with a one-line pointer to its successor. `sonnet-5.md` price corrected to $2/$10 (the old $3/$15 + intro-pricing note no longer matches the live table).
+- **Catalogs synced:** `skills/README.md`, root `README.md` (table row + "Recent additions" bullet), `skill-scope.md` model-detection row.
 
-Two commits, both pushed:
-- `e60c11d` — the 3 new skills + companion edits
-- `e6c86dd` — README SEO/accuracy pass
+Also added `skills/standards/comment-style.md` — a universal permanent-pinned skill (in `skill-scope`) setting a project-wide comment level: `none` (default) / `terse` / `descriptive`. The level lives in one `**Active level: …**` line in the installed copy; `install-kit` Step 2 asks it at install (all three options explained, default none) and ignores that line when comparing on re-install. Exceptions that apply even at `none`: escape-hatch justifications (TS `as`, suppression-directive reasons), tool-consumed pragmas/license headers, JSDoc-as-type-system. Changes later only on an explicit in-session statement. Wired into `skill-scope`, `install-kit`, both READMEs.
 
 ## Decisions & why
-- **Discovery → spec artifacts stopped at prose skills, not committed `/intent` or `/spec` files.** The video that prompted this used file-based artifact chains, but this kit is markdown-instruction-only with no build/CI layer to consume such files — a prose protocol (`intent-capture`) gets the same discipline without inventing a file format nothing reads.
-- **Hooks isolated under `skills/models/claude/`, not woven into `ai-standards.md`.** The kit's stated identity is tool-agnostic (Claude Code, OpenCode, "any agent that reads markdown"); hook mechanics are Claude Code-only, so they're strictly additive and pointed-to, never a dependency.
-- **Autonomous maintenance loop and a real cross-model eval harness were explicitly declined**, per the user's own call — deprioritized as scope creep without a proven need. Only a documented trigger condition was added for the eval piece.
-- **Local clone vs. GitHub reconciled mid-session**: at one point local was verified ahead of origin by 5 commits; later the user correctly flagged that GitHub was actually the live truth (origin had 1 commit — a README badge — that local hadn't fetched). Fast-forwarded local to match before any further edits. Lesson: don't trust a single `ls-remote` read as final; re-verify direction of drift before treating either copy as canonical.
+
+- **Comment-style bookmark/footnote sidecar levels were dropped.** A sidecar doc means extra reads and writes and drifts on refactor; revisit only if a measured session shows it saves tokens.
+- **`descriptive` deliberately loosens RULE AI-11** (why-only) for the project; `ai-standards.md` text left untouched (byte-identical rule).
+
+- **Universal, not tool-tagged.** The kit is tool-agnostic by design; model protocols apply to whatever tool drives that model, so they carry no `compat` tag and mention no Claude Code mechanisms.
+- **Previous-gen skills kept, not deleted or renamed.** Projects can be pinned to an older model ID; no `RENAMES.md` row is needed since nothing was renamed.
+- **`opus-as-fable` left as-is** (targets Opus 4.8). Opus 5.5 already verifies unprompted and delegates freely, so the emulation directives likely need re-baselining before being pointed at it — untested, deliberately not changed.
 
 ## Known issues
-None outstanding. The one advisory the Opus audit raised (pre-merge-gate not naming `skill-writer.md` for skill-file diffs) was fixed in the same session, before commit.
+
+- Model facts will drift again; each new skill carries a staleness guard pointing at the Models API / `claude-api` skill.
+- `haiku-4-5.md` untouched — its staleness guard still says verified 2026-07; the live table shows no newer Haiku.
 
 ## Next steps
-- No open work. If continuing this thread: consider whether `intent-capture` and `pre-merge-gate` need real-world dogfooding inside a project install before calling them stable — they're new and unused in practice.
-- `claude-all-models.md`'s regression-eval trigger ("drift observed on a skill after ≥2 routing changes") is the thing to watch for — if it fires, that's the next stage to actually build.
+
+- Review and commit the uncommitted lineup update (suggested message: `feat: add Sonnet 5.5, Opus 5.5, Opus 5, Fable 5.1 model protocols and update fleet routing`).
+- Decide whether `opus-as-fable` should get a 5.5 counterpart or be retired.
+- Planned separately: a hardcoded version-bump script (cache-busting `script`/`link` tags) as the first candidate for deterministic scripts replacing hand-written Edit sweeps — still needs the user's folder/versioning convention. Additive class/`data-*` insertion scripts deferred behind it.
+- GitHub repo topics/tags still unset (suggested: `claude-code`, `ai-agents`, `skills`, `llm-tooling`) — user hasn't decided.
 
 ## Don't touch / gotchas
-- **`ai-standards.md`'s RULE AI-01–AI-16 body text must stay byte-identical** unless a rule is genuinely being changed — the only sanctioned edit there is the 2-line pointer near the top. Any future diff touching that file should be checked with `git diff --numstat` for surprise deletions before committing.
-- **`hooks-enforcement.md`'s hard rule (never touch `handover/`) is load-bearing** — any future edit to its sample hook commands must preserve that boundary, or it can silently corrupt `role-session` lock coordination in a way the dev won't see happening.
-- This repo has no `.claude/skills/` of its own (doesn't dogfood its own install layout) — skill files live at `skills/<category>/<name>.md` in source form; that's intentional, not an oversight.
+
+- **`ai-standards.md`'s RULE AI-01–AI-16 body text must stay byte-identical** unless a rule is genuinely being changed.
+- **`hooks-enforcement.md`'s hard rule (never touch `handover/`) is load-bearing** — don't let future hook-command edits cross that boundary.
+- This repo has no `.claude/skills/` of its own (doesn't dogfood its own install layout) — skill files live at `skills/<category>/<name>.md` in source form; intentional.
+- `skills/README.md` and root `README.md` both reference the skill catalog independently — when adding a skill, both need updating, plus `skill-scope.md` for model skills.

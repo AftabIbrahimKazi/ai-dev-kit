@@ -5,7 +5,9 @@ description: Claude Sonnet 5 (claude-sonnet-5) protocol — near-Opus coding at 
 
 # Sonnet 5 — Speed-Value Protocol
 
-Model ID: `claude-sonnet-5` · 1M context · 128K max output · $3 in / $15 out per MTok ($2/$10 intro through 2026-08-31). Near-Opus quality on coding and agentic work at a fraction of the cost — the best default when Opus-tier depth isn't required.
+> Previous generation. Sonnet 5.5 (`sonnet-5-5`) succeeds it at the same price with breaking API changes — prefer that skill for new work; use this one for projects pinned to `claude-sonnet-5`.
+
+Model ID: `claude-sonnet-5` · 1M context · 128K max output · $2 in / $10 out per MTok (live pricing table, 2026-09-25; the earlier $3/$15 base with intro pricing through 2026-08-31 is no longer listed — re-verify before cost-critical decisions). Near-Opus quality on coding and agentic work at a fraction of the cost — the best default when Opus-tier depth isn't required.
 
 ## Staleness guard
 Model facts here (ID, pricing, limits, API rules) were verified 2026-07. Intro pricing expires 2026-08-31. If a newer Claude model generation exists or the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill), follow the live source, and log the correction in `learnings.md`.

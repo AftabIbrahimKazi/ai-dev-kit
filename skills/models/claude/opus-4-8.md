@@ -5,6 +5,8 @@ description: Claude Opus 4.8 (claude-opus-4-8) protocol — prompting, effort/th
 
 # Opus 4.8 — Workhorse-Flagship Protocol
 
+> Previous generation. Opus 5.5 (`opus-5-5`) is the current Opus, cheaper and stronger — prefer that skill for new work; use this one for projects pinned to `claude-opus-4-8`.
+
 Model ID: `claude-opus-4-8` · 1M context · 128K max output · $5 in / $25 out per MTok. The default choice for serious coding, agentic, and knowledge work — Fable-adjacent capability at half the price.
 
 ## Staleness guard

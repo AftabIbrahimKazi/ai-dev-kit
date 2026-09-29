@@ -33,7 +33,7 @@ Some skills aren't universal, aren't stack-detectable, and aren't task-instance-
 ## Current classification
 
 ### Permanent-pinned — universal (installed always, never scanned for)
-`skill-scope`, `handover`, `coding-standards`, `session-budget`, `agent-usage`, `mode-kernel`, `pre-merge-gate`, `pre-commit`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`
+`skill-scope`, `handover`, `coding-standards`, `comment-style`, `session-budget`, `agent-usage`, `mode-kernel`, `pre-merge-gate`, `pre-commit`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`
 
 `skill-scope` itself is pinned for a structural reason, not a task-agnostic-trigger reason: both `install-kit` and `handover` reference it by name at runtime in the target project, so its absence silently breaks both mechanisms. Never let it be deselected in Pick mode.
 
@@ -48,7 +48,7 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 | `triforge` | `@triforge/*` dependency |
 | `shopify-toolkit-install` + its pulled-in Shopify skills | Shopify theme structure (`shopify.theme.toml`, `sections/`, `snippets/`), `.shopifycli` |
 | `memory-bank` | existing `memory-bank/` folder, or explicit user choice at install |
-| `fable-5` / `opus-4-8` / `sonnet-5` / `haiku-4-5` / `claude-all-models` / `opus-as-fable` | which model(s) the project states it's driven by (CLAUDE.md, or asked at install if not file-observable) |
+| `fable-5-1` / `opus-5-5` / `sonnet-5-5` / `haiku-4-5` / `fable-5` / `opus-5` / `opus-4-8` / `sonnet-5` / `claude-all-models` / `opus-as-fable` | which model(s) the project states it's driven by (CLAUDE.md, or asked at install if not file-observable) |
 | `models/opencode/*` (all) | presence of OpenCode config/usage, or asked at install |
 | `hooks-enforcement` | `.claude/settings.json` hooks already present, or asked at install |
 
