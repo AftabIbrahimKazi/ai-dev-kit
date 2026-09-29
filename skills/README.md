@@ -13,9 +13,13 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 ### models/claude/ — the Claude lineup
 | Skill | Purpose |
 |---|---|
-| [fable-5](models/claude/fable-5.md) | Fable 5 protocol — when its price pays off, always-on thinking, effort tuning |
-| [opus-4-8](models/claude/opus-4-8.md) | Opus 4.8 workhorse protocol — explicit adaptive thinking, fast mode, task budgets |
-| [sonnet-5](models/claude/sonnet-5.md) | Sonnet 5 — near-Opus coding at Sonnet cost, literal instruction patterns |
+| [fable-5-1](models/claude/fable-5-1.md) | Fable 5.1 protocol — when its price pays off, preserved-thinking rules, progress updates, autonomy/scope prompts |
+| [opus-5-5](models/claude/opus-5-5.md) | Opus 5.5 — current flagship; always-on thinking, `medium` default effort, forced-tool-use ban |
+| [sonnet-5-5](models/claude/sonnet-5-5.md) | Sonnet 5.5 — recalibrated effort, `between_tools` thinking-off, low-effort verification prompt |
+| [opus-5](models/claude/opus-5.md) | Opus 5 (previous gen) — thinking-on default, verbosity/over-verification/subagent tuning |
+| [fable-5](models/claude/fable-5.md) | Fable 5 (previous gen) — when its price pays off, always-on thinking, effort tuning |
+| [opus-4-8](models/claude/opus-4-8.md) | Opus 4.8 (previous gen) — explicit adaptive thinking, fast mode, task budgets |
+| [sonnet-5](models/claude/sonnet-5.md) | Sonnet 5 (previous gen) — near-Opus coding at Sonnet cost, literal instruction patterns |
 | [haiku-4-5](models/claude/haiku-4-5.md) | Haiku 4.5 — fan-out/classification workhorse, what never to route to it |
 | [claude-all-models](models/claude/claude-all-models.md) | Fleet routing — right model per task, escalation rules, cost discipline |
 | [opus-as-fable](models/claude/opus-as-fable.md) | Behavioral protocol pushing Opus 4.8 toward Fable-grade rigor |
@@ -61,6 +65,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [coding-standards](standards/coding-standards.md) | Load & enforce the layered coding-standards/ chain before any edit |
+| [comment-style](standards/comment-style.md) | Per-project comment level — none (default) / terse / descriptive — asked at install, changeable any time; saves tokens |
 
 ## memory/ — persistent knowledge
 | Skill | Purpose |
