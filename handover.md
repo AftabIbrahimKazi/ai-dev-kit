@@ -17,7 +17,13 @@ Updated the kit for the Sonnet 5.5 / Opus 5.5 release, plus caught up two models
 
 Also added `skills/standards/comment-style.md` — a universal permanent-pinned skill (in `skill-scope`) setting a project-wide comment level: `none` (default) / `terse` / `descriptive`. The level lives in one `**Active level: …**` line in the installed copy; `install-kit` Step 2 asks it at install (all three options explained, default none) and ignores that line when comparing on re-install. Exceptions that apply even at `none`: escape-hatch justifications (TS `as`, suppression-directive reasons), tool-consumed pragmas/license headers, JSDoc-as-type-system. Changes later only on an explicit in-session statement. Wired into `skill-scope`, `install-kit`, both READMEs.
 
+Then added the **Context code** to the `[CX]` rule: `CLAUDE.md` can set a 2–4 char code (e.g. `X7`) and every response starts `[CX X7]` instead of `[CX]`; bare `[CX]` still works when none is set. Changed only AI-01/AI-03 in `ai-standards.md` (AI-04 onward byte-identical, verified via git diff), plus `CLAUDE.example.md`, `coding-standards/README.md`, `install-kit` Step 3 (asks for the code, 'none' allowed), and a `UserPromptSubmit` reminder hook in `hooks-enforcement`. Sandbox-tested with fresh agents: code X7, code Q9 (no carry-over from a distractor X7), and no code — all correct; install flow set the row. Not tested in a real long Claude Code session.
+
 ## Decisions & why
+
+- **Context code is a fixed proxy, not a counter.** User chose a fixed code (`X7`) over a per-response counter; AI-01 says plainly it can still be copied forward mid-session, so a missing/wrong code is a reliable lost-context signal but a correct one is not proof. A counter (`[CX 001]`…) would catch copy-forward if this proves too weak.
+- **`[CX][ON]`/`[OFF]` self-report rejected** — a drifted model can't detect its own drift, so it would always say ON.
+- **Test-prompt gotcha:** asking a Sonnet 5.5 agent for a verbatim log of everything it wrote triggers the `reasoning_extraction` safeguard; ask for opening lines only.
 
 - **Comment-style bookmark/footnote sidecar levels were dropped.** A sidecar doc means extra reads and writes and drifts on refactor; revisit only if a measured session shows it saves tokens.
 - **`descriptive` deliberately loosens RULE AI-11** (why-only) for the project; `ai-standards.md` text left untouched (byte-identical rule).

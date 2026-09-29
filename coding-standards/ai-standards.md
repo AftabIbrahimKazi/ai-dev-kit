@@ -18,12 +18,17 @@ Rules AI-01 to AI-03 exist to detect and recover from context loss. A response p
 
 The AI must begin every response with the token `[CX]` before any other content, including during the thinking stage. This is a context-active signal — it confirms the AI has the project standards loaded and is operating within them.
 
+If the project's `CLAUDE.md` sets a **Context code** (a 2–4 character token the developer chose, e.g. `X7`), the token is `[CX <code>]` instead — the code must be read from `CLAUDE.md`, never guessed or carried over from another project. A bare `[CX]` in any other rule's example stands for whichever full token this project uses.
+
 ```
-[CX]
+[CX]            ← no Context code set
+[CX X7]         ← Context code X7 set in CLAUDE.md
 ... rest of response
 ```
 
-**If `[CX]` is missing from any response, the AI has lost context.** The response must be discarded immediately — do not attempt to salvage it. A hallucinated response breaks more than it fixes.
+**If the token is missing from any response — or, when a Context code is set, the code is missing or wrong — the AI has lost context.** The response must be discarded immediately — do not attempt to salvage it. A hallucinated response breaks more than it fixes.
+
+The code is a proxy, not proof: it shows `CLAUDE.md` was read and this is the right project, but a model can still repeat it from its own earlier replies. A missing or wrong code is a reliable lost-context signal; a correct one is not a guarantee. A change to the code in `CLAUDE.md` takes effect from the next session.
 
 ---
 
@@ -42,14 +47,14 @@ If the wrong standards are listed the developer must correct them before work be
 
 ## RULE AI-03 — Recovery procedure when [CX] is missing
 
-When a response is missing `[CX]`:
+When a response is missing the `[CX]` token (or has a missing or wrong Context code):
 
 1. Stop the prompt immediately — do not let it complete
 2. Discard the response entirely
 3. Choose a recovery path:
    - **Quick recovery:** Update `handover.md` with current state and start a new session
    - **Full recovery:** Generate a new `handover.md` from scratch reflecting the current project state
-4. In the new session the AI must load standards and confirm with `[CX]` before any work
+4. In the new session the AI must load standards and confirm with the full token (`[CX]` or `[CX <code>]`) before any work
 
 ---
 

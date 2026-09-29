@@ -86,7 +86,7 @@ New session starts
 → CLAUDE.md instructs Claude to read coding-standards/index.md
 → index.md maps every file role to its standards chain
 → Claude loads the relevant standards before editing any file
-→ Claude begins every response with [CX] to confirm context is active
+→ Claude begins every response with [CX] (or [CX <code>] when CLAUDE.md sets a Context code) to confirm context is active
 → Work begins under the full standards system
 ```
 
@@ -94,15 +94,15 @@ New session starts
 
 ## Hallucination Detection
 
-Every Claude response must begin with `[CX]`. This is the context-active signal defined in `ai-standards.md`.
+Every Claude response must begin with `[CX]`, or `[CX <code>]` when `CLAUDE.md` sets a Context code (e.g. `[CX X7]`). This is the context-active signal defined in `ai-standards.md`.
 
-**If `[CX]` is missing:**
+**If the token is missing, or the code is missing or wrong:**
 1. Stop the response immediately
 2. Discard it — do not use it
 3. Update `handover.md` with the current project state
 4. Start a new session
 
-A response without `[CX]` means Claude has lost context and is operating without the standards loaded. Any code it produces in that state may break more than it fixes.
+A response without the correct token means Claude has lost context and is operating without the standards loaded. Any code it produces in that state may break more than it fixes.
 
 ---
 
