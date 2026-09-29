@@ -6,7 +6,7 @@ compat: claude-code-only
 
 # Hooks Enforcement — Claude Code Only
 
-**This is Claude Code-only: it needs Claude Code's hook system (`SessionStart`, `PreToolUse` events in `.claude/settings.json`) — no other tool this kit targets has an equivalent.**
+**This is Claude Code-only: it needs Claude Code's hook system (`SessionStart`, `UserPromptSubmit`, `PreToolUse` events in `.claude/settings.json`) — no other tool this kit targets has an equivalent.**
 
 `ai-standards.md`'s context-integrity rules (AI-01–AI-03) work by prompt compliance — the model polices itself, which degrades exactly when context pressure is highest. Claude Code hooks can inject deterministic reminders and block tool calls; they cannot verify prose output. This skill automates the *reminder*, not the *verification* — say so plainly rather than overselling it.
 
@@ -17,7 +17,7 @@ compat: claude-code-only
 2. **At end of every use:** append one dated bullet — a case this caught, a false block, or a hook exit-code behavior that didn't match what's documented here. Merge instead of duplicating; delete disproven bullets.
 
 ## Non-goal
-This cannot confirm `[CX]` is honest — only that a proxy artifact exists. Residual reliance on prompt compliance is inherent and stays. Do not describe this as "enforcing" AI-01–AI-03 in project docs; describe it as assisting.
+This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy artifact exists. Residual reliance on prompt compliance is inherent and stays. Do not describe this as "enforcing" AI-01–AI-03 in project docs; describe it as assisting.
 
 ## `handover/` guard (hard rule)
 **Hooks configured by this skill must never read, write, or gate on any path under `handover/`.** Lane coordination in `role-session` stays exclusively inside the model-driven claim protocol — a hook racing `locks.md` outside the dev's visibility corrupts claims silently.
@@ -45,7 +45,19 @@ This cannot confirm `[CX]` is honest — only that a proxy artifact exists. Resi
 ```
 The marker file is written by the **model**, as the last step of its AI-02 declaration — never by the hook itself, which only checks for it.
 
-Merge this into the target's `.claude/settings.json` — never overwrite an existing one.
+`UserPromptSubmit` hook — re-injects the AI-01 reminder on every user message, because the token tends to drop in long sessions once the original instruction is far back in context. It names no code, so it never goes stale; the model reads the code from `CLAUDE.md`:
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "echo 'AI-01: begin your response with the [CX] token defined in CLAUDE.md (with the Context code, if one is set).'" }] }
+    ]
+  }
+}
+```
+Costs roughly 25 input tokens per user message, mostly served from cache after the first turn.
+
+Merge these into the target's `.claude/settings.json` — never overwrite an existing one.
 
 ## Staleness guard
 Hook exit-code semantics (0 = allow, 2 = block with stderr shown to the model) and event names can change between Claude Code CLI versions. Confirm current behavior against the live Claude Code docs before relying on this in a production project — treat the block above as a starting point, not a guarantee.
