@@ -21,8 +21,8 @@ Statuses: `in-progress` · `awaiting-review` · `blocked (reason)` · `done`. Th
 Created empty (`mkdir handover/locks.d`, gitignored). One directory per claim, created with `mkdir` (atomic), holding an `owner` file:
 ```
 handover/locks.d/src__overlay.js/owner   →  claude-a3f9 | frontend | venus counters | editing | 2026-07-12 14:30
-handover/locks.d/git/owner               →  opencode-07c2 | backend | api fix | committing | 2026-07-12 14:41
-handover/locks.d/role__frontend/owner    →  claude-a3f9 | frontend | - | active | 2026-07-12 14:00
+handover/locks.d/@git/owner               →  opencode-07c2 | backend | api fix | committing | 2026-07-12 14:41
+handover/locks.d/@role__frontend/owner    →  claude-a3f9 | frontend | - | active | 2026-07-12 14:00
 ```
 To see all claims: list `handover/locks.d` and read each `owner`. Key rule and shell forms: `PROTOCOL.md` §0.
 

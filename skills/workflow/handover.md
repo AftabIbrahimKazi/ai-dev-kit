@@ -113,4 +113,4 @@ When `agent-usage`'s Reporting contract applies (a dispatched agent must write i
 ### Parallel mode specifics
 - The ceiling is **per role file**, not for the folder — each session reads only its own `<role>.md`, so that is the number that matters.
 - **`board.md`: clear `done` rows as part of finishing**, not "when convenient". A board that accumulates completed rows is the same unbounded-growth bug in a different file.
-- **`memory-bank/` is shared across roles and owned by none.** Before demoting into it from a role session, claim key `memory-bank__INDEX.md` in `handover/locks.d/` (atomic `mkdir`, per `role-session`) like any other shared file — concurrent demotions otherwise collide on the index. Release it in the same step you write.
+- **`memory-bank/` is shared across roles and owned by none.** Before demoting into it from a role session, claim key `@memory-bank-index` in `handover/locks.d/` (atomic `mkdir`, per `role-session`) like any other shared file — concurrent demotions otherwise collide on the index. Release it in the same step you write.
