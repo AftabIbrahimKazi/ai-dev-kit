@@ -204,7 +204,7 @@ A file just written or edited is not re-read to verify — the write would have 
 
 ## RULE AI-15 — Fixed boot order
 
-Session-start reads happen in a fixed, consistent order every session: project `CLAUDE.md` → standards index → handover → role charter (if parallel mode). A stable read order produces a stable context prefix, which caches across turns; random-order boots forfeit that discount.
+Session-start reads happen in a fixed, consistent order every session: project session-protocol file (`CLAUDE.md`/`AGENTS.md`) → standards index → handover → role charter (if parallel mode). A stable read order produces a stable context prefix, which caches across turns; random-order boots forfeit that discount.
 
 ---
 
