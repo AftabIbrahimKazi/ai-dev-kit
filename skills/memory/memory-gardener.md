@@ -23,7 +23,7 @@ The failure mode is always the same: dated session sections stacked into a log i
 - Fixed bugs, shipped work, completed next-steps → delete.
 - Keep only: current state, the exact resume point, live known-issues, and don't-touch gotchas.
 
-Collapse multiple dated sections into a single `## Last session`. In parallel mode the ceiling applies **per role file**, and `board.md` should keep no `done` rows. If demoting into `memory-bank/` from a role session, claim `memory-bank__INDEX.md` in `handover/locks.d/` first (atomic `mkdir`, per `role-session`) — concurrent demotions collide on the index.
+Collapse multiple dated sections into a single `## Last session`. In parallel mode the ceiling applies **per role file**, and `board.md` should keep no `done` rows. If demoting into `memory-bank/` from a role session, claim `@memory-bank-index` in `handover/locks.d/` first (atomic `mkdir`, per `role-session`) — concurrent demotions collide on the index.
 
 ## Gardening rules — per file
 **Merge:** bullets teaching the same lesson in different words become one bullet with the strongest phrasing. Two data points for the same pattern make it a *rule*; note that ("seen 3×").

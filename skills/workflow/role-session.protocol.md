@@ -5,7 +5,7 @@ Tool-agnostic source of truth for every AI coding agent working in this repo —
 Coordination files (all in `handover/`):
 
 - `board.md` — dashboard, one row per active task: `Role | Session | Task | Files | Status | Started` (format defined once, in `role-session`'s `templates.md`). The `Files` column lists **every** path the task will touch. Informational: each session edits only its own row and re-asserts it at each checkpoint.
-- `locks.d/` — the atomic claims (§0): one directory per claimed file, plus `git` (commit token) and `role__<role>`. Gitignored, local runtime state.
+- `locks.d/` — the atomic claims (§0): one directory per claimed file, plus `@git` (commit token) and `@role__<role>`. Gitignored, local runtime state.
 - `roles/<role>.md` — role charter (owned paths, forbidden paths, definition of done).
 - `<role>.md` — per-role handover note (resume state for that role's task). First line `Session: <id>`.
 
@@ -21,13 +21,13 @@ Prose rules like "re-read the file, then write your row" are check-then-act and 
 
 **Claim.** `mkdir handover/locks.d/<key>` — plain `mkdir` with no `-p`/`-Force`/`-ErrorAction` (works the same in bash and PowerShell; the parent `locks.d/` already exists). Success = you hold it. Failure ("already exists") = another session holds it: read its `owner`, do not proceed. Immediately after success write `handover/locks.d/<key>/owner` containing `session | role | task | status | claimed-timestamp`.
 
-**Key.** Repo-relative path with every `/` or `\` replaced by `__` (`src/a/b.js` → `src__a__b.js`). Reserved keys: `git` (commit token), `role__<role>` (role ownership; one live session per role), `memory-bank__INDEX.md` (shared bank index).
+**Key.** Encode the repo-relative path so the mapping is injective: replace `%` with `%25`, `_` with `%5F`, `@` with `%40`, then every `/` or `\` with `__` (`src/a/b.js` → `src__a__b.js`; `src/my_file.js` → `src__my%5Ffile.js`). After encoding, a raw `__` can only be a separator, so two distinct paths never share a key. **Reserved keys** live in their own namespace, prefixed `@` — which encoded file keys never start with: `@git` (commit token), `@role__<role>` (role ownership; one live session per role), `@memory-bank-index` (shared bank index). A file path can never produce a reserved key. This is the only definition of the key scheme; other files reference it.
 
 **Release.** Delete the `owner` file, then the directory (`rmdir` / `Remove-Item`). Update status in place by rewriting your own `owner`.
 
 **Multi-file claims:** take all keys before the first edit; if any `mkdir` fails, release the ones you took and report who holds the blocker. A directory with no `owner` file (a session died between the two steps) is a suspect claim — treat per §3.
 
-**Same role, two sessions: not allowed.** The first session takes `role__<role>`; a second session wanting the same role must pick another role, or resume (§1b) only after the dev confirms the first is dead. This keeps one writer per `<role>.md`.
+**Same role, two sessions: not allowed.** The first session takes `@role__<role>`; a second session wanting the same role must pick another role, or resume (§1b) only after the dev confirms the first is dead. This keeps one writer per `<role>.md`.
 
 ---
 
@@ -54,7 +54,7 @@ You are continuing a task another session (possibly another tool) already starte
 This is **not a new claim**:
 
 - **Skip the lock pre-check** from 1a. The task's claims already exist and are yours to inherit.
-- **Keep the existing claims in `locks.d/` as-is** under that role. Do not delete and re-claim them. **Adopt them:** rewrite each `owner` (and `role__<role>`, the board row, and the `Session:` line of `<role>.md`) with your own session id, and log `resumed from <old-session> at <timestamp>` in the board row.
+- **Keep the existing claims in `locks.d/` as-is** under that role. Do not delete and re-claim them. **Adopt them:** rewrite each `owner` (and `@role__<role>`, the board row, and the `Session:` line of `<role>.md`) with your own session id, and log `resumed from <old-session> at <timestamp>` in the board row.
 - Resume only when the previous session is known dead (cut off, or the dev says so). If it may still be live, ask the dev — never run two live sessions on one role.
 - Read the role's handover file (`handover/<role>.md`) for the **exact resume point** — last completed step and next step.
 - **Verify before continuing:** open the files the handover note references and confirm their current on-disk contents match what the note says they should contain. If they don't (drift — a partial edit, an unrecorded change), stop, report the discrepancy to the dev, and reconcile before writing anything.
