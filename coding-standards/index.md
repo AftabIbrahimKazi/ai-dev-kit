@@ -30,7 +30,7 @@ The `frameworks/` folder contains framework-specific additions or overrides. A f
 3. Open the relevant `{discipline}-standards/{file-role}.md` — read laws for that file type
 4. Check `frameworks/{framework}.md` — read framework-level additions/overrides
 5. Check `frameworks/{framework}/{file-role}.md` — read framework + file-type specific rules
-6. Check the project's own `CLAUDE.md` or `handover.md` — apply project-specific context (file names, prefixes, conventions)
+6. Check the project's own session-protocol file (`CLAUDE.md`/`AGENTS.md`) or `handover.md` — apply project-specific context (file names, prefixes, conventions)
 
 ---
 
@@ -49,7 +49,7 @@ subfolder shape.
 
 ## Script Standard Selection
 
-A project uses exactly one script standard. The project's `CLAUDE.md` or `handover.md` declares which applies.
+A project uses exactly one script standard. The project's session-protocol file or `handover.md` declares which applies.
 
 | Project uses | Standard to read |
 |---|---|

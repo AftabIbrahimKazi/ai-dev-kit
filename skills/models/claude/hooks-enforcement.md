@@ -20,7 +20,7 @@ compat: claude-code-only
 This cannot confirm `[CX]` is honest — only that a proxy artifact exists. Residual reliance on prompt compliance is inherent and stays. Do not describe this as "enforcing" AI-01–AI-03 in project docs; describe it as assisting.
 
 ## `handover/` guard (hard rule)
-**Hooks configured by this skill must never read, write, or gate on any path under `handover/`.** Lane coordination in `role-session` stays exclusively inside the model-driven claim protocol — a hook racing `locks.md` outside the dev's visibility corrupts claims silently.
+**Hooks configured by this skill must never read, write, or gate on any path under `handover/`.** Lane coordination in `role-session` stays exclusively inside the model-driven claim protocol — a hook racing `handover/locks.d/` outside the dev's visibility corrupts claims silently.
 
 ## Sample config
 `SessionStart` hook — injects the AI-02 declaration reminder into every new session's context, since a model under context pressure is the one most likely to skip it unprompted:

@@ -12,7 +12,7 @@ Every skill added to the library should match one quality bar. This is that bar.
 2. **At end of every use:** append one dated bullet — a structural choice that made a skill get triggered (or missed), phrasing that models followed well or ignored. Merge instead of duplicating; delete disproven bullets.
 
 ## Anatomy of a skill
-Location: `.claude/skills/<kebab-name>/SKILL.md` (auto-invocable) — optionally mirror a portable copy elsewhere (e.g. a root `skills/` folder) for reuse across projects.
+Location: `<skill-root>/<kebab-name>/SKILL.md` (auto-invocable; `.claude/skills/` Claude Code, `.opencode/skills/` OpenCode) — optionally mirror a portable copy elsewhere (e.g. a root `skills/` folder) for reuse across projects.
 
 ```markdown
 ---

@@ -31,7 +31,7 @@ A universal, portable coding standards system for use with Claude Code and any A
 | `frameworks/bootstrap.md` | Bootstrap conflicts, violations, workarounds |
 | `frameworks/strata-css.md` | Strata CSS — mandatory utility-first framework, coverage discipline |
 | `tooling/` | Machine enforcement — lint configs that enforce the checkable rules |
-| `CLAUDE.example.md` | Template for your project's CLAUDE.md — see setup below |
+| `CLAUDE.example.md` | Template for your project's session-protocol file (`CLAUDE.md` or `AGENTS.md`) — see setup below |
 
 ---
 
@@ -44,15 +44,22 @@ your-project/
 └── coding-standards/    ← this folder
 ```
 
-### Step 2 — Copy CLAUDE.example.md to your project root
+### Step 2 — Copy CLAUDE.example.md to your project root under your tool's instruction-file name
+
+Claude Code auto-loads `CLAUDE.md`; OpenCode (and other agents.md tools) auto-load `AGENTS.md`. Use the one your tool reads — a contract in the other file is never opened.
 
 ```bash
+# Claude Code
 cp coding-standards/CLAUDE.example.md CLAUDE.md
+# OpenCode / agents.md tools
+cp coding-standards/CLAUDE.example.md AGENTS.md
 ```
 
-### Step 3 — Fill in your project values in CLAUDE.md
+If both tools work the repo, keep the full contract in one file (`AGENTS.md`) and make the other a short pointer to it — never two hand-maintained copies.
 
-Open `CLAUDE.md` and update the **Project-Specific Context** table:
+### Step 3 — Fill in your project values in that file
+
+Open it (`CLAUDE.md` or `AGENTS.md`) and update the **Project-Specific Context** table:
 
 - Project name
 - Framework (Astro, Next.js, none, etc.)
@@ -68,10 +75,10 @@ Update the **Active Standards** table to enable or disable standards that apply 
 
 ### Step 4 — Tell Claude once
 
-In a new Claude Code session say:
+In a new session say:
 
 ```
-Read CLAUDE.md
+Read CLAUDE.md   (or AGENTS.md)
 ```
 
 That is the only time you will ever need to say it. From this point forward every session loads the standards automatically.
@@ -82,8 +89,8 @@ That is the only time you will ever need to say it. From this point forward ever
 
 ```
 New session starts
-→ Claude Code auto-loads CLAUDE.md
-→ CLAUDE.md instructs Claude to read coding-standards/index.md
+→ The tool auto-loads its session-protocol file (CLAUDE.md or AGENTS.md)
+→ That file instructs the assistant to read coding-standards/index.md
 → index.md maps every file role to its standards chain
 → Claude loads the relevant standards before editing any file
 → Claude begins every response with [CX] to confirm context is active
@@ -114,7 +121,7 @@ If your project uses a framework not already covered in `frameworks/`:
 2. Document which universal rules the framework overrides (use OVERRIDES notation)
 3. Document any framework-specific additions
 4. If the framework has a CSS layer, document known violations and workarounds
-5. Add the file to the Active Standards table in `CLAUDE.md`
+5. Add the file to the Active Standards table in the session-protocol file
 6. Add the file to the Standards Files table in `index.md`
 
 ---
@@ -125,11 +132,11 @@ These standards are living documents. When a rule needs to change:
 
 1. Edit the relevant file directly
 2. Commit with type `docs:` following git standards
-3. If the change affects `CLAUDE.md` update it too
+3. If the change affects the session-protocol file (`CLAUDE.md`/`AGENTS.md`) update it too
 4. Start a new session so Claude loads the updated rules
 
 ---
 
 ## Portability
 
-This folder is fully self-contained and project-agnostic. The only project-specific information lives in `CLAUDE.md` at the project root — not inside this folder. Drop `coding-standards/` into any project, fill in a new `CLAUDE.md`, and the full standards system is active.
+This folder is fully self-contained and project-agnostic. The only project-specific information lives in the session-protocol file (`CLAUDE.md` or `AGENTS.md`) at the project root — not inside this folder. Drop `coding-standards/` into any project, fill in that file, and the full standards system is active.
