@@ -87,11 +87,13 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
 
 ## mcp/ — optional MCP servers, one manager
+Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): UI prototyping, image reading, image generation. Say *"set up MCP servers"* after the install and `mcp-manager` runs the interview. **Local-model servers are global-first:** scripts in `~/.ai-dev-kit/mcp/`, models and ledgers in `~/.ai-dev-kit/<server>/`, keys in `~/.ai-dev-kit/.env`, rules in the tool's global instruction file — never copied per project. Each installer runs a hardware preflight first.
+
 | Skill | Purpose |
 |---|---|
 | [mcp-manager](mcp/mcp-manager.md) | Meta skill for all opt-in MCP servers — setup interview (servers × AI tools × scope × keys × routing), per-tool config wiring, "MCP first, then fallback" rules. Opt-in only. |
-| [local-vision](mcp/mcp-manager.local-vision.md) | Server file + `local-vision.js` — free offline image reading (Qwen3-VL-2B/4B via llama.cpp) for models without vision; hardware-aware installer + stdio MCP in one script |
-| [image-gen](mcp/mcp-manager.image-gen.md) | Server file + `image-gen.js` CLI/MCP — image generation with fallback: Gemini Nano Banana (paid) → Cloudflare FLUX.1 schnell (free allowance) → placeholder; daily caps, cooldowns |
+| [local-vision](mcp/mcp-manager.local-vision.md) | Server file + `local-vision.js` — free offline image reading (Qwen3-VL-2B/4B via llama.cpp) for models without vision; hardware-aware installer (CPU/CUDA/Vulkan/Metal) + stdio MCP in one script; verified in real OpenCode |
+| [image-gen](mcp/mcp-manager.image-gen.md) | Server file + `image-gen.js` CLI/MCP — image generation for sites/apps with fallback: Gemini Nano Banana (needs billing) → Cloudflare FLUX.1 schnell (≈173 free images/day) → labelled placeholder; 80% heads-up, 90% switch, pause at exhaustion, every step reported as a notice |
 | [stitch](mcp/mcp-manager.stitch.md) | Server file (companion of mcp-manager) — Google Stitch UI prototyping, free for now; try first, fall back to artifact/HTML flow |
 
 ## libraries/ — the user's own repos
