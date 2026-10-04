@@ -12,7 +12,7 @@ Self-improving skills only work if their learnings stay short, true, and dedupli
 2. **At end of every use:** append one dated bullet — a pruning heuristic that worked, a class of bullet that always turns out stale. Merge instead of duplicating; delete disproven bullets.
 
 ## Scope
-Glob for every `learnings.md` under the skills directories (`.claude/skills/*/`), the project's `memory-bank/` (INDEX.md + entries — see the `memory-bank` skill), **the project's handover notes (`handover.md`, or `handover/<role>.md` + `handover/board.md` in parallel mode — see the `handover` skill)**, plus the user's persistent memory index if present. Report per-file sizes first; garden the files over ~15 bullets, over the handover ceiling, or explicitly named.
+Glob for every `learnings.md` under the skills directories (`<skill-root>/*/`), the project's `memory-bank/` (INDEX.md + entries — see the `memory-bank` skill), **the project's handover notes (`handover.md`, or `handover/<role>.md` + `handover/board.md` in parallel mode — see the `handover` skill)**, plus the user's persistent memory index if present. Report per-file sizes first; garden the files over ~15 bullets, over the handover ceiling, or explicitly named.
 
 ## Gardening handover notes (highest-value target)
 Handover is loaded **in full at every session start**, so bloat there is charged to every future session — unlike a learnings file, which is read only when its skill runs. Treat it as the priority.
@@ -23,7 +23,7 @@ The failure mode is always the same: dated session sections stacked into a log i
 - Fixed bugs, shipped work, completed next-steps → delete.
 - Keep only: current state, the exact resume point, live known-issues, and don't-touch gotchas.
 
-Collapse multiple dated sections into a single `## Last session`. In parallel mode the ceiling applies **per role file**, and `board.md` should keep no `done` rows. If demoting into `memory-bank/` from a role session, claim `memory-bank/INDEX.md` in `locks.md` first — concurrent demotions collide on the index.
+Collapse multiple dated sections into a single `## Last session`. In parallel mode the ceiling applies **per role file**, and `board.md` should keep no `done` rows. If demoting into `memory-bank/` from a role session, claim `@memory-bank-index` in `handover/locks.d/` first (atomic `mkdir`, per `role-session`) — concurrent demotions collide on the index.
 
 ## Gardening rules — per file
 **Merge:** bullets teaching the same lesson in different words become one bullet with the strongest phrasing. Two data points for the same pattern make it a *rule*; note that ("seen 3×").

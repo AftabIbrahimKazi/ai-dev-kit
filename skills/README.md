@@ -2,7 +2,7 @@
 
 Portable, self-improving skills for AI coding agents — Claude Code natively, other tools (OpenCode, etc.) via their own instruction files. Every skill reads its `learnings.md` at start and appends one distilled lesson at end, so the library sharpens with use.
 
-**To use in a project:** copy the `.md` into that project as `.claude/skills/<name>/SKILL.md` (folder name = skill name, file renamed to `SKILL.md`). The flat `.claude/skills/` layout is required for auto-invocation — these category subfolders exist only for organizing the portable copies.
+**To use in a project:** copy the `.md` into that project's skill root as `<skill-root>/<name>/SKILL.md` (folder name = skill name, file renamed to `SKILL.md`; skill root = `.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode, `.agents/skills/` for Codex-style tools). The flat layout is required for auto-invocation — these category subfolders exist only for organizing the portable copies.
 
 **Canonical home:** the [`ai-dev-kit`](https://github.com/AftabIbrahimKazi/ai-dev-kit) repo (local clone: `My Projects/ai-dev-kit/`). Improve skills there and commit; copies inside projects are installs. When editing a skill inside a project instead, port the improvement back to the repo — never let the two drift silently.
 
@@ -58,7 +58,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit |
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, message format, version bump |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
-| [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, file locks, git token queue (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
+| [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, atomic file claims, git token, session ids (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
 | [e2e-scaffold](workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
 
 ## standards/ — convention systems
@@ -113,6 +113,6 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 
 > read skills/README.md and install
 
-**Claude, when given that instruction:** read `meta/install-kit.md` in this folder and follow it as the installation procedure. In short: offer **everything** or an **interactive pick** (catalog below), copy chosen skills to `.claude/skills/<name>/SKILL.md` (flat — never category subfolders), never copy `learnings.md` files, wire `coding-standards/CLAUDE.example.md` into the project's `CLAUDE.md` if standards were chosen (merge, never overwrite), and finish with a report of what was installed and skipped. After install, the dumped `skills/` folder may be kept as the in-project library copy or deleted — ask the user.
+**The agent, when given that instruction:** read `meta/install-kit.md` in this folder and follow it as the installation procedure. In short: offer **everything** or an **interactive pick** (catalog below), detect which coding tool the session is running in (infer from the project, confirm with the user), copy chosen skills to that tool's skill root as `<skill-root>/<name>/SKILL.md` (flat — never category subfolders), never copy `learnings.md` files, wire `coding-standards/CLAUDE.example.md` into the tool's own session file — `CLAUDE.md` for Claude Code, `AGENTS.md` for OpenCode — if standards were chosen (merge, never overwrite), and finish with a report of what was installed and skipped. After install, the dumped `skills/` folder may be kept as the in-project library copy or deleted — ask the user.
 
-Alternative flows: from a session that can see both projects, ask Claude to run the install-kit against the target path; or manually copy any single `<category>/<name>.md` to `.claude/skills/<name>/SKILL.md`.
+Alternative flows: from a session that can see both projects, ask Claude to run the install-kit against the target path; or manually copy any single `<category>/<name>.md` to `<skill-root>/<name>/SKILL.md`.

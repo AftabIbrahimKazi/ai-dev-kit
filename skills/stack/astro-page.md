@@ -13,7 +13,7 @@ New surface area in an Astro project should be indistinguishable from existing s
 
 ## Step 1 — Discover the project's conventions (never assume)
 Before writing anything, establish from the project itself:
-- **Standards docs:** CLAUDE.md, `coding-standards/`, or equivalent — load the chain for every file role you'll touch (component, stylesheet, script).
+- **Standards docs:** session-protocol file (`CLAUDE.md`/`AGENTS.md`), `coding-standards/`, or equivalent — load the chain for every file role you'll touch (component, stylesheet, script).
 - **Prefixes:** CSS token prefix and selector signature (e.g. `--ex-` / `ex-`) — grep an existing stylesheet to confirm.
 - **File placement:** where do pages, components, overlays, entry scripts, and per-feature CSS live? Mirror the nearest sibling, don't invent a location.
 - **Script wiring:** does the project use per-page entry scripts (`src/scripts/*-entry.ts`)? New page → new entry or extend an existing one, matching the established pattern.

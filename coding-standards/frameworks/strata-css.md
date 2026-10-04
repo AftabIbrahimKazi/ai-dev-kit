@@ -1,7 +1,7 @@
 # Framework Standards — Strata CSS
 
 Applies to any project that declares Strata CSS (`strata-css` on npm) as its
-CSS framework in `CLAUDE.md`. When active it is mandatory, not optional:
+CSS framework in its session-protocol file (`CLAUDE.md` or `AGENTS.md`). When active it is mandatory, not optional:
 **all CSS in the project must be a Strata utility class first.** Custom CSS
 is the fallback, used only where Strata has no coverage — never a stylistic
 choice.
@@ -11,7 +11,7 @@ file governs how those rules interact with Strata; where the two conflict,
 this file's ruling wins for the Strata-covered surface.
 
 Project-specific values (token prefix, token file path, install method) are
-declared in the project's own `CLAUDE.md` — this file states the universal
+declared in the project's own session-protocol file — this file states the universal
 rules only.
 
 ---
@@ -212,7 +212,7 @@ a token-driven font-size; reserve `text-[…]` for token-driven color.
 
 ## Project Setup Declaration
 
-Each project using this standard must declare, in its own `CLAUDE.md`:
+Each project using this standard must declare, in its own session-protocol file (`CLAUDE.md` or `AGENTS.md`):
 
 - How Strata is installed (npm package vs. local `file:` dependency, and
   where the source lives if local)
@@ -223,4 +223,4 @@ Each project using this standard must declare, in its own `CLAUDE.md`:
   tokens follow `prefers-color-scheme` automatically or require an explicit
   toggle
 
-This file states the rules; the project's `CLAUDE.md` states the values.
+This file states the rules; the project's session-protocol file states the values.
