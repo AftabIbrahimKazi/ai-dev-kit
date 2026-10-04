@@ -12,13 +12,14 @@ description: Opt-in MCP servers — setup interview, per-tool config wiring, tri
 2. **At end of every use:** append one dated bullet — a config-format quirk, a server failure mode, a fallback that fired wrongly. Merge instead of duplicating; delete disproven bullets.
 
 ## Registry
-Installed servers = the `<server>.md` companion files in this skill's folder, e.g. `.claude/skills/mcp-manager/stitch.md` (library source: `mcp/mcp-manager.<server>.md`; any `.md` there with a `trigger:` frontmatter field is a server file). Each has frontmatter: `trigger` (tasks it serves), `replaces` (the normal flow it falls back to), `transport`, `url`/`command`, `auth` (none / api-key / oauth + default env var name), `cost` (free / limited / paid), `verified` (date its facts were last checked). Read a server file only when its trigger matches or during setup — never load all of them.
+Installed servers = the `<server>.md` companion files in this skill's folder, e.g. `.claude/skills/mcp-manager/stitch.md` (library source: `mcp/mcp-manager.<server>.md`; any `.md` there with a `trigger:` frontmatter field is a server file). Each has frontmatter: `trigger` (tasks it serves), `replaces` (the normal flow it falls back to), `transport`, `url`/`command`, optional `setup` (local install command + size), `auth` (none / api-key / oauth + default env var name), `cost` (free / limited / paid), `verified` (date its facts were last checked). Read a server file only when its trigger matches or during setup — never load all of them.
 
 ## Setup interview ("grill me") — ask ONE question at a time, wait for each answer
 Skip any question the user already answered. Never infer an answer.
 1. **Servers:** list registry servers (name, one line, cost). Multi-select.
 2. **AI tools:** which tools will use them — Claude Code, OpenCode, other. For "other", ask the tool's name, then fetch its current MCP docs for config file path + format; never write a guessed format. (An unrecognised tool name: ask what it is, don't assume.)
 3. **Scope per tool:** project-level or user-level config. Default project; user-level only if asked (it affects every repo).
+4a. **Local servers** (file has a `setup:` line): state the total download size and disk/RAM need, and get an explicit yes before running `setup`. Check free disk first; stop with a clear message if short. Run it, report results, then health-check by calling each tool once. Skip step 4 for servers with `auth: none`.
 4. **Auth per server needing a key:** "Is the key already an environment variable?" — No → add `<DEFAULT_VAR>=` placeholder to the project's `.env` (confirm it is gitignored) and tell the user to paste the real value; Yes → ask the variable's name and use it. Never grep `.env`. **Configs reference the variable, never the secret.** Claude Code and OpenCode do not read `.env` themselves — tell the user to load it into the shell that launches the tool (or export the variable); VS Code uses an `${input:}` password prompt instead.
 5. **Routing per server:** `first` (try it before the normal flow, per its trigger) or `explicit` (only when the user names it). Default: the server file's suggestion.
 6. **Load mode** (tools that can scope MCPs, e.g. OpenCode): always-on vs enabled only for the agent/task that needs it. Recommend on-demand when 3+ servers are configured — tool schemas load every session otherwise.
@@ -27,8 +28,8 @@ Then: write configs, add the Pinned block (below), health-check, report.
 
 ## Config writers — merge, never overwrite
 Read the target file first; add only the server's entry; preserve everything else; show the diff summary.
-- **Claude Code:** `<project>/.mcp.json` (project) or `claude mcp add --scope user` (user). Remote: `{"mcpServers":{"<name>":{"type":"http","url":"<url>","headers":{"<Header>":"${VAR}"}}}}`. Stdio: `{"command":…,"args":[…],"env":{"K":"${VAR}"}}`.
-- **OpenCode:** `opencode.json` `mcp` key. Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
+- **Claude Code:** `<project>/.mcp.json` (project) or `claude mcp add --scope user` (user). Remote: `{"mcpServers":{"<name>":{"type":"http","url":"<url>","headers":{"<Header>":"${VAR}"}}}}`. Stdio: `{"command":…,"args":[…],"env":{"K":"${VAR}"}}` — local servers use the installed script's absolute path: `{"command":"node","args":["<project>/.claude/skills/mcp-manager/local-media.js","mcp"]}`.
+- **OpenCode:** `opencode.json` `mcp` key. Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. Local stdio: `{"type":"local","command":["node","<path>/local-media.js","mcp"],"enabled":true}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
 - **Other tools:** per step 2's fetched docs. State the source URL in the report.
 Formats drift — if a write fails or the docs differ from the above, trust current docs and add a learning.
 
