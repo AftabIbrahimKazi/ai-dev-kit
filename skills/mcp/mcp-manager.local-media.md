@@ -20,6 +20,11 @@ Open models in OpenCode cannot read or write images. This server adds both, offl
 - `describe_image(image_path, prompt?)` — Qwen3-VL-2B (Q4_K_M). First call starts the model (~5 s extra); then ~7–12 s. Reads UI text well, with occasional character slips ("METROS" for "METRICS") — treat exact strings and numbers as unverified.
 - `generate_image(prompt, output_path?, width?, height?, seed?)` — SDXS-512, 1 step. ~6 s at 512×512 (256–768, multiples of 64). Draft quality: mockups, concepts, placeholders. No negative prompt, no faces/text fidelity.
 
+## Hardware-aware setup
+`node local-media.js preflight` detects CPU threads, RAM, free disk and GPU, then plans: **cuda** (NVIDIA ≥4 GB VRAM, Windows), **vulkan** (discrete AMD/Intel GPU), **metal** (Apple Silicon), else **cpu**. Vision tier is 2B by default and 4B on GPUs with ≥6 GB (or 16 GB Apple). `setup` re-checks, refuses on `blocked` (disk <1.2× need, RAM <4 GB, unmapped OS) unless `--force`, and swaps a GPU build that fails its self-test for the CPU build. Override with `--backend`/`--tier`.
+- **Tested:** CPU, and the Vulkan download/extract/self-test on this machine. On this AMD iGPU Vulkan was *not* faster (image 10 s vs 6 s, vision 5.5 s vs 6.3 s), which is why integrated GPUs plan as CPU.
+- **Not tested (no hardware):** CUDA, Metal, discrete-GPU Vulkan, Linux/macOS. Treat their speed claims as expectations.
+
 ## Why these models (measured on this CPU)
 | Candidate | Time (512²) | Verdict |
 |---|---|---|
