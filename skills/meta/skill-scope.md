@@ -60,7 +60,9 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 Each fires only on a specific task instance nameable in a next-task line, not a fixed property of the stack.
 
 ### Opt-in addons (never offered by default; install only on explicit request)
-`system1-prefilter`
+`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`)
+
+`mcp-manager` is the opt-in router for every MCP server: one skill, one companion file per server, chosen individually in its own setup interview. Adding a server never adds a skill or a classification row.
 
 Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
 

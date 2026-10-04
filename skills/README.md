@@ -86,6 +86,12 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Opt-in only, never in any default install. |
 
+## mcp/ — optional MCP servers, one manager
+| Skill | Purpose |
+|---|---|
+| [mcp-manager](mcp/mcp-manager.md) | Meta skill for all opt-in MCP servers — setup interview (servers × AI tools × scope × keys × routing), per-tool config wiring, "MCP first, then fallback" rules. Opt-in only. |
+| [stitch](mcp/mcp-manager.stitch.md) | Server file (companion of mcp-manager) — Google Stitch UI prototyping, free for now; try first, fall back to artifact/HTML flow |
+
 ## libraries/ — the user's own repos
 | Skill | Purpose |
 |---|---|

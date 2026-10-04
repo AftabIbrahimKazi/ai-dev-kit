@@ -37,6 +37,7 @@ Full catalog: [skills/README.md](skills/README.md)
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
 | `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification) |
 | `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering, requires a configured endpoint) |
+| `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, per-tool config, MCP-first-then-fallback) + one companion file per server (`stitch`) |
 
 ### `coding-standards/` — the layered standards system
 
@@ -100,6 +101,7 @@ skills/
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter)
+  mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch)
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
 coding-standards/

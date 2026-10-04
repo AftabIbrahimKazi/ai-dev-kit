@@ -12,7 +12,7 @@ Installs by copying markdown files only. Never installs packages, never runs bui
 2. **At end of every use:** append one dated bullet — source-location changes, a picking pattern the user prefers, an install step that was missing. Merge instead of duplicating; delete disproven bullets.
 
 ## Source locations (verify, don't assume)
-- **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, `addons/`, with a README index) and `coding-standards/` (has `index.md` at its root).
+- **Canonical home: the `ai-dev-kit` repo** — `My Projects/ai-dev-kit/` locally, `github.com/AftabIbrahimKazi/ai-dev-kit` remote (formerly `claude-dev-kit`; old URL redirects). It contains both `skills/` (category subfolders: `models/`, `workflow/`, `standards/`, `memory/`, `stack/`, `libraries/`, `meta/`, `addons/`, `mcp/`, with a README index) and `coding-standards/` (has `index.md` at its root).
 - If the local clone isn't at that path, glob for a `skills/README.md` + `coding-standards/index.md` pair, or clone the repo. Copies inside other projects are *installs*, not the source — improvements flow repo → projects, never the reverse.
 
 ## Skill scope — read before Step 1
@@ -24,6 +24,8 @@ Every skill installed here falls into one of two mechanisms, defined canonically
 The user can override any pin decision, but only by stating it explicitly in this session — never infer an override from context or convenience.
 
 **Opt-in addons** (`addons/` — currently `system1-prefilter`) are a fourth category: never offered as part of Everything/Pick/Auto-detect by default, never stack-scanned. Offer them only when the user explicitly asks (at install or any later session) — then follow that addon's own Setup section for its install questions (e.g. `system1-prefilter` asks endpoint + API-key-variable questions itself). Once installed, treat as permanent-pinned — it's the user's own durable choice, not re-derived per session.
+
+**Opt-in MCP servers** (`mcp/` — `mcp-manager` + its `mcp-manager.<server>.md` companions) are a fifth category: never part of Everything/Pick/Auto-detect, never stack-scanned. At the end of Step 1, ask once: "Set up optional MCP servers (e.g. Stitch for UI prototyping)?" Yes → install `mcp-manager` and only the chosen server companions (Step 2 companion rule), then **run `mcp-manager`'s Setup interview in full** — it owns every question (servers, AI tools, scope, keys, routing, load mode) and the config writes; install-kit never asks them on its behalf. No → skip silently; the user can ask any later session. Once configured, treat as permanent-pinned.
 
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
