@@ -25,6 +25,8 @@ Open models in OpenCode cannot read images. This server adds sight, offline and 
 - **Not tested (no hardware):** CUDA, Metal, discrete-GPU Vulkan, Linux/macOS. Treat their speed claims as expectations.
 
 ## Rules
+- Client timeouts: the first call loads the model (~5-30 s). OpenCode needs `"timeout": 240000` on this server (its default 5 s, or any value under ~40 s, fails with MCP error -32001). Claude Code: set `MCP_TOOL_TIMEOUT`.
+- Verified in real OpenCode (big-pickle, no vision): read a login screenshot's buttons and labels in 32 s total. Smaller models sometimes answer without calling the tool — the global rules tell them to call it.
 - Memory: ~2 GB while loaded; unloads after 10 idle minutes (`VISION_IDLE_SECONDS`). `node local-vision.js stop` frees it at once.
 - On any failure (not set up, timeout, bad file) fall back per `replaces`; never block.
 - Image *generation* is not local: local models were tested and abandoned (see `nano-banana`).
