@@ -27,14 +27,16 @@ const STYLES = {
 };
 const ASPECTS = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"];
 
-// Fill missing keys from ./.env (whitelisted names only).
+// Fill missing keys from ./.env (project) and then ~/.ai-dev-kit/.env (global, set once for every project). Whitelisted names only.
 (function loadEnv() {
-  try {
-    for (const line of fs.readFileSync(path.join(process.cwd(), ".env"), "utf8").split(/\r?\n/)) {
-      const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
-      if (m && KEYS.includes(m[1]) && !process.env[m[1]] && m[2]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
-    }
-  } catch {}
+  for (const file of [path.join(process.cwd(), ".env"), path.join(os.homedir(), ".ai-dev-kit", ".env")]) {
+    try {
+      for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+        const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+        if (m && KEYS.includes(m[1]) && !process.env[m[1]] && m[2]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+      }
+    } catch {}
+  }
 })();
 
 const today = () => new Date().toISOString().slice(0, 10);

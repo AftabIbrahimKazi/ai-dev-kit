@@ -18,7 +18,7 @@ Installed servers = the `<server>.md` companion files in this skill's folder, e.
 Skip any question the user already answered. Never infer an answer.
 1. **Servers:** list registry servers (name, one line, cost). Multi-select.
 2. **AI tools:** which tools will use them — Claude Code, OpenCode, other. For "other", ask the tool's name, then fetch its current MCP docs for config file path + format; never write a guessed format. (An unrecognised tool name: ask what it is, don't assume.)
-3. **Scope per tool:** project-level or user-level config. Default project; user-level only if asked (it affects every repo).
+3. **Scope per tool:** project-level or user-level config. **Local-model servers (`setup:` line) and keyless/shared servers default to user-level (global)** — models, runtimes, ledgers and scripts live once under `~/.ai-dev-kit/`, never per project (a per-project copy duplicates GBs). Hosted servers with a project-specific key default to project-level. Ask only when the user wants the other choice.
 4a. **Local servers** (file has a `setup:` line): run its `preflight` first and show the user the report (hardware, chosen backend/model tier, download size, expected speed, warnings). `blocked` stops here unless the user insists (`--force`). Get an explicit yes on the size, then run `setup` (it re-runs preflight and picks the GPU build when the hardware warrants it, with automatic CPU fallback). Report results, then health-check by calling each tool once. Skip step 4 for servers with `auth: none`.
 4. **Auth per server needing a key:** "Is the key already an environment variable?" — No → add `<DEFAULT_VAR>=` placeholder to the project's `.env` (confirm it is gitignored) and tell the user to paste the real value; Yes → ask the variable's name and use it. Never grep `.env`. **Configs reference the variable, never the secret.** Claude Code and OpenCode do not read `.env` themselves — tell the user to load it into the shell that launches the tool (or export the variable); VS Code uses an `${input:}` password prompt instead.
 5. **Routing per server:** `first` (try it before the normal flow, per its trigger) or `explicit` (only when the user names it). Default: the server file's suggestion.
@@ -26,10 +26,14 @@ Skip any question the user already answered. Never infer an answer.
 7. **Confirm the plan** (server × tool × file × scope × routing) before writing anything.
 Then: write configs, add the Pinned block (below), health-check, report.
 
+## Global-first layout (local servers)
+- Scripts: copy `<skill folder>/<server>.js` to `~/.ai-dev-kit/mcp/<server>.js`; user-level configs point there by absolute path. Data: `~/.ai-dev-kit/<server>/` (models, ledgers). Keys: `~/.ai-dev-kit/.env` (a project `.env` overrides). Instructions: the tool's global file (`~/.config/opencode/AGENTS.md`, `~/.claude/CLAUDE.md`) holds the routing/notice rules once — not every project.
+- Verify after writing: `opencode mcp list` / `claude mcp list` must show the server connected from a neutral directory (not the project).
+
 ## Config writers — merge, never overwrite
 Read the target file first; add only the server's entry; preserve everything else; show the diff summary.
 - **Claude Code:** `<project>/.mcp.json` (project) or `claude mcp add --scope user` (user). Remote: `{"mcpServers":{"<name>":{"type":"http","url":"<url>","headers":{"<Header>":"${VAR}"}}}}`. Stdio: `{"command":…,"args":[…],"env":{"K":"${VAR}"}}` — local servers use the installed script's absolute path: `{"command":"node","args":["<project>/.claude/skills/mcp-manager/local-vision.js","mcp"]}`.
-- **OpenCode:** `opencode.json` `mcp` key. Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. Local stdio: `{"type":"local","command":["node","<path>/local-vision.js","mcp"],"enabled":true}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
+- **OpenCode:** `opencode.json` `mcp` key (user-level: `~/.config/opencode/opencode.jsonc`; keep its other keys). Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. Local stdio: `{"type":"local","command":["node","<path>/local-vision.js","mcp"],"enabled":true}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
 - **Other tools:** per step 2's fetched docs. State the source URL in the report.
 Formats drift — if a write fails or the docs differ from the above, trust current docs and add a learning.
 
