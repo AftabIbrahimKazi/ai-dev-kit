@@ -1,6 +1,6 @@
 ---
 name: image-gen
-description: Image generation for websites and apps — Gemini "Nano Banana" first, Cloudflare Workers AI FLUX.1 [schnell] as the free fallback, then a placeholder. One CLI, also a stdio MCP tool, with daily caps.
+description: Image generation for websites and apps — Gemini "Nano Banana", then Cloudflare FLUX.1 [schnell], switching before limits are hit, then a labelled placeholder. CLI + stdio MCP tool; tells the user about every switch and pause.
 trigger: generate_image — hero/feature/illustration/icon/mockup images needed for a site or app, or any request to "make/create an image"
 replaces: a text/CSS/SVG placeholder, or ask the user to supply the image
 transport: stdio
@@ -14,12 +14,20 @@ verified: 2026-10-04 — live Gemini (key valid, free tier 429 -> fallback) and 
 
 # Image Gen — One Tool, Provider Fallback
 
-Open models and Claude alike cannot make images. This tool calls hosted models and degrades cleanly: **Gemini → Cloudflare FLUX → placeholder**. It never blocks a task.
+Open models and Claude alike cannot make images. This tool calls hosted models and degrades cleanly: **Gemini → Cloudflare FLUX → placeholder**. It never blocks a task, never spends past your caps, and **reports every switch, warning, pause and placeholder** as a `NOTICE`.
 
 ## Tool
 `generate_image(prompt, style?, aspect?, output_path?)` (~3 s via Cloudflare) — also `node image-gen.js generate "<prompt>" [--style s] [--aspect 16:9] [--out file]`. Returns the saved path, which provider made it, and which providers were skipped and why. The file extension is corrected to the real format (Cloudflare returns JPEG).
 - `style` presets: `saas-illustration`, `isometric`, `business-photo`, `icon-3d`, `product-mockup` — a look is appended to your prompt. For plain gradients use CSS, not an image.
 - `aspect`: 1:1, 16:9 (default), 9:16, 4:3, 3:4, 3:2, 2:3 — Gemini only; Cloudflare returns 1024×1024 (crop in CSS with `object-fit`).
+
+## Staying out of the limit trap (what happens, in order)
+1. **Heads-up at 80%** of a provider's daily cap: a notice, nothing changes.
+2. **Switch at 90%** (`IMAGE_SOFT_LIMIT_PCT`): the provider is skipped *before* it can fail or bill past the cap, and the next one is used (notice names the counts).
+3. **Quota/auth error** (429/401/403): that provider is paused until Google/Cloudflare's retry time (else 1 h) and the next one is used (notice).
+4. **All providers at their limits:** image generation is **paused until 00:00 UTC** (05:30 IST). No provider is called again until then; every request gets a placeholder and a notice.
+5. **Placeholder:** a labelled image from placehold.co at the right aspect size (`Placeholder: <your prompt>`), or a local SVG if the web is unreachable. Always marked `PLACEHOLDER (not a generated image)`.
+`node image-gen.js reset` ends a pause/cooldown early (e.g. after enabling billing). All notices are also appended to `~/.ai-dev-kit/image-gen/notices.log`. The counter only counts this tool's images — other Workers AI/Gemini usage on the same account is not seen.
 
 ## Provider chain and limits
 - `IMAGE_PROVIDERS` (default `gemini,cloudflare`) sets the order. A provider is skipped when its key is missing, its **daily cap** is reached (`GEMINI_DAILY_CAP` default 10, `CLOUDFLARE_DAILY_CAP` default 150), or it is **cooling down** after a 401/403/429 (honours Google's `retryDelay`, else 1 h).
@@ -29,7 +37,8 @@ Open models and Claude alike cannot make images. This tool calls hosted models a
 ## Rules
 - Describe subject and setting; never ask for exact text, logos or real people's likenesses. Generate once and show the path; do not loop regenerating.
 - Tell the user which provider produced the image. FLUX output is strong but not final: in testing faces and hands were good, but it can invent gibberish text on signs/screens (an isometric diagram showed "Tune") and real brand logos (an Apple logo on a laptop). Tell the user to check for both before shipping.
-- On "no image produced", use the placeholder and say that keys/quota are the cause. Never retry in a loop.
+- **Relay every NOTICE to the user in your reply, in plain words, in the same message as the result** — each switch, heads-up, pause and placeholder. Never hide or summarise away a pause or a placeholder.
+- A placeholder is final until the user acts: do not retry, do not try other image tools, do not describe it as a generated image. Remind the user to replace it before shipping and when generation resumes.
 - Prompts go to Google/Cloudflare: no secrets, client-confidential or personal data.
 - Cost: with Gemini billing on, each image costs money (third-party figure ~US$0.04). The default cap of 10/day bounds spend; lower it with `GEMINI_DAILY_CAP`.
 
