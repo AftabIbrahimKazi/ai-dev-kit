@@ -50,3 +50,4 @@ Open models and Claude alike cannot make images. This tool calls hosted models a
 ## Credits and terms
 - Gemini "Nano Banana" — Google — Gemini API terms apply. Cloudflare Workers AI — Cloudflare terms apply.
 - FLUX.1 [schnell] — Black Forest Labs — Apache-2.0 (hosted by Cloudflare as `@cf/black-forest-labs/flux-1-schnell`).
+- Placeholders — placehold.co (third-party service, fetched at runtime; local SVG fallback). Full list: [CREDITS.md](../../CREDITS.md).
