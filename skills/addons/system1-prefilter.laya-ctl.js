@@ -2,7 +2,7 @@
 // Local Laya provider control for system1-prefilter. No dependencies.
 // Usage: node laya-ctl.js <preflight|setup|start|stop|health|status>   (setup/preflight accept --force)
 // Everything lives in LAYA_HOME (default ~/.ai-dev-kit/laya), shared across projects.
-// Env: LAYA_HOME, LAYA_PYTHON (python >=3.10), LAYA_PORT (8000), LAYA_MODELS (typed-decisions).
+// Env: LAYA_HOME, LAYA_PYTHON (python >=3.10), LAYA_PORT (8000), LAYA_MODELS (english).
 const { spawn, spawnSync } = require("child_process");
 const fs = require("fs");
 const os = require("os");
@@ -10,7 +10,7 @@ const path = require("path");
 
 const home = process.env.LAYA_HOME || path.join(os.homedir(), ".ai-dev-kit", "laya");
 const port = process.env.LAYA_PORT || "8000";
-const models = process.env.LAYA_MODELS || "typed-decisions";
+const models = process.env.LAYA_MODELS || "english"; // measured: english separates relevant/irrelevant candidates better than typed-decisions
 const win = process.platform === "win32";
 const venvBin = (n) => path.join(home, "venv", win ? "Scripts" : "bin", n + (win ? ".exe" : ""));
 const pidFile = path.join(home, "serve.pid");
@@ -42,12 +42,15 @@ function preflight() {
 }
 
 function findPython() {
-  const cands = process.env.LAYA_PYTHON ? [[process.env.LAYA_PYTHON]] : [["python3"], ["python"], ["py", "-3"]];
+  const cands = process.env.LAYA_PYTHON ? [[process.env.LAYA_PYTHON]] : [["py", "-3.12"], ["py", "-3.11"], ["py", "-3.13"], ["py", "-3.10"], ["python3"], ["python"], ["py", "-3"]];
+  const found = [];
   for (const [cmd, ...pre] of cands) {
     const r = spawnSync(cmd, [...pre, "-c", "import sys;print(sys.version_info[0]*100+sys.version_info[1])"], { encoding: "utf8" });
-    if (r.status === 0 && Number(r.stdout) >= 310) return [cmd, ...pre];
+    if (r.status === 0 && Number(r.stdout) >= 310) found.push({ py: [cmd, ...pre], v: Number(r.stdout) });
   }
-  return null;
+  // torch wheels lag new Pythons: prefer 3.10-3.13, fall back to anything >= 3.10
+  const best = found.find((f) => f.v <= 313) || found[0];
+  return best ? best.py : null;
 }
 
 async function health() {
