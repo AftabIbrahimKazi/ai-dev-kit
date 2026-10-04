@@ -13,6 +13,8 @@ verified: 2026-10-04 (live endpoint: initialize, tools/list, list_projects with 
 
 # Stitch — Prototype UI Here First, Code Later
 
+Google Stitch is a Google product; its MCP endpoint and terms belong to Google (see [CREDITS.md](../../CREDITS.md)).
+
 Offloads UI exploration to Stitch so the main model spends tokens on code, not on drafting mockups.
 
 ## Use for
