@@ -7,7 +7,7 @@ transport: stdio
 command: node <skill folder>/image-gen.js mcp
 setup: none to download. Keys (each optional; at least one needed): GEMINI_API_KEY (paid — see Cost), CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN (free allowance)
 auth: api-key — env vars above, or the project's .env (read by the script; whitelisted names only)
-cost: Gemini image models need billing (free tier returned 429 on a fresh key, tested 2026-10-04); Cloudflare free ~10,000 neurons/day (~230 FLUX images per third-party sources, unverified)
+cost: Gemini image models need billing (free tier returned 429 on a fresh key, tested 2026-10-04); Cloudflare free 10,000 neurons/day, resets 00:00 UTC; one 1024x1024 4-step FLUX image = 57.6 neurons (4 tiles x 4.8 + 4 steps x 9.6, per Cloudflare's pricing page) = ~173 free images/day; beyond that calls fail on the free plan (paid ~US$0.0006/image)
 routing-default: first for any image request; fall back silently to the placeholder
 verified: 2026-10-04 — live Gemini (key valid, free tier 429 -> fallback) and live Cloudflare FLUX.1 schnell (6 images, ~2.8 s each, 1024x1024 JPEG, free); chain, caps, cooldowns, .env loading and MCP also against fake servers
 ---
