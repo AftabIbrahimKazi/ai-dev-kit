@@ -91,6 +91,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [mcp-manager](mcp/mcp-manager.md) | Meta skill for all opt-in MCP servers — setup interview (servers × AI tools × scope × keys × routing), per-tool config wiring, "MCP first, then fallback" rules. Opt-in only. |
 | [local-vision](mcp/mcp-manager.local-vision.md) | Server file + `local-vision.js` — free offline image reading (Qwen3-VL-2B/4B via llama.cpp) for models without vision; hardware-aware installer + stdio MCP in one script |
+| [image-gen](mcp/mcp-manager.image-gen.md) | Server file + `image-gen.js` CLI/MCP — image generation with fallback: Gemini Nano Banana (paid) → Cloudflare FLUX.1 schnell (free allowance) → placeholder; daily caps, cooldowns |
 | [stitch](mcp/mcp-manager.stitch.md) | Server file (companion of mcp-manager) — Google Stitch UI prototyping, free for now; try first, fall back to artifact/HTML flow |
 
 ## libraries/ — the user's own repos
