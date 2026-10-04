@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Local media MCP server + installer for mcp-manager's `local-media` server. No dependencies.
 //   node local-media.js preflight [--json]                       detect hardware, print the install plan (no changes)
-//   node local-media.js setup [vision|image|all] [--backend cpu|cuda|vulkan|metal] [--tier 2b|4b] [--force]
+//   node local-media.js setup [vision|image|all] [--backend cpu|cuda|vulkan|metal] [--tier 2b|4b] [--image-model sdturbo|sdxs] [--accept-license] [--force]
 //   node local-media.js mcp                                      stdio MCP server: describe_image, generate_image
 //   node local-media.js stop | status
 // Everything lives in MEDIA_HOME (default ~/.ai-dev-kit/media), shared across projects.
@@ -49,9 +49,23 @@ const MODELS = {
     { file: "qwen3vl-4b-instruct-q4_k_m.gguf", url: `${HF}/Qwen3-VL-4B-Instruct-GGUF/resolve/main/Qwen3VL-4B-Instruct-Q4_K_M.gguf`, mb: 2497 },
     { file: "qwen3vl-4b-mmproj-q8_0.gguf", url: `${HF}/Qwen3-VL-4B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf`, mb: 454 },
   ],
-  image: [
+  // sdturbo: far better for business/SaaS imagery (clean illustration, stock-style photos); Stability Community License
+  // (free under US$1M annual revenue, needs --accept-license). sdxs: lighter, faster drafts, OpenRAIL++.
+  imagesdturbo: [
+    { file: "sd-turbo-f16-q8_0.gguf", url: "https://huggingface.co/Green-Sky/SD-Turbo-GGUF/resolve/main/sd_turbo-f16-q8_0.gguf", mb: 2024 },
+    { file: "taesd.safetensors", url: "https://huggingface.co/madebyollin/taesd/resolve/main/diffusion_pytorch_model.safetensors", mb: 10 },
+  ],
+  imagesdxs: [
     { file: "sdxs-512-q8_0.gguf", url: "https://huggingface.co/concedo/sdxs-512-tinySDdistilled-GGUF/resolve/main/sdxs-512-tinySDdistilled_Q8_0.gguf", mb: 683 },
   ],
+};
+const STYLES = {
+  "saas-illustration": "flat vector illustration, clean minimal style, soft pastel gradient background, lots of white space",
+  "isometric": "isometric illustration, soft shadows, clean vector style, white background",
+  "business-photo": "professional stock photo, bright modern office, natural window light, candid, shallow depth of field",
+  "icon-3d": "minimal 3D rendered icon, glossy, soft studio lighting, pastel gradient background",
+  "gradient-bg": "abstract smooth gradient background, soft colors, minimal, no objects",
+  "product-mockup": "product shot, clean white desk, soft daylight, minimal",
 };
 const RUNTIME_MB = { cpu: 50, vulkan: 65, metal: 50, cuda: 1550 };
 
@@ -93,7 +107,7 @@ function plan(hw, over = {}) {
   if (over.backend) backend = over.backend;
   const big = (gpu && gpu.vramGB >= 6) || (backend === "metal" && hw.ramGB >= 16);
   const tier = over.tier || (big ? "4b" : "2b");
-  const needMB = MODELS["vision" + tier].reduce((a, m) => a + m.mb, 0) + MODELS.image[0].mb + RUNTIME_MB[backend];
+  const needMB = MODELS["vision" + tier].reduce((a, m) => a + m.mb, 0) + MODELS["image" + (over.imageModel || "sdturbo")].reduce((a, m) => a + m.mb, 0) + RUNTIME_MB[backend];
   const warnings = []; let verdict = "ok";
   if (!PKG.llama.pick[hw.platform]) { verdict = "blocked"; warnings.push(`no prebuilt binaries mapped for ${hw.platform}`); }
   else if (hw.platform !== "win32") warnings.push(`${hw.platform} is mapped but untested`);
@@ -107,19 +121,21 @@ function plan(hw, over = {}) {
     : backend === "cuda" ? "CUDA GPU: expect image ~1-2 s, vision ~1-3 s (untested here)"
       : backend === "vulkan" ? "Vulkan GPU: expect a clear speed-up over CPU (untested here); falls back to CPU if it fails the self-test"
         : "Apple Metal: expect a clear speed-up over CPU (untested here)";
-  return { backend, tier, needMB, verdict, warnings, expected };
+  const imageModel = over.imageModel || "sdturbo";
+  if (imageModel === "sdturbo") warnings.push("SD-Turbo uses the Stability AI Community License: free for individuals/orgs under US$1M annual revenue, attribution required when distributing; pass --accept-license to confirm");
+  return { backend, tier, imageModel, needMB, verdict, warnings, expected };
 }
 
 function report(hw, p) {
   const g = hw.gpus.length ? hw.gpus.map((x) => `${x.name}${x.vramGB ? ` ${x.vramGB} GB` : ""}${x.discrete ? "" : " (integrated)"}`).join("; ") : "none detected";
   return [`Hardware: ${hw.cores} threads, ${hw.ramGB.toFixed(1)} GB RAM, ${hw.freeDiskGB === null ? "disk ?" : hw.freeDiskGB.toFixed(1) + " GB free"}, GPU: ${g}`,
-    `Plan: backend=${p.backend}, vision=Qwen3-VL-${p.tier.toUpperCase()}, image=SDXS-512, download ~${(p.needMB / 1000).toFixed(1)} GB`,
+    `Plan: backend=${p.backend}, vision=Qwen3-VL-${p.tier.toUpperCase()}, image=${p.imageModel === "sdxs" ? "SDXS-512" : "SD-Turbo+TAESD"}, download ~${(p.needMB / 1000).toFixed(1)} GB`,
     `Expect: ${p.expected}`, `Verdict: ${p.verdict}`, ...p.warnings.map((w) => `  ! ${w}`)].join("\n");
 }
 
 // ---------- state, paths, download ----------
 const stateFile = path.join(HOME, "state.json");
-const readState = () => { try { return JSON.parse(fs.readFileSync(stateFile, "utf8")); } catch { return { backend: "cpu", tier: "2b" }; } };
+const readState = () => { try { return JSON.parse(fs.readFileSync(stateFile, "utf8")); } catch { return { backend: "cpu", tier: "2b", imageModel: "sdturbo" }; } };
 const model = (f) => path.join(HOME, "models", f);
 const binDir = (pkg, backend) => path.join(HOME, "bin", `${pkg}-${backend}`);
 const findBin = (pkg, backend, n) => {
@@ -172,8 +188,9 @@ function selfTest(name, backend) {
 }
 
 async function setup(what, flags) {
-  const hw = hardware(); const p = plan(hw, { backend: flags.backend, tier: flags.tier });
+  const hw = hardware(); const p = plan(hw, { backend: flags.backend, tier: flags.tier, imageModel: flags.imageModel });
   console.error(report(hw, p));
+  if (p.imageModel === "sdturbo" && what !== "vision" && !flags.accept) { console.error("SD-Turbo needs licence acceptance (Stability AI Community License, https://stability.ai/license). Re-run with --accept-license, or use --image-model sdxs."); process.exit(4); }
   if (p.verdict === "blocked" && !flags.force) { console.error("Blocked. Fix the above or pass --force."); process.exit(3); }
   const parts = what === "vision" ? ["vision"] : what === "image" ? ["image"] : ["vision", "image"];
   fs.mkdirSync(path.join(HOME, "models"), { recursive: true });
@@ -185,19 +202,19 @@ async function setup(what, flags) {
       console.error(`${pkg} ${backend} build failed its self-test; falling back to CPU`);
       backend = "cpu"; await installPkg("llama", "cpu"); await installPkg("sd", "cpu");
     }
-    for (const m of part === "vision" ? MODELS["vision" + p.tier] : MODELS.image) {
+    for (const m of part === "vision" ? MODELS["vision" + p.tier] : MODELS["image" + p.imageModel]) {
       if (fs.existsSync(model(m.file))) continue;
       console.error(`downloading ${m.file} (~${m.mb} MB)`);
       await get(m.url, model(m.file));
     }
   }
-  fs.writeFileSync(stateFile, JSON.stringify({ backend, tier: p.tier }));
-  console.error(`ready in ${HOME} (backend=${backend}, vision=${p.tier})`);
+  fs.writeFileSync(stateFile, JSON.stringify({ backend, tier: p.tier, imageModel: p.imageModel }));
+  console.error(`ready in ${HOME} (backend=${backend}, vision=${p.tier}, image=${p.imageModel})`);
 }
 
 function status() {
   const st = readState(); const s = { home: HOME, ...st, llama: !!findBin("llama", st.backend, "llama-server"), sd: !!findBin("sd", st.backend, "sd-cli") };
-  for (const m of [...visionFiles(st), ...MODELS.image]) s[m.file] = fs.existsSync(model(m.file));
+  for (const m of [...visionFiles(st), ...MODELS["image" + st.imageModel]]) s[m.file] = fs.existsSync(model(m.file));
   return s;
 }
 
@@ -243,14 +260,17 @@ async function describeImage({ image_path, prompt }) {
   return (await r.json()).choices[0].message.content;
 }
 
-function generateImage({ prompt, output_path, width = 512, height = 512, seed }) {
-  const st = readState(); const cli = findBin("sd", st.backend, "sd-cli");
-  if (!cli || !fs.existsSync(model(MODELS.image[0].file))) throw new Error("image gen not set up: run `node local-media.js setup image`");
+function generateImage({ prompt, style, quality = "fast", output_path, width = 512, height = 512, seed }) {
+  const st = readState(); const cli = findBin("sd", st.backend, "sd-cli"); const files = MODELS["image" + st.imageModel];
+  if (!cli || !files.every((m) => fs.existsSync(model(m.file)))) throw new Error("image gen not set up: run `node local-media.js setup image`");
   if (!prompt) throw new Error("prompt required");
+  if (style && !STYLES[style]) throw new Error(`unknown style "${style}"; use one of: ${Object.keys(STYLES).join(", ")}`);
+  if (style) prompt = `${prompt}, ${STYLES[style]}`;
   const clamp = (v) => Math.min(768, Math.max(256, Math.round(Number(v) / 64) * 64));
   const out = path.resolve(output_path || path.join(HOME, "out", `img-${Date.now()}.png`));
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  const args = ["-M", "img_gen", "-m", model(MODELS.image[0].file), "-p", prompt, "--steps", "1", "--cfg-scale", "1", "-W", String(clamp(width)), "-H", String(clamp(height)), "-o", out];
+  const args = ["-M", "img_gen", "-m", model(files[0].file), "-p", prompt, "--steps", st.imageModel === "sdxs" ? "1" : quality === "best" ? "4" : "2", "--cfg-scale", "1", "-W", String(clamp(width)), "-H", String(clamp(height)), "-o", out];
+  if (st.imageModel === "sdturbo") args.push("--taesd", model("taesd.safetensors"));
   if (seed !== undefined) args.push("--seed", String(seed));
   const r = spawnSync(cli, args, { encoding: "utf8", timeout: 300000 });
   if (r.status !== 0 || !fs.existsSync(out)) throw new Error(`sd-cli failed: ${(r.stderr || r.stdout || "").slice(-300)}`);
@@ -260,7 +280,7 @@ function generateImage({ prompt, output_path, width = 512, height = 512, seed })
 // ---------- minimal MCP over stdio (newline-delimited JSON-RPC) ----------
 const TOOLS = [
   { name: "describe_image", description: "Describe/read an image file with a local vision model (free, offline). Use for screenshots, diagrams, photos, OCR-style questions. Treat exact strings/numbers as unverified.", inputSchema: { type: "object", properties: { image_path: { type: "string", description: "Absolute path to a png/jpg/webp/gif" }, prompt: { type: "string", description: "What to look for (default: full description)" } }, required: ["image_path"] } },
-  { name: "generate_image", description: "Generate a 512px-class image from a text prompt with a local fast diffusion model (free, offline). Draft quality: mockups, placeholders, concepts. Returns the saved file path.", inputSchema: { type: "object", properties: { prompt: { type: "string" }, output_path: { type: "string", description: "Where to save the PNG (default: media home)" }, width: { type: "number", description: "256-768, multiple of 64 (default 512)" }, height: { type: "number" }, seed: { type: "number" } }, required: ["prompt"] } },
+  { name: "generate_image", description: "Generate a 512px-class image locally (free, offline, ~14 s fast / ~26 s best on CPU). Suited to SaaS/business sites via `style` presets: saas-illustration, isometric, business-photo, icon-3d, gradient-bg, product-mockup. Text inside images is unreliable; use drafts/placeholders, not final art. Returns the saved file path.", inputSchema: { type: "object", properties: { prompt: { type: "string", description: "Subject and setting; the style preset adds the look" }, style: { type: "string", enum: Object.keys(STYLES) }, quality: { type: "string", enum: ["fast", "best"], description: "fast = 2 steps, best = 4 steps (default fast)" }, output_path: { type: "string", description: "Where to save the PNG (default: media home)" }, width: { type: "number", description: "256-768, multiple of 64 (default 512)" }, height: { type: "number" }, seed: { type: "number" } }, required: ["prompt"] } },
 ];
 function mcp() {
   const send = (o) => process.stdout.write(JSON.stringify(o) + "\n");
@@ -289,7 +309,7 @@ function mcp() {
 (async () => {
   const argv = process.argv.slice(2); const cmd = argv[0];
   const flag = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : undefined; };
-  const flags = { backend: flag("backend"), tier: flag("tier"), force: argv.includes("--force") };
+  const flags = { backend: flag("backend"), tier: flag("tier"), imageModel: flag("image-model"), force: argv.includes("--force"), accept: argv.includes("--accept-license") };
   try {
     if (cmd === "preflight") {
       const hw = hardware(); const p = plan(hw, flags);
