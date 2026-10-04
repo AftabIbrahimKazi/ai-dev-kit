@@ -29,7 +29,7 @@ Open models in OpenCode cannot read images. This server adds sight, offline and 
 - Verified in real OpenCode (big-pickle, no vision): read a login screenshot's buttons and labels in 32 s total. Smaller models sometimes answer without calling the tool — the global rules tell them to call it.
 - Memory: ~2 GB while loaded; unloads after 10 idle minutes (`VISION_IDLE_SECONDS`). `node local-vision.js stop` frees it at once.
 - On any failure (not set up, timeout, bad file) fall back per `replaces`; never block.
-- Image *generation* is not local: local models were tested and abandoned (see `nano-banana`).
+- Image *generation* is not local: local models were tested and abandoned (see `image-gen`).
 
 ## Credits and licences
 - Qwen3-VL-2B/4B-Instruct (GGUF) — Qwen Team, Alibaba Cloud — Apache-2.0 — huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF
