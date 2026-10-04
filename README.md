@@ -2,9 +2,9 @@
 
 # AI Dev Kit
 
-**A self-improving skills library and layered coding-standards system for AI-assisted development — Claude Code, OpenCode, and any coding agent that reads markdown.**
+**Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-Portable Claude Code skills, agent instructions, and framework-agnostic coding standards for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
+Portable `SKILL.md` agent skills, framework-agnostic coding standards, and opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering) for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
 ---
 
@@ -36,8 +36,8 @@ Full catalog: [skills/README.md](skills/README.md)
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
 | `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification) |
-| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering, requires a configured endpoint) |
-| `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, per-tool config, MCP-first-then-fallback) + one companion file per server (`stitch`) |
+| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool) |
+| `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 
 ### `coding-standards/` — the layered standards system
 
@@ -56,6 +56,23 @@ Full map: [coding-standards/index.md](coding-standards/index.md)
 | `qa/` (umbrella folder, not one file) | Definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
 | `ai-standards.md` | The AI behavioral contract — hallucination detection, `[CX]` context-integrity signal, read-efficiency rules — for every session regardless of tool |
 | `tooling/` | Lint configs that mechanically enforce whichever rules above are machine-checkable |
+
+## Optional AI tools: free and local MCP servers for any coding agent
+
+One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCode, or another MCP client. **Models, runtimes, usage ledgers and keys live once in `~/.ai-dev-kit/` — never per project** — and each tool falls back to your normal flow when it is missing, rate-limited, or out of quota.
+
+| Tool | What the agent gets | Runs | Cost | Verified |
+|---|---|---|---|---|
+| [`stitch`](skills/mcp/mcp-manager.stitch.md) | UI prototyping with [Google Stitch](https://stitch.withgoogle.com) (screens, variants, design systems) before any code is written | hosted | free for now, limited | live: generated a mobile screen and a Three.js 3D widget |
+| [`local-vision`](skills/mcp/mcp-manager.local-vision.md) | `describe_image` — reads screenshots, diagrams and photos for models that cannot see (Qwen3-VL-2B via llama.cpp) | local CPU/GPU | free | real OpenCode; ~7–12 s per image on an 8-core CPU |
+| [`image-gen`](skills/mcp/mcp-manager.image-gen.md) | `generate_image` for websites and apps: Gemini "Nano Banana" → Cloudflare Workers AI FLUX.1 schnell → labelled placeholder | hosted | Cloudflare free tier ≈ 173 images/day; Gemini image models need billing | real OpenCode; live Cloudflare and Gemini quota paths |
+| [`prefilter`](skills/addons/system1-prefilter.md) | `prefilter` — the local [Laya](https://huggingface.co/convaiinnovations/laya) decision model ranks candidate files/tests before the agent reads them in full | local | free | real OpenCode; 1–3 s per call after a ~15–20 s first start |
+
+**Built so a free tool can never become a trap.** `image-gen` warns at 80% of a daily cap, switches provider at 90% (before anything fails or bills), pauses all generation until 00:00 UTC when every provider is exhausted, then serves clearly marked placeholders — and every switch, pause and placeholder is reported to you as a notice, in the tool output and in `~/.ai-dev-kit/image-gen/notices.log`. Installers run a hardware preflight (CPU, RAM, disk, GPU) first, refuse installs the machine cannot hold, and pick CUDA/Vulkan/Metal builds only when the hardware warrants it, with automatic CPU fallback.
+
+**Honest status.** Developed and tested on Windows 11 with an 8-core CPU and no discrete GPU. The CUDA, Metal, discrete-GPU Vulkan and Linux/macOS paths are implemented but untested. Model and API facts carry a `verified:` date and are re-checked live at setup. Credits and licences for every model and service (Qwen, llama.cpp, Laya, FLUX.1, Gemini) are listed in each server file.
+
+**Get started:** install the kit, then tell your agent *"set up MCP servers"* — [`mcp-manager`](skills/mcp/mcp-manager.md) asks which tools, which AI clients, and where to keep keys, then writes the configs (merging, never overwriting) and health-checks each one.
 
 ## Install into a project
 
@@ -80,6 +97,11 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 
 ## Recent additions
 
+- **MCP manager and free local/hosted tools.** [`mcp-manager`](skills/mcp/mcp-manager.md) is a meta skill that owns setup interviews, per-client config writing (Claude Code, OpenCode, others), MCP-first-then-fallback routing and global-first layout for every optional MCP server; adding a server is one data file. Shipped servers: Stitch UI prototyping, local image reading (Qwen3-VL), image generation with provider fallback and limit protection, and the Laya-backed file prefilter. All run from one global home (`~/.ai-dev-kit/`) and were verified in a real OpenCode session.
+- **Local decision model.** [`system1-prefilter`](skills/addons/system1-prefilter.md) now supports a free offline provider (Laya, 421M parameters) with a hardware-aware installer and a `prefilter` MCP tool; measured guidance on phrasing, checkpoint choice and thresholds is recorded in the skill.
+- **Controlled-writing rule.** [`skill-writer`](skills/meta/skill-writer.md) now asks for imperative steps, one term per concept and explicit conditions (borrowed from ASD-STE100's disambiguation rules). Measured on two skills: about 16% fewer tokens with equal-or-better rule-following.
+- **Kit audit.** Every skill was checked for frontmatter, trigger-rich descriptions, length, catalog coverage and classification; stale descriptions and an install-kit contradiction were fixed.
+
 - **Tool-routed installs.** `install-kit` now detects the target tool and routes both the skill root and the session-protocol file (`CLAUDE.md` for Claude Code, `AGENTS.md` for OpenCode/Codex) — a contract in a file the tool never opens can no longer pass as a successful install. Parallel-session claims moved from a shared `locks.md` table to atomic `handover/locks.d/` claims with per-session ids, so concurrent Claude Code and OpenCode sessions can't silently clobber each other.
 - **Agent-tool discipline.** [`agent-usage`](skills/workflow/agent-usage.md) defaults every session to inline work — no Agent-tool delegation — unless the user names an agent explicitly or a scope-anchored need is judged and approved first; [`mode-kernel`](skills/workflow/mode-kernel.md) is the shared table governing how that gate (and three other skills' own stop-and-wait gates) behaves across autonomous, planning, and background session modes.
 - **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated session-protocol file/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
@@ -101,8 +123,8 @@ skills/
   stack/           ← Three.js, Astro, Shopify (live-pulled from Shopify's own toolkit, never forked)
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
-  addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter)
-  mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch)
+  addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
+  mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
 coding-standards/
