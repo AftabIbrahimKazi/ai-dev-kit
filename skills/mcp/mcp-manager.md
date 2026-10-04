@@ -28,8 +28,8 @@ Then: write configs, add the Pinned block (below), health-check, report.
 
 ## Config writers — merge, never overwrite
 Read the target file first; add only the server's entry; preserve everything else; show the diff summary.
-- **Claude Code:** `<project>/.mcp.json` (project) or `claude mcp add --scope user` (user). Remote: `{"mcpServers":{"<name>":{"type":"http","url":"<url>","headers":{"<Header>":"${VAR}"}}}}`. Stdio: `{"command":…,"args":[…],"env":{"K":"${VAR}"}}` — local servers use the installed script's absolute path: `{"command":"node","args":["<project>/.claude/skills/mcp-manager/local-media.js","mcp"]}`.
-- **OpenCode:** `opencode.json` `mcp` key. Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. Local stdio: `{"type":"local","command":["node","<path>/local-media.js","mcp"],"enabled":true}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
+- **Claude Code:** `<project>/.mcp.json` (project) or `claude mcp add --scope user` (user). Remote: `{"mcpServers":{"<name>":{"type":"http","url":"<url>","headers":{"<Header>":"${VAR}"}}}}`. Stdio: `{"command":…,"args":[…],"env":{"K":"${VAR}"}}` — local servers use the installed script's absolute path: `{"command":"node","args":["<project>/.claude/skills/mcp-manager/local-vision.js","mcp"]}`.
+- **OpenCode:** `opencode.json` `mcp` key. Remote: `{"type":"remote","url":"<url>","enabled":true,"headers":{"<Header>":"{env:VAR}"}}`. Local stdio: `{"type":"local","command":["node","<path>/local-vision.js","mcp"],"enabled":true}`. For on-demand load: set `"tools": {"<name>*": false}` globally and `true` under the agent that needs it.
 - **Other tools:** per step 2's fetched docs. State the source URL in the report.
 Formats drift — if a write fails or the docs differ from the above, trust current docs and add a learning.
 
