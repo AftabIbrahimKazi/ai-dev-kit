@@ -90,7 +90,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [mcp-manager](mcp/mcp-manager.md) | Meta skill for all opt-in MCP servers — setup interview (servers × AI tools × scope × keys × routing), per-tool config wiring, "MCP first, then fallback" rules. Opt-in only. |
-| [local-media](mcp/mcp-manager.local-media.md) | Server file + `local-media.js` — free offline image reading (Qwen3-VL-2B) and fast image generation (SDXS, ~6 s on CPU) for models without vision; installer + stdio MCP in one script |
+| [local-media](mcp/mcp-manager.local-media.md) | Server file + `local-media.js` — free offline image reading (Qwen3-VL-2B) and SaaS/business image generation (SD-Turbo + style presets, ~17 s on CPU) for models without vision; installer + stdio MCP in one script |
 | [stitch](mcp/mcp-manager.stitch.md) | Server file (companion of mcp-manager) — Google Stitch UI prototyping, free for now; try first, fall back to artifact/HTML flow |
 
 ## libraries/ — the user's own repos
