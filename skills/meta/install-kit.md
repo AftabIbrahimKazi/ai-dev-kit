@@ -78,7 +78,7 @@ When maintaining the library itself: any skill rename/merge MUST add a ledger ro
 
 ## Step 4 — Verify and report
 - List what was installed where, grouped (skills / standards), plus what was skipped and why.
-- Confirm the flat `.claude/skills/` layout (one folder per skill, each containing exactly `SKILL.md`).
+- Confirm the flat `.claude/skills/` layout (one folder per skill, each containing `SKILL.md` plus only that skill's companion files, if any).
 - Suggest the natural first actions in the new project: a `handover.md` (if handover installed), the CLAUDE.md project table (if standards installed).
 
 ## Keeping installs current
