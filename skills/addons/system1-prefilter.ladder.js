@@ -35,4 +35,20 @@ function resolveBoolean(answers, confidenceFloor = 0.7) {
   return { toRead, toReVerify };
 }
 
-module.exports = { resolveMCQ, resolveBoolean };
+/**
+ * Laya adapter (local provider). Laya's response is `answers[id]` with
+ * type "choice" (+ probabilities) or "noul" (yes-probability, 0..1).
+ * Returns the shapes the resolvers above take: { mcq, boolean }.
+ * A noul answer's confidence is max(p, 1 - p), same as Laya reports.
+ */
+function fromLaya(response) {
+  const mcq = {};
+  const boolean = {};
+  for (const [id, a] of Object.entries(response.answers || {})) {
+    if (a.type === "choice") mcq[id] = { choice: a.choice, probabilities: a.probabilities };
+    else if (a.type === "noul") boolean[id] = { choice: a.noul >= 0.5 ? "yes" : "no", confidence: Math.max(a.noul, 1 - a.noul) };
+  }
+  return { mcq, boolean };
+}
+
+module.exports = { resolveMCQ, resolveBoolean, fromLaya };
