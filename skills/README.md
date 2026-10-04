@@ -84,7 +84,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 ## addons/ — optional, user-opted capabilities
 | Skill | Purpose |
 |---|---|
-| [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Opt-in only, never in any default install. |
+| [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline). Opt-in only, never in any default install. |
 
 ## mcp/ — optional MCP servers, one manager
 | Skill | Purpose |

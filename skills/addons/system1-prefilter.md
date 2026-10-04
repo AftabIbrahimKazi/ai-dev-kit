@@ -17,13 +17,22 @@ A System-One-typed-decision provider takes a state string + one or more typed qu
 
 ## Setup (once per project, at install or whenever the user opts in later)
 
-1. Ask hosted vs. local endpoint; get the `base_url`.
+1. Ask hosted vs. local endpoint; get the `base_url`. **Local Laya** → follow "Local provider: Laya" below instead (no key, `base_url` is fixed), then do step 4's health-check.
 2. Ask: "Have you already set the API key as an environment variable?"
    - **No** → create `SYSTEM1_API_KEY=` in the project's `.env` (gitignored) with an empty/placeholder value; tell the user to paste the real key in afterward. Use this exact name — never invent a different one.
    - **Yes** → ask for the existing variable's name; use that instead of the default. Never grep `.env` to find it — ask directly, it's cheaper and unambiguous.
 3. Store `base_url` the same way, under `SYSTEM1_BASE_URL`, same yes/no/name logic.
 4. **Health-check before first real use:** send one trivial request (a single boolean question against dummy state) to confirm the endpoint responds and the key is valid. Report success/failure plainly. A local endpoint that refuses the connection is a distinct, expected failure mode — report it as "server not running," not as a generic error.
 5. If the check fails or either variable is unset when this skill would otherwise fire: skip prefiltering silently and do the task the normal way. Never treat missing config as a blocking error mid-task.
+
+## Local provider: Laya (free, offline, no key)
+
+[Laya](https://huggingface.co/convaiinnovations/laya) is a 421M-parameter Apache-2.0 typed-decision model; `laya-serve` exposes this skill's endpoint on localhost. The companion `laya-ctl.js` manages it (`node laya-ctl.js setup|start|stop|health`); everything installs once into `~/.ai-dev-kit/laya`, shared by all projects.
+- **Setup (install-kit runs it):** check Python ≥3.10 (else stop and say so). Tell the user the one-time size (~0.9 GB packages + ~1 GB weights) and get a yes before `setup`. Then `start` and run the health-check with a real boolean question. Set `SYSTEM1_BASE_URL=http://127.0.0.1:8000`; leave `SYSTEM1_API_KEY` unset. Never bind beyond 127.0.0.1.
+- **Run on demand:** `start` before the first prefilter of a session, never at login. It idle-unloads after 600 s; `stop` when done. One checkpoint (`typed-decisions`) uses ~2 GB RAM; loading all three uses ~4.3 GB.
+- **Request shape differs from the generic one:** `{"state": …, "questions": {id: {"type", "instructions", "criteria"}}}`. Single target → `type: "choice"` with `criteria` as label→description. Per-candidate yes/no → `type: "noul"` (returns the yes-probability). Pass the response through `fromLaya()` in `ladder.js`, then the resolvers.
+- **Measured (CPU, 2026-10-04):** 0.4–2.5 s per call (the 33 ms figure is GPU). Right file picked at 93–95% on a 4-file MCQ. A relevant file scored only 0.53 on a boolean and was correctly flagged for re-verification. Its model card says it ships over-confident: never loosen the ladder thresholds for Laya.
+- **Helps any model**, Claude included: it cuts file reads before they cost tokens.
 
 ## Scope — apply only to these (proven, from the feasibility session log)
 
