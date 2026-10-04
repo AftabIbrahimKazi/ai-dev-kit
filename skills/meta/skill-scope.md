@@ -1,6 +1,6 @@
 ---
 name: skill-scope
-description: Canonical classification for every skill in the library — permanent-pinned (universal or stack-conditional, decided once at setup), per-session archivable (toggled from the stated next task), and opt-in addons (invisible until explicitly requested). Referenced by install-kit and handover — edit here, not in either.
+description: Canonical skill classification — permanent-pinned (universal or stack-conditional), per-session archivable, opt-in addon. Trigger when classifying, installing, pinning or archiving a skill. Read by install-kit and handover; edit here only.
 metadata:
   type: reference
 ---

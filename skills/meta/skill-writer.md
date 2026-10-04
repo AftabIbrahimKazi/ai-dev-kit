@@ -49,6 +49,7 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - **State goal + constraints, not step-by-step scripts** — over-prescription reduces output quality on strong models. Exception: checklists for genuinely ordered procedures (scaffolding, teardown) are fine.
 - **Include the failure mode** each section prevents — "this stops X" makes the rule self-justifying.
 - **Hard caps and thresholds** ("3+ files", "≤5 lines", "two failed fixes → stop") beat vague qualifiers ("large", "several").
+- **Write in a controlled style** (borrowed from ASD-STE100's disambiguation rules, not its dictionary): imperative steps, one term per concept (never swap synonyms), explicit conditions ("if X, do Y", not "consider"), no idioms, no filler or hedges. Measured on two skills: ~16% fewer tokens, equal-or-better rule-following (Haiku 4.5, 5 runs/cell). When rewriting an existing skill, re-check each rule survived — one rewrite dropped "ask what changed since it last worked".
 - **Token-lean:** target under ~120 lines. A skill loads into context every time it fires; bloat is a per-use tax. Put rarely-needed depth in a `references/` file the skill points to.
 - **Project-agnostic by default:** no absolute paths, no project names, no assumptions a different repo would break. Discover conventions from the project ("grep an existing file to confirm the prefix") instead of hardcoding them.
 - **The self-improvement loop is mandatory:** read `learnings.md` at start, append one dated, concrete, mergeable bullet at end. This is what makes the library compound.

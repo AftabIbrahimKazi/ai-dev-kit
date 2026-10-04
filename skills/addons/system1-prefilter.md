@@ -1,6 +1,6 @@
 ---
 name: system1-prefilter
-description: Optional add-on — use a fast, provider-agnostic System-One-style typed-decision model (calibrated probabilities, no text generation) to prefilter candidates before full-content reads. Trigger only when this project has it configured (a reachable endpoint set up per "Setup" below) — never assume it's available, never install by default.
+description: Opt-in add-on — prefilter candidates with a typed-decision model (calibrated probabilities, no generated text) before full-content reads. Trigger only when this project has it configured per "Setup"; never assume it exists, never install by default.
 ---
 
 # System-1 Prefilter — Typed-Decision Add-On
