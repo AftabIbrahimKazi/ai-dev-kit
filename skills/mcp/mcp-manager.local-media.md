@@ -31,7 +31,7 @@ Open models in OpenCode cannot read or write images. This server adds both, offl
 | SDXS-512 (Q8) | 6 s | **chosen** — speed first, decent quality |
 | SD-Turbo, 1 step | 28 s | slower; decoder alone 21 s |
 | SD-Turbo, 4 steps | 45 s | better light and composition, 7× slower; rejected on speed |
-| Vulkan build | no gain | the AMD iGPU was not used |
+| Vulkan build (AMD iGPU) | image 10 s, vision 5.5 s | no real gain; sd.cpp reported no usable GPU |
 Larger vision (Qwen3-VL-4B, Q4 2.5 GB) is the upgrade path if 2B misreads too much; it fits in RAM but is slower.
 
 ## Rules
