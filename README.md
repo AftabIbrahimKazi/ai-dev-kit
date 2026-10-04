@@ -64,7 +64,7 @@ Full map: [coding-standards/index.md](coding-standards/index.md)
 
    > read skills/README.md and install
 
-3. Choose **everything** or **pick** — Claude copies the chosen skills to `.claude/skills/` (the auto-invocable location), wires the standards `CLAUDE.md`, and reports what was installed.
+3. Choose **everything** or **pick** — the installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), and reports what was installed.
 
 Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
@@ -73,16 +73,17 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 - **Self-improving skills.** Every skill reads a `learnings.md` sidecar at start and appends one distilled lesson at end. Learnings are per-project (never committed here, never copied by the installer) — each project's copies adapt to that project.
 - **Adaptive to change.** Skills that describe living things (Claude models, libraries, frameworks) carry staleness guards: verify against the live source, follow it over the skill text, log the correction.
 - **Standards as law, gaps flagged.** The standards system is declarative and testable; where it is silent, the AI flags the gap instead of inventing a rule ([RULE AI-12](coding-standards/ai-standards.md)).
-- **Sequential by default, parallel when you say so.** The `role-session` skill coordinates multiple parallel Claude sessions (role charters, file locks, git token queue) and switches itself off in projects without the parallel structure.
+- **Sequential by default, parallel when you say so.** The `role-session` skill coordinates multiple parallel AI sessions — Claude Code, OpenCode, or both (role charters, atomic `mkdir` file claims, a git commit token, session ids) and switches itself off in projects without the parallel structure.
 - **Token-lean by design.** Skill descriptions are hard-capped, bodies stay under ~120 lines, read-efficiency rules are part of the standards, and the `memory-gardener` skill prunes accumulated knowledge.
 - **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
 - **Claude Code enhancements stay optional and isolated.** Where a Claude Code-only mechanism (like hook-based enforcement in `hooks-enforcement`) can mechanically assist a rule, it lives under `skills/models/claude/` as an opt-in add-on — the underlying contract in `coding-standards/ai-standards.md` works the same with or without it, on any tool.
 
 ## Recent additions
 
+- **Tool-routed installs.** `install-kit` now detects the target tool and routes both the skill root and the session-protocol file (`CLAUDE.md` for Claude Code, `AGENTS.md` for OpenCode/Codex) — a contract in a file the tool never opens can no longer pass as a successful install. Parallel-session claims moved from a shared `locks.md` table to atomic `handover/locks.d/` claims with per-session ids, so concurrent Claude Code and OpenCode sessions can't silently clobber each other.
 - **Agent-tool discipline.** [`agent-usage`](skills/workflow/agent-usage.md) defaults every session to inline work — no Agent-tool delegation — unless the user names an agent explicitly or a scope-anchored need is judged and approved first; [`mode-kernel`](skills/workflow/mode-kernel.md) is the shared table governing how that gate (and three other skills' own stop-and-wait gates) behaves across autonomous, planning, and background session modes.
-- **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated `CLAUDE.md`/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
-- **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's `.claude/skills/` at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
+- **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated session-protocol file/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
+- **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's skill root at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
 - **Tool-compatibility checkpoint.** Any skill that depends on a mechanism only one AI coding tool provides (Claude Code hooks, for example) now declares it structurally via a `compat: <tool>-only` frontmatter field, checked automatically by `install-kit` at install time — so tool-specific features get flagged and kept out of incompatible projects instead of failing silently.
 - **Comment level.** [`comment-style`](skills/standards/comment-style.md) sets one project-wide level for AI-written code comments — `none` (default), `terse`, or `descriptive` — because comments cost output tokens when written and input tokens on every re-read. `install-kit` asks at install; the user can change it any time in-session. Rule-mandated comments (TS `as` justifications, suppression-directive reasons, tool pragmas) still apply at `none`.
 - **Claude 5.5 generation.** [`sonnet-5-5`](skills/models/claude/sonnet-5-5.md), [`opus-5-5`](skills/models/claude/opus-5-5.md), [`opus-5`](skills/models/claude/opus-5.md), and [`fable-5-1`](skills/models/claude/fable-5-1.md) join the lineup, and `claude-all-models` now routes across the current gears with the previous generation kept for pinned projects. These stay universal (no `compat` field) — they encode model behavior and API rules, not any one tool's mechanisms — and each new-generation skill flags the breaking API changes (forced `tool_choice` rejected, thinking blocks bound to model + conversation) that bite when moving up from its predecessor.
@@ -110,7 +111,7 @@ coding-standards/
   */               ← file-role partials per discipline
   frameworks/      ← framework additions/overrides (astro, bootstrap)
   tooling/         ← lint configs enforcing the machine-checkable rules
-  CLAUDE.example.md← session-protocol template to wire into a project's CLAUDE.md
+  CLAUDE.example.md← session-protocol template — wire into CLAUDE.md (Claude Code) or AGENTS.md (OpenCode)
 ```
 
 ## Maintaining the kit

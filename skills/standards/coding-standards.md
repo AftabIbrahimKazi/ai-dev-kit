@@ -18,19 +18,19 @@ The user maintains a portable, layered standards system (`coding-standards/` in 
 2. **File-role partials** — `coding-standards/{discipline}-standards/{file-role}.md` (e.g. `css-standards/component-files.md`). Identify the file's role via the File-to-Role Mapping in `coding-standards/index.md` — don't guess the role.
 3. **Framework overrides** — `frameworks/{framework}.md` + `frameworks/{framework}/{file-role}.md`. Framework files may extend or explicitly override universal rules; an override always says so.
 
-Then apply project-specific context (CLAUDE.md / handover: prefixes, token files, file placement) on top.
+Then apply project-specific context (session-protocol file / handover: prefixes, token files, file placement) on top.
 
 ## Loading discipline (correct AND cheap)
 - **Load per file-role, lazily.** Editing one component stylesheet needs: index (once per session) → css global → component-files partial → framework css layer if any. Not the whole folder.
 - **Once per session per chain.** Track which chains are already loaded; re-read only if the task moves to a new discipline or file role.
-- **Exactly one script standard per project** — the project's CLAUDE.md/handover declares JS-only, TS-only, or combined. Never read more than one.
+- **Exactly one script standard per project** — the project's session-protocol file (`CLAUDE.md`/`AGENTS.md`) or handover declares JS-only, TS-only, or combined. Never read more than one.
 - Cross-cutting standards (accessibility, performance, seo, qa) load at their checkpoint (new page → seo + accessibility; pre-release → qa + performance), not on every edit.
 - If the project has no `coding-standards/` folder, this skill doesn't apply — say so rather than importing rules from another project.
 
 ## Enforcement discipline
 - **Standards are law, not suggestions.** Where a standard and habit/training conflict, the standard wins — including when it feels non-idiomatic.
 - **Gaps get flagged, never filled silently.** If a needed rule doesn't exist, say "the standards don't cover X; I'll do Y — flag for the standards repo" and proceed. Recurring gaps are candidates for the user to add as new partials.
-- **Session protocol compliance:** if the project's CLAUDE.md defines a behavioral contract (response markers, standards declaration, no-filler rules), it is part of the standards — follow it exactly.
+- **Session protocol compliance:** if the project's session-protocol file (`CLAUDE.md`/`AGENTS.md`) defines a behavioral contract (response markers, standards declaration, no-filler rules), it is part of the standards — follow it exactly.
 - Before finishing any edit: self-check the diff against the loaded chain (prefixes, tokens vs hardcoded values, structure rules), not against generic best practice.
 
 ## Reviewing / retrofitting

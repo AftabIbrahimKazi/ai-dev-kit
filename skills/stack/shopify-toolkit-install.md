@@ -1,6 +1,6 @@
 ---
 name: shopify-toolkit-install
-description: Pull Shopify's own AI toolkit skills live from their repo into a Shopify project's .claude/skills/ — never copied into or maintained by ai-dev-kit. Trigger on "setup for shopify", "install shopify skills", "shopify ai toolkit".
+description: Pull Shopify's own AI toolkit skills live from their repo into a Shopify project's skill root — never copied into or maintained by ai-dev-kit. Trigger on "setup for shopify", "install shopify skills", "shopify ai toolkit".
 ---
 
 # Shopify Toolkit Install — Live Pull, Not a Fork
@@ -20,16 +20,16 @@ Shopify publishes its own skills (Liquid, Shopify CLI, storefront GraphQL, partn
 Ask which of the toolkit's skill folders to install (default: all) — typical set: `shopify-liquid`, `shopify-dev`, `shopify-use-shopify-cli`, `shopify-storefront-graphql`, `shopify-partner`, `shopify-onboarding-dev`. Only proceed once the project is confirmed to be a Shopify theme/app (has `shopify.theme.toml`, a `templates/`+`sections/` Liquid layout, or the user just said so).
 
 ### 2. Clone to a scratch location, not into the project directly
-Shallow-clone (`git clone --depth 1`) the source repo into a temp directory — never directly into `.claude/skills/`, so a partial/failed clone can't corrupt the project's existing skills.
+Shallow-clone (`git clone --depth 1`) the source repo into a temp directory — never directly into the skill root, so a partial/failed clone can't corrupt the project's existing skills.
 
-### 3. Copy selected skill folders into `.claude/skills/`
-Copy each chosen `skills/<shopify-skill-name>/` folder whole (SKILL.md + any companion scripts/data/assets) into `<target>/.claude/skills/<same-name>/` — flat layout, same convention `install-kit` uses for this kit's own skills. Keep the `shopify-*` naming as-is; it already avoids collision with ai-dev-kit skill names. Delete the temp clone once the copy succeeds.
+### 3. Copy selected skill folders into the routed skill root
+Copy each chosen `skills/<shopify-skill-name>/` folder whole (SKILL.md + any companion scripts/data/assets) into `<skill-root>/<same-name>/` (routed per `install-kit` Step 1) — flat layout, same convention `install-kit` uses for this kit's own skills. Keep the `shopify-*` naming as-is; it already avoids collision with ai-dev-kit skill names. Delete the temp clone once the copy succeeds.
 
 ### 4. Flag the telemetry hook before wiring anything
 The toolkit's scripts send usage telemetry (queries, code, model identifiers) to shopify.dev by default. Before finishing, tell the user this plainly and give the two opt-out mechanisms Shopify documents: set `OPT_OUT_INSTRUMENTATION=true`, or create an empty file at `~/.config/shopify-ai-toolkit/opt-out`. Ask whether to apply the opt-out now — never silently leave a phone-home default active without surfacing it, and never enable/wire any hook config on the user's behalf without asking first (same bar as `hooks-enforcement`'s treatment of its own sample hooks).
 
 ### 5. Record the snapshot, not a live link
-This is a point-in-time copy, no auto-update mechanism (the toolkit's own `.mcp.json` was empty at last check — no MCP server wiring either). Note in the project's `CLAUDE.md` (a short line, following the pattern already used in Shopify theme projects installed from this kit) that these skills are Shopify-authored, installed via this skill, and should be re-pulled by re-running this skill rather than hand-edited for upstream changes.
+This is a point-in-time copy, no auto-update mechanism (the toolkit's own `.mcp.json` was empty at last check — no MCP server wiring either). Note in the project's session-protocol file (`CLAUDE.md`/`AGENTS.md`) (a short line, following the pattern already used in Shopify theme projects installed from this kit) that these skills are Shopify-authored, installed via this skill, and should be re-pulled by re-running this skill rather than hand-edited for upstream changes.
 
 ### 6. Report
 List what was installed (skill names + count), the telemetry decision made, and the re-pull instruction (re-run this skill to refresh).

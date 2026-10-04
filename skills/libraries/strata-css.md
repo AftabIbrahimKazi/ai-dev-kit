@@ -12,9 +12,9 @@ Strata is the user's framework: npm package `strata-css` (NOT `strata` — unrel
 The single biggest time sink is rediscovering "does Strata have a utility for property X?" by reading `registry.js` by hand. Don't. Run the companion script from any project with strata-css installed:
 
 ```bash
-node .claude/skills/strata-css/coverage.js            # all properties
-node .claude/skills/strata-css/coverage.js padding    # filter
-node .claude/skills/strata-css/coverage.js --zero     # what has NO utility / named-only
+node <skill-root>/strata-css/coverage.js            # all (skill-root: .claude/skills or .opencode/skills) properties
+node <skill-root>/strata-css/coverage.js padding    # filter
+node <skill-root>/strata-css/coverage.js --zero     # what has NO utility / named-only
 ```
 
 It reads the **installed** registry, so output always matches the version in play — nothing to go stale. It reports, per property: `[arb]` arbitrary bracket, `[arb-bp]` breakpoint-scoped arbitrary, named, and breakpoint-scoped named. **A property absent from its output has no utility at all and must stay real CSS.**

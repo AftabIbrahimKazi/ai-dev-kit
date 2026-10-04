@@ -76,12 +76,12 @@ Invoke the `memory-gardener` skill to do this if the file is far over; it owns t
 
 ## Skill scope for next session
 
-Only touches `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), move any of these it doesn't need to `.claude/skills-archive/<name>/` — move, not delete, to preserve local `learnings.md`. Record it:
+Only touches `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), move any of these it doesn't need to `<tool-dir>/skills-archive/<name>/` (`.claude/` or `.opencode/`, matching the skill root) — move, not delete, to preserve local `learnings.md`. Record it:
 
 ```markdown
 ## Archived skills (this session)
-Archived to `.claude/skills-archive/` — restore if scope shifts:
-- perf-audit — .claude/skills-archive/perf-audit/
+Archived to `<tool-dir>/skills-archive/` — restore if scope shifts:
+- perf-audit — <tool-dir>/skills-archive/perf-audit/
 ```
 
 An explicit user override (e.g. "keep `perf-audit` pinned anyway") is honored and noted as explicit, never inferred. The next session restores on the spot if scope shifts; a skill bouncing archive→restore repeatedly should move to permanent-pinned instead, via install-kit.
@@ -91,7 +91,7 @@ An explicit user override (e.g. "keep `perf-audit` pinned anyway") is honored an
 When `agent-usage`'s Reporting contract applies (a dispatched agent must write its full raw findings somewhere), those findings go here — never into `handover.md` directly, and never lost.
 
 **Folder convention:**
-- Classic mode: `.claude/agent-handovers/INDEX.md` + one dated file per agent run (`YYYY-MM-DD_task-slug.md`).
+- Classic mode: `<tool-dir>/agent-handovers/INDEX.md` (`.claude/` or `.opencode/`, matching the skill root) + one dated file per agent run (`YYYY-MM-DD_task-slug.md`).
 - Multi-role mode: `handover/<role>/agent-handovers/INDEX.md` + files, owned exclusively by that role's folder — no lock-file entry needed (unlike `memory-bank/INDEX.md`, which is shared across roles and does need one).
 
 **Who writes them:** the dispatched agent itself, as part of finishing its task — full raw findings, not a summary written after the fact. Writing it yourself would reintroduce the cost the delegation was meant to avoid.
@@ -113,4 +113,4 @@ When `agent-usage`'s Reporting contract applies (a dispatched agent must write i
 ### Parallel mode specifics
 - The ceiling is **per role file**, not for the folder — each session reads only its own `<role>.md`, so that is the number that matters.
 - **`board.md`: clear `done` rows as part of finishing**, not "when convenient". A board that accumulates completed rows is the same unbounded-growth bug in a different file.
-- **`memory-bank/` is shared across roles and owned by none.** Before demoting into it from a role session, claim `memory-bank/INDEX.md` in `locks.md` like any other shared file — concurrent demotions otherwise collide on the index. Release it in the same step you write.
+- **`memory-bank/` is shared across roles and owned by none.** Before demoting into it from a role session, claim key `@memory-bank-index` in `handover/locks.d/` (atomic `mkdir`, per `role-session`) like any other shared file — concurrent demotions otherwise collide on the index. Release it in the same step you write.
