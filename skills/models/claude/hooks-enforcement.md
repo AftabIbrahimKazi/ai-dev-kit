@@ -20,7 +20,7 @@ compat: claude-code-only
 This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy artifact exists. Residual reliance on prompt compliance is inherent and stays. Do not describe this as "enforcing" AI-01–AI-03 in project docs; describe it as assisting.
 
 ## `handover/` guard (hard rule)
-**Hooks configured by this skill must never read, write, or gate on any path under `handover/`.** Lane coordination in `role-session` stays exclusively inside the model-driven claim protocol — a hook racing `handover/locks.d/` outside the dev's visibility corrupts claims silently.
+**Hooks (settings hooks and mods) must never write under `handover/`, and never read or gate on the lane state in `handover/locks.d/`.** Lane coordination in `role-session` stays exclusively inside the model-driven claim protocol — a hook racing `handover/locks.d/` outside the dev's visibility corrupts claims silently. Two things stay allowed because they cannot race a claim: inspecting a path string (to skip it), and a commit-time scan of staged text, which may read committed handover notes like any other file (`locks.d/` is gitignored and excluded from the scan). A hook that would only re-check handover files, such as a per-edit linter, skips `handover/` entirely: no check applies there, so running it wastes a process.
 
 ## Sample config
 `SessionStart` hook — injects the AI-02 declaration reminder into every new session's context, since a model under context pressure is the one most likely to skip it unprompted:
@@ -60,6 +60,8 @@ Costs roughly 25 input tokens per user message, mostly served from cache after t
 Merge these into the target's `.claude/settings.json` — never overwrite an existing one.
 
 ## Pre-commit gate (separate from AI-01–AI-03, same hook mechanism)
+
+**Superseded where mods are available (2026-10-09).** The `precommit-gate` mod does this job without bash scripts: it gates both the Bash and PowerShell tools (so it works on Windows), parses the command so text that merely mentions "git commit" is not blocked, scans for leaked secrets (also on `git push`), and runs the `pre-commit` skill's `check.js` on every attempt, so it needs no declaration marker. Install it with `mod-setup`. The settings-hook variant below (`hooks-enforcement.pre-commit-gate.sh` / `-clear.sh`, shipped as companions) stays for projects that want shell hooks. Its marker lives under `.claude/`, and Claude Code asks permission for every write there (and refuses it in headless runs), so expect one approval prompt per commit with it.
 
 Skill triggers that depend on the model noticing a moment in conversation ("this is the done-moment", "this is a bug worth investigating") cannot be hooked — there's no tool-call event to match on. `git commit` is different: it's an actual Bash call, so it's mechanically detectable. This gate hard-blocks it until `pre-commit`'s checklist has actually run.
 

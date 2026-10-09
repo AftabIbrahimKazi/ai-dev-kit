@@ -1,0 +1,4 @@
+{
+  "description": "edit-check hooks module",
+  "modules": ["./register.ts"]
+}

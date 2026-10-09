@@ -1,0 +1,8 @@
+{
+  "name": "standards-chain",
+  "version": "0.1.0",
+  "description": "Denies the first Edit or Write of a file until its coding-standards chain has been read (index, discipline file, role partial, framework file), and again after a compaction. Does nothing without a coding-standards/ folder. Config in .claude/standards-chain.json. Deliberate deny; fails open on its own errors. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

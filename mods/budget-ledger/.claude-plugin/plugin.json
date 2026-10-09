@@ -1,0 +1,8 @@
+{
+  "name": "budget-ledger",
+  "version": "0.1.0",
+  "description": "Logs real token usage, cost, cache and tool-result sizes per turn to a local ledger (one file per session under ~/.ai-dev-kit/ledger); adds /budget. Observes only, changes nothing. Reads env: USERPROFILE, HOME.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

@@ -48,22 +48,26 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 | `triforge` | `@triforge/*` dependency |
 | `shopify-toolkit-install` + its pulled-in Shopify skills | Shopify theme structure (`shopify.theme.toml`, `sections/`, `snippets/`), `.shopifycli` |
 | `memory-bank` | existing `memory-bank/` folder, or explicit user choice at install |
-| `fable-5-1` / `opus-5-5` / `sonnet-5-5` / `haiku-4-5` / `fable-5` / `opus-5` / `opus-4-8` / `sonnet-5` / `claude-all-models` / `opus-as-fable` | which model(s) the project states it's driven by (session-protocol file, or asked at install if not file-observable) |
+| `fable-5-1` / `opus-5-5` / `sonnet-5-5` / `haiku-5-5` / `haiku-4-5` / `fable-5` / `opus-5` / `opus-4-8` / `sonnet-5` / `claude-all-models` / `opus-as-fable` | which model(s) the project states it's driven by (session-protocol file, or asked at install if not file-observable) |
 | `models/opencode/*` (all) | presence of OpenCode config/usage, or asked at install |
-| *Exclusivity rule* | A project detected as **OpenCode-only** (`.opencode/`/`opencode.json` present, no `.claude/` or `CLAUDE.md`, user confirms) is a negative signal for the Claude model lineup — do not pin `fable-5`/`opus-4-8`/`sonnet-5`/`haiku-4-5`/`claude-all-models`/`opus-as-fable`/`hooks-enforcement` unless the user explicitly asks. Mirror: a Claude Code-only project does not pin `models/opencode/*`. A project using both pins both lineups. |
+| *Exclusivity rule* | A project detected as **OpenCode-only** (`.opencode/`/`opencode.json` present, no `.claude/` or `CLAUDE.md`, user confirms) is a negative signal for the Claude model lineup — do not pin `fable-5`/`opus-4-8`/`sonnet-5`/`haiku-5-5`/`haiku-4-5`/`claude-all-models`/`opus-as-fable`/`hooks-enforcement`/`mod-writer`/`mod-setup` unless the user explicitly asks. Mirror: a Claude Code-only project does not pin `models/opencode/*`. A project using both pins both lineups. |
 | `hooks-enforcement` | `.claude/settings.json` hooks already present, or asked at install |
 
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
 ### Per-session archivable (handover toggles from the stated next task)
-`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`
+`perf-audit`, `code-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `install-kit`
+
+`code-audit` is archivable like `perf-audit`: it fires on a cleanup or audit task. `pre-merge-gate`'s `edit-check.js` uses its engine when present and falls back to its own frozen copy of the per-edit rules when it is archived, so archiving breaks nothing.
 
 Each fires only on a specific task instance nameable in a next-task line, not a fixed property of the stack.
 
 ### Opt-in addons (never offered by default; install only on explicit request)
-`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`)
+`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`), `mod-setup` (+ the `mods/` folder it installs from)
 
 `mcp-manager` is the opt-in router for every MCP server: one skill, one companion file per server, chosen individually in its own setup interview. Adding a server never adds a skill or a classification row.
+
+`mod-setup` is the same for Claude Code mods (`compat: claude-code-only`): one skill, one folder per mod under `mods/`, each chosen individually after a review of what it touches. Adding a mod adds no skill and no classification row. Three mods run an engine script, a companion of a universal skill that installs with it: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`) and `budget-ledger`'s `/budget` (`session-budget`). `guard`, `debug-nudge` and `standards-chain` carry their own rules and need no engine.
 
 Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
 
