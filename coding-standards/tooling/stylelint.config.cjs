@@ -3,7 +3,7 @@
    committed; judgement rules remain in the standards docs.
 
    Install:  npm i -D stylelint stylelint-order
-   Run:      npx stylelint "public/css/**/*.css" --config coding-standards/tooling/stylelint.config.cjs
+   Run:      npx stylelint "public/css/*.css" --config coding-standards/tooling/stylelint.config.cjs
    (Adjust the glob to the project's CSS location; wire into pre-commit/CI.)
 
    Rule map — every entry cites the standard it enforces. */
