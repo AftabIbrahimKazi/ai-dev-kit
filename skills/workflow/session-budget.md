@@ -29,6 +29,10 @@ The model skills pick the gear; this skill drives it. Every rule targets the act
 - Give subagents only the slice of context they need, never the whole session.
 - Escalate on demonstrated failure, not anticipated difficulty (see the `claude-all-models` skill for routing).
 
+## Measure, then shrink (scripts, any tool)
+- `node <skill-root>/session-budget/report.js` reports tokens, cost, cache hit rate, the biggest tool-result sinks, re-reads of unchanged files, whole-file reads and low-cache turns. It reads the ledger written by the optional `budget-ledger` mod (Claude Code, installed with `mod-setup`; adds `/budget`). Without the mod there is no ledger.
+- Run a command that prints 150+ lines (verbose test reporters, long builds) as `node <skill-root>/session-budget/compact.js -- <command>`. The exit code is unchanged and every failure line survives; passing-test lines, progress, library stack frames and duplicates are dropped, and the full output is kept in `~/.ai-dev-kit/raw` (newest 20; `--no-save-raw` turns it off). Arguments keep their quoting; a single argument is used as the whole command line. Measured: 59% smaller on a verbose passing log, about 0% on lint or type-check failures, so use it for verbose output only.
+
 ## Session shape
 - Front-load the expensive thinking: plan once at high effort, execute the plan at working effort.
 - When context grows long, consolidate: the handover file is cheaper than dragging dead history through every request.

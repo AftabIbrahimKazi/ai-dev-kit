@@ -1,0 +1,9 @@
+
+ RUN  v5.0.3 C:/project/src
+
+
+ Test Files  1 passed (1)
+      Tests  144 passed | 6 skipped (150)
+   Start at  01:11:20
+   Duration  241ms (transform 42%, import 26%, tests 24%, worker 8%)
+
