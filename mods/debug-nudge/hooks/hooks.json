@@ -1,0 +1,4 @@
+{
+  "description": "debug-nudge hooks module",
+  "modules": ["./register.ts"]
+}

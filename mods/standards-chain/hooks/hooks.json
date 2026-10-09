@@ -1,0 +1,4 @@
+{
+  "description": "standards-chain hooks module",
+  "modules": ["./register.ts"]
+}

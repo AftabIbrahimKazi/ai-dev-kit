@@ -27,6 +27,8 @@ The user can override any pin decision, but only by stating it explicitly in thi
 
 **Opt-in MCP servers** (`mcp/` — `mcp-manager` + its `mcp-manager.<server>.md` companions) are a fifth category: never part of Everything/Pick/Auto-detect, never stack-scanned. At the end of Step 1, ask once: "Set up optional MCP servers (e.g. Stitch for UI prototyping)?" Yes → install `mcp-manager` and only the chosen server companions (Step 2 companion rule), then **run `mcp-manager`'s Setup interview in full** — it owns every question (servers, AI tools, scope, keys, routing, load mode) and the config writes; install-kit never asks them on its behalf. No → skip silently; the user can ask any later session. Once configured, treat as permanent-pinned.
 
+**Opt-in Claude Code mods** (`mods/` + `mod-setup`) are a sixth category: Claude Code targets only, never part of Everything/Pick/Auto-detect, never stack-scanned. Offer them only when the user asks (for example "set up mods", "track my token use"). Then install `mod-setup` and follow it in full; it owns the version check, the review of what each mod touches, and the install. A mod needs its engine script, which ships with a skill (`pre-commit`, `pre-merge-gate`, `session-budget`); Step 2 already installs those `.js` companions.
+
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
 - **Everything** — all skills + the full coding-standards system.
@@ -58,7 +60,7 @@ For each selected skill, copy the library file into the **routed skill root** fr
 ```
 Rules:
 - **Flat layout is mandatory** — `<skill-root>/<name>/SKILL.md`, never category subfolders (no tool discovers them nested).
-- **Companion files install alongside:** a library file named `<skill>.<companion>.<ext>` (e.g. `role-session.templates.md`, `strata-css.coverage.js`) is copied into the same skill folder as `<companion>.<ext>` (e.g. `<skill-root>/role-session/templates.md`, `<skill-root>/strata-css/coverage.js`). Companions are not always markdown — executable helpers ship this way too, so copy them verbatim and preserve the extension.
+- **Companion files install alongside:** a library file named `<skill>.<companion>.<ext>` (e.g. `role-session.templates.md`, `strata-css.coverage.js`) is copied into the same skill folder as `<companion>.<ext>` (e.g. `<skill-root>/role-session/templates.md`, `<skill-root>/strata-css/coverage.js`). Companions are not always markdown — executable helpers ship this way too, so copy them verbatim and preserve the extension. **When any `.js` companion installs, also write `<skill-root>/package.json` containing `{ "type": "commonjs" }` (once, at the skill root; skip if it already says so).** The companions are CommonJS, and a project whose own `package.json` has `"type": "module"` (Astro, Vite and most modern setups) would otherwise make Node refuse every one of them; the nearest `package.json` wins, so this file shields them without touching the project.
 - The category folders exist only in the library; they disappear on install.
 - **Never copy `learnings.md` files** — learnings are per-project experience; each project starts its own.
 - If a skill already exists in the target: compare; if identical, skip silently; if different, show a one-line diff summary and ask (the target may have local learnings-promoted edits worth keeping). Ignore `comment-style`'s `**Active level: …**` line and whitespace-only differences in the comparison, and carry the target's existing value into any updated copy — it's the project's own setting, not drift.

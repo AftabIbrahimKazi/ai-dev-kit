@@ -1,0 +1,8 @@
+{
+  "name": "guard",
+  "version": "0.1.0",
+  "description": "Denies edits to secret files, lockfiles, .git and node_modules, and destructive Bash or PowerShell commands (recursive deletes of root-like paths, force push, deleting remote main/master, git reset --hard, git clean -f, publish, a download piped into a shell, SQL drops). Per-project config in .claude/guard.json. Deliberate denies; fails open on its own errors. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

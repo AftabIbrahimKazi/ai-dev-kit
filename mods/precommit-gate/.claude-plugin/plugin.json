@@ -1,0 +1,8 @@
+{
+  "name": "precommit-gate",
+  "version": "0.1.0",
+  "description": "Gates git commit and git push run through Bash or PowerShell, using the pre-commit skill's check.js on every attempt: leaked secrets, secret files, bad commit messages and --no-verify are denied every time; warnings (a header over 50 characters, untracked files) stop the first attempt per staged change set. No declaration file. Fails open if the script is missing; denies are deliberate. Reads env: USERPROFILE, HOME.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

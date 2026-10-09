@@ -1,0 +1,39 @@
+{
+  "name": "ai-dev-kit-mods",
+  "description": "Optional Claude Code mods for the ai-dev-kit: token ledger, commit and edit guards, standards checks, a debugging reminder. Mods that need more than a few rules run a tool-agnostic script from a skill.",
+  "owner": {
+    "name": "Aftab Ibrahim Kazi"
+  },
+  "plugins": [
+    {
+      "name": "budget-ledger",
+      "source": "./budget-ledger",
+      "description": "Logs real token usage, cost, cache and tool-result sizes per turn, one file per session; adds /budget. Observes only."
+    },
+    {
+      "name": "precommit-gate",
+      "source": "./precommit-gate",
+      "description": "Gates git commit and push (Bash and PowerShell): blocks leaked secrets, secret files, bad messages and --no-verify; needs the pre-commit skill's check.js."
+    },
+    {
+      "name": "guard",
+      "source": "./guard",
+      "description": "Denies edits to secret files, lockfiles and .git, and destructive Bash or PowerShell commands (root-like recursive deletes, force push, deleting remote main, reset --hard, clean -f, publish, download piped into a shell). Config in .claude/guard.json."
+    },
+    {
+      "name": "edit-check",
+      "source": "./edit-check",
+      "description": "After each Edit or Write, runs the pre-merge-gate skill's edit-check.js and shows the model only the problems (syntax, ESLint, Stylelint, coding-standards rules)."
+    },
+    {
+      "name": "debug-nudge",
+      "source": "./debug-nudge",
+      "description": "Reminds the model once, at the second failed fix of a test/build command (Bash or PowerShell), to stop editing and apply the debug-protocol skill. Reminder only."
+    },
+    {
+      "name": "standards-chain",
+      "source": "./standards-chain",
+      "description": "Denies the first Edit or Write of a file until its coding-standards chain (index, discipline file, role partial, framework file) has been read, and again after a compaction. Does nothing without a coding-standards/ folder."
+    }
+  ]
+}

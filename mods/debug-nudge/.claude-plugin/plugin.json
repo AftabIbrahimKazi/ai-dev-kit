@@ -1,0 +1,8 @@
+{
+  "name": "debug-nudge",
+  "version": "0.1.0",
+  "description": "Counts failed fix attempts: a verification command (test, build, lint) run through Bash or PowerShell that fails again after an edit. At the second failed fix it reminds the model once to stop editing and apply the debug-protocol skill. Reminder only; never blocks. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

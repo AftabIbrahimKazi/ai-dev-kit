@@ -1,0 +1,8 @@
+{
+  "name": "edit-check",
+  "version": "0.1.0",
+  "description": "After each Edit or Write, runs the pre-merge-gate skill's edit-check.js on that file (syntax, project ESLint/Stylelint, optional tsc, coding-standards rules when the project has them) and shows the model only the problems. Adds nothing when the file is clean. Never blocks; fails open. Reads env: USERPROFILE, HOME.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}
