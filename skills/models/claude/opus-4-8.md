@@ -38,4 +38,4 @@ Model facts here (ID, pricing, limits, API rules) were verified 2026-07. If a ne
 ## Token discipline
 - Remove forced-progress scaffolding ("summarize every N tool calls") — 4.8 does this natively.
 - Cache-first prompt layout: stable system + tools first, volatile content after the last breakpoint; verify with `usage.cache_read_input_tokens`.
-- Delegate cheap fan-out (search, file sweeps, classification) to Haiku 4.5 subagents; keep 4.8 as orchestrator.
+- Delegate cheap fan-out (search, file sweeps, classification) to Haiku 5.5 subagents; keep 4.8 as orchestrator.

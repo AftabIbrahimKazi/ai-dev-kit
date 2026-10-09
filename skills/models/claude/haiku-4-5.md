@@ -1,6 +1,6 @@
 ---
 name: haiku-4-5
-description: Claude Haiku 4.5 (claude-haiku-4-5) protocol — fast/cheap fan-out patterns, what to route to it and what not, thinking config. Trigger when working with, routing to, or writing code that calls Haiku 4.5.
+description: Claude Haiku 4.5 (claude-haiku-4-5, previous generation — new work uses haiku-5-5) protocol — fast/cheap fan-out patterns, what to route to it and what not, thinking config. Trigger when working with, routing to, or writing code that calls Haiku 4.5.
 ---
 
 # Haiku 4.5 — Speed-and-Volume Protocol
@@ -8,7 +8,7 @@ description: Claude Haiku 4.5 (claude-haiku-4-5) protocol — fast/cheap fan-out
 Model ID: `claude-haiku-4-5` (full: `claude-haiku-4-5-20251001`) · 200K context · 64K max output · $1 in / $5 out per MTok. The fastest, cheapest current model — its job is volume, latency, and fan-out, not depth.
 
 ## Staleness guard
-Model facts here (ID, pricing, limits, API rules) were verified 2026-07. If a newer Haiku exists or the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill), follow the live source, and log the correction in `learnings.md`.
+Model facts here (ID, pricing, limits, API rules) were verified 2026-07. Haiku 5.5 (`haiku-5-5` skill) superseded this model on 2026-10-07; use this file only for projects pinned to 4.5. If the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill), follow the live source, and log the correction in `learnings.md`.
 
 ## Self-improvement (do this first and last)
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
