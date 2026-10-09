@@ -38,4 +38,4 @@ Model facts here (ID, pricing, limits, API rules) were verified 2026-07. Intro p
 ## Token discipline
 - Leave `max_tokens` headroom at `xhigh`/`max` — adaptive thinking shares the output budget; `stop_reason: "max_tokens"` with a wall of thinking means the budget was too tight.
 - Cache-first layout; verify `cache_read_input_tokens`.
-- Route true fan-out grunt work down to Haiku 4.5; route work Sonnet repeatedly fails at up to Opus 4.8 rather than retrying.
+- Route true fan-out grunt work down to Haiku 5.5; route work Sonnet repeatedly fails at up to Opus 4.8 rather than retrying.

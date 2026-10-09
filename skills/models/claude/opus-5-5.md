@@ -36,4 +36,4 @@ Default dropped from `high` (Opus 5) to `medium`. In testing `medium` matches or
 
 ## Token discipline
 - Cache-first layout; cache reads are 0.05× input, so a miss costs relatively more — append-only histories, stable prefix. Verify `cache_read_input_tokens`.
-- Fan cheap sweeps down to Haiku 4.5 or Sonnet 5.5; keep Opus 5.5 as orchestrator.
+- Fan cheap sweeps down to Haiku 5.5 or Sonnet 5.5; keep Opus 5.5 as orchestrator.

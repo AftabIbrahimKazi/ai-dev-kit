@@ -8,7 +8,7 @@ description: Route tasks across the Claude lineup — model selection, delegatio
 Treat the lineup as one machine with four gears. The single biggest lever for correctness AND cost is routing each task to the cheapest model that reliably does it — then never re-doing work on a bigger model that a smaller one already finished.
 
 ## Staleness guard
-The lineup table below was verified 2026-09-25. Model lineups change: before load-bearing routing/cost decisions, confirm the current lineup (Models API / platform.claude.com or the claude-api skill). New models slot into the same gear logic; update the table and log the change in `learnings.md`.
+The lineup table below was verified 2026-10-08. Model lineups change: before load-bearing routing/cost decisions, confirm the current lineup (Models API / platform.claude.com or the claude-api skill). New models slot into the same gear logic; update the table and log the change in `learnings.md`.
 
 ## Self-improvement (do this first and last)
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
@@ -21,11 +21,11 @@ The lineup table below was verified 2026-09-25. Model lineups change: before loa
 | Fable 5.1 | `claude-fable-5-1` | 1M / 128K | 10 – 50 | Hardest problems only; long-horizon autonomy |
 | Opus 5.5 | `claude-opus-5-5` | 1M / 128K | 4 – 20 | Default flagship: serious coding, agents, review |
 | Sonnet 5.5 | `claude-sonnet-5-5` | 1M / 128K | 2 – 10 | Near-Opus coding at volume; interactive work |
-| Haiku 4.5 | `claude-haiku-4-5` | 200K / 64K | 1 – 5 | Fan-out, classification, latency paths |
+| Haiku 5.5 | `claude-haiku-5-5` | 1M / 128K | 0.10 – 0.50 (≤100K prompt; 0.50 – 2.50 above) | Fan-out, classification, routing, latency paths |
 
-Previous generation, still served (pinned projects, fallback targets): Fable 5 (`claude-fable-5`, 10 – 50), Opus 5 (`claude-opus-5`, 5 – 25), Opus 4.8 (`claude-opus-4-8`, 5 – 25), Sonnet 5 (`claude-sonnet-5`, 2 – 10). New work targets the four rows above.
+Previous generation, still served (pinned projects, fallback targets): Fable 5 (`claude-fable-5`, 10 – 50), Opus 5 (`claude-opus-5`, 5 – 25), Opus 4.8 (`claude-opus-4-8`, 5 – 25), Sonnet 5 (`claude-sonnet-5`, 2 – 10), Haiku 4.5 (`claude-haiku-4-5`, 1 – 5, 200K / 64K). New work targets the four rows above.
 
-Per-model depth lives in the sibling skills: `fable-5-1`, `opus-5-5`, `sonnet-5-5`, `haiku-4-5` (previous generation: `fable-5`, `opus-5`, `opus-4-8`, `sonnet-5`) — load the one matching the model you're actually driving.
+Per-model depth lives in the sibling skills: `fable-5-1`, `opus-5-5`, `sonnet-5-5`, `haiku-5-5` (previous generation: `fable-5`, `opus-5`, `opus-4-8`, `sonnet-5`, `haiku-4-5`) — load the one matching the model you're actually driving.
 
 ## Routing rules
 1. **Start one gear lower than instinct says.** Escalate on demonstrated failure, not anticipated difficulty. Sonnet 5.5 at `medium`/`high` handles most of what people reflexively send to Opus.
@@ -35,10 +35,10 @@ Per-model depth lives in the sibling skills: `fable-5-1`, `opus-5-5`, `sonnet-5-
 5. **Match effort before matching model.** Bumping Sonnet `medium → high → xhigh` is cheaper than switching to Opus; try it first. Effort levels are recalibrated per model (Opus 5.5 `medium` ≈ Opus 5 `high`) — re-sweep after every model change, never carry a level over.
 
 ## API-surface differences that bite when switching models
-- Thinking: Fable 5/5.1 and Opus 5.5 = always on (omit param; `disabled` 400s) · Sonnet 5.5 = adaptive when omitted, `disabled` 400s, off only via `{type:"between_tools"}` at `high` or below · Opus 5 / Sonnet 5 = adaptive when omitted, `disabled` allowed (Opus 5: `high` or below) · Opus 4.8 = off unless `{type:"adaptive"}` set · Haiku = legacy `budget_tokens` only.
+- Thinking: Fable 5/5.1 and Opus 5.5 = always on (omit param; `disabled` 400s) · Sonnet 5.5 = adaptive when omitted, `disabled` 400s, off only via `{type:"between_tools"}` at `high` or below · Opus 5 / Sonnet 5 = adaptive when omitted, `disabled` allowed (Opus 5: `high` or below) · Opus 4.8 = off unless `{type:"adaptive"}` set · Haiku 5.5 = adaptive when omitted, `disabled` allowed at `high` or below, `budget_tokens` 400s · Haiku 4.5 = legacy `budget_tokens` only.
 - **Forced `tool_choice` (`any`/`tool`) 400s on Fable 5.1, Opus 5.5, Sonnet 5.5** — use `auto` + `strict: true` + a prompt naming the tool. Still allowed on older rows.
-- `effort`: supported Fable/Opus/Sonnet (`low`→`max`); errors on Haiku 4.5. Default is `medium` on Opus 5.5, `high` elsewhere — set it explicitly.
-- Sampling params: rejected on Fable/Opus/Sonnet 5+; allowed on Haiku.
+- `effort`: supported Fable/Opus/Sonnet/Haiku 5.5 (`low`→`max`); errors on Haiku 4.5. Default is `medium` on Opus 5.5 and Haiku 5.5, `high` elsewhere — set it explicitly.
+- Sampling params: rejected on Fable/Opus/Sonnet 5+ and Haiku 5.5; allowed on Haiku 4.5. Assistant prefill and manual `budget_tokens` also 400 on Haiku 5.5. Haiku 5.5 has no server-side refusal fallback.
 - Thinking blocks are bound to their producing model and conversation on the 5.5 / Fable 5.1 tier: keep histories append-only, and expect a fallback model to run without them.
 - **Switching models mid-conversation invalidates the prompt cache** — spawn a subagent on the other model instead of swapping the main loop.
 - Tokenizers differ — re-baseline `max_tokens` with `count_tokens` per model, never reuse counts.
