@@ -1,0 +1,136 @@
+
+ RUN  v5.0.3 C:/project/src
+
+ ❯ src/many.test.ts (150 tests | 6 failed) 32ms
+   ❯ suite 1 (50)
+     × case 1.17 throws 4ms
+     × case 1.34 compares objects 6ms
+   ❯ suite 2 (50)
+     × case 2.25 throws 0ms
+   ❯ suite 3 (50)
+     × case 3.10 compares objects 1ms
+     × case 3.40 compares objects 1ms
+     × case 3.41 throws 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/many.test.ts > suite 1 > case 1.17 throws
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ src/many.test.ts:19:69
+     17|   it('case 1.15 works', () => { expect(15 + 1).toBe(16) })
+     18|   it('case 1.16 works', () => { expect(16 + 1).toBe(17) })
+     19|   it('case 1.17 throws', () => { const o: any = undefined; return o.va…
+       |                                                                     ^
+     20|   it('case 1.18 works', () => { expect(18 + 1).toBe(19) })
+     21|   it('case 1.19 works', () => { expect(19 + 1).toBe(20) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/many.test.ts > suite 1 > case 1.34 compares objects
+AssertionError: expected { a: 34, b: [ 1, 2, 3 ] } to deeply equal { a: 34, b: [ 1, 2, 4 ] }
+
+- Expected
++ Received
+
+  {
+    "a": 34,
+    "b": [
+      1,
+      2,
+-     4,
++     3,
+    ],
+  }
+
+ ❯ src/many.test.ts:36:76
+     34|   it('case 1.32 works', () => { expect(32 + 1).toBe(33) })
+     35|   it('case 1.33 works', () => { expect(33 + 1).toBe(34) })
+     36|   it('case 1.34 compares objects', () => { expect({ a: 34, b: [1, 2, 3…
+       |                                                                            ^
+     37|   it('case 1.35 works', () => { expect(35 + 1).toBe(36) })
+     38|   it('case 1.36 works', () => { expect(36 + 1).toBe(37) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/many.test.ts > suite 2 > case 2.25 throws
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ src/many.test.ts:79:69
+     77|   it('case 2.23 works', () => { expect(23 + 1).toBe(24) })
+     78|   it('case 2.24 works', () => { expect(24 + 1).toBe(25) })
+     79|   it('case 2.25 throws', () => { const o: any = undefined; return o.va…
+       |                                                                     ^
+     80|   it('case 2.26 works', () => { expect(26 + 1).toBe(27) })
+     81|   it('case 2.27 works', () => { expect(27 + 1).toBe(28) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/many.test.ts > suite 3 > case 3.10 compares objects
+AssertionError: expected { a: 10, b: [ 1, 2, 3 ] } to deeply equal { a: 10, b: [ 1, 2, 4 ] }
+
+- Expected
++ Received
+
+  {
+    "a": 10,
+    "b": [
+      1,
+      2,
+-     4,
++     3,
+    ],
+  }
+
+ ❯ src/many.test.ts:116:76
+    114|   it('case 3.8 works', () => { expect(8 + 1).toBe(9) })
+    115|   it('case 3.9 works', () => { expect(9 + 1).toBe(10) })
+    116|   it('case 3.10 compares objects', () => { expect({ a: 10, b: [1, 2, 3…
+       |                                                                            ^
+    117|   it('case 3.11 works', () => { expect(11 + 1).toBe(12) })
+    118|   it('case 3.12 works', () => { expect(12 + 1).toBe(13) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/many.test.ts > suite 3 > case 3.40 compares objects
+AssertionError: expected { a: 40, b: [ 1, 2, 3 ] } to deeply equal { a: 40, b: [ 1, 2, 4 ] }
+
+- Expected
++ Received
+
+  {
+    "a": 40,
+    "b": [
+      1,
+      2,
+-     4,
++     3,
+    ],
+  }
+
+ ❯ src/many.test.ts:146:76
+    144|   it('case 3.38 works', () => { expect(38 + 1).toBe(39) })
+    145|   it('case 3.39 works', () => { expect(39 + 1).toBe(40) })
+    146|   it('case 3.40 compares objects', () => { expect({ a: 40, b: [1, 2, 3…
+       |                                                                            ^
+    147|   it('case 3.41 throws', () => { const o: any = undefined; return o.va…
+    148|   it('case 3.42 works', () => { expect(42 + 1).toBe(43) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/many.test.ts > suite 3 > case 3.41 throws
+TypeError: Cannot read properties of undefined (reading 'value')
+ ❯ src/many.test.ts:147:69
+    145|   it('case 3.39 works', () => { expect(39 + 1).toBe(40) })
+    146|   it('case 3.40 compares objects', () => { expect({ a: 40, b: [1, 2, 3…
+    147|   it('case 3.41 throws', () => { const o: any = undefined; return o.va…
+       |                                                                     ^
+    148|   it('case 3.42 works', () => { expect(42 + 1).toBe(43) })
+    149|   it('case 3.43 works', () => { expect(43 + 1).toBe(44) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 144 passed (150)
+   Start at  01:11:05
+   Duration  802ms (worker 27%, transform 26%, import 24%, tests 23%)
+

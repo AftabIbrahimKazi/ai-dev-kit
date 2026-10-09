@@ -11,6 +11,9 @@ A commit is the one operation where sloppiness becomes permanent history. This p
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
 2. **At end of every use:** append one dated bullet — what this pass caught, or a check that never fires and could be dropped. Merge instead of duplicating; delete disproven bullets.
 
+## Step 0 — Run the mechanical check
+`node <skill-root>/pre-commit/check.js --staged --message "<draft message>"` (add `--all` before `git commit -a`, `--push` before a push). It reports debug leftovers, secrets and secret files (values masked), untracked and half-staged files, and message format against the git standard. Read its findings instead of re-reading the diff for those categories; any BLOCK stops the commit. The optional `precommit-gate` mod (Claude Code) runs it on every `git commit` and `git push`: a BLOCK stops every attempt; warnings (a header over 50 characters, untracked files) stop the first attempt for a staged change set, and running the same command again commits. No declaration file is needed.
+
 ## Step 1 — Survey before staging
 `git status` + `git diff` (and `git diff --stat` for shape):
 - **Untracked strays:** screenshots, scratch files, `*.log`, editor droppings, test assets dumped in root. Each one: belongs in the commit (move to its proper location first), in `.gitignore`, or deleted. Never `git add .` past unexplained untracked files.

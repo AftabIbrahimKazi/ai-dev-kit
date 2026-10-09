@@ -1,0 +1,126 @@
+
+C:\project\src\lintme.js
+   1:1   error  Unexpected var, use let or const instead  no-var
+   2:8   error  Expected '===' and instead saw '=='       eqeqeq
+   2:28  error  'missing1' is not defined                 no-undef
+   3:1   error  Unexpected var, use let or const instead  no-var
+   4:8   error  Expected '===' and instead saw '=='       eqeqeq
+   4:28  error  'missing2' is not defined                 no-undef
+   5:1   error  Unexpected var, use let or const instead  no-var
+   6:8   error  Expected '===' and instead saw '=='       eqeqeq
+   6:28  error  'missing3' is not defined                 no-undef
+   7:1   error  Unexpected var, use let or const instead  no-var
+   8:8   error  Expected '===' and instead saw '=='       eqeqeq
+   8:28  error  'missing4' is not defined                 no-undef
+   9:1   error  Unexpected var, use let or const instead  no-var
+  10:8   error  Expected '===' and instead saw '=='       eqeqeq
+  10:28  error  'missing5' is not defined                 no-undef
+  11:1   error  Unexpected var, use let or const instead  no-var
+  12:8   error  Expected '===' and instead saw '=='       eqeqeq
+  12:28  error  'missing6' is not defined                 no-undef
+  13:1   error  Unexpected var, use let or const instead  no-var
+  14:8   error  Expected '===' and instead saw '=='       eqeqeq
+  14:28  error  'missing7' is not defined                 no-undef
+  15:1   error  Unexpected var, use let or const instead  no-var
+  16:8   error  Expected '===' and instead saw '=='       eqeqeq
+  16:28  error  'missing8' is not defined                 no-undef
+  17:1   error  Unexpected var, use let or const instead  no-var
+  18:8   error  Expected '===' and instead saw '=='       eqeqeq
+  18:28  error  'missing9' is not defined                 no-undef
+  19:1   error  Unexpected var, use let or const instead  no-var
+  20:9   error  Expected '===' and instead saw '=='       eqeqeq
+  20:30  error  'missing10' is not defined                no-undef
+  21:1   error  Unexpected var, use let or const instead  no-var
+  22:9   error  Expected '===' and instead saw '=='       eqeqeq
+  22:30  error  'missing11' is not defined                no-undef
+  23:1   error  Unexpected var, use let or const instead  no-var
+  24:9   error  Expected '===' and instead saw '=='       eqeqeq
+  24:30  error  'missing12' is not defined                no-undef
+  25:1   error  Unexpected var, use let or const instead  no-var
+  26:9   error  Expected '===' and instead saw '=='       eqeqeq
+  26:30  error  'missing13' is not defined                no-undef
+  27:1   error  Unexpected var, use let or const instead  no-var
+  28:9   error  Expected '===' and instead saw '=='       eqeqeq
+  28:30  error  'missing14' is not defined                no-undef
+  29:1   error  Unexpected var, use let or const instead  no-var
+  30:9   error  Expected '===' and instead saw '=='       eqeqeq
+  30:30  error  'missing15' is not defined                no-undef
+  31:1   error  Unexpected var, use let or const instead  no-var
+  32:9   error  Expected '===' and instead saw '=='       eqeqeq
+  32:30  error  'missing16' is not defined                no-undef
+  33:1   error  Unexpected var, use let or const instead  no-var
+  34:9   error  Expected '===' and instead saw '=='       eqeqeq
+  34:30  error  'missing17' is not defined                no-undef
+  35:1   error  Unexpected var, use let or const instead  no-var
+  36:9   error  Expected '===' and instead saw '=='       eqeqeq
+  36:30  error  'missing18' is not defined                no-undef
+  37:1   error  Unexpected var, use let or const instead  no-var
+  38:9   error  Expected '===' and instead saw '=='       eqeqeq
+  38:30  error  'missing19' is not defined                no-undef
+  39:1   error  Unexpected var, use let or const instead  no-var
+  40:9   error  Expected '===' and instead saw '=='       eqeqeq
+  40:30  error  'missing20' is not defined                no-undef
+  41:1   error  Unexpected var, use let or const instead  no-var
+  42:9   error  Expected '===' and instead saw '=='       eqeqeq
+  42:30  error  'missing21' is not defined                no-undef
+  43:1   error  Unexpected var, use let or const instead  no-var
+  44:9   error  Expected '===' and instead saw '=='       eqeqeq
+  44:30  error  'missing22' is not defined                no-undef
+  45:1   error  Unexpected var, use let or const instead  no-var
+  46:9   error  Expected '===' and instead saw '=='       eqeqeq
+  46:30  error  'missing23' is not defined                no-undef
+  47:1   error  Unexpected var, use let or const instead  no-var
+  48:9   error  Expected '===' and instead saw '=='       eqeqeq
+  48:30  error  'missing24' is not defined                no-undef
+  49:1   error  Unexpected var, use let or const instead  no-var
+  50:9   error  Expected '===' and instead saw '=='       eqeqeq
+  50:30  error  'missing25' is not defined                no-undef
+  51:1   error  Unexpected var, use let or const instead  no-var
+  52:9   error  Expected '===' and instead saw '=='       eqeqeq
+  52:30  error  'missing26' is not defined                no-undef
+  53:1   error  Unexpected var, use let or const instead  no-var
+  54:9   error  Expected '===' and instead saw '=='       eqeqeq
+  54:30  error  'missing27' is not defined                no-undef
+  55:1   error  Unexpected var, use let or const instead  no-var
+  56:9   error  Expected '===' and instead saw '=='       eqeqeq
+  56:30  error  'missing28' is not defined                no-undef
+  57:1   error  Unexpected var, use let or const instead  no-var
+  58:9   error  Expected '===' and instead saw '=='       eqeqeq
+  58:30  error  'missing29' is not defined                no-undef
+  59:1   error  Unexpected var, use let or const instead  no-var
+  60:9   error  Expected '===' and instead saw '=='       eqeqeq
+  60:30  error  'missing30' is not defined                no-undef
+  61:1   error  Unexpected var, use let or const instead  no-var
+  62:9   error  Expected '===' and instead saw '=='       eqeqeq
+  62:30  error  'missing31' is not defined                no-undef
+  63:1   error  Unexpected var, use let or const instead  no-var
+  64:9   error  Expected '===' and instead saw '=='       eqeqeq
+  64:30  error  'missing32' is not defined                no-undef
+  65:1   error  Unexpected var, use let or const instead  no-var
+  66:9   error  Expected '===' and instead saw '=='       eqeqeq
+  66:30  error  'missing33' is not defined                no-undef
+  67:1   error  Unexpected var, use let or const instead  no-var
+  68:9   error  Expected '===' and instead saw '=='       eqeqeq
+  68:30  error  'missing34' is not defined                no-undef
+  69:1   error  Unexpected var, use let or const instead  no-var
+  70:9   error  Expected '===' and instead saw '=='       eqeqeq
+  70:30  error  'missing35' is not defined                no-undef
+  71:1   error  Unexpected var, use let or const instead  no-var
+  72:9   error  Expected '===' and instead saw '=='       eqeqeq
+  72:30  error  'missing36' is not defined                no-undef
+  73:1   error  Unexpected var, use let or const instead  no-var
+  74:9   error  Expected '===' and instead saw '=='       eqeqeq
+  74:30  error  'missing37' is not defined                no-undef
+  75:1   error  Unexpected var, use let or const instead  no-var
+  76:9   error  Expected '===' and instead saw '=='       eqeqeq
+  76:30  error  'missing38' is not defined                no-undef
+  77:1   error  Unexpected var, use let or const instead  no-var
+  78:9   error  Expected '===' and instead saw '=='       eqeqeq
+  78:30  error  'missing39' is not defined                no-undef
+  79:1   error  Unexpected var, use let or const instead  no-var
+  80:9   error  Expected '===' and instead saw '=='       eqeqeq
+  80:30  error  'missing40' is not defined                no-undef
+
+✖ 120 problems (120 errors, 0 warnings)
+  40 errors and 0 warnings potentially fixable with the `--fix` option.
+
