@@ -6,6 +6,8 @@
 
 Portable `SKILL.md` agent skills, framework-agnostic coding standards, and opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering) for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
+[![License: MIT](https://img.shields.io/github/license/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/stargazers) [![GitHub forks](https://img.shields.io/github/forks/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/forks) [![Last commit](https://img.shields.io/github/last-commit/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/commits/main)
+
 ---
 
 Listed under AI Hub → Skills on Three.js Resources — a curated directory for Three.js AI tools.
@@ -15,6 +17,28 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 </div>
 
 ---
+
+## Quick start
+
+```bash
+git clone https://github.com/AftabIbrahimKazi/ai-dev-kit.git
+cp -r ai-dev-kit/skills ai-dev-kit/coding-standards your-project/
+```
+
+On Windows PowerShell: `Copy-Item -Recurse ai-dev-kit/skills, ai-dev-kit/coding-standards your-project/`
+
+Then open Claude Code, OpenCode, Codex or any agent that reads markdown in `your-project` and say:
+
+> read skills/README.md and install
+
+The installer copies markdown files only: no packages, no build step. Full details: [Install into a project](#install-into-a-project).
+
+**Why use it**
+
+- **Consistent sessions.** The agent loads the right skill and the right standards for each task and each file, so session ten behaves like session one.
+- **Fewer wasted tokens.** Skills load only when relevant, reads are targeted, cheap models take the cheap work, and a script finds violations so the agent does not have to.
+- **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
+- **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
 
 ## What's in the kit
 
@@ -28,14 +52,14 @@ Full catalog: [skills/README.md](skills/README.md)
 
 | Category | Covers | Representative skills |
 |---|---|---|
-| `models/claude/` | Protocols tuned to each Claude model's actual behavior | `fable-5-1`, `opus-5-5`, `sonnet-5-5`, `haiku-4-5` (current) plus `fable-5`, `opus-5`, `opus-4-8`, `sonnet-5` (previous gen), `claude-all-models` (fleet routing), `opus-as-fable`, `hooks-enforcement` (opt-in Claude Code hooks) |
+| `models/claude/` | Protocols tuned to each Claude model's actual behavior | `fable-5-1`, `opus-5-5`, `sonnet-5-5`, `haiku-5-5` (current) plus `fable-5`, `opus-5`, `opus-4-8`, `sonnet-5`, `haiku-4-5` (previous gen), `claude-all-models` (fleet routing), `opus-as-fable`, `hooks-enforcement` (opt-in Claude Code hooks) |
 | `models/opencode/` | Open-weight fleet driven through OpenCode | `opencode-all-models` (routing), GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax, Devstral, MiMo, gpt-oss, `local-small-models` (≤32B self-hosted) |
 | `workflow/` | Session/process discipline, model-independent | `intent-capture` → `plan-first` → `interpretation-checkpoint` → `pre-merge-gate` / `pre-commit` pipeline; plus `handover`, `debug-protocol`, `session-budget`, `perf-audit`, `role-session` (parallel sessions), `e2e-scaffold` |
-| `standards/` | Loads and enforces the coding-standards chain; sets comment volume | `coding-standards`, `comment-style` (none / terse / descriptive — token-saving, asked at install) |
+| `standards/` | Loads and enforces the coding-standards chain; audits a whole project against the script-checkable rules; sets comment volume | `coding-standards`, `code-audit`, `comment-style` (none / terse / descriptive — token-saving, asked at install) |
 | `memory/` | Persistent knowledge across sessions | `memory-bank` (repo-committed context/decisions), `memory-gardener` (prunes/merges learnings) |
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
-| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification) |
+| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods) |
 | `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool) |
 | `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 
@@ -93,9 +117,16 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 - **Sequential by default, parallel when you say so.** The `role-session` skill coordinates multiple parallel AI sessions — Claude Code, OpenCode, or both (role charters, atomic `mkdir` file claims, a git commit token, session ids) and switches itself off in projects without the parallel structure.
 - **Token-lean by design.** Skill descriptions are hard-capped, bodies stay under ~120 lines, read-efficiency rules are part of the standards, and the `memory-gardener` skill prunes accumulated knowledge.
 - **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
+- **Measured, not promised.** Where a claim has a number, the number and its sample size are stated: Haiku 5.5 running a written plan cost $0.049 against $0.581 for Sonnet 5.5 on six test plans (both passed all six); the audit script found the same lines as a model-led audit in 0.2 s with no tokens, where the model cost $0.026 and missed one file (one project, three rules); the output compactor shrank a verbose passing test log by 59% and failure output by about 0%. These are small samples from the author's own projects: indicative, not guarantees.
 - **Claude Code enhancements stay optional and isolated.** Where a Claude Code-only mechanism (like hook-based enforcement in `hooks-enforcement`) can mechanically assist a rule, it lives under `skills/models/claude/` as an opt-in add-on — the underlying contract in `coding-standards/ai-standards.md` works the same with or without it, on any tool.
 
 ## Recent additions
+
+- **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 46 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships six opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge` and `standards-chain`. Each wraps a tool-agnostic script or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
+- **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
+- **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
 
 - **MCP manager and free local/hosted tools.** [`mcp-manager`](skills/mcp/mcp-manager.md) is a meta skill that owns setup interviews, per-client config writing (Claude Code, OpenCode, others), MCP-first-then-fallback routing and global-first layout for every optional MCP server; adding a server is one data file. Shipped servers: Stitch UI prototyping, local image reading (Qwen3-VL), image generation with provider fallback and limit protection, and the Laya-backed file prefilter. All run from one global home (`~/.ai-dev-kit/`) and were verified in a real OpenCode session.
 - **Local decision model.** [`system1-prefilter`](skills/addons/system1-prefilter.md) now supports a free offline provider (Laya, 421M parameters) with a hardware-aware installer and a `prefilter` MCP tool; measured guidance on phrasing, checkpoint choice and thresholds is recorded in the skill.
@@ -125,6 +156,8 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
+mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain), a local marketplace; each wraps a tool-agnostic script from a skill
+tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
 coding-standards/
@@ -142,6 +175,26 @@ coding-standards/
 - New skills follow the quality bar in [skills/meta/skill-writer.md](skills/meta/skill-writer.md).
 - Standards edits follow the repo's own principles ([index.md → Principles](coding-standards/index.md)): testable, declarative, wrong/right examples mandatory. Machine-checkable rule changes update [`coding-standards/tooling/`](coding-standards/tooling/) in the same commit.
 - `learnings.md` files are gitignored — they belong to the project that earned them. Lessons worth keeping forever get promoted into skill bodies (see `memory-gardener`).
+
+## FAQ
+
+**What is an agent skill (`SKILL.md`)?** A markdown file with a short description of when it applies and the steps to follow. The agent reads the description, and loads the file only when a task matches. Every skill here is one such file.
+
+**Which AI coding tools does it work with?** Claude Code natively, plus OpenCode, Codex and any agent that reads markdown instructions. The installer detects the tool and puts the skills and the session file where that tool actually reads them (`CLAUDE.md` or `AGENTS.md`).
+
+**Does it install packages or touch my code?** No. The installer copies markdown files only. The audit script and the Claude Code mods are optional and run only when you choose them.
+
+**Can I use only the standards, or only the skills?** Yes, either folder works alone. A project that wants the standards enforced during a session needs both, because the `coding-standards` skill is what loads the chain.
+
+**How is this different from a prompt library?** Skills load on a trigger instead of sitting in every prompt, they record lessons per project, the standards are testable rules with wrong/right examples, and a script audits a codebase against them.
+
+**How do I update an install?** Pull the repository and re-run the installer. It compares each file and asks before overwriting a local change.
+
+**Is it free?** Yes, MIT licensed. Optional tools state their own limits: some run locally for free, hosted ones have free tiers or need billing.
+
+## Contributing and support
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). If the kit saves you time or tokens, a star helps other people find it.
 
 ## License
 
