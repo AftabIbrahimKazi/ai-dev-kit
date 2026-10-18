@@ -202,7 +202,8 @@ function detect(cmd, ps = false) {
   for (const toks of tokenize(cmd, ps)) {
     let i = 0;
     while (i < toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[i])) i++;
-    if (!toks[i] || path.basename(toks[i]).replace(/\.exe$/i, '') !== 'git') continue;
+    const base = toks[i] ? toks[i].split(/[\\/]/).pop() : '';
+    if (!base || base.replace(/\.exe$/i, '') !== 'git') continue;
     i++;
     while (i < toks.length && toks[i].startsWith('-')) {
       i += toks[i] === '-c' || toks[i] === '-C' ? 2 : 1;
