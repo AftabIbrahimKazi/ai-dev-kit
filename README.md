@@ -105,7 +105,7 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 
    > read skills/README.md and install
 
-3. Choose **everything** or **pick** — the installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), and reports what was installed.
+3. Choose **everything**, **pick**, **auto-detect** (scans the project and cites the signal before pinning anything), or a **stack preset** (name the stack directly — Astro, Next.js, Laravel — no scan needed). The installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), mechanically re-verifies the result (`install-kit.verify.js`), and reports what was installed — or exactly what still needs fixing before it's reported done.
 
 Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
@@ -122,6 +122,9 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 
 ## Recent additions
 
+- **Install protocol, enforced.** [`install-kit`](skills/meta/install-kit.md)'s Step 4 now runs `install-kit.verify.js`, a mechanical re-check of the actual files on disk (flat skill layout, the CommonJS `package.json` shield, the session-protocol file with its Context-code placeholder actually filled in, `comment-style`'s level actually answered, `coding-standards/index.md` present) instead of trusting the agent's own narration — the install isn't reported done while it fails. A new **Stack preset** mode lets the user name a stack directly (Astro, Next.js, Laravel) instead of waiting on Auto-detect's scan; Next.js and Laravel presets install what the kit actually has and say plainly, in the report, which framework-specific layer doesn't exist yet rather than papering over the gap.
+- **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
+- **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 46 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
 - **Optional Claude Code mods.** [`mods/`](mods/) ships seven opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain` and `output-compact`. Each wraps a tool-agnostic script or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
