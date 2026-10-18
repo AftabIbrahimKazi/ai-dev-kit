@@ -1,0 +1,8 @@
+{
+  "name": "output-compact",
+  "version": "0.1.0",
+  "description": "Runs the session-budget skill's compact.js on Bash/PowerShell stdout and stderr before the model reads them: drops ANSI codes, progress/spinner lines, passing-test lines, duplicate lines and library stack frames, while every failure-looking line survives (compact.js's own tested guarantee). No-ops below the engine's own 40-line/15%-savings floor, on a denied or errored call, or when the engine is missing. Fails open. No network. Reads env: HOME, USERPROFILE.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

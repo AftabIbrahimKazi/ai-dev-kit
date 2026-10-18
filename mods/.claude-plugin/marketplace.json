@@ -1,6 +1,6 @@
 {
   "name": "ai-dev-kit-mods",
-  "description": "Optional Claude Code mods for the ai-dev-kit: token ledger, commit and edit guards, standards checks, a debugging reminder. Mods that need more than a few rules run a tool-agnostic script from a skill.",
+  "description": "Optional Claude Code mods for the ai-dev-kit: token ledger, commit and edit guards, standards checks, a debugging reminder, output compaction. Mods that need more than a few rules run a tool-agnostic script from a skill.",
   "owner": {
     "name": "Aftab Ibrahim Kazi"
   },
@@ -34,6 +34,11 @@
       "name": "standards-chain",
       "source": "./standards-chain",
       "description": "Denies the first Edit or Write of a file until its coding-standards chain (index, discipline file, role partial, framework file) has been read, and again after a compaction. Does nothing without a coding-standards/ folder."
+    },
+    {
+      "name": "output-compact",
+      "source": "./output-compact",
+      "description": "Runs the session-budget skill's compact.js on every Bash/PowerShell result before the model reads it: drops noise, keeps every failure line, no-ops below its own savings floor or when the engine is missing."
     }
   ]
 }
