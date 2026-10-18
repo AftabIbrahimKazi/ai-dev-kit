@@ -29,6 +29,8 @@ The user can override any pin decision, but only by stating it explicitly in thi
 
 **Opt-in Claude Code mods** (`mods/` + `mod-setup`) are a sixth category: Claude Code targets only, never part of Everything/Pick/Auto-detect, never stack-scanned. Offer them only when the user asks (for example "set up mods", "track my token use"). Then install `mod-setup` and follow it in full; it owns the version check, the review of what each mod touches, and the install. A mod needs its engine script, which ships with a skill (`pre-commit`, `pre-merge-gate`, `session-budget`); Step 2 already installs those `.js` companions.
 
+**`misfire-log`** (`meta/misfire-log.md` + its two scripts) is a seventh category: never part of Everything/Pick/Auto-detect, never stack-scanned. Offer it only when the user asks (for example "track when the kit doesn't work", "log misfires"). Install the skill file and both scripts, then follow its own Setup — create `.claude/misfires.jsonl` lazily and add it to `.gitignore`. No key, no service, no other skill depends on it.
+
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):
 - **Everything** — all skills + the full coding-standards system.
