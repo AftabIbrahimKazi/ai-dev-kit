@@ -59,7 +59,7 @@ Full catalog: [skills/README.md](skills/README.md)
 | `memory/` | Persistent knowledge across sessions | `memory-bank` (repo-committed context/decisions), `memory-gardener` (prunes/merges learnings) |
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
-| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods) |
+| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods), `misfire-log` (opt-in: logs when a skill/mod/addon should have fired but didn't, for the next kit update) |
 | `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool) |
 | `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 

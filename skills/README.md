@@ -112,6 +112,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [mod-setup](meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](../mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
 | [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once or hand-picked |
 | [skill-scope](meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
+| [misfire-log](meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
 ## Installing into a new project
 

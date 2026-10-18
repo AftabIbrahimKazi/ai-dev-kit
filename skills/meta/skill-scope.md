@@ -63,11 +63,13 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 Each fires only on a specific task instance nameable in a next-task line, not a fixed property of the stack.
 
 ### Opt-in addons (never offered by default; install only on explicit request)
-`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`), `mod-setup` (+ the `mods/` folder it installs from)
+`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`), `mod-setup` (+ the `mods/` folder it installs from), `misfire-log`
 
 `mcp-manager` is the opt-in router for every MCP server: one skill, one companion file per server, chosen individually in its own setup interview. Adding a server never adds a skill or a classification row.
 
 `mod-setup` is the same for Claude Code mods (`compat: claude-code-only`): one skill, one folder per mod under `mods/`, each chosen individually after a review of what it touches. Adding a mod adds no skill and no classification row. Three mods run an engine script, a companion of a universal skill that installs with it: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`) and `budget-ledger`'s `/budget` (`session-budget`). `guard`, `debug-nudge` and `standards-chain` carry their own rules and need no engine.
+
+`misfire-log` is a standalone logging aid (one gitignored file, two scripts) — it needs no key and no service, and nothing else in the kit depends on it or degrades if it's absent.
 
 Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
 
