@@ -23,7 +23,7 @@ A mod runs with the user's permissions and sees every prompt and tool call. Inst
 Offer the list from `mods/.claude-plugin/marketplace.json` with each entry's description. Install nothing the user did not choose. Wave order for a new user: `budget-ledger` first (it measures the rest).
 
 ## Step 3 — Install the engine skills first
-Three mods run a script that ships with a skill: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`) and `budget-ledger`'s `/budget` report (`session-budget`). `guard`, `debug-nudge` and `standards-chain` need no script. Check that the skill is installed in `<project>/.claude/skills/<skill>/` or `~/.claude/skills/<skill>/`. If missing, install it with `install-kit` first. A mod whose engine is missing does nothing, by design.
+Four mods run a script that ships with a skill: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`), `budget-ledger`'s `/budget` report (`session-budget`) and `output-compact` (`session-budget`'s `compact.js`). `guard`, `debug-nudge` and `standards-chain` need no script. Check that the skill is installed in `<project>/.claude/skills/<skill>/` or `~/.claude/skills/<skill>/`. If missing, install it with `install-kit` first. A mod whose engine is missing does nothing, by design.
 
 ## Step 4 — Review before install (mandatory)
 1. Run `claude plugin validate <mods/name>` and show the `hooks:` and `calls:` lines. Explain in one sentence each what the mod can touch (files, processes, env vars).

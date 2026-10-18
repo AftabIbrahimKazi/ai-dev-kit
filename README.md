@@ -123,7 +123,7 @@ Details, including per-skill manual installs: [skills/README.md → Installing i
 ## Recent additions
 
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 46 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships six opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge` and `standards-chain`. Each wraps a tool-agnostic script or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships seven opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain` and `output-compact`. Each wraps a tool-agnostic script or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
 - **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
 - **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
@@ -156,7 +156,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain), a local marketplace; each wraps a tool-agnostic script from a skill
+mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact), a local marketplace; each wraps a tool-agnostic script from a skill
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)

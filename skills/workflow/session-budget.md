@@ -32,6 +32,7 @@ The model skills pick the gear; this skill drives it. Every rule targets the act
 ## Measure, then shrink (scripts, any tool)
 - `node <skill-root>/session-budget/report.js` reports tokens, cost, cache hit rate, the biggest tool-result sinks, re-reads of unchanged files, whole-file reads and low-cache turns. It reads the ledger written by the optional `budget-ledger` mod (Claude Code, installed with `mod-setup`; adds `/budget`). Without the mod there is no ledger.
 - Run a command that prints 150+ lines (verbose test reporters, long builds) as `node <skill-root>/session-budget/compact.js -- <command>`. The exit code is unchanged and every failure line survives; passing-test lines, progress, library stack frames and duplicates are dropped, and the full output is kept in `~/.ai-dev-kit/raw` (newest 20; `--no-save-raw` turns it off). Arguments keep their quoting; a single argument is used as the whole command line. Measured: 59% smaller on a verbose passing log, about 0% on lint or type-check failures, so use it for verbose output only.
+- The optional `output-compact` mod (Claude Code, installed with `mod-setup`) runs this same `compact.js` on every Bash/PowerShell result automatically, so savings don't depend on remembering to pipe a command through it by hand. It no-ops under `compact.js`'s own 40-line/15%-savings floor, so a short command is untouched either way.
 
 ## Session shape
 - Front-load the expensive thinking: plan once at high effort, execute the plan at working effort.
