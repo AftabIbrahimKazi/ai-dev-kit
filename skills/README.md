@@ -110,7 +110,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [skill-writer](meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
 | [mod-writer](meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](../mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
-| [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once or hand-picked |
+| [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `verify.js` companion mechanically re-checks the result before the install is reported done |
 | [skill-scope](meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 | [misfire-log](meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
