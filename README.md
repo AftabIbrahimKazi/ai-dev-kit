@@ -159,6 +159,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 **Good to know**
 - **Tested:** all seven kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
+- **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
 - **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
 - **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/hooks`, by git hooks (every tool).
 
