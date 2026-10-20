@@ -57,7 +57,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [interpretation-checkpoint](workflow/interpretation-checkpoint.md) | Files/Changes/Assumptions breakdown for correction on multi-file, multi-parameter tasks |
 | [session-budget](workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation; `report.js` (ledger report) and `compact.js` (verbose-output shrinker) companions |
 | [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit; `edit-check.js` companion runs the mechanical checks |
-| [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, secrets, message format, version bump; `check.js` companion runs the mechanical checks |
+| [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, secrets, message format, version bump; `check.js` companion runs the mechanical checks; `install-hook.js` installs it as git hooks |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
 | [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, atomic file claims, git token, session ids (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
 | [e2e-scaffold](workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
@@ -73,7 +73,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [memory-bank](memory/memory-bank.md) | Repo-committed project memory — decisions, context, solved mysteries |
-| [memory-gardener](memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds |
+| [memory-gardener](memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds; `stale.js` companion lists bullets that name deleted files |
 | [skill-ablation](memory/skill-ablation.md) | Periodic archive-and-run-bare pass — restore only instructions real work proves are missing |
 
 ## stack/ — technology-specific

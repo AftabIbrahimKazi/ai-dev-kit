@@ -35,7 +35,7 @@ The installer copies markdown files only: no packages, no build step. Full detai
 
 **Why use it**
 
-- **Consistent sessions.** The agent loads the right skill and the right standards for each task and each file, so session ten behaves like session one.
+- **Consistent sessions.** The standards chain loads for each file you edit (the optional `standards-chain` mod makes that mechanical), and skills load when the agent recognises their trigger, so session ten behaves like session one. Skill loading is model-judged, not guaranteed; the mods are what enforce the critical gates.
 - **Fewer wasted tokens.** Skills load only when relevant, reads are targeted, cheap models take the cheap work, and a script finds violations so the agent does not have to.
 - **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
 - **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
@@ -44,7 +44,7 @@ The installer copies markdown files only: no packages, no build step. Full detai
 
 The kit is two independent systems that share one install path. `skills/` teaches an AI coding agent *how to work* — session discipline, model-specific behavior, memory, coordination. `coding-standards/` teaches it *what correct code looks like* for this project — language rules, file-role conventions, framework overrides. Either can be adopted alone; together, the `coding-standards` skill is what loads and enforces the standards chain during a session, so a project that wants enforcement needs both folders.
 
-Every skill is a single portable markdown file with `name` + `description` frontmatter — the description is trigger-rich ("trigger when…") so it loads only when relevant — and reads a project-local, gitignored `learnings.md` sidecar at start and appends a lesson at end, so this repo stays the clean upstream while each install compounds its own experience. Every standard is testable and declarative, with wrong/right examples wherever a rule could be misread, and flags a gap (`RULE AI-12`) rather than inventing a rule where the standards are silent. They interlock at one seam: the `install-kit` skill installs both in one pass, and the `coding-standards` skill is what actually loads and walks the standards chain during a session — without it, `coding-standards/` is just reference documentation.
+Every skill is a single portable markdown file with `name` + `description` frontmatter — the description is situation-first ("use whenever … load this BEFORE …") so it loads only when relevant — and reads a project-local, gitignored `learnings.md` sidecar at start and appends a lesson at end, so this repo stays the clean upstream while each install compounds its own experience. Every standard is testable and declarative, with wrong/right examples wherever a rule could be misread, and flags a gap (`RULE AI-12`) rather than inventing a rule where the standards are silent. They interlock at one seam: the `install-kit` skill installs both in one pass, and the `coding-standards` skill is what actually loads and walks the standards chain during a session — without it, `coding-standards/` is just reference documentation.
 
 ### `skills/` — the self-improving skills library
 
@@ -109,6 +109,59 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 
 Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
+## Slash commands
+
+Slash commands are shortcuts **you** type; the agent never runs them on its own. Anything typed after the name is passed to the command (`/audit src/components`). Most of the kit needs no command: the mods and git hooks fire by themselves, and skills load when the agent recognises their trigger. Reach for a command at the moments below. Type `/kit` in a session for this table.
+
+### Most useful commands
+
+| Command | Use it when | How to use it |
+|---|---|---|
+| `/commit-check` | You are about to commit | `/commit-check` or `/commit-check --message "feat: add nav"`. Reports secrets, secret files, stray files and message format; a BLOCK means do not commit. |
+| `/audit` | You want a health check of the whole project | `/audit`, `/audit src/` or `/audit --standard css,html`. Prints counts per rule and the worst files. |
+| `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
+| `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
+| `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
+| `/handover` | Starting or ending a session | `/handover`. Resume from, or write, `handover.md`. |
+| `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
+| `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
+
+### All commands
+
+**Kit commands** (templates in [`skills/commands/`](skills/commands/); installed on request by `install-kit` into `.claude/commands/` or `.opencode/commands/`; each runs a kit script and hands the output to the agent, so no skill has to be matched first):
+
+| Command | What it does | Arguments | Needs |
+|---|---|---|---|
+| `/audit` | Standards audit of the project | script options: a path, `--standard`, `--rule`, `--top N` | `code-audit` |
+| `/commit-check` | Mechanical pre-commit check of the staged change | `--message "…"`, `--all` | `pre-commit` |
+| `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
+| `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
+| `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
+| `/hooks` | Shows git hook status and offers to install them | none | `pre-commit` |
+| `/kit` | This cheat sheet | optional: describe your situation | none |
+
+**Mod command** (Claude Code, from the `budget-ledger` mod): `/budget` shows the same ledger report.
+
+**Skills by name** (Claude Code turns every installed skill into `/<skill-name> <free text>`, which loads it on purpose instead of waiting for the agent to match it):
+
+| Group | Commands | Use when |
+|---|---|---|
+| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover`, `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session` | the situation in each skill's description |
+| Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
+| Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
+| Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
+| Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
+| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
+| OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
+
+**Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
+
+**Good to know**
+- **Tested:** all seven kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
+- **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
+- **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
+- **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/hooks`, by git hooks (every tool).
+
 ## Key ideas
 
 - **Self-improving skills.** Every skill reads a `learnings.md` sidecar at start and appends one distilled lesson at end. Learnings are per-project (never committed here, never copied by the installer) — each project's copies adapt to that project.
@@ -159,6 +212,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /hooks, /kit); each runs a kit script
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact), a local marketplace; each wraps a tool-agnostic script from a skill
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/

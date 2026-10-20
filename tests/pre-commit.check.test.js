@@ -162,3 +162,11 @@ t('cli: --detect --shell powershell parses PowerShell', () => {
   const j = JSON.parse(spawnSync('node', [SCRIPT, '--detect', "git commit -m 'fix: it''s ok'", '--shell', 'powershell'], { encoding: 'utf8' }).stdout);
   assert.deepStrictEqual(j.messages, ["fix: it's ok"]);
 });
+t('cli: --no-fail prints the BLOCK report but exits 0 (slash commands abort on a non-zero exit)', () => {
+  const d = repo(); put(d, 'k.js', `const k = "${KEY}";\n`); sh(d, 'add', '.');
+  const hard = spawnSync('node', [SCRIPT, '--staged', '--cwd', d], { encoding: 'utf8' });
+  const soft = spawnSync('node', [SCRIPT, '--staged', '--no-fail', '--cwd', d], { encoding: 'utf8' });
+  assert.strictEqual(hard.status, 1);
+  assert.strictEqual(soft.status, 0);
+  assert.ok(soft.stdout.includes('BLOCK') && soft.stdout.includes('Anthropic key'));
+});

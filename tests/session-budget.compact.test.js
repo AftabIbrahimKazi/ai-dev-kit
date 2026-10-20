@@ -105,6 +105,13 @@ t('cli: stdin mode and run mode (keeps the exit code, merges stderr)', () => {
   assert.strictEqual(bad.status, 7); assert.ok(bad.stdout.includes('oops'));
   assert.strictEqual(spawnSync('node', [SCRIPT, '--'], { encoding: 'utf8', env: cliEnv() }).status, 2);
 });
+t('cli --report-exit: always exits 0 and prints the real exit code last, failure lines kept', () => {
+  const bad = spawnSync('node', [SCRIPT, '--report-exit', '--', 'node', '-e', "console.error('boom FAIL');process.exit(7)"], { encoding: 'utf8', env: cliEnv() });
+  assert.strictEqual(bad.status, 0); assert.ok(bad.stdout.includes('boom FAIL'));
+  assert.strictEqual(bad.stdout.trim().split('\n').pop(), 'exit code: 7');
+  const ok = spawnSync('node', [SCRIPT, '--report-exit', '--', 'node', '-e', 'console.log(1)'], { encoding: 'utf8', env: cliEnv() });
+  assert.strictEqual(ok.status, 0); assert.strictEqual(ok.stdout.trim().split('\n').pop(), 'exit code: 0');
+});
 t('cli run mode: an argument with spaces stays one argument, and no deprecation warning is printed', () => {
   const r = spawnSync('node', [SCRIPT, '--', 'node', '-e', 'console.log(JSON.stringify(process.argv.slice(1)))', 'a b', 'c'], { encoding: 'utf8', env: cliEnv() });
   assert.strictEqual(r.status, 0, r.stderr);
