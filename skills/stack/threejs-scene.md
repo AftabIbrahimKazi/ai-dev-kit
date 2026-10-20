@@ -1,6 +1,6 @@
 ---
 name: threejs-scene
-description: Three.js discipline — shader pitfalls, disposal, scroll cameras, textures, render-loop hygiene. Trigger on scenes, meshes, shaders, materials, cameras, scroll/animation bindings, or visual glitches.
+description: Use whenever working on Three.js scenes, meshes, shaders, materials, cameras, scroll/animation bindings, or visual glitches. Load this BEFORE editing scene code.
 ---
 
 # Three.js Scene — Hard-Won Patterns

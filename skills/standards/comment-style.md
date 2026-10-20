@@ -1,6 +1,6 @@
 ---
 name: comment-style
-description: Set how much the AI comments code it writes — none (default), terse, or descriptive — to cut token waste. Trigger whenever writing or editing code, or when the user asks to change comment style, verbosity, or add/remove comments.
+description: Use whenever writing or editing code, or when the user asks to change comment style or verbosity, or to add or remove comments. Load this BEFORE writing code; the default is no comments.
 ---
 
 # Comment Style — Per-Project Comment Level

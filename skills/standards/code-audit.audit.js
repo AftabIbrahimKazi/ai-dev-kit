@@ -517,6 +517,7 @@ function main() {
     else if (v === '--commits') opt.commits = Math.max(1, Number(a[++i]) || 200);
     else if (v === '--sections') opt.sections = Math.max(1, Number(a[++i]) || 6);
     else if (v === '--audit') continue; // accepted so the old edit-check spelling still works
+    else if (v === '--no-fail') opt.noFail = true; // always exit 0: a slash command aborts on a non-zero exit
     else if (v.startsWith('--')) { console.log(`unknown option ${v}; see the header of this file`); process.exitCode = 2; return; }
     else opt.paths.push(v);
   }
@@ -537,7 +538,7 @@ function main() {
   if (json) console.log(JSON.stringify(res, null, 2));
   else console.log(report(res, opt.baseline ? null : base, opt, cwd) + (opt.baseline ? `\nbaseline saved to ${norm(BASELINE)}` : ''));
   // exit 1 only when counts rose against a saved baseline, so it can gate CI without failing on old debt
-  if (base && !opt.baseline) {
+  if (base && !opt.baseline && !opt.noFail) {
     process.exitCode = Object.entries(t).some(([r, byFile]) => Object.entries(byFile).some(([f, l]) => l.length > ((base.rules[r] || {})[f] || 0))) ? 1 : 0;
   }
 }

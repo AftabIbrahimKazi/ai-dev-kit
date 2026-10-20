@@ -1,6 +1,6 @@
 ---
 name: install-kit
-description: Install the skills library and/or coding-standards into a project — all in one go or hand-picked; pure file copying, no packages. Trigger on install skills, set up skills/standards, add my skills, or a project missing them.
+description: Use whenever the user asks to install skills or standards, "set up skills" or "add my skills", or a project lacks them. Load this BEFORE copying any file.
 ---
 
 # Install Kit — Skills & Standards Into Any Project
@@ -30,6 +30,10 @@ The user can override any pin decision, but only by stating it explicitly in thi
 **Opt-in Claude Code mods** (`mods/` + `mod-setup`) are a sixth category: Claude Code targets only, never part of Everything/Pick/Auto-detect, never stack-scanned. Offer them only when the user asks (for example "set up mods", "track my token use"). Then install `mod-setup` and follow it in full; it owns the version check, the review of what each mod touches, and the install. A mod needs its engine script, which ships with a skill (`pre-commit`, `pre-merge-gate`, `session-budget`); Step 2 already installs those `.js` companions.
 
 **`misfire-log`** (`meta/misfire-log.md` + its two scripts) is a seventh category: never part of Everything/Pick/Auto-detect, never stack-scanned. Offer it only when the user asks (for example "track when the kit doesn't work", "log misfires"). Install the skill file and both scripts, then follow its own Setup — create `.claude/misfires.jsonl` lazily and add it to `.gitignore`. No key, no service, no other skill depends on it.
+
+**Opt-in slash commands and git hooks** are an eighth category: never part of Everything/Pick/Auto-detect. Offer only when asked ("add slash commands", "git hook", "enforce this for human commits"). Both run the kit's own scripts and need that script's skill installed first.
+- **Commands** (`commands/*.md` templates): Claude Code → `<target>/.claude/commands/`, OpenCode → `<target>/.opencode/commands/`; Codex/agents.md tools have no command folder, so skip. Copy a template only when its script's skill is installed (`audit` needs `code-audit`; `commit-check` and `hooks` need `pre-commit`; `token-report` and `quiet` need `session-budget`; `stale` needs `memory-gardener`; `kit` needs nothing). Replace `{{skill-root}}` with the routed skill root as a relative path with forward slashes. Never overwrite an existing command file. The user then types `/audit`, `/commit-check`, `/token-report`, `/quiet`, `/stale`, `/hooks` or `/kit`; the script output is injected into the prompt, so no skill has to be matched first.
+- **Git hooks** (works in every tool, and for human commits): after `pre-commit` is installed, ask once, then run `node <skill-root>/pre-commit/install-hook.js`. It refuses to overwrite a hook it did not write; `uninstall` removes only its own. Tell the user `--no-verify` skips hooks.
 
 ## Step 1 — Offer the modes
 Ask exactly one question (skip it if the user already said which):

@@ -1,6 +1,6 @@
 ---
 name: plan-first
-description: For tasks touching 3+ files or ambiguous scope — enumerate files, ≤5-line plan, confirm, execute without pausing. In plan mode on big or repetitive work, also write the plan for a cheaper executor model and verify its result. Trigger before multi-file features, refactors, redesigns, or tasks with two plausible interpretations.
+description: Use whenever a task touches 3+ files, has ambiguous scope, or bundles several deliverables (feature, refactor, redesign), or plan mode is on for big or repetitive work. Load this BEFORE the first edit.
 ---
 
 # Plan First — Cheap Insurance Before Expensive Runs

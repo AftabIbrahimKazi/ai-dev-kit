@@ -1,6 +1,6 @@
 ---
 name: role-session
-description: Parallel-session lane protocol — role charters, file-lock claims, git token queue, per-role handover; sequential fallback without handover/ folder. Trigger when the user assigns a role ("you are the tester", "frontend session") or a handover/ board/locks structure exists.
+description: Use whenever the user assigns a role ("you are the tester", "frontend session") or a handover/ board or locks folder exists. Load this BEFORE touching any file in a parallel-session project.
 ---
 
 # Role Session — One Lane of the GPU

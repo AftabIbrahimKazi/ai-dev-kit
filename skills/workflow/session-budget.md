@@ -1,6 +1,6 @@
 ---
 name: session-budget
-description: Token discipline — grep before read, targeted ranges, no re-reads, no restating code, cheap-model delegation. Trigger at session start on long tasks, when context fills, or on mention of tokens, cost, budget.
+description: Use whenever the user mentions tokens, token usage, cost, budget, expense or a filling context, or a long task starts. Load this BEFORE answering or reading files.
 ---
 
 # Session Budget — Drive Efficiently

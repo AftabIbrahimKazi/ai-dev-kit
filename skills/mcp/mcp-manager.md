@@ -1,6 +1,6 @@
 ---
 name: mcp-manager
-description: Opt-in MCP servers — setup interview, per-tool config wiring, trigger routing, fallback to the normal flow. Trigger on add/set up/configure an MCP, Stitch, "MCP first", MCP not working, or a task a configured server covers.
+description: Use whenever the user asks to add, set up or configure an MCP, mentions Stitch or "MCP first", an MCP is not working, or a task a configured server covers. Load this BEFORE wiring or calling any MCP.
 ---
 
 # MCP Manager — Opt-In MCP Servers, One Set of Rules

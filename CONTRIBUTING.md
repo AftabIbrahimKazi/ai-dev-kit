@@ -9,7 +9,7 @@ Thanks for helping. This repository is the canonical home of the skills and stan
 
 ## Adding or changing a skill
 
-- Follow the quality bar in [skills/meta/skill-writer.md](skills/meta/skill-writer.md): a trigger-rich `description`, checkable rules, a short body.
+- Follow the quality bar in [skills/meta/skill-writer.md](skills/meta/skill-writer.md): a situation-first `description` ("Use whenever … Load this BEFORE …"), checkable rules, a short body.
 - File layout is `skills/<category>/<name>.md`; a script or extra file is a companion named `<name>.<companion>.<ext>`.
 - Update together: `skills/README.md`, the root `README.md`, and `skills/meta/skill-scope.md` (where the skill is classified).
 - A rename or merge needs a row in [migrations/RENAMES.md](migrations/RENAMES.md).

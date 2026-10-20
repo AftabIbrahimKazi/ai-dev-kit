@@ -1,6 +1,6 @@
 ---
 name: skill-writer
-description: Write skills to the library's quality bar — trigger-rich descriptions, checkable rules, self-improvement loop, token-lean. Trigger when creating, reviewing, or improving a skill / SKILL.md.
+description: Use whenever creating, reviewing, improving or rewriting the description of a skill or SKILL.md. Load this BEFORE writing or editing any skill file.
 ---
 
 # Skill Writer — Meta-Skill
@@ -36,10 +36,12 @@ Most of this library works on any markdown-reading agent — that's the point of
 - `install-kit` reads `compat` at install time (see its Step 2) and flags/skips accordingly — a skill without this field is assumed to work everywhere, so leaving it off a genuinely tool-specific skill silently breaks that gate.
 
 ## Description rules (the highest-leverage 2 lines)
-The description is the ONLY thing the model sees when deciding to load the skill. It must contain:
-1. **What it does** (one clause),
-2. **Explicit triggers** — the words/situations that should fire it: "Trigger when …" listing concrete verbs, nouns, and user phrasings,
-3. Scope note if relevant ("Project-agnostic" / "any Three.js project").
+The description is the ONLY thing the model sees when deciding to load the skill. Write it in this order:
+1. **Situation first** — open with `Use whenever …` and the situations that should fire it, in the user's own words (concrete verbs, nouns, phrasings, including the symptom, not just the topic: "a failing build, cause unknown", not "debugging").
+2. **Load instruction** — end that clause with `Load this BEFORE <the action it governs>.` Without it the model answers from general knowledge and skips the skill.
+3. **What it does** — one short clause after, only if the situations do not already imply it.
+4. Scope note if relevant ("any Three.js project").
+A description that opens with what the skill *is* ("Token discipline — grep before read…") reads as a topic label and loses to the model's own judgement. Measured 2026-10-20: with only 4 skills installed, situation-first descriptions with a load instruction loaded in 8 of 8 runs against 5 of 8 for what-it-is-first. With the full 28-skill set the gain vanished: 6 of 14 right loads either way (session-budget went from 0 to 2 of 2, handover from 2 to 0 of 2, a failing-build prompt never loaded debug-protocol). Treat the shape as neutral-to-helpful, not a fix; competition between skills and the model's own judgement dominate, and n=2 per prompt is too small to rank wordings. Re-measure before claiming more.
 A beautiful skill with a vague description is dead weight — it never loads.
 **Hard cap: ~40 words.** Descriptions load into EVERY session whether the skill fires or not — they are the library's only always-on cost. Spend the budget on trigger words, never on prose ("Use X to its fullest", "Project-agnostic", "self-improvement loop" are padding — cut them).
 
@@ -55,7 +57,7 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - **The self-improvement loop is mandatory:** read `learnings.md` at start, append one dated, concrete, mergeable bullet at end. This is what makes the library compound.
 
 ## Review checklist (for existing skills)
-- [ ] Description has explicit triggers
+- [ ] Description opens with `Use whenever …` (situations in the user's words) and carries a `Load this BEFORE …` instruction
 - [ ] Every rule checkable; thresholds numeric
 - [ ] No project-specific hardcoding
 - [ ] Self-improvement loop present

@@ -1,6 +1,6 @@
 ---
 name: perf-audit
-description: Ranked web performance audit — bundle size, asset weight, loading strategy, render thrash, 3D extras. Trigger on performance, slowness, bundle size, Lighthouse, page weight, or pre-release.
+description: Use whenever the user raises performance, slowness, bundle size, Lighthouse or page weight on a web project, or a pre-release check. Load this BEFORE auditing or optimizing.
 ---
 
 # Perf Audit — Measure, Rank, Fix the Top Item

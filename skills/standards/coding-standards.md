@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Load and enforce the layered coding-standards/ chain (global → file-role partial → framework override) before editing. Trigger before editing/creating CSS, HTML, JS/TS, or framework files in a project with coding-standards/, or on mention of standards, conventions, compliance.
+description: Use whenever about to edit or create CSS, HTML, JS/TS or framework files in a project with a coding-standards/ folder, or when standards, conventions or compliance come up. Load this BEFORE the first edit.
 ---
 
 # Coding Standards — Load the Chain, Then Edit

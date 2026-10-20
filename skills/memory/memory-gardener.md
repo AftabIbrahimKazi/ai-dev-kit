@@ -1,6 +1,6 @@
 ---
 name: memory-gardener
-description: Prune and merge learnings.md files, memory-bank, handover notes, and memory indexes so knowledge compounds without bloat. Trigger on clean/garden/prune skills or memory, when a learnings.md exceeds ~30 bullets, or when a handover file exceeds 120 lines.
+description: Use whenever the user asks to clean, garden or prune skills or memory, a learnings.md exceeds ~30 bullets, or a handover file exceeds 120 lines. Load this BEFORE deleting or merging notes.
 ---
 
 # Memory Gardener — Keep the Compounding Compounding
@@ -13,6 +13,9 @@ Self-improving skills only work if their learnings stay short, true, and dedupli
 
 ## Scope
 Glob for every `learnings.md` under the skills directories (`<skill-root>/*/`), the project's `memory-bank/` (INDEX.md + entries — see the `memory-bank` skill), **the project's handover notes (`handover.md`, or `handover/<role>.md` + `handover/board.md` in parallel mode — see the `handover` skill)**, plus the user's persistent memory index if present. Report per-file sizes first; garden the files over ~15 bullets, over the handover ceiling, or explicitly named.
+
+## Find stale bullets first (script, any tool)
+Run `node <skill-root>/memory-gardener/stale.js` from the project root before reading anything. It lists bullets that name a file which no longer exists, with file and line, and never edits. Treat each as a candidate: delete it when the lesson was only about that file, keep or rewrite it when the lesson still holds in general. Do not read the clean files; the report replaces that pass.
 
 ## Gardening handover notes (highest-value target)
 Handover is loaded **in full at every session start**, so bloat there is charged to every future session — unlike a learnings file, which is read only when its skill runs. Treat it as the priority.

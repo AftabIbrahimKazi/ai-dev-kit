@@ -1,6 +1,6 @@
 ---
 name: code-audit
-description: Project-wide audit of the coding-standards rules that a script can check (CSS, HTML, JS/TS, page SEO/a11y/perf basics, git history, versioning). Trigger on a cleanup, audit, retrofit or review task over a whole project or folder, an old or multi-dev codebase, or "find all violations of ...".
+description: Use whenever the user asks for a cleanup, audit, retrofit or review across a whole project or folder, an old or multi-dev codebase, or "find all violations of ...". Load this BEFORE reading files; it runs a script.
 compat: node
 ---
 

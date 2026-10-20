@@ -1,6 +1,6 @@
 ---
 name: interpretation-checkpoint
-description: Trigger on tasks touching 2+ files AND changing 2+ distinct parameters/aspects — show a structured Files/Changes/Assumptions/Non-goals breakdown for correction before editing. Skip when it's one change mechanically repeated across many files.
+description: Use whenever a task touches 2+ files AND changes 2+ distinct parameters or aspects. Load this BEFORE the first edit; skip it for one change repeated mechanically across files.
 ---
 
 # Interpretation Checkpoint — Verify the Read Before Writing

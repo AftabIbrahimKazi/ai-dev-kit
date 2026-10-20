@@ -1,6 +1,6 @@
 ---
 name: agent-usage
-description: Default-never policy for the Agent tool — two scope-anchored exceptions, an approval gate, and efficiency rules for chained/multi-agent patterns. Trigger every time an Agent call is being considered, for any task.
+description: Use whenever an Agent (subagent) call is being considered, for any task. Load this BEFORE spawning any agent; the default is never, with two scope-anchored exceptions and an approval gate.
 ---
 
 # Agent Usage — Default Off, Judged Exceptions

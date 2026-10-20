@@ -1,6 +1,6 @@
 ---
 name: skill-ablation
-description: Periodically archive the session-protocol file/skills/hooks, run real work with none of it, restore only what proves missing. Trigger on "ablation", "delete protocol", "run bare", "prune skills", a major model upgrade, or ~6 months since last run.
+description: Use whenever the user mentions ablation, "delete protocol", "run bare" or "prune skills", after a major model upgrade, or ~6 months since the last run. Load this BEFORE archiving any protocol or skill.
 ---
 
 # Skill Ablation — Prove the Scaffolding Still Earns Its Keep

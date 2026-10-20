@@ -1,6 +1,6 @@
 ---
 name: e2e-scaffold
-description: Scaffold a reusable Playwright fixtures/config/smoke-test layer once per project. Trigger on "set up e2e/playwright testing", "add playwright", or before the first Playwright spec in a project without one.
+description: Use whenever the user asks to set up e2e or Playwright testing, or a first Playwright spec is about to be written in a project without a fixtures layer. Load this BEFORE writing any spec.
 ---
 
 # E2E Scaffold — Write the Plumbing Once, Reuse It Forever

@@ -1,6 +1,6 @@
 ---
 name: shopify-toolkit-install
-description: Pull Shopify's own AI toolkit skills live from their repo into a Shopify project's skill root — never copied into or maintained by ai-dev-kit. Trigger on "setup for shopify", "install shopify skills", "shopify ai toolkit".
+description: Use whenever the user says "setup for shopify", "install shopify skills" or "shopify ai toolkit". Load this BEFORE fetching anything.
 ---
 
 # Shopify Toolkit Install — Live Pull, Not a Fork

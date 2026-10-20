@@ -1,6 +1,6 @@
 ---
 name: debug-protocol
-description: Disciplined debugging — reproduce first, one hypothesis, cheapest disproof, one change at a time. Trigger when hunting a bug, regression, unexpected behavior, "why is this broken", or after two failed fixes.
+description: Use whenever something fails, errors or behaves unexpectedly and the cause is unknown: a bug, regression, failing build or test, "why is this broken", or after two failed fixes. Load this BEFORE investigating or editing.
 ---
 
 # Debug Protocol — No Shotgun Edits

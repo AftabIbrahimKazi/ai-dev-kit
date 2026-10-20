@@ -1,6 +1,6 @@
 ---
 name: mode-kernel
-description: Central decision table for how a stop-and-wait gate behaves per Claude Code session mode (normal, autonomous/no-pause, planning, background). Trigger whenever agent-usage, debug-protocol, coding-standards, or perf-audit is about to apply its gate outside plain interactive mode.
+description: Use whenever a stop-and-wait gate (agent-usage, debug-protocol, coding-standards, perf-audit) is about to apply outside plain interactive mode: autonomous, planning or background. Load this BEFORE pausing or asking.
 ---
 
 # Mode Kernel — Gate Behavior Per Session Mode
