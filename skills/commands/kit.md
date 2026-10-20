@@ -12,7 +12,8 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Something fails, cause unknown | `/debug-protocol <what happened>` |
 | Big or many-file task | `/plan-first <task>` |
 | Vague request | `/intent-capture <request>` |
-| Start or end a session | `/handover` |
+| Start a session | `/resume` |
+| End a session | `/wrap-up` (optional: the next task) |
 | Memory notes may be out of date | `/stale` |
 | Check or install git hooks | `/hooks` |
 | Set up a project | `/install-kit` |
