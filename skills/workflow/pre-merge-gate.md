@@ -1,6 +1,6 @@
 ---
 name: pre-merge-gate
-description: Self-check a change against loaded standards before handoff or commit — diff scoped to files actually touched. Trigger before "done," "ready for review," a commit, or a role-session handoff.
+description: Use whenever a change is about to be called done, ready for review, handed off or committed. Load this BEFORE saying done or committing.
 ---
 
 # Pre-Merge Gate — Check Your Own Diff Before Handing It Off

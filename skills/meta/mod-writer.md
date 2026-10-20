@@ -1,6 +1,6 @@
 ---
 name: mod-writer
-description: Write Claude Code mods (function-hook plugins) to the kit's bar — mod vs script vs hook choice, safety rules, validate/test loop. Trigger when creating, reviewing, or improving a mod or anything in mods/.
+description: Use whenever creating, reviewing or improving a Claude Code mod or anything in mods/. Load this BEFORE writing or editing mod code.
 compat: claude-code-only
 ---
 

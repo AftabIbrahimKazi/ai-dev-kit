@@ -1,6 +1,6 @@
 ---
 name: skill-scope
-description: Canonical skill classification — permanent-pinned (universal or stack-conditional), per-session archivable, opt-in addon. Trigger when classifying, installing, pinning or archiving a skill. Read by install-kit and handover; edit here only.
+description: Use whenever classifying, installing, pinning or archiving a skill. Load this BEFORE changing any skill's status; edit the classification here only.
 metadata:
   type: reference
 ---
@@ -63,7 +63,7 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 Each fires only on a specific task instance nameable in a next-task line, not a fixed property of the stack.
 
 ### Opt-in addons (never offered by default; install only on explicit request)
-`system1-prefilter`, `mcp-manager` (+ its per-server companions, e.g. `stitch`), `mod-setup` (+ the `mods/` folder it installs from), `misfire-log`
+`system1-prefilter`, the `commands/` slash-command templates and `pre-commit`'s `install-hook.js` (both offered only on request), `mcp-manager` (+ its per-server companions, e.g. `stitch`), `mod-setup` (+ the `mods/` folder it installs from), `misfire-log`
 
 `mcp-manager` is the opt-in router for every MCP server: one skill, one companion file per server, chosen individually in its own setup interview. Adding a server never adds a skill or a classification row.
 

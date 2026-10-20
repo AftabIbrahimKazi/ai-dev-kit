@@ -1,6 +1,6 @@
 ---
 name: astro-page
-description: Convention-driven Astro scaffolding — discover project conventions, mirror the nearest sibling, verify. Trigger when adding an Astro page, component, overlay, entry script, or wiring CSS/TS into an Astro site.
+description: Use whenever adding an Astro page, component, overlay or entry script, or wiring CSS/TS into an Astro site. Load this BEFORE scaffolding.
 ---
 
 # Astro Page — Convention-Driven Scaffolding

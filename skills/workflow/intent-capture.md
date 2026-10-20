@@ -1,6 +1,6 @@
 ---
 name: intent-capture
-description: Restate a request as goal + constraints + done-when before planning or editing. Trigger when a request is vague, has two+ plausible readings, or names no acceptance criterion.
+description: Use whenever a request is vague, has two or more plausible readings, or names no acceptance criterion ("make it better", "clean this up"). Load this BEFORE planning or editing.
 ---
 
 # Intent Capture — Pin the Ask Before Acting

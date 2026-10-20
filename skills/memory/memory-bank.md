@@ -1,6 +1,6 @@
 ---
 name: memory-bank
-description: Repo-committed project memory — decisions, context, solved mysteries as distilled one-fact files; recall before related work. Trigger when starting work in a previously-touched area, after solving something non-obvious, on lasting decisions, or "remember this" / "why did we do X".
+description: Use whenever starting work in a previously-touched area, after solving something non-obvious, on a lasting decision, or on "remember this" / "why did we do X". Load this BEFORE answering or recording.
 ---
 
 # Memory Bank — Durable Project Knowledge
