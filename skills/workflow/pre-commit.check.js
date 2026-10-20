@@ -238,6 +238,7 @@ function main() {
   const a = process.argv.slice(2);
   const opt = { mode: 'staged' };
   let json = false;
+  let noFail = false;
   for (let i = 0; i < a.length; i++) {
     const k = a[i];
     if (k === '--json') json = true;
@@ -245,6 +246,7 @@ function main() {
     else if (k === '--all') opt.mode = 'all';
     else if (k === '--push') opt.mode = 'push';
     else if (k === '--files') opt.files = a[++i].split(',').filter(Boolean);
+    else if (k === '--no-fail') noFail = true; // always exit 0: a slash command aborts on a non-zero exit
     else if (k === '--message') opt.message = a[++i];
     else if (k === '--message-file') opt.message = fs.readFileSync(a[++i], 'utf8');
     else if (k === '--cwd') opt.cwd = a[++i];
@@ -256,7 +258,7 @@ function main() {
   }
   const res = check(opt);
   console.log(json ? JSON.stringify(res, null, 2) : report(res));
-  process.exitCode = res.findings.some((f) => f.sev === 'BLOCK') ? 1 : 0;
+  process.exitCode = !noFail && res.findings.some((f) => f.sev === 'BLOCK') ? 1 : 0;
 }
 
 if (require.main === module) main();

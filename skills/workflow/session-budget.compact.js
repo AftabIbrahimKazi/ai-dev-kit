@@ -6,6 +6,7 @@
 //   node compact.js -- npm test                  run the command, print compacted output, exit with its code
 //   node compact.js -- "npm test -- -t 'a b'"    one argument is used as the whole command line, as typed
 //   options: --max N (line budget, default 150)  --save-raw DIR  --no-save-raw
+//            --report-exit  always exit 0 and print "exit code: N" last (for slash commands, where a non-zero exit aborts the command)
 //   When output is compacted, the full text is kept in ~/.ai-dev-kit/raw (AI_DEV_KIT_HOME overrides), newest 20.
 //
 // Contract: every line that looks like a failure survives (see FAILURE). Only these are dropped or merged:
@@ -113,6 +114,7 @@ function main() {
     if (own[i] === '--max') opts.max = Number(own[++i]);
     else if (own[i] === '--save-raw') opts.saveRaw = own[++i];
     else if (own[i] === '--no-save-raw') opts.saveRaw = null;
+    else if (own[i] === '--report-exit') opts.reportExit = true;
   }
   if (dd !== -1) {
     const cmd = a.slice(dd + 1);
@@ -124,7 +126,11 @@ function main() {
     child.stdout.on('data', (d) => { buf += d; });
     child.stderr.on('data', (d) => { buf += d; });
     child.on('error', (e) => { console.error('compact: ' + e.message); process.exitCode = 127; });
-    child.on('close', (code) => { process.stdout.write(finish(buf, opts) + '\n'); process.exitCode = code == null ? 1 : code; });
+    child.on('close', (code) => {
+      const c = code == null ? 1 : code;
+      process.stdout.write(finish(buf, opts) + '\n');
+      if (opts.reportExit) process.stdout.write(`exit code: ${c}\n`); else process.exitCode = c;
+    });
     return;
   }
   let buf = '';

@@ -1,6 +1,6 @@
 ---
 name: mod-setup
-description: Install, review, enable and remove the kit's optional Claude Code mods safely — version and surface check, validate review, engine skills, consent. Trigger on install mods, set up budget-ledger, enable a mod, mods not loading, or remove a mod.
+description: Use whenever the user asks to install, enable, review or remove mods, set up budget-ledger, or mods are not loading. Load this BEFORE running any plugin command.
 compat: claude-code-only
 ---
 
@@ -20,10 +20,12 @@ A mod runs with the user's permissions and sees every prompt and tool call. Inst
 3. Mods off? If `disableAllHooks` is true, `--safe-mode`/`--bare` is used, or managed settings block mods, report that and stop.
 
 ## Step 2 — Pick mods
-Offer the list from `mods/.claude-plugin/marketplace.json` with each entry's description. Install nothing the user did not choose. Wave order for a new user: `budget-ledger` first (it measures the rest).
+Offer the list from `mods/.claude-plugin/marketplace.json` with each entry's description. Install nothing the user did not choose. Wave order for a new user: `budget-ledger` first (it measures the rest). `guard` overlaps Claude Code's own `permissions.deny` rules: plain file paths (`.env`, lockfiles) can live in `settings.json`; keep `guard` for parsed destructive commands (force push, `reset --hard`, root-like deletes) across Bash and PowerShell.
 
 ## Step 3 — Install the engine skills first
 Four mods run a script that ships with a skill: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`), `budget-ledger`'s `/budget` report (`session-budget`) and `output-compact` (`session-budget`'s `compact.js`). `guard`, `debug-nudge` and `standards-chain` need no script. Check that the skill is installed in `<project>/.claude/skills/<skill>/` or `~/.claude/skills/<skill>/`. If missing, install it with `install-kit` first. A mod whose engine is missing does nothing, by design.
+
+**One commit gate only.** If `precommit-gate` is chosen and the project already has the `hooks-enforcement` settings-hook gate (`.claude/hooks/pre-commit-gate.sh` in `.claude/settings.json`), both would gate every `git commit` and the marker prompts would double up. Ask which to keep and remove the other. Likewise, a mod whose engine skill is missing loads fine but does nothing, so confirm the engine path in Step 6.
 
 ## Step 4 — Review before install (mandatory)
 1. Run `claude plugin validate <mods/name>` and show the `hooks:` and `calls:` lines. Explain in one sentence each what the mod can touch (files, processes, env vars).
