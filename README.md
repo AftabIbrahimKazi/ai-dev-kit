@@ -122,7 +122,8 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
 | `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
 | `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
-| `/handover` | Starting or ending a session | `/handover`. Resume from, or write, `handover.md`. |
+| `/resume` | Starting a session | `/resume`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
+| `/wrap-up` | Ending a session | `/wrap-up` or `/wrap-up next task is the pricing section`. Rewrites `handover.md` in place (no ever-growing log); the task you name goes first under Next steps. Does not commit. |
 | `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
 | `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
 
@@ -137,6 +138,8 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
 | `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
+| `/resume` | Loads `handover.md` as the project state; reads only | none | `handover` |
+| `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
 | `/hooks` | Shows git hook status and offers to install them | none | `pre-commit` |
 | `/kit` | This cheat sheet | optional: describe your situation | none |
 
@@ -146,7 +149,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 | Group | Commands | Use when |
 |---|---|---|
-| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover`, `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session` | the situation in each skill's description |
+| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/resume` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session` | the situation in each skill's description |
 | Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
 | Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
 | Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
@@ -157,7 +160,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 **Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
 
 **Good to know**
-- **Tested:** all seven kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
+- **Tested:** all nine kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
 - **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
 - **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
@@ -213,7 +216,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /hooks, /kit); each runs a kit script
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /hooks, /resume, /wrap-up, /kit); each runs a kit script
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact), a local marketplace; each wraps a tool-agnostic script from a skill
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/

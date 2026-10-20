@@ -126,6 +126,8 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/quiet <cmd>` | a command with shortened output | `session-budget` |
 | `/stale` | stale-memory report | `memory-gardener` |
 | `/hooks` | git-hook status | `pre-commit` |
+| `/resume` | loads `handover.md` as the project state (reads only) | `handover` |
+| `/wrap-up` | rewrites `handover.md` in place | `handover` |
 | `/kit` | cheat sheet, no script | none |
 
 ## Installing into a new project
