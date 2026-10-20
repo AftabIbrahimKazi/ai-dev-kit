@@ -114,6 +114,20 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [skill-scope](meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 | [misfire-log](meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
+## commands/ — optional slash-command templates
+
+Not skills: plain command files that `install-kit` copies to `.claude/commands/` or `.opencode/commands/` on request. Each runs a kit script and hands the output to the agent, so no skill has to be matched first. The full usage tables are in the [root README](../README.md#slash-commands).
+
+| Command | Runs | Needs |
+|---|---|---|
+| `/audit` | `code-audit` script | `code-audit` |
+| `/commit-check` | `pre-commit` check on the staged change | `pre-commit` |
+| `/token-report` | ledger report | `session-budget` |
+| `/quiet <cmd>` | a command with shortened output | `session-budget` |
+| `/stale` | stale-memory report | `memory-gardener` |
+| `/hooks` | git-hook status | `pre-commit` |
+| `/kit` | cheat sheet, no script | none |
+
 ## Installing into a new project
 
 **Quick start (the intended flow):** dump this `skills/` folder — and `coding-standards/` if the project should have the standards system — into the new project's root, then tell Claude:
