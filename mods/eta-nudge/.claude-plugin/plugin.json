@@ -1,0 +1,8 @@
+{
+  "name": "eta-nudge",
+  "version": "0.1.0",
+  "description": "Reminder only: nudges once when a Bash/PowerShell call is backgrounded, and every 10 minutes of wall-clock task time after the first 5, to restate or give a time estimate and checkpoint (plan-first's rule). Never computes the estimate itself, never blocks. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

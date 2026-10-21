@@ -124,6 +124,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
 | `/handover` | Starting or ending a session | `/handover`. Resume from, or write, `handover.md`. |
 | `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
+| `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
 | `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
 
 ### All commands
@@ -139,6 +140,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
 | `/hooks` | Shows git hook status and offers to install them | none | `pre-commit` |
 | `/kit` | This cheat sheet | optional: describe your situation | none |
+| `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |
 
 **Mod command** (Claude Code, from the `budget-ledger` mod): `/budget` shows the same ledger report.
 
@@ -157,9 +159,10 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 **Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
 
 **Good to know**
-- **Tested:** all seven kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
+- **Tested:** all seven script-backed kit commands ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` is untested (new, no script to run headless) — it's a plain instruction template, same shape as `/kit`. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
 - **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
+- **`prefilter-rank` mod:** automates `system1-prefilter`'s local-Laya narrowing after Grep/Glob (5-40 results) — adds a ranked read-order reminder, never removes a result. Loopback-only (`127.0.0.1`, checked in code, never the hosted-provider path), fails open if Laya isn't configured or reachable within a short timeout. Needs the addon's local-Laya path already set up; `mod-setup` won't offer it before that.
 - **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
 - **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/hooks`, by git hooks (every tool).
 
@@ -176,11 +179,13 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
+- **Time estimates & checkpointing.** `plan-first` now states a time estimate (as a range, not false precision) before any task estimated past 5 minutes, or anything backgrounded or part of a sequential/parallel chain, and designs that work into self-contained checkpoints (target ≤10 min, worst case ≤15, longer only when a step is genuinely unsplittable). The new `/eta` command restates the current estimate/checkpoint on demand without re-deriving it from scratch. The `eta-nudge` mod makes the reminder half deterministic instead of memory-dependent (nudges on a backgrounded call, and every 10 minutes past the first 5). The estimate itself stays the model's judgment call — nothing can mechanize that — but `session-budget.report.js` now surfaces each turn's real wall-clock duration (`budget-ledger` already logged it, just never read it back), so an estimate can finally be checked against what actually happened instead of staying pure vibes.
+- **`prefilter-rank` mod.** Automates `system1-prefilter`'s local-Laya narrowing: ranks a Grep/Glob result (5-40 files) by relevance to the task and adds a read-order reminder, instead of requiring the agent to call the `prefilter` MCP tool itself every time. Task text comes from the session transcript's last user message (`$.session.messages()` — free, no model call). Loopback-only by a host check in code (never trusts `SYSTEM1_BASE_URL` alone), never the hosted-provider path (no-ops if `SYSTEM1_API_KEY` is set instead), fails open if Laya isn't reachable within a short timeout. `mod-writer.md`'s "no network" rule now carries this one narrow, disclosed exception.
 - **Install protocol, enforced.** [`install-kit`](skills/meta/install-kit.md)'s Step 4 now runs `install-kit.verify.js`, a mechanical re-check of the actual files on disk (flat skill layout, the CommonJS `package.json` shield, the session-protocol file with its Context-code placeholder actually filled in, `comment-style`'s level actually answered, `coding-standards/index.md` present) instead of trusting the agent's own narration — the install isn't reported done while it fails. A new **Stack preset** mode lets the user name a stack directly (Astro, Next.js, Laravel) instead of waiting on Auto-detect's scan; Next.js and Laravel presets install what the kit actually has and say plainly, in the report, which framework-specific layer doesn't exist yet rather than papering over the gap.
 - **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
 - **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships seven opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain` and `output-compact`. Each wraps a tool-agnostic script or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships nine opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank` and `eta-nudge`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
 - **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
 - **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
@@ -214,7 +219,7 @@ skills/
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
   commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /hooks, /kit); each runs a kit script
-mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact), a local marketplace; each wraps a tool-agnostic script from a skill
+mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)

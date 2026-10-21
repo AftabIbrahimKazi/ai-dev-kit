@@ -105,7 +105,15 @@ function analyse({ sid, rows }) {
     repeatGreps: [...greps.entries()].filter(([, n]) => n >= 2).map(([k, n]) => ({ k, n })),
     lowCacheTurns: lowCache,
     skills: [...skills.entries()].map(([k, n]) => ({ k, n })),
+    durationMs: main.reduce((s, r) => s + (r.ms || 0), 0),
+    longestTurnMs: Math.max(0, ...main.map((r) => r.ms || 0)),
   };
+}
+
+// "4m 12s", or "48s" under a minute. For checking a plan-first estimate against what actually happened.
+function fmtMs(ms) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
 function format(a) {
@@ -114,6 +122,7 @@ function format(a) {
   L.push(`session ${a.sid} | ${a.turns} turns (+${a.subagentTurns} subagent) | ${a.models.join(', ')}`);
   L.push(`tokens: in ${n(a.tokens.in)} | out ${n(a.tokens.out)} | cache read ${n(a.tokens.cr)} | cache write ${n(a.tokens.cw)} | cache hit ${(a.cacheHit * 100).toFixed(0)}%`);
   L.push(`cost: ${a.costUsd == null ? 'n/a' : '$' + a.costUsd.toFixed(4)} | context peak ${a.ctxPeakPct}%`);
+  L.push(`time: ${fmtMs(a.durationMs)} total | longest turn ${fmtMs(a.longestTurnMs)} -- for checking a plan-first estimate against reality`);
   if (a.topTools.length) L.push('top tool results (est. tokens): ' + a.topTools.map((x) => `${x.k} ${n(x.tokens)}`).join(', '));
   if (a.topItems.length) L.push('top single sinks: ' + a.topItems.map((x) => `${x.k.slice(0, 60)} ${n(x.tokens)}`).join(' | '));
   if (a.repeatReads.length) L.push(`WASTE re-read, file unchanged: ${a.repeatReads.join(', ')}`);
@@ -133,4 +142,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { analyse, format, pickSessions, parseArgs };
+module.exports = { analyse, format, pickSessions, parseArgs, fmtMs };
