@@ -11,6 +11,7 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | A noisy test or build run | `/quiet npm test` |
 | Something fails, cause unknown | `/debug-protocol <what happened>` |
 | Big or many-file task | `/plan-first <task>` |
+| How long is this going to take | `/eta` |
 | Vague request | `/intent-capture <request>` |
 | Start or end a session | `/handover` |
 | Memory notes may be out of date | `/stale` |

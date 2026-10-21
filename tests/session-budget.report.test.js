@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { analyse, pickSessions } = require('../skills/workflow/session-budget.report.js');
+const { analyse, pickSessions, fmtMs } = require('../skills/workflow/session-budget.report.js');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
 const row = (o) => ({ v: 1, ts: '2026-10-09T10:00:00.000Z', sid: 's1', turnId: 't', model: 'm', in: 10, out: 5, cr: 0, cw: 0, ms: 1, usd: 0.01, ctxPct: 5, tools: [], ...o });
@@ -38,6 +38,16 @@ t('subagent turns are counted apart', () => {
   const a = ses([row({ ts: '1' }), row({ ts: '2', agentId: 'x' })]);
   assert.strictEqual(a.turns, 1);
   assert.strictEqual(a.subagentTurns, 1);
+});
+t('duration sums wall-clock time across main turns, subagent turns excluded, longest turn tracked', () => {
+  const a = ses([row({ ts: '1', ms: 5000 }), row({ ts: '2', ms: 125000 }), row({ ts: '3', ms: 3000, agentId: 'x' })]);
+  assert.strictEqual(a.durationMs, 130000);
+  assert.strictEqual(a.longestTurnMs, 125000);
+});
+t('fmtMs: seconds under a minute, minutes and seconds past it', () => {
+  assert.strictEqual(fmtMs(48000), '48s');
+  assert.strictEqual(fmtMs(252000), '4m 12s');
+  assert.strictEqual(fmtMs(0), '0s');
 });
 t('skills counted', () => {
   const a = ses([row({ tools: [{ t: 'Skill', k: 'plan-first', c: 1 }, { t: 'Skill', k: 'plan-first', c: 1 }, { t: 'Skill', k: 'handover', c: 1 }] })]);

@@ -42,7 +42,7 @@ mods/<name>/
 
 ## Rules
 - **Fail open** for observers and assists: wrap own logic in `try/catch` and end each hook with `.catch(($, e, next) => next(e))`. Only a deliberate gate may fail closed, and its description says so.
-- No network. Read only the env vars the mod needs and name them at the end of the `plugin.json` description ("Reads env: HOME." or "Reads no env."). Never read secrets.
+- No network, with one narrow exception: a loopback-only call (`127.0.0.1`/`localhost`) to a single named local service, via `$.http.fetch` (never the plugin's own sockets). The host, not just the env var, must be checked in code — never trust an env var alone to stay loopback, since a misconfigured or malicious value could point it elsewhere. State the exact exception in the `plugin.json` description ("Calls Laya locally at 127.0.0.1 only; no other network access, no key read, fails open if unreachable"). `$.http.fetch` has no `signal`/timeout option — race it with a short timer (`Promise.race`) so an unreachable or slow service can never block the tool call it hooked; the dangling fetch is harmless, just let it go. Read only the env vars the mod needs and name them at the end of the `plugin.json` description ("Reads env: HOME." or "Reads no env."). Never read secrets — if a configured value looks like a hosted provider's key rather than a local, keyless service, treat it as "not configured for this mod" and do nothing.
 - A hook on shell commands matches both `Bash` and `PowerShell` (`{ tool: ['Bash', 'PowerShell'] }`). On Windows the model may run git through either, and a Bash-only gate is silently skipped. Parse PowerShell with its own rules: the backtick escapes, a backslash is a path character.
 - Never write under `handover/`; never read or gate on `handover/locks.d/` (role-session lane state). Skip `handover/` before starting work on a path there. A commit-time scan of staged text may read committed handover notes (see `hooks-enforcement`).
 - A hook adds model-visible text (`context`, rewritten results, prompt sections) only when that is the mod's purpose. Measure the tokens it adds.
@@ -56,6 +56,7 @@ mods/<name>/
 - `$.fs.write` replaces the whole file and creates parent folders. There is no append. `$.fs.read` rejects files over 4 MiB. For a log, keep the text in memory, write one file per session, roll to a new part file well before 4 MiB, and queue the writes through one promise so concurrent hooks cannot drop a row (see `budget-ledger`).
 - `session.compact` fires for `precompute` too, which only prepares a summary. Act after `next(e)`, and only on other triggers when the result is not a `skip`.
 - On Windows, `$.fs` paths arrive absolute with backslashes. Normalise before comparing.
+- `$.session.messages()` reads the transcript as plain data (free, no model call) — use `.at(-1)` for the last user message when a hook needs "what is the user actually trying to do" without spending tokens to ask. It is not always representative of the current sub-task on a long multi-turn thread; degrade safely (skip, don't guess) when it looks unrelated to the tool call at hand.
 - The hooks module has no Node and no DOM. Run Node work with `$.process.run(["node", script, ...])` (argv list, no shell, 30 s default timeout).
 
 ## Validate and test loop
@@ -69,7 +70,7 @@ mods/<name>/
 ## Review checklist
 - [ ] Step 0 says a mod is the right tool
 - [ ] Observers fail open; any gate says it fails closed
-- [ ] No network, no secrets, no writes under `handover/`, nothing reads `handover/locks.d/`
+- [ ] No network beyond a stated loopback-only exception (host checked in code, not just the env var); no secrets; no writes under `handover/`; nothing reads `handover/locks.d/`
 - [ ] `validate` passes; `calls:` lines match the intent
 - [ ] Tests cover the happy path, a failing host call, and "engine missing"
 - [ ] Ship gate evidence recorded (correctness set, ledger tokens)
