@@ -44,6 +44,8 @@ Updated: 2026-10-21 · Branch: main (the only branch) · Pushed to `origin/main`
 4. Optional: an opt-in hard-stop mod that denies edits after N failed fixes of the same command (the idea from the proposal doc; `debug-nudge` only reminds); a ratchet mod for `code-audit`.
 5. Real-OpenCode test of the earlier MCP tools; write `~/.claude/CLAUDE.md` global rules.
 6. Revisit skill loading only with a mod or `CLAUDE.md` rule per must-have skill; description wording alone is not the lever.
+7. Author Next.js and/or Laravel coding-standards layers if asked (no framework-specific layer exists for either yet; stack presets install the universal set only and say so) — scope as its own piece of work.
+8. The `claude/festive-tesla-nl5y59` branch (merged into `main` 2026-10-18) still exists on GitHub; a cloud session's scoped token couldn't delete it (403) — delete manually if not already done.
 
 ## Don't touch / gotchas
 
