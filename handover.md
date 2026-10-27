@@ -1,10 +1,10 @@
 # Handover — ai-dev-kit
 
-Updated: 2026-10-28 · Branch: main · **uncommitted work on top of `c8fe6fa`** (nothing from 2026-10-28 is committed or pushed).
+Updated: 2026-10-28 · Branch: main · `origin/main` is current as of this note (the add-ons are in `8d93842`).
 
 ## Current state
 
-17 script test files pass (288 tests) and 9 mods pass `claude plugin test` (107 tests). `main` is GitHub plus all of the 2026-10-27 work; on top of that, uncommitted: the `narrate` and `personality` add-ons, `/narration` and `/persona`, README, CREDITS, CHANGELOG, `skills/README.md`, `install-kit.md` and `.gitignore` edits. Review with `git status` and commit when ready. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check`. OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
+17 script test files pass (297 tests) and 9 mods pass `claude plugin test` (107 tests). `main` = GitHub = all of the 2026-10-27 work plus the 2026-10-28 `narrate` and `personality` add-ons, `/narration` and `/persona`, and the README, CREDITS, CHANGELOG, `skills/README.md` and `install-kit.md` updates. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check`. OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
 
 **State on this machine (outside the repo):** the `narrate` Stop hook is wired in `~/.claude/settings.json` (points at the kit's `skills/addons/narrate.speak.js`); Piper (`piper-tts`) and the voice-mode packages are installed under Python 3.11; voices live in `~/.claude/voices/` (`ljspeech`, `joe` are the defaults; `lessac` and `ryan` are unused leftovers, Ryan is non-commercial); `~/.claude/narrate.json` selects Piper with the female voice. No persona is chosen and the `personality` SessionStart hook is not wired.
 
