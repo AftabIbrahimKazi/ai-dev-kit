@@ -4,15 +4,16 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 
 ## Current state
 
-`main` = GitHub plus a session's audit work, rebased onto six commits that a cloud Claude session had pushed on 2026-10-18 (`output-compact` mod, `misfire-log`, `install-kit.verify.js`, stack presets, a Windows `git.exe` fix in `pre-commit.check.js`, README catch-up). All 10 script test files and all 7 mods (81 tests) pass; the mods marketplace validates. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check` (the other mods are installed per project only). OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
+`main` = GitHub plus all of the 2026-10-27 work (new features merged and tested, token cuts, fixes, docs). 15 script test files pass; 9 mods pass `claude plugin test` (106 tests); all 16 command templates ran live. Local `main` and `origin/main` are in sync after the push at the end of this session. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check` (the other mods are installed per project only). OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
 
 ## Last session (2026-10-27)
 
 - **New features audited, merged and pushed.** The untested feature branch was merged with the live `main`, tested in a scratch project, and pushed: 14 of 14 script test files pass, 9 of 9 mods pass `claude plugin test` (104 tests), the git hook blocks a staged key and a `.env`, all 16 commands ran live, 11 of 11 skill prompts triggered on Sonnet. Report and raw data: `findings/2026-10-27-new-features-audit.md` and `findings/data/`; harness: `findings/harness/`.
 - **Fixed:** `/resume` and `/hooks` collided with Claude Code built-ins and are now `/pickup` and `/githooks`; `standards-chain` skips `project-context/`; `/eta` mapped in `install-kit`.
-- **Built:** connector-free `/figma` (`skills/addons/project-context.figma.js`, 7 tests); `debug-nudge` early reminder.
+- **Built:** connector-free `/figma` (`skills/addons/project-context.figma.js`, 8 tests; handles Figma-style SVGs: named white/black, a note that Figma outlines text by default); `debug-nudge` early reminder.
 - **Token cost:** always-on about 2,500 to about 1,950 per session (`disable-model-invocation` on commands, leaner `CLAUDE.md` from `install-kit`, shorter model descriptions). `ai-standards.md` examples left alone on purpose.
 - **`debug-nudge` fixed:** it never fired when a pipe (`npm test | tail`) hid the exit code; it now reads failure text too (commit `919cd56`, 12 tests). Live: on an unclear-cause bug `debug-protocol` loaded 3 of 6 with the mod and 0 of 6 without (small sample). The earlier "no effect" result was invalid because the mod could not fire. `pre-commit` is not a problem: it loaded before `git commit` in 30 of 30 haiku runs with something to commit (5 phrasings); on a clean tree it loaded only in the runs where the model went on to commit, which is correct. The earlier misses were a clean-tree artifact of the first scratch project.
+- **Not problems after all:** `pre-commit` triggering (30 of 30 with something to commit; the earlier misses were a clean-tree artifact), the `[CX]` marker (24 of 24 on Sonnet and Opus) and AI-18 yes/no length. "Pending tasks": not reproduced headless; the preference to decide and proceed is in memory.
 - **Branches:** the temporary branches were deleted locally and on GitHub; `kit-audit-2026-10-20` is kept locally.
 - **Later checks:** `[CX]` marker 24 of 24 and AI-18 yes/no short on Sonnet and Opus; OpenCode loads skills 3 of 3 on a clean install; no repro of "pending tasks" in headless tests (details in the findings file, fifth pass).
 
@@ -41,14 +42,14 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 
 - Mods are verified through `claude -p` only; the VS Code chat panel is not covered. `php -l` in `edit-check` is untested (php is not on PATH).
 - The merged result was not re-run through the live-vs-local A/B after the `handover` description was restored; the last full A/B predates the merge. No end-to-end `install-kit` run against the merged tree either.
-- Whether OpenCode exposes skills as `/skill-name` is unconfirmed; `/audit` as an OpenCode command was verified, the other commands only in Claude Code.
+- OpenCode 1.18 with a free model loaded skills 3 of 3 on a clean kit install; its slash-command behaviour beyond `/audit` is unconfirmed. Codex was not run (not installed here). A scratch project with extra files hung OpenCode for an unknown reason (a copy with no kit files hung too), so it is not a kit problem.
 - `Compression\ai-dev-kit` is a second clone still on the Oct 10 commit, and the user-scope marketplace points at it, so installed mods lag this repo until it is pulled or the marketplace is repointed to this repo.
 - Cloud (IDE/web) Claude sessions push straight to GitHub as author `Claude`; a local clone does not learn about it. Run `git fetch && git status` before starting local work.
 - The earlier Cloudflare token note is stale (it expired 2026-10-11); nothing depends on it now. `_sandbox/` is git-excluded and can be deleted when no longer needed.
 
 ## Next steps
 
-0. **Newest first:** test `/figma` on a real Figma SVG and PNG export; design a harder `debug-protocol` test (unclear cause) with a marker file to prove the reminder arrives; a Codex run; GitHub homepage and topics; a real example of a "pending task" if it keeps happening.
+0. **Newest first:** try `/figma` on a real Figma SVG export (only a hand-made Figma-style file was tested); set the GitHub homepage URL and topics (topics are at the 20 limit); a real example of a "pending task" if it keeps happening; `debug-protocol` still loads only about half the time even with the mod (3 of 6).
 1. **Use the kit as it is for a while, then decide.** Install `/audit`, `/commit-check`, `/quiet` and the git hooks in one real project; read `/token-report` (needs `budget-ledger`) after a week.
 2. Repoint the user-scope marketplace to this repo, or `git pull` in `Compression\ai-dev-kit`, then `claude plugin update` the mods.
 3. Version-bump script (needs the user's convention); this was already first on the earlier list.
