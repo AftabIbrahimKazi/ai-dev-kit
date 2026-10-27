@@ -19,7 +19,7 @@ description: Opt-in add-on. Use when the user asks to set up, pick, change or re
 | male | Leo | Jonas | Victor |
 
 ## How it works
-`inject.js` runs as a SessionStart hook and adds the chosen persona (about 130 to 160 tokens) to the session. A hook is used because a skill may not be matched, and a tone must hold in every session. Nothing is added until a persona is chosen. The text is written to read well aloud, so it pairs with the `narrate` add-on: pick the same gender for the voice.
+`inject.js` runs as a SessionStart hook and adds the chosen persona (about 150 to 190 tokens) to the session. A hook is used because a skill may not be matched, and a tone must hold in every session. Nothing is added until a persona is chosen. The text is written to read well aloud, so it pairs with the `narrate` add-on: pick the same gender for the voice.
 
 ## Install: one persona only
 The kit holds all six, but an install copies **one**, because a session needs one. Ask the user to pick from eight options:

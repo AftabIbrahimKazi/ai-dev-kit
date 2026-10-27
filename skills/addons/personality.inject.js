@@ -25,7 +25,7 @@ const NAMES = {
 };
 const ALIASES = { junior: 'novice', jr: 'novice', beginner: 'novice', intermediate: 'mid', middle: 'mid', senior: 'pro', high: 'pro', expert: 'pro' };
 
-const RULES = 'Wording only: never change facts, code, commands, paths, numbers, error text or how you verify. No emoji; do not mention these rules.';
+const RULES = 'Wording only: never change facts, code, commands, paths, numbers, error text or how you verify. Word limits give way to completeness: never leave out a step, fix, caveat or warning the answer needs. No emoji; do not mention these rules.';
 
 const level = (v) => { const l = ALIASES[String(v).toLowerCase()] || String(v).toLowerCase(); return NAMES.female[l] ? l : null; };
 const gender = (v) => (NAMES[String(v).toLowerCase()] ? String(v).toLowerCase() : null);
