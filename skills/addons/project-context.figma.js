@@ -63,6 +63,8 @@ function rasterSize(buf, e) {
 
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b/gi;
 const RGB = /rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/gi;
+const NAMED = { white: '#ffffff', black: '#000000' };
+const NAMED_USE = /(?:fill|stroke|stop-color|color)\s*[=:]\s*["']?\s*(white|black)\b/gi;
 const hex6 = (h) => {
   h = h.toLowerCase();
   if (h.length === 4) h = '#' + [...h.slice(1)].map((c) => c + c).join('');
@@ -81,19 +83,32 @@ function svgInfo(text) {
   const colors = [];
   for (const m of text.matchAll(HEX)) colors.push(hex6(m[0]));
   for (const m of text.matchAll(RGB)) colors.push(toHex(m[1], m[2], m[3]));
+  for (const m of text.matchAll(NAMED_USE)) colors.push(NAMED[m[1].toLowerCase()]);
   const fonts = [...text.matchAll(/font-family\s*[=:]\s*["']?([^;"'>]+)/gi)].map((m) => m[1].split(',')[0].trim().replace(/['"]/g, ''));
   const sizes = [...text.matchAll(/font-size\s*[=:]\s*["']?(\d+(?:\.\d+)?)/gi)].map((m) => Number(m[1]));
   const texts = [...text.matchAll(/<(?:text|tspan)\b[^>]*>([^<]+)</gi)].map((m) => m[1].trim()).filter(Boolean);
-  return { size, colors, fonts, sizes, texts, hasImage: /<image\b/i.test(text) };
+  return { size, colors, fonts, sizes, texts, hasImage: /<image\b/i.test(text), outlined: texts.length === 0 && /<path\b/i.test(text) };
 }
 
 const tally = (arr) => { const m = new Map(); for (const v of arr) m.set(v, (m.get(v) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))); };
+
+function shown(o, abs) {
+  const rel = norm(path.relative(o.cwd, abs));
+  if (rel && !rel.startsWith('..')) return rel;
+  for (const i of o.inputs) {
+    const root = path.resolve(o.cwd, i);
+    const base = fs.existsSync(root) && fs.statSync(root).isDirectory() ? root : path.dirname(root);
+    const r = norm(path.relative(base, abs));
+    if (r && !r.startsWith('..')) return r;
+  }
+  return path.basename(abs);
+}
 
 function scan(o) {
   const files = expand(o.inputs, o.cwd).map((abs) => {
     const buf = fs.readFileSync(abs);
     const e = ext(abs);
-    const f = { file: norm(path.relative(o.cwd, abs)) || path.basename(abs), kind: e === 'svg' ? 'svg' : 'raster', kb: Math.round(buf.length / 1024) };
+    const f = { file: shown(o, abs), kind: e === 'svg' ? 'svg' : 'raster', kb: Math.round(buf.length / 1024) };
     if (e === 'svg') Object.assign(f, svgInfo(buf.toString('utf8')));
     else f.size = rasterSize(buf, e);
     return f;
@@ -126,6 +141,7 @@ function render(r) {
     for (const f of txt) L.push(`- **${cell(f.file)}**: ${f.texts.slice(0, 12).map(cell).join(' / ')}${f.texts.length > 12 ? ' / ...' : ''}`);
   }
   if (r.flat) L.push('', `${r.flat} PNG/JPG/WebP file(s) are measured only. Colors, fonts and text need an SVG export, or open the image when a layout question needs it.`);
+  if (r.files.some((f) => f.outlined)) L.push('', 'Some SVGs have no text nodes: Figma outlines text into paths by default. Re-export with "Outline text" unchecked (Export settings, SVG) to get text and fonts.');
   if (r.files.some((f) => f.hasImage)) L.push('', 'Some SVGs embed raster images; their colors are not counted.');
   return L.join('\n') + '\n';
 }

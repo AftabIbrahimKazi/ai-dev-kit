@@ -74,3 +74,16 @@ t('cli: usage errors exit 1, a missing file exits 2', () => {
   assert.strictEqual(cli(d, 'a.svg', '--nope').status, 1);
   assert.strictEqual(cli(d, 'missing.svg').status, 2);
 });
+
+t('figma-style export: named white and black count, outlined text is flagged, outside paths stay short', () => {
+  const d = dir();
+  const out = dir();
+  fs.writeFileSync(path.join(out, 'Login.svg'), '<svg width="390" height="844" fill="none"><rect fill="white"/><rect fill="#2F6BFF"/><stop stop-color="black"/><text font-family="Inter" font-size="14"><tspan>Hi</tspan></text></svg>');
+  fs.writeFileSync(path.join(out, 'Logo.svg'), '<svg width="10" height="10"><path d="M0 0H10V10Z" fill="#0A84FF"/></svg>');
+  const r = F.scan({ inputs: [out], cwd: d });
+  assert.deepStrictEqual(r.files.map((f) => f.file), ['Login.svg', 'Logo.svg']);
+  assert.deepStrictEqual(r.colors.map((x) => x[0]).sort(), ['#000000', '#0a84ff', '#2f6bff', '#ffffff']);
+  assert.strictEqual(r.files[1].outlined, true);
+  assert.strictEqual(r.files[0].outlined, false);
+  assert.match(F.render(r), /Figma outlines text into paths/);
+});
