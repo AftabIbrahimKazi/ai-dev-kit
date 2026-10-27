@@ -13,10 +13,10 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Big or many-file task | `/plan-first <task>` |
 | How long is this going to take | `/eta` |
 | Vague request | `/intent-capture <request>` |
-| Start a session | `/resume` |
+| Start a session | `/pickup` |
 | End a session | `/wrap-up` (optional: the next task) |
 | Memory notes may be out of date | `/stale` |
-| Check or install git hooks | `/hooks` |
+| Check or install git hooks | `/githooks` |
 | Merge or rebase stopped with conflicts | `/resolve-conflicts` (optional: `ours`, `theirs`, `step`, `--role backend`) |
 | Does this page work at every screen size | `/responsive-check` (optional: `--range 600-900`, `--width 375`, `--detect`) |
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
