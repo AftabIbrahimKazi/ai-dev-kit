@@ -1,6 +1,6 @@
 ---
 name: hooks-enforcement
-description: Optional Claude Code hook config that mechanically assists AI-01–AI-03, and separately hard-gates git commit on the pre-commit skill. Trigger when installing into a Claude Code project using ai-standards.md and/or pre-commit.
+description: Optional Claude Code hooks for AI-01–AI-03 and a hard git-commit gate on the pre-commit skill. Trigger when installing into a Claude Code project using ai-standards.md and/or pre-commit.
 compat: claude-code-only
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: opus-4-8
-description: Claude Opus 4.8 (claude-opus-4-8) protocol — prompting, effort/thinking config, fast mode, token discipline. Trigger when working with, routing to, or writing code that calls Opus 4.8.
+description: Claude Opus 4.8 (claude-opus-4-8) protocol. Trigger when working with, routing to, or writing code that calls Opus 4.8.
 ---
 
 # Opus 4.8 — Workhorse-Flagship Protocol

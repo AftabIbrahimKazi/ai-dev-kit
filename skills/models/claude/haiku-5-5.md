@@ -1,6 +1,6 @@
 ---
 name: haiku-5-5
-description: Claude Haiku 5.5 (claude-haiku-5-5) protocol — first Haiku with adaptive thinking and effort, fan-out/classification routing, breaking API rules vs Haiku 4.5, early-stopping and verification prompts. Trigger when working with, routing to, or writing code that calls Haiku 5.5.
+description: Claude Haiku 5.5 (claude-haiku-5-5) protocol. Trigger when working with, routing to, or writing code that calls Haiku 5.5.
 ---
 
 # Haiku 5.5 — Speed-and-Volume Protocol

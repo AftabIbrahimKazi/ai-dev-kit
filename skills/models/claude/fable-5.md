@@ -1,6 +1,6 @@
 ---
 name: fable-5
-description: Claude Fable 5 (claude-fable-5) protocol — selection, prompting, effort tuning, token discipline. Trigger when working with, routing to, or writing code that calls Fable 5.
+description: Claude Fable 5 (claude-fable-5) protocol. Trigger when working with, routing to, or writing code that calls Fable 5.
 ---
 
 # Fable 5 — Maximum-Capability Protocol

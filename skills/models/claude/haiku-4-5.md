@@ -1,6 +1,6 @@
 ---
 name: haiku-4-5
-description: Claude Haiku 4.5 (claude-haiku-4-5, previous generation — new work uses haiku-5-5) protocol — fast/cheap fan-out patterns, what to route to it and what not, thinking config. Trigger when working with, routing to, or writing code that calls Haiku 4.5.
+description: Claude Haiku 4.5 (claude-haiku-4-5, previous generation; new work uses haiku-5-5) protocol. Trigger when working with, routing to, or writing code that calls Haiku 4.5.
 ---
 
 # Haiku 4.5 — Speed-and-Volume Protocol

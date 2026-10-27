@@ -1,6 +1,6 @@
 ---
 name: opus-5-5
-description: Claude Opus 5.5 (claude-opus-5-5) protocol — always-on thinking, medium default effort, forced-tool-use ban, cheaper-than-Opus-5 flagship. Trigger when working with, routing to, or writing code that calls Opus 5.5.
+description: Claude Opus 5.5 (claude-opus-5-5) protocol. Trigger when working with, routing to, or writing code that calls Opus 5.5.
 ---
 
 # Opus 5.5 — Flagship Protocol
