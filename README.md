@@ -353,7 +353,7 @@ With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is
 
 ### Reply personas (`personality`)
 
-Six original personas change how replies are worded for your skill level. They change wording only: facts, code, paths and verification never change. A persona adds about 130 to 160 tokens per session, and in a Haiku test (6 runs per persona) replies were 41 to 58% shorter than with none.
+Six original personas change how replies are worded for your skill level. They change wording only: facts, code, paths and verification never change. A persona adds about 150 to 190 tokens per session. It does not make the model less accurate: on 20 questions with objective answer checks (JavaScript and Python behavior, SQL, git recovery, security, and multi-part explanations such as race conditions, CORS and N+1 queries), answers with a persona were as correct as with none on both Haiku and Sonnet, and every miss was a correct answer in plain words that a keyword check did not recognize. A shared rule makes completeness win over the word limits, so no step, fix or warning is dropped. Replies came out 2 to 36% shorter on Haiku (one run per question, Haiku and Sonnet, plus a 16-question repeat).
 
 | Level | Language | Female | Male |
 |---|---|---|---|
@@ -507,7 +507,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 ## Recent additions
 
 - **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are slash commands, global hotkeys or both, chosen at install. Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once with `/narration replay` to hear it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Optional voice mode transcribes your speech offline with Whisper and types it into the chat box. Covered by 35 script tests; see the status note in [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
-- **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 130 to 160 tokens per session; replies were 41 to 58% shorter in a 6-run-per-persona Haiku test.
+- **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 150 to 190 tokens per session; no accuracy loss on 20 objectively graded questions (Haiku and Sonnet), replies up to 36% shorter.
 - **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
 - **Lower always-on cost, no feature removed.** A normal install now costs about 1,950 tokens per session before any work, down from about 2,500 (estimates at ~4 characters per token). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (up to about 320 tokens). `install-kit` writes a leaner `CLAUDE.md` (no template preamble; the parallel-session section only with `role-session`, about 140-235 tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them (about 50 tokens in a normal install). Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
 - **Skill Triggers table.** The `CLAUDE.md` contract carries a short table mapping situations to skills ("commit what I have" to `pre-commit`, a failing build to `debug-protocol`, and so on), because skills load by the model's own judgment and sometimes do not. With the table, `pre-commit` loaded 4 of 4 on a "commit what I have" prompt (1 of 2 before). `install-kit` removes a row when its skill is not installed.
@@ -607,7 +607,7 @@ coding-standards/
 
 **Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
 
-**Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 130 to 160 tokens per session.
+**Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 150 to 190 tokens per session. In tests on Haiku and Sonnet it answered as correctly as no persona.
 
 **Is it free?** Yes, MIT licensed. Optional tools state their own limits: some run locally for free, hosted ones have free tiers or need billing.
 

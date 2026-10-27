@@ -13,7 +13,7 @@
 - A reply that is only code or a table is announced ("Code and tables are on screen") instead of being silent.
 - Parallel replies queue and play in order instead of cutting each other off; playback uses the current default output device.
 - The narration command is `/narration`; `/narrate` collided with the skill of that name. Companion file names follow the installed layout (`<skill-root>/narrate/speak.js`).
-- Persona injection cut from about 340 to 130 to 160 tokens per session.
+- Persona injection cut from about 340 to 150 to 190 tokens per session, with a rule that completeness beats the word limits. Checked for accuracy on 20 objectively graded questions: same results as no persona on Haiku and Sonnet.
 - `README` listed `/githooks-enforcement`; the skill is `hooks-enforcement`.
 
 ## 2026-10-27
