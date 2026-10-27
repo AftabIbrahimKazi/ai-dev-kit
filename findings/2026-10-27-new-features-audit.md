@@ -196,7 +196,7 @@ Notes:
 - The `[CX X7]` marker shows on nearly every command reply. The 0-in-22 figure in the trigger runs came from the harness's marker check, not from the model skipping it.
 - Renamed `/pickup` and `/githooks` run live. `/quiet` needs a command argument; with none it returns nothing.
 - Expected stops: `/responsive-check` needs Playwright, `/optimize-assets` conversions need a converter, `/figma` needs the connector.
-- Still open: `debug-protocol` triggering, `pre-commit` triggering on haiku, OpenCode and Codex runs, real converter and Figma runs.
+- Still open: `debug-protocol` triggering, `pre-commit` triggering on haiku, Codex run, real converter and Figma runs.
 
 Fixes made after the second pass: `/resume` renamed `/pickup`, `/hooks` renamed `/githooks` (both collided with Claude Code built-ins), `/eta` mapped in `install-kit`, `standards-chain` skips `project-context/`, README intro and AI-17/AI-18 added.
 
@@ -216,3 +216,10 @@ Verified: the flag is documented for command files and keeps `/name` working; `/
 Per-session cost beyond always-on: the standards load on the first file edit (`ai-standards.md` 2,410 plus `index.md` 1,840, plus the role file for the edited type, for example `css-standards.md` 4,044). About 750 tokens of `ai-standards.md` are Wrong/Right examples in AI-04 to AI-10 that restate one-line contract bullets. Not compressed: compliance with these rules was already weak in the runs above and the sample sizes here cannot show a before/after difference.
 
 Not changed on purpose: trigger-critical descriptions (`debug-protocol`, `coding-standards`, `code-audit`), `skill-scope` (pinned, referenced at runtime), the authoring skills (already not pinned by `install-kit`).
+
+## Fifth pass: marker, response shape, OpenCode, completion
+
+- `[CX X7]` marker: present in 24 of 24 replies on Sonnet and Opus (6 prompts, 2 runs each). The earlier "about 60%" came from the trigger harness's marker check, not from the models.
+- AI-18 yes/no: replies of 4 to 49 characters on Sonnet and 31 to 98 on Opus, so no long answers to yes/no questions. The comparison prompt returned a table-length answer on both.
+- OpenCode 1.18.35, free `glm-5.3-flash-free`: a clean kit install (skills in `.opencode/skills`, commands, `AGENTS.md`) answers in about 16 seconds with the marker and the standards declaration. Skills loaded on 3 of 3 prompts (`optimize-assets`, `resolve-conflicts`, `responsive-check`); the control question loaded none and its reply had no marker. `big-pickle` and the earlier scratch project hung or timed out for reasons not found (a copy without any kit files hung too), so they say nothing about the kit. Codex is not installed here and was not run.
+- Pending tasks: no task-list tool appears in any local transcript. A headless multi-part test (4 tasks, 51 checkable parts) completed 51 of 51 with and without a closing-check rule, and replies ended with an offer or question in 0 of 15 runs with the kit contract. In the audit session itself 13 of 27 turns ended with a question or a deferral, mostly decision asks and waits on background runs. No kit rule was added; the preference to decide and proceed was saved to memory instead.
