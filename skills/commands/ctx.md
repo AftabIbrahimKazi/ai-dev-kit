@@ -1,5 +1,6 @@
 ---
 description: Set up and maintain the private project-context/ docs folder
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Project-context report:

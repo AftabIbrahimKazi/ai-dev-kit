@@ -1,5 +1,6 @@
 ---
 description: Resume from handover.md - loads the project's current state so nothing has to be re-explained
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Handover file (printed as NO_HANDOVER_FILE if there is none):

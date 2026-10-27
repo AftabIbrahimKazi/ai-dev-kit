@@ -1,5 +1,6 @@
 ---
 description: Turn exported Figma PNG/SVG files into project-context/design/figma.md (no MCP)
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Figma intake from exported files: `$ARGUMENTS`

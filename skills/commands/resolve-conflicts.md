@@ -1,5 +1,6 @@
 ---
 description: Resolve merge conflicts: mode, pace and role guardrails
+disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git status:*), Bash(git diff:*)
 ---
 Conflict set (ours/theirs legend, hunks, kind, role scope):

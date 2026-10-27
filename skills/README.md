@@ -120,7 +120,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 
 ## commands/ — optional slash-command templates
 
-Not skills: plain command files that `install-kit` copies to `.claude/commands/` or `.opencode/commands/` on request. Most run a kit script and hand the output to the agent, so no skill has to be matched first; a couple (`/kit`, `/eta`) are pure instruction templates with nothing to run. The full usage tables are in the [root README](../README.md#slash-commands).
+Not skills: plain command files that `install-kit` copies to `.claude/commands/` or `.opencode/commands/` on request. Each carries `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context (about 320 tokens per session if all are installed) while you can still type them. Most run a kit script and hand the output to the agent, so no skill has to be matched first; a couple (`/kit`, `/eta`) are pure instruction templates with nothing to run. The full usage tables are in the [root README](../README.md#slash-commands).
 
 | Command | Runs | Needs |
 |---|---|---|

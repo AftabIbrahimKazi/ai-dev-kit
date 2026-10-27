@@ -1,5 +1,6 @@
 ---
 description: Ask for the current task's time estimate and next checkpoint, instead of asking in prose
+disable-model-invocation: true
 ---
 Report, in a few lines, no more:
 1. What's running right now (if anything) and its estimated time remaining, as a range.
