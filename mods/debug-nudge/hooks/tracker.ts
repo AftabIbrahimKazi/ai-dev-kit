@@ -56,3 +56,10 @@ export function noteFirstFailure(s: State, command: string, failed: boolean): st
   s.early = true
   return 'debug-nudge: a verification command failed. Before editing, apply the debug-protocol skill: reproduce it, state one hypothesis with its evidence, test it with the cheapest probe, then make one change.'
 }
+
+// A pipe (`npm test 2>&1 | tail -80`) or `; echo` hides the command's exit code, so the host reports success
+// for a failing run. This reads the output text for the usual failure signals so those runs still count.
+// It is only ever applied to commands that already look like verification commands (VERIFY above).
+const FAILED_TEXT = /(\b[1-9]\d* (?:tests? )?(?:failed|failing)\b|\bFAIL(?:ED)?\b|\bnpm ERR!|\bAssertionError\b|\berror TS\d+|^Traceback\b|^\s*Error:|\bexit(?:ed)? (?:with )?(?:code|status) [1-9])/m
+
+export const looksFailed = (text: string): boolean => FAILED_TEXT.test(text)

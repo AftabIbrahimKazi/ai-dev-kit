@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { fresh, noteBash, noteEdit, noteFirstFailure, cmdKey } from '../hooks/tracker'
+import { fresh, noteBash, noteEdit, noteFirstFailure, looksFailed, cmdKey } from '../hooks/tracker'
 
 test('the second failed fix triggers one nudge; the first failure and the first retry do not', () => {
   const s = fresh()
@@ -121,4 +121,24 @@ test('a failed edit is not counted', async ($, on) => {
   const r2 = await bash($, 'npm test')
   expect(r.context).toBeUndefined()
   expect(r2.context).toBeUndefined()
+})
+
+test('failure text is recognised when a pipe hid the exit code, and passing output is not', () => {
+  expect(looksFailed('> node test.js\nFAIL total expected 1500 got NaN')).toBe(true)
+  expect(looksFailed('Tests: 2 failed, 5 passed')).toBe(true)
+  expect(looksFailed('npm ERR! code ELIFECYCLE')).toBe(true)
+  expect(looksFailed('src/a.ts(3,1): error TS2322: bad')).toBe(true)
+  expect(looksFailed('Traceback (most recent call last):')).toBe(true)
+  expect(looksFailed('Tests: 0 failed, 7 passed\nok')).toBe(false)
+  expect(looksFailed('all good, nothing to report')).toBe(false)
+})
+
+test('a failing test piped through tail still triggers the early reminder', async ($, on) => {
+  on('session.start', () => ({ cwd: '/work' }))
+  on('tool.call', () => ({ result: 'out', text: '> node test.js\nFAIL total expected 1500 got NaN' })) // isError absent: the pipe hid it
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  const r = await bash($, 'npm test 2>&1 | tail -80')
+  expect(r.context[0]).toContain('verification command failed')
+  const again = await bash($, 'npm test 2>&1 | tail -80')
+  expect(again.context).toBeUndefined()
 })
