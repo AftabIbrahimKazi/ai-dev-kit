@@ -3,6 +3,7 @@
 ## 2026-10-28
 
 ### Added
+- README reference sections: everything at a glance (what runs by itself and what to ask for), the complete skills catalog (65 skills, by category), all nine mods, every script and the git hooks, the full narration, hotkey, dictation and persona reference, and a table of where each piece lives and how to turn it off.
 - `narrate` and `personality` add-ons with `/narration` and `/persona` (first listed under 2026-10-27; this entry records the final behavior).
 
 ### Fixed
