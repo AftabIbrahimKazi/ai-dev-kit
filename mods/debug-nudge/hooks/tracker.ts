@@ -4,9 +4,9 @@ export const VERIFY = /\b(test|tests|jest|vitest|pytest|mocha|phpunit|playwright
 export const NUDGE_AT = 2
 
 export type Entry = { lastFailed: boolean; cycles: number; nudged: boolean; files: string[] }
-export type State = { edits: string[]; byCmd: Map<string, Entry> }
+export type State = { edits: string[]; byCmd: Map<string, Entry>; early: boolean }
 
-export const fresh = (): State => ({ edits: [], byCmd: new Map() })
+export const fresh = (): State => ({ edits: [], byCmd: new Map(), early: false })
 
 // The command's name without its arguments, so `npm run lint` and `npm run test` stay apart but
 // `npm test -- --watch` and `npm test` match. Stops at the first flag, after a script or file path, or at 3 words.
@@ -47,4 +47,12 @@ export function noteBash(s: State, command: string, failed: boolean): string | n
     return `debug-nudge: "${key}" has failed after ${e.cycles} separate fix attempts (edited: ${names}). Stop editing. Apply the debug-protocol skill: state the exact failure, list 2-3 hypotheses, and test them with a read-only check before the next edit.`
   }
   return null
+}
+
+// One early reminder per session, at the first failed verification command, because the skill's own trigger is
+// unreliable at that moment (about 1 run in 3 loads it). Separate from the second-fix nudge above, which still fires.
+export function noteFirstFailure(s: State, command: string, failed: boolean): string | null {
+  if (s.early || !failed || !VERIFY.test(command)) return null
+  s.early = true
+  return 'debug-nudge: a verification command failed. Before editing, apply the debug-protocol skill: reproduce it, state one hypothesis with its evidence, test it with the cheapest probe, then make one change.'
 }
