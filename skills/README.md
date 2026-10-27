@@ -136,7 +136,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
 | `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
-| `/figma` | Figma file into `project-context/design/`, read-only | `project-context`, Figma connector |
+| `/figma` | exported Figma PNG/SVG files into `project-context/design/figma.md`, no MCP | `project-context` |
 | `/kit` | cheat sheet, no script | none |
 | `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |
 | `/format` | sets the response shape (table, bullets, oneline, bool), no script | none |
