@@ -1,0 +1,15 @@
+{
+  "default": "frontend",
+  "roles": {
+    "frontend": {
+      "in": ["src/components/**", "src/pages/**", "src/styles/**", "public/**", "ui/**", "**/*.css", "**/*.scss", "**/*.html", "**/*.jsx", "**/*.tsx", "**/*.vue", "**/*.svelte", "**/*.astro", "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
+      "out": ["api/**", "server/**", "backend/**", "db/**", "migrations/**", "composer.json", "composer.lock"],
+      "outOfScope": "leave"
+    },
+    "backend": {
+      "in": ["api/**", "server/**", "backend/**", "db/**", "migrations/**", "tests/api/**", "composer.json", "composer.lock", "package.json", "package-lock.json"],
+      "out": ["src/components/**", "src/pages/**", "src/styles/**", "public/**", "ui/**", "**/*.css", "**/*.scss", "**/*.html", "**/*.jsx", "**/*.tsx", "**/*.vue", "**/*.svelte", "**/*.astro"],
+      "outOfScope": "leave"
+    }
+  }
+}
