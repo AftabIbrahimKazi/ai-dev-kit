@@ -12,7 +12,7 @@ const CSS = /\.(css|scss|sass|less|pcss)$/i
 const HTML = /\.(html?|astro)$/i
 const JS = /\.(js|jsx|mjs|cjs)$/i
 const TS = /\.(ts|tsx|mts|cts)$/i
-const SKIP = /(^|\/)(node_modules|dist|build|vendor|\.git|\.claude|handover|\.next|\.astro)\//i
+const SKIP = /(^|\/)(node_modules|dist|build|vendor|\.git|\.claude|handover|project-context|\.next|\.astro)\//i
 
 export function globToRegExp(g: string): RegExp {
   const s = norm(g)

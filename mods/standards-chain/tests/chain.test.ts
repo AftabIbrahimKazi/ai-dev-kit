@@ -33,7 +33,7 @@ test('framework files: .astro adds astro, config adds more', () => {
 })
 
 test('files without a standard, and exempt folders, have no chain', () => {
-  for (const p of ['README.md', 'src/a.py', 'package.json', 'coding-standards/css-standards.md', 'node_modules/x/a.js', 'dist/a.css', 'handover/a.js', 'public/app.min.js', '.claude/x.js', 'src/a.php']) {
+  for (const p of ['README.md', 'src/a.py', 'package.json', 'coding-standards/css-standards.md', 'node_modules/x/a.js', 'dist/a.css', 'handover/a.js', 'project-context/a.js', 'public/app.min.js', '.claude/x.js', 'src/a.php']) {
     expect(chainFor(p)).toBeNull()
   }
   expect(chainFor('gen/a.css', { ignore: ['gen/**'] })).toBeNull()

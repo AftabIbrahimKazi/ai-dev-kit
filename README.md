@@ -122,7 +122,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
 | `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
 | `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
-| `/resume` | Starting a session | `/resume`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
+| `/pickup` | Starting a session | `/pickup`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
 | `/wrap-up` | Ending a session | `/wrap-up` or `/wrap-up next task is the pricing section`. Rewrites `handover.md` in place (no ever-growing log); the task you name goes first under Next steps. Does not commit. |
 | `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
 | `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
@@ -140,9 +140,9 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
 | `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
-| `/resume` | Loads `handover.md` as the project state; reads only | none | `handover` |
+| `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
 | `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
-| `/hooks` | Shows git hook status and offers to install them | none | `pre-commit` |
+| `/githooks` | Shows git hook status and offers to install them | none | `pre-commit` |
 | `/resolve-conflicts` | Resolves merge/rebase conflicts: mode `both` (default), `ours`, `theirs`; pace `all`, `auto` (default), `step`; role guardrails | `--role frontend|backend`, `--out leave|ours|theirs`, `--note "…"` | `resolve-conflicts` |
 | `/responsive-check` | Checks a page at range-based viewports (the six RULE 17 zones by default) and proposes range-based fixes | `--range a-b` (repeatable), `--min N`, `--max N`, `--width W`, `--ranges a-b,…`, `--detect`, `--max-probes N` | `responsive-check` |
 | `/optimize-assets` | Finds heavy assets, converts them (`webp`, `avif`, `jpg`, `mp4`, `woff2`, ...) or compresses them in place of the same format; originals are never touched | `scan [dir]`, `convert <paths> --to webp,avif`, `compress <paths>`, `precompress <paths>`, `tools`, `refs <assets>`, `--preset vision|web` | `optimize-assets` |
@@ -158,29 +158,30 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 | Group | Commands | Use when |
 |---|---|---|
-| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/resume` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session`, `/resolve-conflicts`, `/responsive-check`, `/optimize-assets` | the situation in each skill's description |
+| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/pickup` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session`, `/resolve-conflicts`, `/responsive-check`, `/optimize-assets` | the situation in each skill's description |
 | Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
 | Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
 | Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
 | Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
-| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
+| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/githooks-enforcement` | choosing or prompting a Claude model |
 | OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
 
 **Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
 
 **Good to know**
-- **Tested:** all script-backed kit commands (`/resume` and `/wrap-up` included) ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` is untested (new, no script to run headless) — it's a plain instruction template, same shape as `/kit`. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
+- **Tested:** all script-backed kit commands (`/pickup` and `/wrap-up` included) ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` and `/figma` are untested (`/figma` needs the Figma connector; `/eta` has no script to run headless) — it's a plain instruction template, same shape as `/kit`. Skills by name were checked for `/debug-protocol` in Claude Code only; whether OpenCode exposes skills the same way is not confirmed.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
 - **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
 - **`prefilter-rank` mod:** automates `system1-prefilter`'s local-Laya narrowing after Grep/Glob (5-40 results) — adds a ranked read-order reminder, never removes a result. Loopback-only (`127.0.0.1`, checked in code, never the hosted-provider path), fails open if Laya isn't configured or reachable within a short timeout. Needs the addon's local-Laya path already set up; `mod-setup` won't offer it before that.
 - **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
-- **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/hooks`, by git hooks (every tool).
+- **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/githooks`, by git hooks (every tool).
 
 ## Key ideas
 
 - **Self-improving skills.** Every skill reads a `learnings.md` sidecar at start and appends one distilled lesson at end. Learnings are per-project (never committed here, never copied by the installer) — each project's copies adapt to that project.
 - **Adaptive to change.** Skills that describe living things (Claude models, libraries, frameworks) carry staleness guards: verify against the live source, follow it over the skill text, log the correction.
 - **Standards as law, gaps flagged.** The standards system is declarative and testable; where it is silent, the AI flags the gap instead of inventing a rule ([RULE AI-12](coding-standards/ai-standards.md)).
+- **Response rules.** [RULE AI-17](coding-standards/ai-standards.md) makes file references clickable links where the tool renders them; [RULE AI-18](coding-standards/ai-standards.md) makes the answer's shape follow the data (a table for a comparison, one line for a single fact, a short answer to a yes/no question).
 - **Sequential by default, parallel when you say so.** The `role-session` skill coordinates multiple parallel AI sessions — Claude Code, OpenCode, or both (role charters, atomic `mkdir` file claims, a git commit token, session ids) and switches itself off in projects without the parallel structure.
 - **Token-lean by design.** Skill descriptions are hard-capped, bodies stay under ~120 lines, read-efficiency rules are part of the standards, and the `memory-gardener` skill prunes accumulated knowledge.
 - **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
@@ -228,7 +229,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /hooks, /resume, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /ctx, /figma, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /ctx, /figma, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/

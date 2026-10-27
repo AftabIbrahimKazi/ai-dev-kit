@@ -129,8 +129,8 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/token-report` | ledger report | `session-budget` |
 | `/quiet <cmd>` | a command with shortened output | `session-budget` |
 | `/stale` | stale-memory report | `memory-gardener` |
-| `/hooks` | git-hook status | `pre-commit` |
-| `/resume` | loads `handover.md` as the project state (reads only) | `handover` |
+| `/githooks` | git-hook status | `pre-commit` |
+| `/pickup` | loads `handover.md` as the project state (reads only) | `handover` |
 | `/wrap-up` | rewrites `handover.md` in place | `handover` |
 | `/resolve-conflicts` | conflict set + role scope, then guided resolution | `resolve-conflicts` |
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
