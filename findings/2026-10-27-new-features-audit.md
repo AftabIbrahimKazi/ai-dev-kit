@@ -128,3 +128,52 @@ node findings/harness/audit.js <kit repo> <proj>                 # token and str
 ```
 
 Raw results from this audit: `findings/data/` (`trigger-before.json`, `trigger-after.json`, `trigger-final.json`, `audit-before.txt`, `audit-final.txt`). On Git Bash for Windows, `MSYS_NO_PATHCONV=1` is needed when a prompt starts with `/`, and must not be set when passing file paths to Node.
+
+## Follow-up checks (second pass)
+
+Read-only review of the repo and local session transcripts; nothing was changed or run.
+
+### 1. Claude leaving a task pending: not reproduced
+- No task-list tool call (`TodoWrite`, `TaskCreate`, `TaskUpdate`) appears in 5,000+ tool calls across 51 local project folders, so the claim can't be confirmed from this data. A concrete example session is needed.
+- Closest pattern: 89 of 411 sessions (22%) end with an offer or question instead of finishing.
+- Kit rules that create deliberate stops: `perf-audit` ("offer to fix, don't fix unprompted"), `resolve-conflicts` and `plan-first` ("do not commit"), `handover` ("offer to create one"), `wrap-up` (user's next ask goes under Next steps).
+- No kit rule tells Claude to leave a task pending.
+
+### 2. Redundancy
+| Overlap | Note |
+|---|---|
+| `/resume` and `/hooks` vs Claude Code built-ins | Name collisions; README lists `/resume` as a built-in while the kit ships one too |
+| `handover`, `role-session`, `memory-bank` | Three stores of cross-session state |
+| `/quiet` and the `output-compact` mod | Same engine, documented |
+| `pre-commit` skill, `/commit-check`, `precommit-gate` mod | One script, three entry points |
+| `pre-merge-gate` and the `edit-check` mod; `debug-protocol` and the `debug-nudge` mod | Skill plus mod pairs |
+| `/eta`, `plan-first` estimate rule, `eta-nudge` mod | Three routes to the same estimate |
+
+### 3. Offloading to non-AI code
+- Already scripted: `/resolve-conflicts`, `/responsive-check`, `/optimize-assets`, `/ctx`, the `project-context/` pre-commit block.
+- Still prose: `/eta`, `/format` (AI-17 and AI-18 are style rules and can't be offloaded).
+- Largest prose skills: `handover` 9 KB, `plan-first` 7.8 KB, `role-session` 8.7 KB plus 15 KB of companions. Checkpoint reporting and the board format are script candidates.
+- Version-bump script is still on the build list.
+
+### 4. Modularity
+- Skill scripts do not depend on each other, except the `pre-merge-gate` edit-check, which looks for a sibling `code-audit` script and has fallbacks.
+- Each mod locates its skill's script by path with fallbacks; without the skill installed it has nothing to run.
+- `install-kit` copies a command only when its skill is installed.
+- Six mods each carry an identical 4.8 MB `index.d.ts`; gitignored, so no repo or install cost.
+- `install-kit.md` is 25 KB (about 6k tokens) but deletes itself after setup.
+
+### 5. install-kit currency
+- `/eta` is missing from its command-to-skill mapping (needs `plan-first`).
+- `install-kit.verify.js` mentions none of the new skills or commands (checks are generic) but implements `--finish`.
+- New mods are covered by `mod-setup`, not `install-kit`.
+- `skill-scope.md` lacks `/format`, `/resume`, `/wrap-up`, `/eta`.
+
+### 6. Docs and SEO
+- README intro lists skills, standards and MCP servers; it never mentions mods, slash commands, hooks, or the audit and handover workflows. AI-17 and AI-18 are not in the README.
+- GitHub homepage URL is empty; topics are at the 20 limit; no `CHANGELOG.md`.
+- Stale: `/install-kit` still described as a project command in places; README "Tested" line is outdated.
+
+### Suggested order
+1. Fix the `install-kit` gaps and the README intro.
+2. Decide the `/resume` and `/hooks` naming.
+3. Add `project-context/` to the `standards-chain` skip list.
