@@ -32,6 +32,15 @@ Verify by: <how I'll prove it works>
 
 Then: "Proceeding unless you redirect" for routine work, or an explicit question when a genuine fork exists (present the fork as 2 options with a recommendation, not an open question).
 
+## Time estimate & checkpointing
+
+Applies whenever a task is estimated to take **more than 5 minutes**, OR will run **backgrounded** (`run_in_background: true`), OR is part of a **sequential or parallel chain** of steps — regardless of file count, so this can trigger even below the 3-file planning threshold above.
+
+1. **State a time estimate before starting**, as a range, not a false-precision single number (e.g. "~8-12 min," not "9 minutes"). This is a judgment call, not a measurement. `session-budget.report.js`'s duration section (real wall-clock time, from `budget-ledger`) can be checked afterward against what was estimated, but nothing feeds that back into the estimate automatically — use it to calibrate judgment over time, don't claim more rigor than a single data point warrants. Add it as a line in the plan format above (`Estimate: ~X-Y min`) when a plan is already being written; state it as one line on its own otherwise.
+2. **Break the task into checkpoints by design**, each one self-contained: a safe, resumable stopping point with nothing left half-done (a passing test, a committed-or-cleanly-stashed state, a file fully written rather than mid-edit — same bar as `handover`'s "exact resume point"). Target **≤10 minutes per checkpoint**, worst case **≤15 minutes**; go longer only when a single step is genuinely atomic and cannot be split further (e.g. one long-running test suite, one external build) — say so plainly when that happens rather than silently exceeding the budget.
+3. **Report at each checkpoint**, not just at the end: what finished, the next checkpoint's own estimate, and whether anything changed the overall estimate. For a background or parallel chain with no one to report to synchronously, write the same checkpoint note into `handover.md` or the task's own status output (per `mode-kernel`'s background-mode rules) so it's there when checked.
+4. On-demand, the same information is available any time via the `/eta` command — this rule is what makes asking for it usually unnecessary, not a replacement for it.
+
 ## Delegated execution (plan mode only)
 Applies only when the session is in plan mode, or the user asks for a plan on a big or repetitive task with defined rules. Do not use it for small fixes or ordinary `plan-first` runs: execute those directly.
 

@@ -116,7 +116,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 
 ## commands/ — optional slash-command templates
 
-Not skills: plain command files that `install-kit` copies to `.claude/commands/` or `.opencode/commands/` on request. Each runs a kit script and hands the output to the agent, so no skill has to be matched first. The full usage tables are in the [root README](../README.md#slash-commands).
+Not skills: plain command files that `install-kit` copies to `.claude/commands/` or `.opencode/commands/` on request. Most run a kit script and hand the output to the agent, so no skill has to be matched first; a couple (`/kit`, `/eta`) are pure instruction templates with nothing to run. The full usage tables are in the [root README](../README.md#slash-commands).
 
 | Command | Runs | Needs |
 |---|---|---|
@@ -129,6 +129,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/resume` | loads `handover.md` as the project state (reads only) | `handover` |
 | `/wrap-up` | rewrites `handover.md` in place | `handover` |
 | `/kit` | cheat sheet, no script | none |
+| `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |
 
 ## Installing into a new project
 

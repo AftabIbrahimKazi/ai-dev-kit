@@ -1,0 +1,8 @@
+{
+  "name": "prefilter-rank",
+  "version": "0.1.0",
+  "description": "After a Grep/Glob with 5+ results, ranks them by relevance to the task using the local Laya prefilter (system1-prefilter addon) and adds a read-order reminder. Calls Laya locally at 127.0.0.1 only (the host is checked in code, never trusted from the env var alone) -- no other network access, no key read, never starts Laya itself. Fails open (does nothing) if SYSTEM1_API_KEY is set (a hosted provider, not Laya), if SYSTEM1_BASE_URL is unset or not loopback, if Laya's /health doesn't answer within 800ms, or if the ranking call itself doesn't answer within 2000ms. Reads env: SYSTEM1_BASE_URL, SYSTEM1_API_KEY.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}
