@@ -44,7 +44,7 @@ Portable, self-improving skills for AI coding agents — Claude Code natively, o
 ## workflow/ — session and process discipline
 Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-first` (decide *how*) → `interpretation-checkpoint` (verify the parsed detail, wide-blast-radius tasks only) → edit → `pre-merge-gate` → `pre-commit`.
 
-**Baseline set** (install-kit installs these by default regardless of stack, unless declined): `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`. Not baseline: `perf-audit`, `role-session`, `e2e-scaffold` — situational, install-kit's Pick/Auto-detect catalog covers these on need.
+**Baseline set** (install-kit installs these by default regardless of stack, unless declined): `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`. Not baseline: `perf-audit`, `role-session`, `e2e-scaffold`, `resolve-conflicts`, `responsive-check`, `optimize-assets` — situational, install-kit's Pick/Auto-detect catalog covers these on need.
 
 | Skill | Purpose |
 |---|---|
@@ -58,6 +58,9 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [session-budget](workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation; `report.js` (ledger report) and `compact.js` (verbose-output shrinker) companions |
 | [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit; `edit-check.js` companion runs the mechanical checks |
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, secrets, message format, version bump; `check.js` companion runs the mechanical checks; `install-hook.js` installs it as git hooks |
+| [resolve-conflicts](workflow/resolve-conflicts.md) | Resolve merge/rebase conflicts by mode (both, ours, theirs), pace (all, auto, step) and developer role; `scope.js` companion lists the conflict set and verifies role scope; [roles example](workflow/resolve-conflicts.roles.example.json) ships `frontend` and `backend` |
+| [responsive-check](workflow/responsive-check.md) | Range-based viewport check and fix (RULE 17 zones by default; `--range`, `--min`, `--max`, `--width`, `--detect`); `probes.js` plans viewports and detects breakpoints, `measure.js` measures in Playwright |
+| [optimize-assets](workflow/optimize-assets.md) | Convert (webp, avif, jpg, mp4, woff2 ...), compress and pre-compress (gzip, brotli) assets with the converters installed; `convert.js` companion also scans for heavy assets and lists references; originals are never touched |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
 | [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, atomic file claims, git token, session ids (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
 | [e2e-scaffold](workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
@@ -87,6 +90,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
+| [project-context](addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
 
 ## mcp/ — optional MCP servers, one manager
 Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): UI prototyping, image reading, image generation. Say *"set up MCP servers"* after the install and `mcp-manager` runs the interview. **Local-model servers are global-first:** scripts in `~/.ai-dev-kit/mcp/`, models and ledgers in `~/.ai-dev-kit/<server>/`, keys in `~/.ai-dev-kit/.env`, rules in the tool's global instruction file — never copied per project. Each installer runs a hardware preflight first.
@@ -110,7 +114,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [skill-writer](meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
 | [mod-writer](meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](../mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
-| [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `verify.js` companion mechanically re-checks the result before the install is reported done |
+| [install-kit](meta/install-kit.md) | Install skills + standards into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `verify.js` companion mechanically re-checks the result before the install is reported done; removes its own project copy once the install verifies clean |
 | [skill-scope](meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 | [misfire-log](meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
@@ -126,8 +130,14 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/quiet <cmd>` | a command with shortened output | `session-budget` |
 | `/stale` | stale-memory report | `memory-gardener` |
 | `/hooks` | git-hook status | `pre-commit` |
+| `/resolve-conflicts` | conflict set + role scope, then guided resolution | `resolve-conflicts` |
+| `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
+| `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
+| `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
+| `/figma` | Figma file into `project-context/design/`, read-only | `project-context`, Figma connector |
 | `/kit` | cheat sheet, no script | none |
 | `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |
+| `/format` | sets the response shape (table, bullets, oneline, bool), no script | none |
 
 ## Installing into a new project
 
