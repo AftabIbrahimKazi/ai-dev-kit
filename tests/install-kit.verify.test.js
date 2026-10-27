@@ -129,3 +129,56 @@ t('cli: exit 0 on a clean install, 1 with findings printed, --json matches verif
   const parsed = JSON.parse(r2.stdout);
   assert.strictEqual(parsed.ok, false);
 });
+
+const finishCli = (root, ...extra) => spawnSync('node', [SCRIPT, '--root', root, '--tool', 'claude', '--finish', ...extra], { encoding: 'utf8' });
+const installed = () => {
+  const d = tmp();
+  write(d, '.claude/skills/handover/SKILL.md', skillMd('handover'));
+  write(d, '.claude/skills/install-kit/SKILL.md', skillMd('install-kit'));
+  write(d, '.claude/skills/install-kit/verify.js', '// verify');
+  write(d, '.claude/skills/install-kit/learnings.md', '- note');
+  write(d, '.claude/skills/package.json', '{ "type": "commonjs" }');
+  write(d, 'CLAUDE.md', okProtocol);
+  return d;
+};
+
+t('--finish after a clean verify removes the installed install-kit and keeps every other skill and the shield', () => {
+  const d = installed();
+  const r = finishCli(d);
+  assert.strictEqual(r.status, 0, r.stdout);
+  assert.match(r.stdout, /removed \.claude\/skills\/install-kit/);
+  assert.ok(!fs.existsSync(path.join(d, '.claude/skills/install-kit')));
+  assert.ok(fs.existsSync(path.join(d, '.claude/skills/handover/SKILL.md')));
+  assert.ok(fs.existsSync(path.join(d, '.claude/skills/package.json')));
+});
+t('--finish removes install-kit from every tool root it is in', () => {
+  const d = installed();
+  write(d, '.opencode/skills/install-kit/SKILL.md', skillMd('install-kit'));
+  const r = finishCli(d);
+  assert.match(r.stdout, /removed \.claude\/skills\/install-kit/);
+  assert.match(r.stdout, /removed \.opencode\/skills\/install-kit/);
+  assert.ok(!fs.existsSync(path.join(d, '.opencode/skills/install-kit')));
+});
+t('--finish keeps install-kit when verification fails, so the install can be repaired', () => {
+  const d = installed();
+  fs.rmSync(path.join(d, 'CLAUDE.md'));
+  const r = finishCli(d);
+  assert.strictEqual(r.status, 1);
+  assert.match(r.stdout, /kept: install failed verification/);
+  assert.ok(fs.existsSync(path.join(d, '.claude/skills/install-kit/SKILL.md')));
+});
+t('--finish never removes the kit library own install-kit', () => {
+  const d = installed();
+  write(d, 'skills/meta/install-kit.md', '# the library source');
+  const r = finishCli(d);
+  assert.match(r.stdout, /kept: this is the kit library itself/);
+  assert.ok(fs.existsSync(path.join(d, 'skills/meta/install-kit.md')));
+  assert.ok(fs.existsSync(path.join(d, '.claude/skills/install-kit/SKILL.md')));
+});
+t('without --finish nothing is deleted, and --finish with no installed copy says so', () => {
+  const d = installed();
+  spawnSync('node', [SCRIPT, '--root', d, '--tool', 'claude'], { encoding: 'utf8' });
+  assert.ok(fs.existsSync(path.join(d, '.claude/skills/install-kit/SKILL.md')));
+  const d2 = tmp(); write(d2, 'CLAUDE.md', okProtocol);
+  assert.match(finishCli(d2).stdout, /kept: no installed install-kit found/);
+});
