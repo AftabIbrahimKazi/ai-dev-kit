@@ -1,8 +1,8 @@
 import type { Register } from 'claude-code'
-import { fresh, noteBash, noteEdit, type State } from './tracker'
+import { fresh, noteBash, noteEdit, noteFirstFailure, type State } from './tracker'
 
 // Reminder-only. Watches edits and verification commands in the main loop and nudges once at the
-// second failed fix. Fails open; never blocks; never touches handover/.
+// first failed verification and once at the second failed fix. Fails open; never blocks; never touches handover/.
 let state: State = fresh()
 
 export const register: Register = (on) => {
@@ -26,7 +26,7 @@ export const register: Register = (on) => {
       if ('deny' in ran && ran.deny) return ran
       if ('agentId' in e && e.agentId) return ran
       const failed = 'isError' in ran && ran.isError === true
-      const note = noteBash(state, e.command, failed)
+      const note = noteBash(state, e.command, failed) ?? noteFirstFailure(state, e.command, failed)
       if (note) {
         const prior = 'context' in ran && ran.context ? ran.context : []
         return { ...ran, context: [...prior, note] } as typeof ran

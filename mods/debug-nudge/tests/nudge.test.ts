@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { fresh, noteBash, noteEdit, cmdKey } from '../hooks/tracker'
+import { fresh, noteBash, noteEdit, noteFirstFailure, cmdKey } from '../hooks/tracker'
 
 test('the second failed fix triggers one nudge; the first failure and the first retry do not', () => {
   const s = fresh()
@@ -14,6 +14,15 @@ test('the second failed fix triggers one nudge; the first failure and the first 
   expect(note).toContain('debug-protocol')
   noteEdit(s, 'src/c.ts')
   expect(noteBash(s, 'npm test', true)).toBeNull() // already nudged once
+})
+
+test('the early reminder fires once per session, on a failed verification command only', () => {
+  const s = fresh()
+  expect(noteFirstFailure(s, 'grep -r foo src', true)).toBeNull() // not a verification command
+  expect(noteFirstFailure(s, 'npm test', false)).toBeNull() // passed
+  expect(noteFirstFailure(s, 'npm test', true)).toContain('debug-protocol')
+  expect(noteFirstFailure(s, 'npm run build', true)).toBeNull() // already given this session
+  expect(noteFirstFailure(fresh(), 'cargo test', true)).toContain('reproduce it')
 })
 
 test('re-running without an edit in between is not a fix attempt', () => {
@@ -84,9 +93,9 @@ test('the hook adds the reminder to the failing result at the second failed fix 
   const third = await bash($, 'npm test')
   await edit($, 'src/c.ts')
   const fourth = await bash($, 'npm test')
-  expect(first.context).toBeUndefined()
+  expect(first.context[0]).toContain('verification command failed') // the early reminder, once
   expect(second.context).toBeUndefined()
-  expect(third.context[0]).toContain('debug-protocol')
+  expect(third.context[0]).toContain('2 separate fix attempts')
   expect(fourth.context).toBeUndefined()
   expect(third.isError).toBe(true) // the result itself is untouched
 })
