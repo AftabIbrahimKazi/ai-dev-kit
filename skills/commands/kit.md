@@ -16,6 +16,11 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Start or end a session | `/handover` |
 | Memory notes may be out of date | `/stale` |
 | Check or install git hooks | `/hooks` |
-| Set up a project | `/install-kit` |
+| Merge or rebase stopped with conflicts | `/resolve-conflicts` (optional: `ours`, `theirs`, `step`, `--role backend`) |
+| Does this page work at every screen size | `/responsive-check` (optional: `--range 600-900`, `--width 375`, `--detect`) |
+| Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
+| A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <url>` (opt-in add-on) |
+| Change how answers are shaped | `/format table|bullets|oneline|bool` (`/format reset` for the default) |
+| Set up or update a project | run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean |
 
 Most checks run without a command (mods and git hooks). Commands are for the moments you choose.

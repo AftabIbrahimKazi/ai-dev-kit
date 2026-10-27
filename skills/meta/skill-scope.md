@@ -56,7 +56,7 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
 ### Per-session archivable (handover toggles from the stated next task)
-`perf-audit`, `code-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `install-kit`
+`perf-audit`, `code-audit`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `install-kit`
 
 `code-audit` is archivable like `perf-audit`: it fires on a cleanup or audit task. `pre-merge-gate`'s `edit-check.js` uses its engine when present and falls back to its own frozen copy of the per-edit rules when it is archived, so archiving breaks nothing.
 
@@ -70,6 +70,8 @@ Each fires only on a specific task instance nameable in a next-task line, not a 
 `mod-setup` is the same for Claude Code mods (`compat: claude-code-only`): one skill, one folder per mod under `mods/`, each chosen individually after a review of what it touches. Adding a mod adds no skill and no classification row. Four mods run an engine script, a companion of a universal skill that installs with it: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`), `budget-ledger`'s `/budget` (`session-budget`) and `output-compact` (`session-budget`'s `compact.js`). `guard`, `debug-nudge`, `standards-chain` and `eta-nudge` carry their own rules and need no engine.
 
 `misfire-log` is a standalone logging aid (one gitignored file, two scripts) — it needs no key and no service, and nothing else in the kit depends on it or degrades if it's absent.
+
+`project-context` is the opt-in private-docs addon: one skill, one companion script, `/ctx` and `/figma`. It is offered only when the user asks for project docs, requirements, brand or Figma handling. Its folder is gitignored and `pre-commit` blocks staged files under it.
 
 Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
 
