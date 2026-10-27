@@ -177,3 +177,25 @@ Read-only review of the repo and local session transcripts; nothing was changed 
 1. Fix the `install-kit` gaps and the README intro.
 2. Decide the `/resume` and `/hooks` naming.
 3. Add `project-context/` to the `standards-chain` skip list.
+
+## Third pass: live sandbox run on the merged kit
+
+Branch `integration/test-features` (main merged into the experiment branch), scratch project built with `mkproject.js`, `claude -p` (Claude Code 2.1.311). Raw results in `findings/data/trigger-merged-*.json` and `commands-run*.json`.
+
+| Layer | Result |
+|---|---|
+| Script tests | 14 of 14 files pass |
+| Mods (`claude plugin test`) | 9 of 9 pass, 104 tests, including the new `standards-chain` skip for `project-context/` |
+| Git hook | Blocks a staged AWS key and a `.env` file |
+| Skills, Sonnet, 11 prompts | 11 of 11 correct, no false trigger on the control |
+| Skills, haiku, 22 runs | New features 14 of 14. `pre-commit` 2 of 4 (rerun). `debug-protocol` 1 of 4 |
+| Skills, Sonnet rerun | `pre-commit` 2 of 2, `debug-protocol` 1 of 2 |
+| Commands, haiku | 16 of 16 ran with correct output. Six first runs hit a 4-turn cap or a permission prompt and passed on rerun (12 turns, `node` and `git` allowed) |
+
+Notes:
+- The `[CX X7]` marker shows on nearly every command reply. The 0-in-22 figure in the trigger runs came from the harness's marker check, not from the model skipping it.
+- Renamed `/pickup` and `/githooks` run live. `/quiet` needs a command argument; with none it returns nothing.
+- Expected stops: `/responsive-check` needs Playwright, `/optimize-assets` conversions need a converter, `/figma` needs the connector.
+- Still open: `debug-protocol` triggering, `pre-commit` triggering on haiku, OpenCode and Codex runs, real converter and Figma runs.
+
+Fixes made after the second pass: `/resume` renamed `/pickup`, `/hooks` renamed `/githooks` (both collided with Claude Code built-ins), `/eta` mapped in `install-kit`, `standards-chain` skips `project-context/`, README intro and AI-17/AI-18 added.

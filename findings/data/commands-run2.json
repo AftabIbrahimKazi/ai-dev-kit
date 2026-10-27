@@ -1,0 +1,44 @@
+[
+ {
+  "c": "/commit-check",
+  "sec": 25,
+  "err": false,
+  "head": "[CX X7] **Not safe to commit yet: nothing is staged.** Running `git commit` now would fail with \"nothing to commit\". - **Mechanical check:** 0 BLOCK, 1 WARN. The warning is 16 untracked files under `.claude/commands/` (audit, comm"
+ },
+ {
+  "c": "/ctx",
+  "sec": 20,
+  "err": false,
+  "head": "[CX X7] **Project context: not set up.** `project-context/` does not exist in this project, so there is nothing to report on yet (no folders, files or index). To set it up, I need two answers: 1. **Folder set:** - **A. Auto-detect"
+ },
+ {
+  "c": "/responsive-check http://localhost:1",
+  "sec": 19,
+  "err": false,
+  "head": "The responsive check did not run. I stopped at Step 3 because Playwright is not installed in this project. **Plan (Step 1):** 18 viewports across the six RULE 17 zones: 320, 448, 575.98, 576, 672, 767.98, 768, 880, 991.98, 992, 10"
+ },
+ {
+  "c": "/resolve-conflicts",
+  "sec": 19,
+  "err": false,
+  "head": "There are no conflicts to resolve in this repository, so I made no edits. - **Conflicted files:** none. `git diff --diff-filter=U` is empty and `scope.js list` reports \"no conflicted files\". - **Merge state:** no merge, rebase, or"
+ },
+ {
+  "c": "/wrap-up",
+  "sec": 34,
+  "err": false,
+  "head": "I wrote `handover.md` at the project root. It did not exist before, and there is no `handover/` folder, so this is the single-file mode. Nothing is committed. The file has the six sections, about 35 lines in total: - **Current sta"
+ },
+ {
+  "c": "/optimize-assets",
+  "sec": 20,
+  "err": false,
+  "head": "One heavy asset found in the project: `public/img/hero.png`, 4096 KB, flagged as big. Which should I convert, and to what target? My recommendations: - **Web hero image:** `--to webp,avif`, keeping the original PNG as the `<pictur"
+ },
+ {
+  "c": "/quiet node --version",
+  "sec": 11,
+  "err": false,
+  "head": "[CX X7] Standards: not yet loaded. Pass. `node --version` exited 0 and printed `v24.12.0`. There are no failure lines."
+ }
+]

@@ -1,0 +1,343 @@
+[
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "I merged main into my branch and git says there are conflict",
+  "run": 1,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00606305,
+  "secs": 17,
+  "status": 1
+ },
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "I merged main into my branch and git says there are conflict",
+  "run": 2,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0048217799999999995,
+  "secs": 15,
+  "status": 1
+ },
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "rebase stopped halfway with merge conflicts, can you fix the",
+  "run": 1,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.005401410000000001,
+  "secs": 15,
+  "status": 1
+ },
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "rebase stopped halfway with merge conflicts, can you fix the",
+  "run": 2,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00467088,
+  "secs": 14,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "The site has horizontal scrolling on phones. Can you check i",
+  "run": 1,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00605242,
+  "secs": 17,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "The site has horizontal scrolling on phones. Can you check i",
+  "run": 2,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [
+   "src/index.html",
+   "styles/main.css"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00557674,
+  "secs": 18,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "make sure this layout works from 320px to 1440px",
+  "run": 1,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [
+   "coding-standards/index.md",
+   "src/index.html",
+   "styles/main.css"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0068338800000000005,
+  "secs": 19,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "make sure this layout works from 320px to 1440px",
+  "run": 2,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [
+   "src/index.html",
+   "styles/main.css",
+   "coding-standards/index.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.005002030000000001,
+  "secs": 17,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "The hero images are 4MB each. Shrink them and give me webp a",
+  "run": 1,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00499141,
+  "secs": 9,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "The hero images are 4MB each. Shrink them and give me webp a",
+  "run": 2,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.005093749999999999,
+  "secs": 18,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "convert my screenshots to jpg so they are cheaper to send yo",
+  "run": 1,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.005142700000000001,
+  "secs": 10,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "convert my screenshots to jpg so they are cheaper to send yo",
+  "run": 2,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [
+   "optimize-assets/learnings.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00496228,
+  "secs": 12,
+  "status": 1
+ },
+ {
+  "expected": "project-context",
+  "prompt": "Set up a folder for the client brand docs and requirements f",
+  "run": 1,
+  "skills": [
+   "project-context"
+  ],
+  "reads": [
+   "project-context/learnings.md",
+   "project-context/SKILL.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.005913890000000001,
+  "secs": 16,
+  "status": 1
+ },
+ {
+  "expected": "project-context",
+  "prompt": "Set up a folder for the client brand docs and requirements f",
+  "run": 2,
+  "skills": [
+   "project-context"
+  ],
+  "reads": [
+   "project-context/learnings.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0053881599999999995,
+  "secs": 15,
+  "status": 1
+ },
+ {
+  "expected": "coding-standards",
+  "prompt": "Add a dark mode toggle button to the header in src/index.htm",
+  "run": 1,
+  "skills": [],
+  "reads": [
+   "coding-standards/index.md",
+   "src/index.html",
+   "styles/main.css",
+   "coding-standards/css-standards.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00594124,
+  "secs": 14,
+  "status": 1
+ },
+ {
+  "expected": "coding-standards",
+  "prompt": "Add a dark mode toggle button to the header in src/index.htm",
+  "run": 2,
+  "skills": [],
+  "reads": [
+   "src/index.html",
+   "styles/main.css",
+   "coding-standards/index.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.00549463,
+  "secs": 17,
+  "status": 1
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "The build fails after my last change and I have no idea why.",
+  "run": 1,
+  "skills": [],
+  "reads": [],
+  "hit": false,
+  "cx": false,
+  "head": "",
+  "cost": 0.006082860000000001,
+  "secs": 16,
+  "status": 1
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "The build fails after my last change and I have no idea why.",
+  "run": 2,
+  "skills": [],
+  "reads": [],
+  "hit": false,
+  "cx": false,
+  "head": "",
+  "cost": 0.00498675,
+  "secs": 16,
+  "status": 1
+ },
+ {
+  "expected": "pre-commit",
+  "prompt": "Commit what I have.",
+  "run": 1,
+  "skills": [],
+  "reads": [],
+  "hit": false,
+  "cx": true,
+  "head": "[CX X7]\n\nNothing to comm",
+  "cost": 0.00428772,
+  "secs": 13,
+  "status": 0
+ },
+ {
+  "expected": "pre-commit",
+  "prompt": "Commit what I have.",
+  "run": 2,
+  "skills": [],
+  "reads": [],
+  "hit": false,
+  "cx": true,
+  "head": "[CX X7] Nothing to commi",
+  "cost": 0.00367665,
+  "secs": 12,
+  "status": 0
+ },
+ {
+  "expected": "(none)",
+  "prompt": "What does git rebase do?",
+  "run": 1,
+  "skills": [],
+  "reads": [],
+  "hit": true,
+  "cx": true,
+  "head": "[CX X7] Standards not ye",
+  "cost": 0.0038480100000000002,
+  "secs": 10,
+  "status": 0
+ },
+ {
+  "expected": "(none)",
+  "prompt": "What does git rebase do?",
+  "run": 2,
+  "skills": [],
+  "reads": [],
+  "hit": true,
+  "cx": true,
+  "head": "[CX X7] Standards: not y",
+  "cost": 0.00331714,
+  "secs": 10,
+  "status": 0
+ }
+]
