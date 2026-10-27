@@ -12,7 +12,7 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 - **Fixed:** `/resume` and `/hooks` collided with Claude Code built-ins and are now `/pickup` and `/githooks`; `standards-chain` skips `project-context/`; `/eta` mapped in `install-kit`.
 - **Built:** connector-free `/figma` (`skills/addons/project-context.figma.js`, 7 tests); `debug-nudge` early reminder.
 - **Token cost:** always-on about 2,500 to about 1,950 per session (`disable-model-invocation` on commands, leaner `CLAUDE.md` from `install-kit`, shorter model descriptions). `ai-standards.md` examples left alone on purpose.
-- **Not resolved:** `debug-protocol` loads in roughly 1 of 3 runs; the `debug-nudge` early reminder showed no effect on an easy bug (0 of 10 with and without) and its delivery cannot be seen in the stream. `pre-commit` misses about half the time on haiku.
+- **`debug-nudge` fixed:** it never fired when a pipe (`npm test | tail`) hid the exit code; it now reads failure text too (commit `919cd56`, 12 tests). Live: on an unclear-cause bug `debug-protocol` loaded 3 of 6 with the mod and 0 of 6 without (small sample). The earlier "no effect" result was invalid because the mod could not fire. `pre-commit` still misses about half the time on haiku.
 - **Branches:** the temporary branches were deleted locally and on GitHub; `kit-audit-2026-10-20` is kept locally.
 - **Later checks:** `[CX]` marker 24 of 24 and AI-18 yes/no short on Sonnet and Opus; OpenCode loads skills 3 of 3 on a clean install; no repro of "pending tasks" in headless tests (details in the findings file, fifth pass).
 
