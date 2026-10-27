@@ -117,6 +117,7 @@ function check(opts) {
 
   for (const f of names) {
     if (SENSITIVE_FILE.test(f)) findings.push({ sev: 'BLOCK', kind: 'file', file: f, msg: 'secret-bearing file is in the change set' });
+    if (/^project-context\//.test(f)) findings.push({ sev: 'BLOCK', kind: 'file', file: f, msg: 'private project-context file is in the change set; unstage it (git rm --cached)' });
     const abs = path.join(cwd, f);
     try { if (mode !== 'push' && fs.statSync(abs).size > BIG_FILE) findings.push({ sev: 'WARN', kind: 'size', file: f, msg: `${(fs.statSync(abs).size / BIG_FILE).toFixed(1)} MB file` }); } catch { /* deleted or unreadable */ }
   }

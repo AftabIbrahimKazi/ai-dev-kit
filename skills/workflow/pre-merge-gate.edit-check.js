@@ -141,7 +141,7 @@ function checkFile(file, cwd, cfg) {
   const abs = path.resolve(cwd, file);
   const rel = norm(path.relative(cwd, abs));
   if (rel.startsWith('..') || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) return [];
-  if (/(^|\/)(node_modules|\.git|dist|build|\.next|vendor)\//.test(rel)) return [];
+  if (/(^|\/)(node_modules|\.git|dist|build|\.next|vendor|project-context)\//.test(rel)) return [];
   if ((cfg.ignore || []).some((g) => globRe(g).test(rel))) return [];
   let text;
   try { text = fs.readFileSync(abs, 'utf8'); } catch { return []; }
