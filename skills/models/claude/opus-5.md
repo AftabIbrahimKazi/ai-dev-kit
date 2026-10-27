@@ -1,6 +1,6 @@
 ---
 name: opus-5
-description: Claude Opus 5 (claude-opus-5) protocol — thinking on by default, verbosity/scope/over-verification tuning, subagent caps. Trigger when working with, routing to, or writing code that calls Opus 5.
+description: Claude Opus 5 (claude-opus-5) protocol. Trigger when working with, routing to, or writing code that calls Opus 5.
 ---
 
 # Opus 5 — Prior-Flagship Protocol

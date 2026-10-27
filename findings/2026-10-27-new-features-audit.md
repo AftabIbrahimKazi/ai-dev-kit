@@ -199,3 +199,20 @@ Notes:
 - Still open: `debug-protocol` triggering, `pre-commit` triggering on haiku, OpenCode and Codex runs, real converter and Figma runs.
 
 Fixes made after the second pass: `/resume` renamed `/pickup`, `/hooks` renamed `/githooks` (both collided with Claude Code built-ins), `/eta` mapped in `install-kit`, `standards-chain` skips `project-context/`, README intro and AI-17/AI-18 added.
+
+## Fourth pass: token cost audit and reductions
+
+Estimates are chars/4 on a fresh install of the merged kit. A realistic install is the 10 baseline skills, the 3 standards skills, `memory-bank` and one model skill with `claude-all-models`; an everything-installed count overstates it (the earlier 39-skill "typical" figure did).
+
+| Always-on item | Before | After |
+|---|---|---|
+| `CLAUDE.md` contract | 1,380 | about 1,150 to 1,240 (preamble and, without `role-session`, the Parallel-Session section omitted by `install-kit`) |
+| Skill descriptions, realistic install | 811 | about 760 (model, `hooks-enforcement` and `misfire-log` descriptions shortened; about 250 if every one of them is installed) |
+| Command descriptions (if installed) | 322 | 0 (`disable-model-invocation: true` on all 16 templates) |
+| Total | about 2,500 | about 1,950 |
+
+Verified: the flag is documented for command files and keeps `/name` working; `/audit`, `/githooks`, `/eta` ran live with it. Shortened model-skill descriptions triggered 8 of 8 on haiku with no false trigger on a control prompt.
+
+Per-session cost beyond always-on: the standards load on the first file edit (`ai-standards.md` 2,410 plus `index.md` 1,840, plus the role file for the edited type, for example `css-standards.md` 4,044). About 750 tokens of `ai-standards.md` are Wrong/Right examples in AI-04 to AI-10 that restate one-line contract bullets. Not compressed: compliance with these rules was already weak in the runs above and the sample sizes here cannot show a before/after difference.
+
+Not changed on purpose: trigger-critical descriptions (`debug-protocol`, `coding-standards`, `code-audit`), `skill-scope` (pinned, referenced at runtime), the authoring skills (already not pinned by `install-kit`).

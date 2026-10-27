@@ -1,6 +1,6 @@
 ---
 name: sonnet-5-5
-description: Claude Sonnet 5.5 (claude-sonnet-5-5) protocol — recalibrated effort, between_tools instead of disabled thinking, forced-tool-use ban, verification at low effort. Trigger when working with, routing to, or writing code that calls Sonnet 5.5.
+description: Claude Sonnet 5.5 (claude-sonnet-5-5) protocol. Trigger when working with, routing to, or writing code that calls Sonnet 5.5.
 ---
 
 # Sonnet 5.5 — Speed-Value Protocol

@@ -1,6 +1,6 @@
 ---
 name: fable-5-1
-description: Claude Fable 5.1 (claude-fable-5-1) protocol — selection, always-on thinking, preserved-thinking rules, progress updates, autonomy and scope prompts. Trigger when working with, routing to, or writing code that calls Fable 5.1 (or Mythos 5.1).
+description: Claude Fable 5.1 (claude-fable-5-1) protocol. Trigger when working with, routing to, or writing code that calls Fable 5.1 (or Mythos 5.1).
 ---
 
 # Fable 5.1 — Maximum-Capability Protocol

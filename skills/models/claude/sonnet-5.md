@@ -1,6 +1,6 @@
 ---
 name: sonnet-5
-description: Claude Sonnet 5 (claude-sonnet-5) protocol — near-Opus coding at Sonnet cost, effort tuning, literal instruction patterns. Trigger when working with, routing to, or writing code that calls Sonnet 5.
+description: Claude Sonnet 5 (claude-sonnet-5) protocol. Trigger when working with, routing to, or writing code that calls Sonnet 5.
 ---
 
 # Sonnet 5 — Speed-Value Protocol
