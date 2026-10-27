@@ -1,5 +1,6 @@
 ---
 description: List memory and handover bullets that name files which no longer exist (report only)
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Stale-memory report:

@@ -1,5 +1,6 @@
 ---
 description: Responsive check on RULE 17 zones; custom ranges, widths, --detect
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Viewport plan or breakpoint report:

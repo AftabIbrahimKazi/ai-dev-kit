@@ -1,5 +1,6 @@
 ---
 description: Mechanical pre-commit check of what is staged (secrets, stray files, debug leftovers, message format)
+disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git status:*)
 ---
 Staged-change check:

@@ -1,5 +1,6 @@
 ---
 description: Wrap up the session - rewrite handover.md in place so the next session can resume cold
+disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git log:*)
 ---
 Repository state:

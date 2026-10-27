@@ -1,5 +1,6 @@
 ---
 description: Set response format: table, bullets, oneline, bool, or reset
+disable-model-invocation: true
 ---
 Requested format: `$ARGUMENTS`
 

@@ -1,5 +1,6 @@
 ---
 description: Show whether the kit's git hooks (secrets, files, commit message) are installed
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Git hook status:

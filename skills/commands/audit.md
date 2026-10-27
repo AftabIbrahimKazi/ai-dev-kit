@@ -1,5 +1,6 @@
 ---
 description: Standards audit of the whole project (runs the code-audit script, then summarizes)
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Audit report (counts, worst files first):

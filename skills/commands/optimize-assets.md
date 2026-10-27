@@ -1,5 +1,6 @@
 ---
 description: Scan, convert, compress or pre-compress assets; originals untouched
+disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
 Asset report:
