@@ -181,6 +181,22 @@ Longer responses are only justified when:
 
 ---
 
+## RULE AI-18 — Response shape: tables where data has structure
+
+The data decides the shape:
+
+| Data | Shape |
+|---|---|
+| 2+ items with 2+ attributes each (comparisons, options, status, file lists, before/after) | Table |
+| One fact, or one action's result | One line |
+| A yes/no question | `Yes` or `No`, plus one line only if the reason is not obvious |
+| Sequential steps, or items with one attribute each | Numbered or bullet list |
+| An explanation the developer asked for, or reasoning where points depend on each other | Short paragraph |
+
+A table needs 2+ rows and 2+ columns of real data; otherwise use a line or a list. Keep a table to about 6 columns and 12 rows; beyond that, show a summary table and the worst rows. A format named in the message wins. A format set with `/format` holds until `/format reset` or the end of the session.
+
+---
+
 ## Read Efficiency
 
 Input tokens are dominated by file reads. These rules govern how the AI fetches context.
@@ -216,6 +232,12 @@ Session-start reads happen in a fixed, consistent order every session: project s
 ## RULE AI-16 — Delegate bulk reads
 
 Fan-out reading (searching many files, per-item checks across a list, bulk classification) is delegated to cheaper subagents where the tooling supports it, passing each worker only the slice of context it needs. The main session receives conclusions, not raw file contents.
+
+---
+
+## RULE AI-17 — File references are clickable links
+
+Where the tool renders links (IDE panels such as the VS Code extension), write every file or location a response mentions as a markdown link with a root-relative path, for example `[ai-standards.md:220](coding-standards/ai-standards.md#L220)`, never as a bare or inline-code path. A bare path stays correct in code blocks, shell commands, output quoted from a script, and tools that show plain text.
 
 ---
 

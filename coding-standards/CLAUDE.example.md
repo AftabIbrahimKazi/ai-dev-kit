@@ -85,9 +85,24 @@ Never edit a file without loading its standard chain first.
 - No restating the task before acting
 - No trailing summaries after completing work
 - No filler phrases
+- Response shape follows the data (RULE AI-18): table for 2+ items with 2+ attributes, one line for one fact, yes/no for yes/no; `/format` overrides
+- Where the tool renders links, file references are markdown links, not bare or inline-code paths (RULE AI-17)
 - No invented rules — gaps in standards are flagged to the developer
 - **Decision preference (all session modes, including autonomous/no-pause and planning modes):** favor token efficiency and correct results with minimal-to-no Agent tool use. This is a weighting input for autonomous judgment calls, not a restriction on making them — see the `agent-usage` and `mode-kernel` skills for the detailed decision logic this preference feeds into.
 - Full rules in `coding-standards/ai-standards.md`
+
+---
+
+## Skill Triggers
+
+Load the skill BEFORE the action (a skill not loaded is a rule not applied). Remove rows for skills not installed.
+
+| Situation | Skill |
+|---|---|
+| About to commit | `pre-commit` |
+| About to say a task is done | `pre-merge-gate` |
+| A build, test or runtime failure whose cause is not obvious | `debug-protocol` |
+| A task touching 3+ files | `plan-first` |
 
 ---
 
