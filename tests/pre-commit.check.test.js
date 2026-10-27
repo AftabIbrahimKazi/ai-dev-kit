@@ -170,3 +170,11 @@ t('cli: --no-fail prints the BLOCK report but exits 0 (slash commands abort on a
   assert.strictEqual(soft.status, 0);
   assert.ok(soft.stdout.includes('BLOCK') && soft.stdout.includes('Anthropic key'));
 });
+
+t('a staged file under project-context/ blocks, even when force-added past .gitignore', () => {
+  const d = repo(); put(d, 'src/a.js', 'const a = 1;\n'); put(d, 'project-context/design/brand.md', 'private\n');
+  sh(d, 'add', 'src/a.js'); sh(d, 'add', '-f', 'project-context/design/brand.md');
+  const r = check({ cwd: d });
+  assert.deepStrictEqual(kinds(r, 'BLOCK'), ['file:project-context/design/brand.md']);
+  assert.match(r.findings[0].msg, /private project-context file/);
+});
