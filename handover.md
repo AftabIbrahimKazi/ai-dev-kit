@@ -1,12 +1,26 @@
 # Handover — ai-dev-kit
 
-Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
+Updated: 2026-10-28 · Branch: main · **uncommitted work on top of `c8fe6fa`** (nothing from 2026-10-28 is committed or pushed).
 
 ## Current state
 
-`main` = GitHub plus all of the 2026-10-27 work (new features merged and tested, token cuts, fixes, docs). 15 script test files pass; 9 mods pass `claude plugin test` (106 tests); all 16 command templates ran live. Local `main` and `origin/main` are in sync after the push at the end of this session. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check` (the other mods are installed per project only). OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
+17 script test files pass (288 tests) and 9 mods pass `claude plugin test` (107 tests). `main` is GitHub plus all of the 2026-10-27 work; on top of that, uncommitted: the `narrate` and `personality` add-ons, `/narration` and `/persona`, README, CREDITS, CHANGELOG, `skills/README.md`, `install-kit.md` and `.gitignore` edits. Review with `git status` and commit when ready. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check`. OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
 
-## Last session (2026-10-27)
+**State on this machine (outside the repo):** the `narrate` Stop hook is wired in `~/.claude/settings.json` (points at the kit's `skills/addons/narrate.speak.js`); Piper (`piper-tts`) and the voice-mode packages are installed under Python 3.11; voices live in `~/.claude/voices/` (`ljspeech`, `joe` are the defaults; `lessac` and `ryan` are unused leftovers, Ryan is non-commercial); `~/.claude/narrate.json` selects Piper with the female voice. No persona is chosen and the `personality` SessionStart hook is not wired.
+
+## Last session (2026-10-28)
+
+- **Built `narrate`** (opt-in): Stop hook reads each reply aloud with Piper; male and female voices; mute, volume, speed, pitch (pitch by resampling, speed by Piper length scale); queue so parallel sessions never cut each other off; default output device via WPF MediaPlayer; `command` engine for cloned voices; `--add-voice` for custom Piper voices; installer asks commands, hotkeys or both; `listen.py` has `Ctrl+Alt` hotkeys and offline Whisper dictation (`Ctrl+Alt+D`). Cross-platform player choice (mac, Linux, Termux) is unit-tested only.
+- **Built `personality`** (opt-in): six original personas (female/male x novice/mid/pro), SessionStart injector, install asks one of eight choices (six, none, custom) and copies only that persona. Trimmed from about 340 to 130-160 tokens; Haiku test (6 runs per persona) gave 41-58% shorter replies than no persona.
+- **Audit of the whole kit (the four-step request):** all tests green; no hook, command or skill-name collisions except `/narrate` vs the `narrate` skill (renamed the command `/narration`); no redundancy found beyond the documented overlap between `narrate` voice mode and Claude Code's native dictation. Misfires: `narrate` loaded 6 of 6, `personality` 5 of 6 on setup prompts, no false trigger in 10 control runs; the misfire log is empty.
+- **Fixed after a user report:** long replies stopped mid-way because narration read only the first 1,200 characters; now chunked, limit is `maxSeconds` (default 300, scales with speed) (checked live: a 2,336-character reply was synthesized and played as 7 pieces).
+- **Fixed after a second user report (repeats):** a Stop with no new reply text re-read the previous reply. Each reply is now spoken once (state in `~/.claude/narrate-last.json`, keyed by transcript and entry id); `replay` (`/narration replay`, `Ctrl+Alt+R`) is the only way to hear it again. `NARRATE_TMP` moves the lock and queue so tests never touch a live narration.
+- **Fixed from the audit:** `F9` and `Ctrl+Alt+Left/Right` collide with VS Code shortcuts (hotkeys now consumed, dictation on `Ctrl+Alt+D`); code-only replies were silent (now announced); command templates and persona folder did not match install-kit's renamed companion layout; README listed `/githooks-enforcement` (skill is `hooks-enforcement`); README FAQ said the installer never installs packages (now true only for the core installer).
+- **Token review:** nothing new is always-on: both add-ons are opt-in, commands use `disable-model-invocation`. No further safe cut found in the existing descriptions (largest are OpenCode model skills, installed only for OpenCode).
+- **Docs:** README (new section, command tables, FAQ, SEO tagline, layout), `skills/README.md`, `CREDITS.md` (Piper GPL-3.0 as a separate program, voice licences), `CHANGELOG.md`, `/kit` cheat sheet.
+- **Not verified:** the narration hotkeys by a real key press, microphone capture, macOS/Linux/Android audio, the personas on Sonnet or inside a real SessionStart hook.
+
+## Earlier session (2026-10-27)
 
 - **New features audited, merged and pushed.** The untested feature branch was merged with the live `main`, tested in a scratch project, and pushed: 14 of 14 script test files pass, 9 of 9 mods pass `claude plugin test` (104 tests), the git hook blocks a staged key and a `.env`, all 16 commands ran live, 11 of 11 skill prompts triggered on Sonnet. Report and raw data: `findings/2026-10-27-new-features-audit.md` and `findings/data/`; harness: `findings/harness/`.
 - **Fixed:** `/resume` and `/hooks` collided with Claude Code built-ins and are now `/pickup` and `/githooks`; `standards-chain` skips `project-context/`; `/eta` mapped in `install-kit`.
@@ -27,6 +41,11 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 - **Fixed:** log fixtures were converted to CRLF on Windows clones and failed `session-budget.compact.test.js`; `.gitattributes` now marks `tests/fixtures/**` as `-text`.
 
 ## Decisions & why
+
+- **Voice and persona are opt-in add-ons, never default.** Voices are downloaded at install, never shipped (licences: only public-domain or CC0 defaults). A cloned or character voice is the user's own and stays out of the repo.
+- **Persona and narration are wording and playback only.** A persona never changes facts, code or verification; narration never talks to Claude and costs no tokens.
+- **Command names must differ from skill names** (`/narration` vs skill `narrate`), as with `/ctx` and `project-context`.
+- **Testing slash commands headless from Git Bash needs `MSYS_NO_PATHCONV=1`,** otherwise `/cmd` becomes `C:/Program Files/Git/cmd`.
 
 - **Priority order is binding: correctness, then tokens, then speed.** A mod or script ships only if the pass rate is equal or better, then measured tokens show a net saving.
 - **Scripts first, mods second; mods for guarantees, skills for judgment.** Measured skill loading is too unreliable to carry a must-happen rule.

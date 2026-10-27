@@ -90,6 +90,8 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
+| [personality](addons/personality.md) | Six original personas (female and male at novice, mid and pro skill levels) that change how replies are worded; SessionStart hook, `/persona`, user-replaceable persona files; wording only, never facts |
+| [narrate](addons/narrate.md) | Stop hook that reads each reply aloud (Piper male/female voices, mute, volume, speed, pitch) plus offline voice-mode dictation into the chat box; no tokens, never touches Claude |
 | [project-context](addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
 
 ## mcp/ — optional MCP servers, one manager
@@ -136,6 +138,8 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
 | `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
+| `/persona` | choose the reply persona: gender and skill level, off, status | `personality` |
+| `/narration` | mute, voice, volume, speed, pitch for reply narration | `narrate` |
 | `/figma` | exported Figma PNG/SVG files into `project-context/design/figma.md`, no MCP | `project-context` |
 | `/kit` | cheat sheet, no script | none |
 | `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |

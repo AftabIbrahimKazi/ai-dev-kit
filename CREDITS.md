@@ -9,6 +9,10 @@ This repository (skills, standards, scripts) is [MIT-licensed](LICENSE). It buil
 | Qwen3-VL-2B / 4B-Instruct (GGUF) | Qwen Team, Alibaba Cloud | Apache-2.0 | `local-vision` — reading images | [huggingface.co/Qwen](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF) |
 | llama.cpp (pinned build b11390) | ggml-org and contributors | MIT | runs the Qwen model locally | [github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) |
 | Laya (421M typed-decision model) and its `laya` package | Convai Innovations (repository: Nandha Kishor M) | Apache-2.0 | `system1-prefilter` / `prefilter` — ranking candidates | [huggingface.co/convaiinnovations/laya](https://huggingface.co/convaiinnovations/laya), [github.com/NandhaKishorM/laya](https://github.com/NandhaKishorM/laya) |
+| Piper (`piper-tts`) | Open Home Foundation / Rhasspy | GPL-3.0-or-later | `narrate` — offline text to speech; installed with pip and run as a separate program, never bundled or linked | [github.com/OHF-Voice/piper1-gpl](https://github.com/OHF-Voice/piper1-gpl) |
+| Piper voices `en_US-ljspeech-medium`, `en_US-joe-medium` | trained on LJ Speech (Keith Ito, public domain) and the Joe dataset (CC0) | public domain / CC0 | `narrate` — default female and male voices, downloaded by the user | [huggingface.co/rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices) |
+| faster-whisper and Whisper `base.en` | SYSTRAN; OpenAI (Whisper) | MIT | `narrate` voice mode — offline dictation | [github.com/SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) |
+| `keyboard`, `sounddevice`, `numpy` | Boppreh; Matthias Geier; NumPy developers | MIT; MIT; BSD-3-Clause | `narrate` — global hotkeys, microphone capture | on PyPI |
 
 ## Hosted services (your own accounts and keys)
 
