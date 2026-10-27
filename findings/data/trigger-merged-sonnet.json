@@ -1,0 +1,174 @@
+[
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "I merged main into my branch and git says there are conflict",
+  "run": 1,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0931414,
+  "secs": 19,
+  "status": 1
+ },
+ {
+  "expected": "resolve-conflicts",
+  "prompt": "rebase stopped halfway with merge conflicts, can you fix the",
+  "run": 1,
+  "skills": [
+   "resolve-conflicts"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0846895,
+  "secs": 14,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "The site has horizontal scrolling on phones. Can you check i",
+  "run": 1,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [
+   "src/index.html",
+   "styles/main.css"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0894952,
+  "secs": 17,
+  "status": 1
+ },
+ {
+  "expected": "responsive-check",
+  "prompt": "make sure this layout works from 320px to 1440px",
+  "run": 1,
+  "skills": [
+   "responsive-check"
+  ],
+  "reads": [
+   "styles/main.css",
+   "src/index.html"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.09392339999999999,
+  "secs": 15,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "The hero images are 4MB each. Shrink them and give me webp a",
+  "run": 1,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.084772,
+  "secs": 9,
+  "status": 1
+ },
+ {
+  "expected": "optimize-assets",
+  "prompt": "convert my screenshots to jpg so they are cheaper to send yo",
+  "run": 1,
+  "skills": [
+   "optimize-assets"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.0857348,
+  "secs": 12,
+  "status": 1
+ },
+ {
+  "expected": "project-context",
+  "prompt": "Set up a folder for the client brand docs and requirements f",
+  "run": 1,
+  "skills": [
+   "project-context"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.08535039999999999,
+  "secs": 14,
+  "status": 1
+ },
+ {
+  "expected": "coding-standards",
+  "prompt": "Add a dark mode toggle button to the header in src/index.htm",
+  "run": 1,
+  "skills": [],
+  "reads": [
+   "coding-standards/index.md",
+   "src/index.html",
+   "styles/main.css",
+   "coding-standards/css-standards.md"
+  ],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.15273609999999999,
+  "secs": 24,
+  "status": 1
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "The build fails after my last change and I have no idea why.",
+  "run": 1,
+  "skills": [
+   "debug-protocol"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": false,
+  "head": "",
+  "cost": 0.093164,
+  "secs": 19,
+  "status": 1
+ },
+ {
+  "expected": "pre-commit",
+  "prompt": "Commit what I have.",
+  "run": 1,
+  "skills": [
+   "pre-commit"
+  ],
+  "reads": [],
+  "hit": true,
+  "cx": true,
+  "head": "[CX X7] There's nothing ",
+  "cost": 0.0816374,
+  "secs": 14,
+  "status": 0
+ },
+ {
+  "expected": "(none)",
+  "prompt": "What does git rebase do?",
+  "run": 1,
+  "skills": [],
+  "reads": [],
+  "hit": true,
+  "cx": true,
+  "head": "[CX X7] Standards: not y",
+  "cost": 0.0652501,
+  "secs": 9,
+  "status": 0
+ }
+]
