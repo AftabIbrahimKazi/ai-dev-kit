@@ -14,6 +14,7 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 - **Token cost:** always-on about 2,500 to about 1,950 per session (`disable-model-invocation` on commands, leaner `CLAUDE.md` from `install-kit`, shorter model descriptions). `ai-standards.md` examples left alone on purpose.
 - **Not resolved:** `debug-protocol` loads in roughly 1 of 3 runs; the `debug-nudge` early reminder showed no effect on an easy bug (0 of 10 with and without) and its delivery cannot be seen in the stream. `pre-commit` misses about half the time on haiku.
 - **Branches:** the temporary branches were deleted locally and on GitHub; `kit-audit-2026-10-20` is kept locally.
+- **Later checks:** `[CX]` marker 24 of 24 and AI-18 yes/no short on Sonnet and Opus; OpenCode loads skills 3 of 3 on a clean install; no repro of "pending tasks" in headless tests (details in the findings file, fifth pass).
 
 ## Earlier session (2026-10-21)
 
@@ -47,7 +48,7 @@ Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 
 ## Next steps
 
-0. **Newest first:** test `/figma` on a real Figma SVG and PNG export; re-test the `[CX]` marker and AI-18 yes/no answers on Sonnet and Opus; design a harder `debug-protocol` test (unclear cause) with a marker file to prove the reminder arrives; real OpenCode and Codex runs; GitHub homepage and topics.
+0. **Newest first:** test `/figma` on a real Figma SVG and PNG export; design a harder `debug-protocol` test (unclear cause) with a marker file to prove the reminder arrives; a Codex run; GitHub homepage and topics; a real example of a "pending task" if it keeps happening.
 1. **Use the kit as it is for a while, then decide.** Install `/audit`, `/commit-check`, `/quiet` and the git hooks in one real project; read `/token-report` (needs `budget-ledger`) after a week.
 2. Repoint the user-scope marketplace to this repo, or `git pull` in `Compression\ai-dev-kit`, then `claude plugin update` the mods.
 3. Version-bump script (needs the user's convention); this was already first on the earlier list.
