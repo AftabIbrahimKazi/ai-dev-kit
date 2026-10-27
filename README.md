@@ -4,7 +4,7 @@
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, and opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering) for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
+Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering), an opt-in offline text-to-speech add-on that reads Claude's replies aloud, and opt-in reply personas, for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
 [![License: MIT](https://img.shields.io/github/license/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/stargazers) [![GitHub forks](https://img.shields.io/github/forks/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/forks) [![Last commit](https://img.shields.io/github/last-commit/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/commits/main)
 
@@ -31,7 +31,7 @@ Then open Claude Code, OpenCode, Codex or any agent that reads markdown in `your
 
 > read skills/README.md and install
 
-The installer copies markdown files only: no packages, no build step. Full details: [Install into a project](#install-into-a-project).
+The core installer copies markdown files only: no packages, no build step. Opt-in add-ons that need a tool (for example `narrate`, which uses Piper for speech) install it only when you ask. Full details: [Install into a project](#install-into-a-project).
 
 **Why use it**
 
@@ -60,7 +60,7 @@ Full catalog: [skills/README.md](skills/README.md)
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
 | `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods), `misfire-log` (opt-in: logs when a skill/mod/addon should have fired but didn't, for the next kit update) |
-| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool), `project-context` (a private, gitignored folder of project docs with token-lean indexes, set up with `/ctx`) |
+| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool), `project-context` (a private, gitignored folder of project docs with token-lean indexes, set up with `/ctx`), `narrate` (offline text to speech for Claude's replies, plus voice dictation), `personality` (six reply personas by skill level) |
 | `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 
 ### `coding-standards/` — the layered standards system
@@ -97,6 +97,17 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 **Honest status.** Developed and tested on Windows 11 with an 8-core CPU and no discrete GPU. The CUDA, Metal, discrete-GPU Vulkan and Linux/macOS paths are implemented but untested. Model and API facts carry a `verified:` date and are re-checked live at setup. Credits and licences for every model and service (Qwen, llama.cpp, Laya, FLUX.1, Gemini, Stitch, placehold.co) are in [CREDITS.md](CREDITS.md) and each server file; nothing third-party is bundled in this repo.
 
 **Get started:** install the kit, then tell your agent *"set up MCP servers"* — [`mcp-manager`](skills/mcp/mcp-manager.md) asks which tools, which AI clients, and where to keep keys, then writes the configs (merging, never overwriting) and health-checks each one.
+
+## Optional: read replies aloud and choose a reply persona
+
+Two opt-in add-ons, never installed by default. Neither costs tokens while it runs: narration is a local script, and a persona adds a short fixed text to the session.
+
+| Add-on | What you get | Token cost | Status |
+|---|---|---|---|
+| [`narrate`](skills/addons/narrate.md) | A Stop hook reads each reply aloud with [Piper](https://github.com/OHF-Voice/piper1-gpl) (offline neural text to speech): code, tables and links are skipped and announced as "on screen". A female and a male voice, mute, volume, speed and pitch, by slash command (`/narration`), by global hotkeys, or both (you choose at install). Replies from parallel sessions queue instead of cutting each other off. Optional voice mode: offline Whisper dictation typed into the chat box. Bring your own Piper voice, or a cloned voice through a command hook. | none | Tested on Windows 11 with headphones and speakers. The hotkeys and microphone capture were not exercised by a real key press or microphone (transcription of a spoken file was). macOS, Linux and Android (Termux) player choice is covered by unit tests only, not by listening. |
+| [`personality`](skills/addons/personality.md) | Six original personas, female and male at novice, mid and professional level, that change how replies are worded (plain and step by step, peer-level, or terse with full jargon). Wording only: facts, code, paths and verification never change. The install asks for one of eight choices (six personas, none, or your own) and copies only that one. | about 130 to 160 tokens per session | Measured on Haiku, 6 runs per persona: replies were 41 to 58% shorter than with no persona, which more than paid for the added tokens. Your Concise output style may shrink that saving. |
+
+Voices are downloaded from their publishers during install and are not in this repo: LJSpeech (public domain) and Joe (CC0). Piper is GPL-3.0 and runs as a separate program. Never commit a cloned or character voice. Claude Code also has its own built-in dictation (the microphone icon in the chat box); `narrate`'s voice mode is the offline alternative. Licences: [CREDITS.md](CREDITS.md).
 
 ## Install into a project
 
@@ -148,6 +159,8 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/optimize-assets` | Finds heavy assets, converts them (`webp`, `avif`, `jpg`, `mp4`, `woff2`, ...) or compresses them in place of the same format; originals are never touched | `scan [dir]`, `convert <paths> --to webp,avif`, `compress <paths>`, `precompress <paths>`, `tools`, `refs <assets>`, `--preset vision|web` | `optimize-assets` |
 | `/ctx <init|analyze|status|add|detect>` | Sets up and maintains the private `project-context/` docs folder: folders by auto-detect, project type or your own list; an `INDEX.md` per folder so Claude reads facts, not raw files | `init [--folders a,b] [--copy]`, `analyze [folder]`, `status`, `add <folder> <file>`, `detect` | `project-context` |
 | `/figma <folder>` | Turns exported Figma PNG/SVG files into `project-context/design/figma.md`: frame sizes, colors, fonts, type sizes, text. No MCP, no Figma account tokens, no connector cost | a folder or files of exports, optional `--link <figma url>`, `--write` to save | `project-context` |
+| `/narration <setting>` | Controls reply narration without opening a file | `mute`, `unmute`, `stop`, `replay`, `status`, `voice male|female`, `volume 0-100`, `speed 0.5-2`, `pitch -12..12`, `maxSeconds 30-1800` | `narrate` |
+| `/persona <setting>` | Chooses how replies are worded; applies from the next session | `set female|male novice|mid|pro`, `off`, `status`, `list` | `personality` |
 | `/kit` | This cheat sheet | optional: describe your situation | none |
 | `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |
 | `/format <name>` | Sets the response shape for the session, no script | `table`, `bullets`, `oneline`, `bool`, `reset` | none |
@@ -162,14 +175,16 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
 | Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
 | Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
+| Add-ons | `/project-context`, `/narrate`, `/personality` | setting up that add-on |
 | Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
-| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/githooks-enforcement` | choosing or prompting a Claude model |
+| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
 | OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
 
 **Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
 
 **Good to know**
 - **What is reliable and what is not.** Mechanical layers (the git hooks, the mods, the scripts) always run; skills load by the model's judgment. In live runs on haiku and Sonnet the new skills triggered reliably, but `debug-protocol` did not always (it loaded in roughly 1 of 3 runs on a failing build; the `debug-nudge` mod raises that). `pre-commit` loaded in 30 of 30 haiku runs whenever there was something to commit. Treat the contract and the mods as the guarantee, and skills as the judgment layer.
+- **New add-ons:** the `narrate` skill loaded on 6 of 6 prompts asking for spoken replies or dictation and the `personality` skill on 5 of 6 prompts asking to set up a persona (haiku), with no false trigger across 10 control runs. `/narration` and `/persona` ran in an installed-layout scratch project on haiku.
 - **Tested:** all script-backed kit commands (`/pickup` and `/wrap-up` included) ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` is untested (no script to run headless); `/figma` is covered by unit tests only, not a live run — it's a plain instruction template, same shape as `/kit`. In OpenCode (1.18, free `glm-5.3-flash-free` model) a clean kit install answered with the `[CX]` marker and loaded the right skill on 3 of 3 prompts (`optimize-assets`, `resolve-conflicts`, `responsive-check`) with no skill on a control question. Skills by name were checked for `/debug-protocol` in Claude Code only; Codex was not run.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
 - **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
@@ -191,6 +206,9 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
+- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are slash commands, global hotkeys or both, chosen at install. Replies from parallel sessions queue instead of cutting each other off, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Optional voice mode transcribes your speech offline with Whisper and types it into the chat box. Covered by 26 script tests; see the status note in [Optional: read replies aloud and choose a reply persona](#optional-read-replies-aloud-and-choose-a-reply-persona).
+- **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 130 to 160 tokens per session; replies were 41 to 58% shorter in a 6-run-per-persona Haiku test.
+- **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
 - **Lower always-on cost, no feature removed.** A normal install now costs about 1,950 tokens per session before any work, down from about 2,500 (estimates at ~4 characters per token). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (up to about 320 tokens). `install-kit` writes a leaner `CLAUDE.md` (no template preamble; the parallel-session section only with `role-session`, about 140-235 tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them (about 50 tokens in a normal install). Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
 - **Skill Triggers table.** The `CLAUDE.md` contract carries a short table mapping situations to skills ("commit what I have" to `pre-commit`, a failing build to `debug-protocol`, and so on), because skills load by the model's own judgment and sometimes do not. With the table, `pre-commit` loaded 4 of 4 on a "commit what I have" prompt (1 of 2 before). `install-kit` removes a row when its skill is not installed.
 - **Merge conflicts, responsive layouts, asset weight.** Three new workflow skills, each with a script and a command: [`resolve-conflicts`](skills/workflow/resolve-conflicts.md) (modes `both`, `ours`, `theirs`; role scope leaves files owned by another role alone), [`responsive-check`](skills/workflow/responsive-check.md) (viewport plan from the project's own breakpoints, then a Playwright measurement) and [`optimize-assets`](skills/workflow/optimize-assets.md) (scan, convert, compress and pre-compress images, video, fonts and SVG, checking the file signature before reading dimensions). Together with `project-context`, they triggered 14 of 14 times on haiku with no skill named in the prompt.
@@ -235,9 +253,9 @@ skills/
   stack/           ← Three.js, Astro, Shopify (live-pulled from Shopify's own toolkit, never forked)
   libraries/       ← skills for the author's own libraries (strata-css, triforge)
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
-  addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context)
+  addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /ctx, /figma, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
@@ -264,13 +282,17 @@ coding-standards/
 
 **Which AI coding tools does it work with?** Claude Code natively, plus OpenCode, Codex and any agent that reads markdown instructions. The installer detects the tool and puts the skills and the session file where that tool actually reads them (`CLAUDE.md` or `AGENTS.md`).
 
-**Does it install packages or touch my code?** No. The installer copies markdown files only. The audit script and the Claude Code mods are optional and run only when you choose them.
+**Does it install packages or touch my code?** The core installer copies markdown files only and never edits your code. The audit script, the Claude Code mods and the add-ons are optional and run only when you choose them. The `narrate` add-on is the one place that installs software (Piper through pip, two voice files of about 63 MB each, and with voice mode a speech model), and only after it tells you the download size and you agree.
 
 **Can I use only the standards, or only the skills?** Yes, either folder works alone. A project that wants the standards enforced during a session needs both, because the `coding-standards` skill is what loads the chain.
 
 **How is this different from a prompt library?** Skills load on a trigger instead of sitting in every prompt, they record lessons per project, the standards are testable rules with wrong/right examples, and a script audits a codebase against them.
 
 **How do I update an install?** Pull the repository and re-run the installer. It compares each file and asks before overwriting a local change.
+
+**Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Optional: read replies aloud and choose a reply persona](#optional-read-replies-aloud-and-choose-a-reply-persona).
+
+**Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 130 to 160 tokens per session.
 
 **Is it free?** Yes, MIT licensed. Optional tools state their own limits: some run locally for free, hosted ones have free tiers or need billing.
 

@@ -22,6 +22,8 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Does this page work at every screen size | `/responsive-check` (optional: `--range 600-900`, `--width 375`, `--detect`) |
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
 | A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <export folder>` (opt-in add-on) |
+| Read answers aloud, mute or tune the voice | `/narration mute|unmute|voice male|volume 80|speed 1.2|pitch 2` (opt-in `narrate` add-on) |
+| Change how answers are worded for your skill level | `/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on) |
 | Change how answers are shaped | `/format table|bullets|oneline|bool` (`/format reset` for the default) |
 | Set up or update a project | run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean |
 
