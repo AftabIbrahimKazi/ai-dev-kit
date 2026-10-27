@@ -1,12 +1,21 @@
 # Handover — ai-dev-kit
 
-Updated: 2026-10-21 · Branch: main (the only branch) · Pushed to `origin/main` after this note is committed.
+Updated: 2026-10-27 · Branch: main · `origin/main` is current as of this note.
 
 ## Current state
 
 `main` = GitHub plus a session's audit work, rebased onto six commits that a cloud Claude session had pushed on 2026-10-18 (`output-compact` mod, `misfire-log`, `install-kit.verify.js`, stack presets, a Windows `git.exe` fix in `pre-commit.check.js`, README catch-up). All 10 script test files and all 7 mods (81 tests) pass; the mods marketplace validates. Mods installed at user scope on this machine: `budget-ledger`, `precommit-gate`, `edit-check` (the other mods are installed per project only). OpenCode is wired globally; the user's own real-OpenCode test of the MCP tools is still pending.
 
-## Last session
+## Last session (2026-10-27)
+
+- **New features audited, merged and pushed.** The untested feature branch was merged with the live `main`, tested in a scratch project, and pushed: 14 of 14 script test files pass, 9 of 9 mods pass `claude plugin test` (104 tests), the git hook blocks a staged key and a `.env`, all 16 commands ran live, 11 of 11 skill prompts triggered on Sonnet. Report and raw data: `findings/2026-10-27-new-features-audit.md` and `findings/data/`; harness: `findings/harness/`.
+- **Fixed:** `/resume` and `/hooks` collided with Claude Code built-ins and are now `/pickup` and `/githooks`; `standards-chain` skips `project-context/`; `/eta` mapped in `install-kit`.
+- **Built:** connector-free `/figma` (`skills/addons/project-context.figma.js`, 7 tests); `debug-nudge` early reminder.
+- **Token cost:** always-on about 2,500 to about 1,950 per session (`disable-model-invocation` on commands, leaner `CLAUDE.md` from `install-kit`, shorter model descriptions). `ai-standards.md` examples left alone on purpose.
+- **Not resolved:** `debug-protocol` loads in roughly 1 of 3 runs; the `debug-nudge` early reminder showed no effect on an easy bug (0 of 10 with and without) and its delivery cannot be seen in the stream. `pre-commit` misses about half the time on haiku.
+- **Branches:** the temporary branches were deleted locally and on GitHub; `kit-audit-2026-10-20` is kept locally.
+
+## Earlier session (2026-10-21)
 
 - **Audit of what fires.** Mods fire deterministically (standards-chain, edit-check, guard, precommit-gate, debug-nudge live-tested headless; budget-ledger writes real rows). Skills load unreliably: about 9 of 21 right loads, unchanged by wording; the prompts that never loaded one are debug, multi-file and vague requests. Anything that must always happen belongs in a mod or git hook, not a skill.
 - **Skill descriptions** (27 of them) now open "Use whenever ... Load this BEFORE ...". Neutral in a 28-skill A/B (tokens -1%, loads 9 vs 12 of 30, within noise). `handover`'s description was reverted to the original: the rewrite lost the "where were we?" trigger in two experiments. `skill-writer` records the measurements.
@@ -38,6 +47,7 @@ Updated: 2026-10-21 · Branch: main (the only branch) · Pushed to `origin/main`
 
 ## Next steps
 
+0. **Newest first:** test `/figma` on a real Figma SVG and PNG export; re-test the `[CX]` marker and AI-18 yes/no answers on Sonnet and Opus; design a harder `debug-protocol` test (unclear cause) with a marker file to prove the reminder arrives; real OpenCode and Codex runs; GitHub homepage and topics.
 1. **Use the kit as it is for a while, then decide.** Install `/audit`, `/commit-check`, `/quiet` and the git hooks in one real project; read `/token-report` (needs `budget-ledger`) after a week.
 2. Repoint the user-scope marketplace to this repo, or `git pull` in `Compression\ai-dev-kit`, then `claude plugin update` the mods.
 3. Version-bump script (needs the user's convention); this was already first on the earlier list.
