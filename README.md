@@ -4,7 +4,7 @@
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-Portable `SKILL.md` agent skills, framework-agnostic coding standards, and opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering) for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
+Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, and opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering) for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
 [![License: MIT](https://img.shields.io/github/license/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/stargazers) [![GitHub forks](https://img.shields.io/github/forks/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/forks) [![Last commit](https://img.shields.io/github/last-commit/AftabIbrahimKazi/ai-dev-kit?style=flat-square)](https://github.com/AftabIbrahimKazi/ai-dev-kit/commits/main)
 
