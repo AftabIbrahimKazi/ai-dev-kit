@@ -19,5 +19,5 @@
 - README intro, command tables and counts brought up to date.
 
 ### Known limits
-- `debug-protocol` and (on haiku) `pre-commit` do not always load by judgment; the mods and git hooks are the reliable layer.
+- `debug-protocol` does not always load by judgment (the `debug-nudge` mod raises it; 3 of 6 vs 0 of 6 on an unclear-cause bug); the mods and git hooks are the reliable layer. `pre-commit` loads reliably when there is something to commit.
 - Not run end to end: `/figma` against a real Figma export, real image conversions, OpenCode and Codex.
