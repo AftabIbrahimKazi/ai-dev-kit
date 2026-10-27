@@ -40,6 +40,39 @@ The core installer copies markdown files only: no packages, no build step. Opt-i
 - **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
 - **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
 
+**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, hotkeys and personas](#voice-narration-hotkeys-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#faq)
+
+## Everything the kit does, at a glance
+
+You do not need to read the code to use the kit. This section says what exists, what happens by itself, and what you have to ask for. Details for each item are in the sections below.
+
+**Happens by itself once installed**
+
+| What | How it works | Needs |
+|---|---|---|
+| Skills load when their situation comes up (commit, failing build, big task, handover, model choice, and so on) | The agent reads each skill's short description and loads the file when it matches. This is model-judged, so it is not guaranteed; the items below are the guaranteed layer. | the skills |
+| Standards are read before a file is edited | The `standards-chain` mod denies the first edit of a file until its standards chain has been read | `standards-chain` mod |
+| Commits are checked | The `precommit-gate` mod (and optional git hooks) block leaked secrets, secret files, bad commit messages and `--no-verify` | `precommit-gate` mod, or `/githooks` |
+| Edits are checked | The `edit-check` mod runs syntax, lint and standards checks after each edit and shows only the problems | `edit-check` mod |
+| Dangerous actions are stopped | The `guard` mod denies edits to secret files, lockfiles and `.git`, and destructive commands such as force push or `reset --hard` | `guard` mod |
+| Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
+| Token use is recorded | The `budget-ledger` mod writes one row per turn; `/token-report` reads it | `budget-ledger` mod |
+| Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `prefilter-rank` (ranked read order) | those mods |
+| Replies are read aloud | A Stop hook speaks each reply once | `narrate` add-on |
+| Replies use a chosen persona | A SessionStart hook adds a short persona text | `personality` add-on |
+
+**You ask for it**
+
+| What | How |
+|---|---|
+| Install the kit into a project | say `read skills/README.md and install` |
+| Slash commands | type them: `/audit`, `/commit-check`, `/pickup`, `/wrap-up`, `/narration`, `/persona` and more ([full list](#slash-commands)) |
+| A skill on purpose | type `/<skill-name>` (for example `/debug-protocol`) |
+| Optional MCP tools | say `set up MCP servers` |
+| Claude Code mods | say `set up mods` |
+| Git hooks for every tool | type `/githooks` |
+| Keyboard shortcuts for narration and dictation | start the hotkey launcher ([hotkey table](#keyboard-hotkeys)) |
+
 ## What's in the kit
 
 The kit is two independent systems that share one install path. `skills/` teaches an AI coding agent *how to work* — session discipline, model-specific behavior, memory, coordination. `coding-standards/` teaches it *what correct code looks like* for this project — language rules, file-role conventions, framework overrides. Either can be adopted alone; together, the `coding-standards` skill is what loads and enforces the standards chain during a session, so a project that wants enforcement needs both folders.
@@ -81,6 +114,161 @@ Full map: [coding-standards/index.md](coding-standards/index.md)
 | `ai-standards.md` | The AI behavioral contract — hallucination detection, `[CX]` context-integrity signal, read-efficiency rules — for every session regardless of tool |
 | `tooling/` | Lint configs that mechanically enforce whichever rules above are machine-checkable |
 
+## Complete skills catalog
+
+Every skill in the kit, by category, with what it is for. Click a category to open it. The same catalog lives in [skills/README.md](skills/README.md). Install-kit installs the baseline workflow skills by default and offers the rest; add-ons and MCP servers are never installed unless you ask.
+
+<details>
+<summary><strong>models/claude/ — the Claude lineup</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [fable-5-1](skills/models/claude/fable-5-1.md) | Fable 5.1 protocol — when its price pays off, preserved-thinking rules, progress updates, autonomy/scope prompts |
+| [opus-5-5](skills/models/claude/opus-5-5.md) | Opus 5.5 — current flagship; always-on thinking, `medium` default effort, forced-tool-use ban |
+| [sonnet-5-5](skills/models/claude/sonnet-5-5.md) | Sonnet 5.5 — recalibrated effort, `between_tools` thinking-off, low-effort verification prompt |
+| [haiku-5-5](skills/models/claude/haiku-5-5.md) | Haiku 5.5 — first Haiku with adaptive thinking and effort, 1M context, fan-out/routing, breaking changes vs 4.5 |
+| [opus-5](skills/models/claude/opus-5.md) | Opus 5 (previous gen) — thinking-on default, verbosity/over-verification/subagent tuning |
+| [fable-5](skills/models/claude/fable-5.md) | Fable 5 (previous gen) — when its price pays off, always-on thinking, effort tuning |
+| [opus-4-8](skills/models/claude/opus-4-8.md) | Opus 4.8 (previous gen) — explicit adaptive thinking, fast mode, task budgets |
+| [sonnet-5](skills/models/claude/sonnet-5.md) | Sonnet 5 (previous gen) — near-Opus coding at Sonnet cost, literal instruction patterns |
+| [haiku-4-5](skills/models/claude/haiku-4-5.md) | Haiku 4.5 (previous gen) — fan-out/classification workhorse, legacy `budget_tokens` surface |
+| [claude-all-models](skills/models/claude/claude-all-models.md) | Fleet routing — right model per task, escalation rules, cost discipline |
+| [opus-as-fable](skills/models/claude/opus-as-fable.md) | Behavioral protocol pushing Opus 4.8 toward Fable-grade rigor |
+| [hooks-enforcement](skills/models/claude/hooks-enforcement.md) | Optional Claude Code hooks assisting AI-01–AI-03 mechanically — Claude Code only |
+
+</details>
+
+<details>
+<summary><strong>models/opencode/ — open-weight models driven through OpenCode</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [opencode-all-models](skills/models/opencode/opencode-all-models.md) | Open-weight fleet routing in OpenCode — GLM/DeepSeek/Kimi/Qwen/MiniMax, local vs. hosted |
+| [big-pickle](skills/models/opencode/big-pickle.md) | Big Pickle — Zen's free stealth model (≈GLM-4.6, Sonnet-4.5/4.6-class); free-tier caveats, exit plan |
+| [glm-5-2](skills/models/opencode/glm-5-2.md) | GLM-5.2 — open-weight flagship for long-horizon agents; latency/caching discipline |
+| [deepseek-v4](skills/models/opencode/deepseek-v4.md) | DeepSeek V4 Pro — cheap frontier reasoning; promo-pricing and cache discipline |
+| [kimi-k2-6](skills/models/opencode/kimi-k2-6.md) | Kimi K2.6 — retry-native agentic coder, best-in-class tool calling, vision-to-UI |
+| [qwen3-coder](skills/models/opencode/qwen3-coder.md) | Qwen3-Coder 480B & Next — Apache-2.0 coding workhorse, self-hosting pick |
+| [minimax-m3](skills/models/opencode/minimax-m3.md) | MiniMax M3 — cheapest frontier-cluster tokens; fan-out/bulk-edit worker |
+| [devstral-2](skills/models/opencode/devstral-2.md) | Devstral 2 — Mistral's repo-surgery specialist, top open SWE-bench per dollar |
+| [mimo-v2-5](skills/models/opencode/mimo-v2-5.md) | MiMo-V2.5 — Xiaomi dark horse, 1M context long-horizon agent at DeepSeek prices |
+| [gpt-oss](skills/models/opencode/gpt-oss.md) | gpt-oss 120b/20b — OpenAI open weights, self-hosted reasoning + tool calling, harmony format |
+| [local-small-models](skills/models/opencode/local-small-models.md) | ≤32B local tier — Ollama setup rules, context floor, tool-call smoke test, task ceiling |
+
+</details>
+
+<details>
+<summary><strong>workflow/ — session and process discipline</strong></summary>
+
+Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-first` (decide *how*) → `interpretation-checkpoint` (verify the parsed detail, wide-blast-radius tasks only) → edit → `pre-merge-gate` → `pre-commit`.
+
+**Baseline set** (install-kit installs these by default regardless of stack, unless declined): `handover`, `agent-usage`, `mode-kernel`, `session-budget`, `debug-protocol`, `intent-capture`, `plan-first`, `interpretation-checkpoint`, `pre-merge-gate`, `pre-commit`. Not baseline: `perf-audit`, `role-session`, `e2e-scaffold`, `resolve-conflicts`, `responsive-check`, `optimize-assets` — situational, install-kit's Pick/Auto-detect catalog covers these on need.
+
+| Skill | Purpose |
+|---|---|
+| [handover](skills/workflow/handover.md) | Session continuity via handover.md — resume cold with zero re-explaining; also hosts the agent-handover mechanism |
+| [agent-usage](skills/workflow/agent-usage.md) | Default-never Agent-tool policy — two scope-anchored exceptions, an approval gate, chaining-pattern efficiency rules |
+| [mode-kernel](skills/workflow/mode-kernel.md) | Central table for how agent-usage/debug-protocol/coding-standards/perf-audit's stop-and-wait gates behave per session mode |
+| [debug-protocol](skills/workflow/debug-protocol.md) | Reproduce → one hypothesis → cheapest disproof; no shotgun edits |
+| [intent-capture](skills/workflow/intent-capture.md) | Goal + constraints + done-when before planning, for ambiguous asks |
+| [plan-first](skills/workflow/plan-first.md) | 5-line plan + file list before multi-file work; in plan mode, plan for a cheaper executor model and verify its result |
+| [interpretation-checkpoint](skills/workflow/interpretation-checkpoint.md) | Files/Changes/Assumptions breakdown for correction on multi-file, multi-parameter tasks |
+| [session-budget](skills/workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation; `report.js` (ledger report) and `compact.js` (verbose-output shrinker) companions |
+| [pre-merge-gate](skills/workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit; `edit-check.js` companion runs the mechanical checks |
+| [pre-commit](skills/workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, secrets, message format, version bump; `check.js` companion runs the mechanical checks; `install-hook.js` installs it as git hooks |
+| [resolve-conflicts](skills/workflow/resolve-conflicts.md) | Resolve merge/rebase conflicts by mode (both, ours, theirs), pace (all, auto, step) and developer role; `scope.js` companion lists the conflict set and verifies role scope; [roles example](skills/workflow/resolve-conflicts.roles.example.json) ships `frontend` and `backend` |
+| [responsive-check](skills/workflow/responsive-check.md) | Range-based viewport check and fix (RULE 17 zones by default; `--range`, `--min`, `--max`, `--width`, `--detect`); `probes.js` plans viewports and detects breakpoints, `measure.js` measures in Playwright |
+| [optimize-assets](skills/workflow/optimize-assets.md) | Convert (webp, avif, jpg, mp4, woff2 ...), compress and pre-compress (gzip, brotli) assets with the converters installed; `convert.js` companion also scans for heavy assets and lists references; originals are never touched |
+| [perf-audit](skills/workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
+| [role-session](skills/workflow/role-session.md) | Parallel-session lane protocol — role charters, atomic file claims, git token, session ids (+ [templates](skills/workflow/role-session.templates.md), [cross-tool protocol](skills/workflow/role-session.protocol.md)) |
+| [e2e-scaffold](skills/workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
+
+</details>
+
+<details>
+<summary><strong>standards/ — convention systems</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [coding-standards](skills/standards/coding-standards.md) | Load & enforce the layered coding-standards/ chain before any edit |
+| [code-audit](skills/standards/code-audit.md) | Project-wide audit of the script-checkable standards rules (CSS, HTML, JS/TS, page SEO/a11y/perf, git history, versioning) for cleanup of old or multi-dev code; `audit.js` companion counts violations by rule and lists `file:line`, so the model reads only what is flagged |
+| [comment-style](skills/standards/comment-style.md) | Per-project comment level — none (default) / terse / descriptive — asked at install, changeable any time; saves tokens |
+
+</details>
+
+<details>
+<summary><strong>memory/ — persistent knowledge</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [memory-bank](skills/memory/memory-bank.md) | Repo-committed project memory — decisions, context, solved mysteries |
+| [memory-gardener](skills/memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds; `stale.js` companion lists bullets that name deleted files |
+| [skill-ablation](skills/memory/skill-ablation.md) | Periodic archive-and-run-bare pass — restore only instructions real work proves are missing |
+
+</details>
+
+<details>
+<summary><strong>stack/ — technology-specific</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [threejs-scene](skills/stack/threejs-scene.md) | Three.js discipline — shaders, disposal, scroll cameras, render hygiene |
+| [astro-page](skills/stack/astro-page.md) | Convention-driven Astro scaffolding — discover, mirror siblings, verify |
+| [shopify-toolkit-install](skills/stack/shopify-toolkit-install.md) | Live-pull Shopify's own AI toolkit skills into a project — never forked into this kit |
+
+</details>
+
+<details>
+<summary><strong>addons/ — optional, user-opted capabilities</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [system1-prefilter](skills/addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
+| [personality](skills/addons/personality.md) | Six original personas (female and male at novice, mid and pro skill levels) that change how replies are worded; SessionStart hook, `/persona`, user-replaceable persona files; wording only, never facts |
+| [narrate](skills/addons/narrate.md) | Stop hook that reads each reply aloud (Piper male/female voices, mute, volume, speed, pitch, replay, reading-time limit) plus offline voice-mode dictation into the chat box; no tokens, never touches Claude |
+| [project-context](skills/addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
+
+</details>
+
+<details>
+<summary><strong>mcp/ — optional MCP servers, one manager</strong></summary>
+
+Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): UI prototyping, image reading, image generation. Say *"set up MCP servers"* after the install and `mcp-manager` runs the interview. **Local-model servers are global-first:** scripts in `~/.ai-dev-kit/mcp/`, models and ledgers in `~/.ai-dev-kit/<server>/`, keys in `~/.ai-dev-kit/.env`, rules in the tool's global instruction file — never copied per project. Each installer runs a hardware preflight first.
+
+| Skill | Purpose |
+|---|---|
+| [mcp-manager](skills/mcp/mcp-manager.md) | Meta skill for all opt-in MCP servers — setup interview (servers × AI tools × scope × keys × routing), per-tool config wiring, "MCP first, then fallback" rules. Opt-in only. |
+| [local-vision](skills/mcp/mcp-manager.local-vision.md) | Server file + `local-vision.js` — free offline image reading (Qwen3-VL-2B/4B via llama.cpp) for models without vision; hardware-aware installer (CPU/CUDA/Vulkan/Metal) + stdio MCP in one script; verified in real OpenCode |
+| [image-gen](skills/mcp/mcp-manager.image-gen.md) | Server file + `image-gen.js` CLI/MCP — image generation for sites/apps with fallback: Gemini Nano Banana (needs billing) → Cloudflare FLUX.1 schnell (≈173 free images/day) → labelled placeholder; 80% heads-up, 90% switch, pause at exhaustion, every step reported as a notice |
+| [stitch](skills/mcp/mcp-manager.stitch.md) | Server file (companion of mcp-manager) — Google Stitch UI prototyping, free for now; try first, fall back to artifact/HTML flow |
+
+</details>
+
+<details>
+<summary><strong>libraries/ — the user's own repos</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [strata-css](skills/libraries/strata-css.md) | Strata CSS framework (Frameworks/strata) — use, debug, fix at source |
+| [triforge](skills/libraries/triforge.md) | @triforge Three.js suite (3D/three-js) — package picking, FINDINGS workflow |
+
+</details>
+
+<details>
+<summary><strong>meta/ — maintaining the library itself</strong></summary>
+
+| Skill | Purpose |
+|---|---|
+| [skill-writer](skills/meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
+| [mod-writer](skills/meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
+| [mod-setup](skills/meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
+| [install-kit](skills/meta/install-kit.md) | Install skills + standards into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `verify.js` companion mechanically re-checks the result before the install is reported done; removes its own project copy once the install verifies clean |
+| [skill-scope](skills/meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
+| [misfire-log](skills/meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
+
+</details>
+
+
 ## Optional AI tools: free and local MCP servers for any coding agent
 
 One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCode, or another MCP client. **Models, runtimes, usage ledgers and keys live once in `~/.ai-dev-kit/` — never per project** — and each tool falls back to your normal flow when it is missing, rate-limited, or out of quota.
@@ -98,16 +286,126 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 
 **Get started:** install the kit, then tell your agent *"set up MCP servers"* — [`mcp-manager`](skills/mcp/mcp-manager.md) asks which tools, which AI clients, and where to keep keys, then writes the configs (merging, never overwriting) and health-checks each one.
 
-## Optional: read replies aloud and choose a reply persona
+## Voice, narration, hotkeys and personas
 
 Two opt-in add-ons, never installed by default. Neither costs tokens while it runs: narration is a local script, and a persona adds a short fixed text to the session.
 
-| Add-on | What you get | Token cost | Status |
-|---|---|---|---|
-| [`narrate`](skills/addons/narrate.md) | A Stop hook reads each reply aloud with [Piper](https://github.com/OHF-Voice/piper1-gpl) (offline neural text to speech): code, tables and links are skipped and announced as "on screen". A female and a male voice, mute, volume, speed and pitch, by slash command (`/narration`), by global hotkeys, or both (you choose at install). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once (a `replay` command repeats it on request), and long replies are read in full up to a time limit you set (5 minutes by default). Optional voice mode: offline Whisper dictation typed into the chat box. Bring your own Piper voice, or a cloned voice through a command hook. | none | Tested on Windows 11 with headphones and speakers. The hotkeys and microphone capture were not exercised by a real key press or microphone (transcription of a spoken file was). macOS, Linux and Android (Termux) player choice is covered by unit tests only, not by listening. |
-| [`personality`](skills/addons/personality.md) | Six original personas, female and male at novice, mid and professional level, that change how replies are worded (plain and step by step, peer-level, or terse with full jargon). Wording only: facts, code, paths and verification never change. The install asks for one of eight choices (six personas, none, or your own) and copies only that one. | about 130 to 160 tokens per session | Measured on Haiku, 6 runs per persona: replies were 41 to 58% shorter than with no persona, which more than paid for the added tokens. Your Concise output style may shrink that saving. |
+### Narration: Claude's replies read aloud (`narrate`)
 
-Voices are downloaded from their publishers during install and are not in this repo: LJSpeech (public domain) and Joe (CC0). Piper is GPL-3.0 and runs as a separate program. Never commit a cloned or character voice. Claude Code also has its own built-in dictation (the microphone icon in the chat box); `narrate`'s voice mode is the offline alternative. Licences: [CREDITS.md](CREDITS.md).
+A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1-gpl), an offline neural text-to-speech engine, on your machine. No cloud service, no tokens. Code, tables and links are not read; they are announced ("Code and tables are on screen"). Each reply is spoken once and long replies are read in full, in sentence-sized pieces, up to a time limit. Replies from parallel sessions queue and play in order instead of cutting each other off. Playback uses your current default output device, so headphones and Bluetooth are followed.
+
+**Install it** by telling your agent *"set up text to speech for Claude's replies"*, or run the steps yourself (paths are `<skill-root>/narrate/` in a project, `skills/addons/narrate.*` in this repo):
+
+| Step | Command |
+|---|---|
+| 1. Voices and Piper (about 125 MB download, asks first) | `node setup.js --voices` |
+| 2. Add the Stop hook to `~/.claude/settings.json` | shown in [narrate.md](skills/addons/narrate.md) |
+| 3. Pick your controls: slash commands, hotkeys, or both | `node setup.js --controls commands`, `hotkeys` or `both` |
+| Optional: hide the hotkey launcher at Windows login | add `--startup` |
+| Optional: voice dictation (Whisper, offline) | add `--dictate` |
+| Optional: use your own Piper voice for a slot | `node setup.js --add-voice male\|female <file.onnx or URL>` |
+
+**All settings** (slash command `/narration <setting>`, or `node speak.js --<setting>`; every change is saved and applies to the next reply):
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| `mute` / `unmute` | none | on | silence or restore narration; mute also stops speech in progress |
+| `stop` | none | none | cut off what is playing now and clear the queue |
+| `replay` | none | none | read the last reply again; a reply is otherwise spoken exactly once |
+| `voice` | `male`, `female` | female | which voice (male is Joe, female is LJSpeech) |
+| `volume` | 0 to 100 | 100 | loudness |
+| `speed` | 0.5 to 2 | 1 (yours may differ) | pace; pitch is unaffected |
+| `pitch` | -12 to 12 | 0 | semitones up or down; pace is unaffected (Piper voices only) |
+| `maxSeconds` | 30 to 1800 | 300 | longest reading, in seconds of speech, converted to characters at your current speed; past it the voice says "the rest is on screen" |
+| `status` | none | none | shows mute state, engine, voice, volume, speed, pitch and the character limit |
+
+### Keyboard hotkeys
+
+Run the hotkey launcher and these work in any window. Each change is spoken back in the new setting ("volume 90"); mute only beeps. They are consumed by the launcher, so they do not also trigger VS Code shortcuts.
+
+| Keys | What it does |
+|---|---|
+| `Ctrl+Alt+D` | start or stop voice dictation (only when started with dictation) |
+| `Ctrl+Alt+M` | mute or unmute (low or high beep) |
+| `Ctrl+Alt+X` | stop speaking now |
+| `Ctrl+Alt+R` | replay the last reply |
+| `Ctrl+Alt+G` | switch between the male and female voice |
+| `Ctrl+Alt+Up` / `Ctrl+Alt+Down` | volume plus or minus 10 |
+| `Ctrl+Alt+Right` / `Ctrl+Alt+Left` | speed plus or minus 0.1 |
+| `Ctrl+Alt+PageUp` / `Ctrl+Alt+PageDown` | pitch plus or minus 1 semitone |
+
+Start the launcher with `~/.claude/narrate-hotkeys.cmd` (Windows) or `narrate-hotkeys.sh`, or `python listen.py --no-dictate` for hotkeys only, `python listen.py` to add dictation (`--key` changes the dictation key, `--model tiny.en|base.en|small.en` the speech model, `--enter` presses Enter after typing). It only works while that program is running. On Linux the `keyboard` library needs root and on macOS the terminal needs Accessibility permission; Android has no global hotkeys, so use `/narration` there.
+
+### Voice dictation
+
+With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is transcribed offline by Whisper and typed into whatever window has focus, the chat box included. It never presses Enter unless you pass `--enter`. Claude Code also has its own built-in dictation (the microphone icon in the chat box); this is the offline alternative.
+
+### Voices, files and platforms
+
+| Item | Detail |
+|---|---|
+| Default voices | `en_US-ljspeech-medium` (female, public domain) and `en_US-joe-medium` (male, CC0), downloaded at install, never shipped in this repo |
+| Your own voice | `--add-voice` registers any Piper `.onnx` file with its `.onnx.json`; a cloned or character voice can plug in through `"engine":"command"` (any program that reads text and writes a wav). Check the licence yourself and never commit a cloned voice or its audio. |
+| Settings file | `~/.claude/narrate.json`: `engine`, `gender`, `volume`, `speed`, `pitch`, `maxSeconds`, `max` (fixed character limit), `voices`, `piper`, `command` |
+| Other files | `~/.claude/voices/` (voices), `narrate.off` (mute switch), `narrate-last.json` (last reply), `narrate-hotkeys.cmd` (launcher) |
+| Windows | tested, including headphones; falls back to the built-in Windows voice without Piper |
+| macOS, Linux, Android (Termux) | player choice (`afplay`, `paplay`/`pw-play`/`aplay`, `termux-media-player`) is unit-tested only, not heard on a real device |
+
+### Reply personas (`personality`)
+
+Six original personas change how replies are worded for your skill level. They change wording only: facts, code, paths and verification never change. A persona adds about 130 to 160 tokens per session, and in a Haiku test (6 runs per persona) replies were 41 to 58% shorter than with none.
+
+| Level | Language | Female | Male |
+|---|---|---|---|
+| `novice` (new to coding, junior) | plain words, terms explained once, reason before step, numbered steps, under 150 words | **Maya**, gentle guide | **Leo**, calm steady mentor |
+| `mid` (working developer) | everyday dev terms unexplained, advanced ideas in one clause, reason and fix together, under 100 words | **Nora**, upbeat peer | **Jonas**, casual and dry-humored |
+| `pro` (professional) | full jargon, result first, exact names, no preamble or recap, under 60 words | **Vera**, precise and neutral | **Victor**, blunt and minimal |
+
+The install offers eight choices: the six personas, `none`, or `custom` (your own file or a starter to edit), and copies only the one you pick. Change it any time with `/persona set female|male novice|mid|pro`, `/persona off`, `/persona status` or `/persona list` (applies from the next session). A project can override your choice with `<project>/.claude/personality.json`. To replace a persona, put your own `<gender>-<level>.md` in `~/.claude/personas/`, or choose `custom` and edit `~/.claude/personas/custom.md`. Add the SessionStart hook shown in [personality.md](skills/addons/personality.md) once.
+
+Licences and credits for Piper, the voices and Whisper: [CREDITS.md](CREDITS.md).
+
+## Claude Code mods (all nine)
+
+Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in code, so unlike skills they fire every time. Each one fails open (if it breaks, your work continues), none depends on another, and nothing in the kit needs them. Install them by saying `set up mods`; [`mod-setup`](skills/meta/mod-setup.md) reviews what each one touches first. Claude Code only.
+
+| Mod | What it does | Kind | Needs or pairs with |
+|---|---|---|---|
+| `budget-ledger` | Logs real token use, cost, cache and tool-result sizes per turn, one file per session; adds `/budget` | observes only | nothing |
+| `precommit-gate` | Gates `git commit` and `git push`: blocks leaked secrets, secret files, bad messages and `--no-verify`; warns once on stray files and debug leftovers | blocks | the `pre-commit` skill |
+| `guard` | Denies edits to secret files, lockfiles and `.git`, and destructive commands (root-like recursive deletes, force push, deleting remote main, `reset --hard`, `clean -f`, publish, download piped into a shell); settings in `.claude/guard.json` | blocks | nothing |
+| `edit-check` | After each edit, runs syntax, ESLint, Stylelint and standards checks and shows the model only the problems; a clean file adds nothing | reminds | the `pre-merge-gate` skill |
+| `standards-chain` | Denies the first edit of a file until its coding-standards chain has been read, and again after a compaction | blocks | a `coding-standards/` folder |
+| `debug-nudge` | One reminder at the first failed test or build, and one at the second failed fix, to stop editing and apply `debug-protocol`; also reads failure text hidden by pipes | reminds | the `debug-protocol` skill |
+| `eta-nudge` | Reminds the agent to state a time estimate when a call is backgrounded, and every 10 minutes after the first 5 | reminds | the `plan-first` skill |
+| `output-compact` | Shortens long Bash and PowerShell output before the model reads it; every failure line survives | rewrites output | the `session-budget` skill |
+| `prefilter-rank` | Ranks Grep and Glob results (5 to 40 files) by relevance using the local Laya model, so low-relevance files can be skipped; local only, removes nothing | reminds | the `system1-prefilter` add-on with local Laya |
+
+## Scripts and git hooks
+
+Scripts are plain Node (no packages) that do the mechanical work so the agent does not spend tokens on it. Skills and commands call them; you can also run them yourself with `node <skill-root>/<skill>/<script>.js`.
+
+| Script | What it does | Command |
+|---|---|---|
+| `code-audit/audit.js` | Counts violations of 47 script-checkable standards rules across a whole project and lists `file:line`; `--list` shows every rule | `/audit` |
+| `pre-commit/check.js` | Staged-diff checks: secrets, secret files, stray files, debug leftovers, message format, `project-context/` files | `/commit-check` |
+| `pre-commit/install-hook.js` | Installs `check.js` as real `pre-commit` and `commit-msg` git hooks, so human commits and tools without mods are checked too (`install`, `uninstall`, `status`) | `/githooks` |
+| `pre-merge-gate/edit-check.js` | Per-file checks (syntax, lint, standards); also used by the `edit-check` mod | by the mod |
+| `session-budget/compact.js` | Shortens long command output without dropping a failure line | `/quiet` |
+| `session-budget/report.js` | Prints the token ledger: tokens, cost, cache, waste, per-turn time | `/token-report` |
+| `plan-first/delegate.js` | Runs a written plan on a cheaper Claude model in one headless call and prints a compact result | by the skill |
+| `resolve-conflicts/scope.js` | Lists the conflict set with a side legend and checks role scope | `/resolve-conflicts` |
+| `responsive-check/probes.js` and `measure.js` | Plans viewports from your breakpoints, then measures layout problems in a browser (Playwright) | `/responsive-check` |
+| `optimize-assets/convert.js` | Finds heavy assets, converts (webp, avif, jpg, mp4, woff2, and more), compresses and pre-compresses them; originals are never touched | `/optimize-assets` |
+| `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
+| `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
+| `project-context/scan.js` and `figma.js` | Tracks which project docs changed; turns exported Figma PNG or SVG files into a design summary | `/ctx`, `/figma` |
+| `install-kit/verify.js` | Re-checks an install on disk before it is reported done | by the installer |
+| `narrate/speak.js`, `listen.py`, `setup.js` | Narration, hotkeys and dictation, installer ([reference](#voice-narration-hotkeys-and-personas)) | `/narration` |
+| `personality/inject.js`, `setup.js` | Persona injector and installer | `/persona` |
+| `system1-prefilter` scripts and the MCP servers | Local decision model, image reading, image generation ([MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent)) | by tool |
+
+**Git hooks.** `/githooks` (or `node pre-commit/install-hook.js install`) writes two hooks into your repository: `pre-commit` runs `check.js --staged` and fails before the editor opens on secrets or secret files, and `commit-msg` adds the message-format check. Only BLOCK findings fail a commit; warnings print and pass. A missing `node` never blocks a commit. `git commit --no-verify` skips hooks, which the `pre-commit` skill forbids. An existing hook of yours is never overwritten without `--force`, and `--force` keeps a copy.
 
 ## Install into a project
 
@@ -139,6 +437,8 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
 | `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
 | `/format` | You want answers as a table, bullets, one-liners or yes/no | `/format bullets`; `/format reset` returns to the default (a table where the data has structure). |
+| `/narration` | You use the `narrate` add-on and want to mute, replay, or change the voice, volume, speed or pitch | `/narration mute`, `/narration replay`, `/narration voice male`, `/narration speed 1.3`. Keyboard shortcuts for the same are in [Keyboard hotkeys](#keyboard-hotkeys). |
+| `/persona` | You use the `personality` add-on and want replies worded for your skill level | `/persona set female novice`, `/persona off`, `/persona list`. Applies from the next session. |
 
 ### All commands
 
@@ -206,7 +506,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
-- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are slash commands, global hotkeys or both, chosen at install. Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once with `/narration replay` to hear it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Optional voice mode transcribes your speech offline with Whisper and types it into the chat box. Covered by 35 script tests; see the status note in [Optional: read replies aloud and choose a reply persona](#optional-read-replies-aloud-and-choose-a-reply-persona).
+- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are slash commands, global hotkeys or both, chosen at install. Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once with `/narration replay` to hear it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Optional voice mode transcribes your speech offline with Whisper and types it into the chat box. Covered by 35 script tests; see the status note in [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
 - **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 130 to 160 tokens per session; replies were 41 to 58% shorter in a 6-run-per-persona Haiku test.
 - **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
 - **Lower always-on cost, no feature removed.** A normal install now costs about 1,950 tokens per session before any work, down from about 2,500 (estimates at ~4 characters per token). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (up to about 320 tokens). `install-kit` writes a leaner `CLAUDE.md` (no template preamble; the parallel-session section only with `role-session`, about 140-235 tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them (about 50 tokens in a normal install). Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
@@ -276,6 +576,21 @@ coding-standards/
 - Standards edits follow the repo's own principles ([index.md → Principles](coding-standards/index.md)): testable, declarative, wrong/right examples mandatory. Machine-checkable rule changes update [`coding-standards/tooling/`](coding-standards/tooling/) in the same commit.
 - `learnings.md` files are gitignored — they belong to the project that earned them. Lessons worth keeping forever get promoted into skill bodies (see `memory-gardener`).
 
+## Where things live, and how to turn things off
+
+| Thing | Where it lives | Scope | Turn it off |
+|---|---|---|---|
+| Skills and standards | `<project>/.claude/skills/`, `<project>/coding-standards/` | one project | delete the folder |
+| Slash commands | `<project>/.claude/commands/` | one project | delete the file |
+| Mods | installed by `mod-setup` into Claude Code | per user or per project | remove the plug-in with `/plugin` |
+| Git hooks | `<repo>/.git/hooks/` | one repository | `node pre-commit/install-hook.js uninstall` |
+| Narration hook, voices, settings | `~/.claude/settings.json`, `~/.claude/voices/`, `~/.claude/narrate.json` | this device and user, every project | `/narration mute`, or remove the Stop hook |
+| Hotkey launcher | `~/.claude/narrate-hotkeys.cmd`, optional Startup entry | this device and user | close it; delete the Startup entry |
+| Persona choice | `~/.claude/personality.json` (project override in `.claude/personality.json`) | user, or one project | `/persona off` |
+| MCP tools, models, keys | `~/.ai-dev-kit/` | this device, never per project | remove the MCP entry from your tool's config |
+| Per-project lessons | `learnings.md` next to each skill | one project, git-ignored | delete the file |
+| Project docs | `<project>/project-context/` | one project, git-ignored | delete the folder |
+
 ## FAQ
 
 **What is an agent skill (`SKILL.md`)?** A markdown file with a short description of when it applies and the steps to follow. The agent reads the description, and loads the file only when a task matches. Every skill here is one such file.
@@ -290,7 +605,7 @@ coding-standards/
 
 **How do I update an install?** Pull the repository and re-run the installer. It compares each file and asks before overwriting a local change.
 
-**Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Optional: read replies aloud and choose a reply persona](#optional-read-replies-aloud-and-choose-a-reply-persona).
+**Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
 
 **Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 130 to 160 tokens per session.
 
