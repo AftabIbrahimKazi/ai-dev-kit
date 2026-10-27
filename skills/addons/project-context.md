@@ -38,6 +38,7 @@ description: Opt-in add-on. Use whenever the user asks to set up project docs (r
    - Text and PDF: read. Text over 200 KB: headings and the first 2 KB.
    - Images: view only those the task needs; otherwise list by name.
    - Office, design and media files: list them, and ask before opening.
+   - Figma: no connector needed. The user exports frames from Figma as SVG (colors, fonts, text) and PNG (reference) into a folder; `node <skill-root>/project-context/figma.js <folder> [--link <url>] [--write]` measures them and drafts `design/figma.md` in code, so no tokens go on reading exports. Open a PNG only for a layout question.
 2. Update the folder's `INDEX.md`: add or change rows for those files, remove rows for `DELETED` ones, keep the rest. Layout, at most 60 lines:
    `# <folder>`, `Purpose: <one line>`, `Updated: <date>`, a **Files** table (File, What it is, Open when), a **Key facts** table (Fact, Source file), and **Gaps and conflicts**.
 3. Facts come from the files, each with its source. Do not infer. Where two docs disagree, list both under conflicts and do not pick one.
