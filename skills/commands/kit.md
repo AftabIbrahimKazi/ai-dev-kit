@@ -13,7 +13,8 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Big or many-file task | `/plan-first <task>` |
 | How long is this going to take | `/eta` |
 | Vague request | `/intent-capture <request>` |
-| Start or end a session | `/handover` |
+| Start a session | `/resume` |
+| End a session | `/wrap-up` (optional: the next task) |
 | Memory notes may be out of date | `/stale` |
 | Check or install git hooks | `/hooks` |
 | Merge or rebase stopped with conflicts | `/resolve-conflicts` (optional: `ours`, `theirs`, `step`, `--role backend`) |
