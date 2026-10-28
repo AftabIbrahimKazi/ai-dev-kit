@@ -4,7 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const CLAUDE = path.join(os.homedir(), '.claude');
-const LIMITS = { volume: [0, 100, 100, 10], speed: [0.5, 2, 1, 0.1], pitch: [-12, 12, 0, 1], maxSeconds: [30, 1800, 300, 30] }; // min, max, default, step
+const LIMITS = { volume: [0, 100, 100, 10], speed: [0.5, 2, 1, 0.1], pitch: [-12, 12, 0, 1], maxSeconds: [30, 1800, 1110, 30] }; // min, max, default, step
 const LABELS = { volume: 'Volume', speed: 'Speed', pitch: 'Pitch', maxSeconds: 'Reads up to (s)' };
 
 // Each script the panel runs: where an installed copy lives under .claude/skills, and the file name in the kit checkout.

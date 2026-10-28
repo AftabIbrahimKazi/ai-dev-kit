@@ -102,7 +102,7 @@ function settings(cfg = config()) {
   const gender = cfg.gender === 'male' ? 'male' : 'female';
   return {
     mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
-    max: cfg.max > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 300) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || defaultVoice(gender),
+    max: cfg.max > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 1110) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || defaultVoice(gender),
     piper: cfg.piper || {}, command: cfg.command, voice: cfg.voice,
   };
 }

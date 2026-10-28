@@ -28,7 +28,7 @@ The same settings are reachable three ways: `/narration <setting>` (commands), t
 | `volume 0-100` | loudness |
 | `speed 0.5-2` | pace; pitch is unaffected |
 | `pitch -12..12` | semitones up or down; pace is unaffected (piper only) |
-| `maxSeconds 30-1800` | longest reading, in seconds of speech (default 300); `status` shows the character limit it gives at the current speed |
+| `maxSeconds 30-1800` | longest reading, in seconds of speech (default 1110, which the 12000-character cap shortens to about 12 minutes at speed 1); `status` shows the character limit it gives at the current speed |
 | `stop`, `status` | cut off speech now; show the current settings |
 | `play` / `replay` | read the latest reply (the play button); a reply is otherwise spoken exactly once |
 | `mode manual` / `mode auto` | `manual` (default, like the play button on claude.ai): the hook only keeps the reply until you play it; `auto`: every reply is spoken as soon as it arrives |
