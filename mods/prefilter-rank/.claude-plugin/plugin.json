@@ -1,7 +1,7 @@
 {
   "name": "prefilter-rank",
-  "version": "0.1.0",
-  "description": "After a Grep/Glob with 5+ results, ranks them by relevance to the task using the local Laya prefilter (system1-prefilter addon) and adds a read-order reminder. Calls Laya locally at 127.0.0.1 only (the host is checked in code, never trusted from the env var alone) -- no other network access, no key read, never starts Laya itself. Fails open (does nothing) if SYSTEM1_API_KEY is set (a hosted provider, not Laya), if SYSTEM1_BASE_URL is unset or not loopback, if Laya's /health doesn't answer within 800ms, or if the ranking call itself doesn't answer within 2000ms. Reads env: SYSTEM1_BASE_URL, SYSTEM1_API_KEY.",
+  "version": "0.2.1",
+  "description": "After a Grep/Glob with 5+ results, ranks them by relevance to the task using the local Laya prefilter (system1-prefilter addon) and adds a read-order reminder. If Laya is set up (laya-ctl.js setup) but not running, the first qualifying Grep/Glob starts it in the background via laya-ctl.js start (at most once per 5 minutes) and goes unranked; later ones are ranked once it is up. Calls Laya locally at 127.0.0.1 only (the host is checked in code, never trusted from the env var alone); SYSTEM1_BASE_URL is optional and defaults to the local Laya port. Fails open (does nothing) if SYSTEM1_API_KEY is set (a hosted provider, not Laya), if Laya is not set up and no loopback SYSTEM1_BASE_URL is given, if Laya's /health doesn't answer within 800ms, or if the ranking call itself doesn't answer within 20 s (CPU Laya takes about 0.35 s per candidate, so a Grep with many files waits for the ranking). Reads env: SYSTEM1_BASE_URL, SYSTEM1_API_KEY, LAYA_PORT, LAYA_HOME. Runs: node laya-ctl.js start.",
   "author": {
     "name": "Aftab Ibrahim Kazi"
   }

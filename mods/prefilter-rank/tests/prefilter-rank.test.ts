@@ -3,7 +3,7 @@ import { expect, test } from 'claude-code/testing'
 // A noul answer's "yes" probability per candidate; built in the same order as `ids`.
 function world(on: any, opts: {
   baseUrl?: string | null; apiKey?: string | null; up?: boolean; nouls?: number[]; httpFails?: boolean;
-  lastUserText?: string | null; result?: any;
+  lastUserText?: string | null; result?: any; setUp?: boolean;
 } = {}) {
   const calls: string[] = []
   on('env.get', (_$: any, e: any) => {
@@ -22,6 +22,10 @@ function world(on: any, opts: {
     }
     return { value: { ok: false, status: 404, headers: {}, text: '' } }
   })
+  const started: string[][] = []
+  ;(calls as any).started = started
+  on('fs.exists', (_$: any, e: any) => { const p = String(e.path).split(String.fromCharCode(92)).join('/'); return { value: !!opts.setUp && (p.endsWith('/venv') || p.endsWith('laya-ctl.js')) } })
+  on('process.run', (_$: any, e: any) => { started.push(e.argv); return { value: { exitCode: 0, stdout: '', stderr: '' } } })
   on('session.messages', () => ({ value: opts.lastUserText === null ? [] : [{ role: 'user', text: opts.lastUserText ?? 'find the auth bug' }] }))
   on('tool.call', () => opts.result ?? { result: { filenames: ['a.js', 'b.js', 'c.js', 'd.js', 'e.js'] }, text: '5 files' })
   return calls
@@ -92,6 +96,32 @@ test('Laya not healthy: the health check runs, the batch call never does', async
   expect(r.context).toBeUndefined()
   expect(calls.length).toBe(1)
   expect(calls[0]).toContain('/health')
+})
+
+test('Laya set up but down: starts it once in the background, this Grep goes unranked', async ($, on) => {
+  const calls = world(on, { up: false, setUp: true, baseUrl: null, nouls: [0.9, 0.1, 0.9, 0.1, 0.9] })
+  const r: any = await grep($)
+  expect(r.context).toBeUndefined()
+  expect((calls as any).started.length).toBe(1)
+  expect((calls as any).started[0][0]).toBe('node')
+  expect((calls as any).started[0][2]).toBe('start')
+  await grep($)
+  expect((calls as any).started.length).toBe(1) // not respawned while it loads
+})
+
+test('Laya not set up: never started, nothing contacted when no URL is configured', async ($, on) => {
+  const calls = world(on, { up: false, setUp: false, baseUrl: null })
+  await grep($)
+  expect((calls as any).started.length).toBe(0)
+  expect(calls.length).toBe(0)
+})
+
+test('Laya set up and up, no URL configured: ranks on the default local port', async ($, on) => {
+  const calls = world(on, { setUp: true, baseUrl: null, nouls: [0.9, 0.1, 0.85, 0.2, 0.3] })
+  const r: any = await grep($)
+  expect(r.context.length).toBe(1)
+  expect(calls[0]).toContain('127.0.0.1:8000')
+  expect((calls as any).started.length).toBe(0)
 })
 
 test('no identifiable last user message: fails open before any http call', async ($, on) => {

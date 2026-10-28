@@ -3,13 +3,17 @@ import type { Register } from 'claude-code'
 // Automatic half of system1-prefilter's local-Laya path: ranks a Grep/Glob result by relevance to the
 // task so the model can skip low-relevance files instead of reading all of them. Loopback-only, by a
 // host check in code (never trust SYSTEM1_BASE_URL alone) -- never the hosted provider path, never
-// starts Laya, never removes a result, only adds a reminder. Fails open on anything unexpected: a slow
-// or absent Laya costs nothing beyond its own short timeout, never blocks the Grep/Glob call itself.
+// removes a result, only adds a reminder. When Laya is set up but not running, the first qualifying
+// Grep/Glob starts it in the background (laya-ctl.js start) and goes unranked; later ones are ranked
+// once it is up. Fails open on anything unexpected: a slow or absent Laya costs nothing beyond its own
+// short timeout, never blocks the Grep/Glob call itself.
 const MIN_CANDIDATES = 5
 const MAX_CANDIDATES = 40 // Laya's own batch cap (system1-prefilter.prefilter-mcp.js)
 const HEALTH_TIMEOUT_MS = 800
-const RANK_TIMEOUT_MS = 2000
+const RANK_TIMEOUT_MS = 20000 // CPU Laya scores about 3 candidates a second (measured 17 in 5.4-6.3 s); a 40-candidate batch fits
 const CONFIDENCE_FLOOR = 0.7
+const RESTART_AFTER_MS = 5 * 60 * 1000 // do not respawn a start that is still loading or failed
+let lastStartAt = 0
 
 function timeout(ms: number): Promise<never> {
   return new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
@@ -18,12 +22,39 @@ function timeout(ms: number): Promise<never> {
 async function loopbackBase($: any): Promise<string | null> {
   const key = await $.env.get('SYSTEM1_API_KEY')
   if (key) return null // a hosted provider is configured instead -- never touch it from here
-  const base = await $.env.get('SYSTEM1_BASE_URL')
+  const base = (await $.env.get('SYSTEM1_BASE_URL')) || ((await layaSetUp($)) ? `http://127.0.0.1:${(await $.env.get('LAYA_PORT')) || '8000'}` : null)
   if (!base) return null
   let url: URL
   try { url = new URL(base) } catch { return null }
   if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') return null // host checked in code, not trusted from the env var
   return base.replace(/\/+$/, '')
+}
+
+async function userHome($: any): Promise<string> {
+  return (await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? ''
+}
+
+// Laya is "set up" when laya-ctl.js setup has built its venv (default location, or LAYA_HOME).
+async function layaSetUp($: any): Promise<boolean> {
+  const laya = (await $.env.get('LAYA_HOME')) || `${await userHome($)}/.ai-dev-kit/laya`
+  return (await $.fs.exists(`${laya}/venv`)) as boolean
+}
+
+async function layaCtl($: any): Promise<string | null> {
+  const home = await userHome($)
+  for (const f of ['.claude/skills/system1-prefilter/laya-ctl.js', `${home}/.claude/skills/system1-prefilter/laya-ctl.js`, 'skills/addons/system1-prefilter.laya-ctl.js']) {
+    if (await $.fs.exists(f)) return f
+  }
+  return null
+}
+
+// Fire and forget: laya-ctl start waits for the model to load (up to minutes), so this must not be awaited.
+async function startLaya($: any): Promise<void> {
+  if (Date.now() - lastStartAt < RESTART_AFTER_MS) return
+  const ctl = await layaCtl($)
+  if (!ctl || !(await layaSetUp($))) return
+  lastStartAt = Date.now()
+  try { Promise.resolve($.process.run(['node', ctl, 'start'], { timeoutMs: 600000 })).catch(() => {}) } catch { /* fail open */ }
 }
 
 async function isUp($: any, base: string): Promise<boolean> {
@@ -90,7 +121,10 @@ export const register: Register = (on) => {
 
       const base = await loopbackBase($)
       if (!base) return ran
-      if (!(await isUp($, base))) return ran
+      if (!(await isUp($, base))) {
+        await startLaya($) // base is already verified loopback above
+        return ran
+      }
 
       const task = await lastUserTask($)
       if (!task) return ran
