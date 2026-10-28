@@ -91,7 +91,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [system1-prefilter](addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
 | [personality](addons/personality.md) | Six original personas (female and male at novice, mid and pro skill levels) that change how replies are worded; SessionStart hook, `/persona`, user-replaceable persona files; wording only, never facts |
-| [narrate](addons/narrate.md) | Stop hook that reads each reply aloud (Piper male/female voices, mute, volume, speed, pitch, replay, reading-time limit) plus offline voice-mode dictation into the chat box; no tokens, never touches Claude |
+| [narrate](addons/narrate.md) | Stop hook that reads each reply aloud (Piper male/female voices, mute, volume, speed, pitch, replay, reading-time limit); no tokens, never touches Claude |
 | [project-context](addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
 
 ## mcp/ — optional MCP servers, one manager

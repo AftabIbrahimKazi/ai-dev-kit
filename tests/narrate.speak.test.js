@@ -98,9 +98,10 @@ t('shape leaves a non-wav buffer alone', () => {
 });
 
 const SETUP = path.join(__dirname, '../skills/addons/narrate.setup.js');
-const { addVoice, parseArgs, installCommand, launcherText, voiceUrls } = require(SETUP);
-t('setup accepts commands, hotkeys or both and refuses anything else', () => {
-  for (const c of ['commands', 'hotkeys', 'both']) assert.strictEqual(parseArgs(['--controls', c]).controls, c);
+const { addVoice, parseArgs, installCommand, voiceUrls } = require(SETUP);
+t('setup accepts commands and refuses anything else, including the removed hotkeys', () => {
+  assert.strictEqual(parseArgs(['--controls', 'commands']).controls, 'commands');
+  for (const c of ['hotkeys', 'both']) assert.throws(() => parseArgs(['--controls', c]), /hotkeys were removed/);
   assert.throws(() => parseArgs(['--controls', 'voice']));
   assert.throws(() => parseArgs([]));
 });
@@ -119,10 +120,6 @@ t('setup commands-only run touches no python and exits 0', () => {
   const r = spawnSync(process.execPath, [SETUP, '--controls', 'commands', '--project', d], { encoding: 'utf8' });
   assert.strictEqual(r.status, 0); assert.ok(r.stdout.startsWith('commands: installed'));
   assert.strictEqual(spawnSync(process.execPath, [SETUP, '--controls', 'x'], { encoding: 'utf8' }).status, 1);
-});
-t('launcher runs hotkeys only unless dictation is chosen', () => {
-  assert.ok(launcherText('python', false).includes('--no-dictate'));
-  assert.ok(!launcherText('python', true).includes('--no-dictate'));
 });
 t('setup --voices stands alone and builds the model and config urls', () => {
   assert.strictEqual(parseArgs(['--voices']).voices, true);
@@ -178,10 +175,6 @@ t('wavSeconds reads the clip length from the header', () => {
   const f = path.join(os.tmpdir(), 'nar-len.wav');
   fs.writeFileSync(f, wav(22050, new Array(22050).fill(1)));
   assert.strictEqual(wavSeconds(f), 1000);
-});
-t('launcher is a shell script off Windows', () => {
-  assert.ok(launcherText('python3', false, 'linux').startsWith('#!/bin/sh'));
-  assert.ok(launcherText('python', false, 'win32').startsWith('@echo off'));
 });
 t('a code-only reply is announced instead of going silent', () => {
   assert.strictEqual(clean('```js\nconst x = 1;\n```'), 'Code and tables are on screen.');
