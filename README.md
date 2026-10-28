@@ -311,8 +311,9 @@ A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1
 |---|---|---|---|
 | `mute` / `unmute` | none | on | silence or restore narration; mute also stops speech in progress |
 | `stop` | none | none | cut off what is playing now and clear the queue |
-| `replay` | none | none | read the last reply again; a reply is otherwise spoken exactly once |
-| `voice` | `male`, `female` | female | which voice (male is Joe, female is LJSpeech) |
+| `play` / `replay` | none | none | read the latest reply (the play button); a reply is otherwise spoken exactly once |
+| `mode` | `manual`, `auto` | manual | `manual`: like the play button on claude.ai, a reply is kept until you play it; `auto`: every reply is spoken as it arrives |
+| `voice` | `male`, `female` | female | which voice (British by default: female is Jenny (Dioco), male is Northern English Male) |
 | `volume` | 0 to 100 | 100 | loudness |
 | `speed` | 0.5 to 2 | 1 (yours may differ) | pace; pitch is unaffected |
 | `pitch` | -12 to 12 | 0 | semitones up or down; pace is unaffected (Piper voices only) |
@@ -336,6 +337,8 @@ Run the hotkey launcher and these work in any window. Each change is spoken back
 
 Start the launcher with `~/.claude/narrate-hotkeys.cmd` (Windows) or `narrate-hotkeys.sh`, or `python listen.py --no-dictate` for hotkeys only, `python listen.py` to add dictation (`--key` changes the dictation key, `--model tiny.en|base.en|small.en` the speech model, `--enter` presses Enter after typing). It only works while that program is running. On Linux the `keyboard` library needs root and on macOS the terminal needs Accessibility permission; Android has no global hotkeys, so use `/narration` there.
 
+**On-screen controls instead of hotkeys (VS Code):** `node extensions/narrate-buttons/install.js`, then reload the window. It adds one footer button that opens a popup tray with every control (volume, speed, pitch and reading time have inline -/+ buttons and the tray stays open while you adjust), plus an **AI Dev Kit** sidebar with the same controls. Set `narrateButtons.footer` to `tray+play` for a separate Play button next to the tray. The controls: narration (play, when to speak, mute, voice, volume, speed, pitch, reading time with +/- buttons), persona picker. A waiting reply turns the Play button yellow. Narration plays on the Play button by default (like claude.ai); switch it to speak every reply with *When to speak*. Every click runs the same scripts the hotkeys and slash commands use. Dictation still needs the launcher. `--remove` uninstalls.
+
 ### Voice dictation
 
 With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is transcribed offline by Whisper and typed into whatever window has focus, the chat box included. It never presses Enter unless you pass `--enter`. Claude Code also has its own built-in dictation (the microphone icon in the chat box); this is the offline alternative.
@@ -344,7 +347,7 @@ With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is
 
 | Item | Detail |
 |---|---|
-| Default voices | `en_US-ljspeech-medium` (female, public domain) and `en_US-joe-medium` (male, CC0), downloaded at install, never shipped in this repo |
+| Default voices | British: `en_GB-jenny_dioco-medium` (female, Jenny (Dioco), attribution required, commercial use permitted) and `en_GB-northern_english_male-medium` (male, CC-BY-SA 4.0), downloaded at install, never shipped in this repo. Installs that only have the older American voices (`en_US-ljspeech-medium`, `en_US-joe-medium`) keep using them until `setup.js --voices` is run |
 | Your own voice | `--add-voice` registers any Piper `.onnx` file with its `.onnx.json`; a cloned or character voice can plug in through `"engine":"command"` (any program that reads text and writes a wav). Check the licence yourself and never commit a cloned voice or its audio. |
 | Settings file | `~/.claude/narrate.json`: `engine`, `gender`, `volume`, `speed`, `pitch`, `maxSeconds`, `max` (fixed character limit), `voices`, `piper`, `command` |
 | Other files | `~/.claude/voices/` (voices), `narrate.off` (mute switch), `narrate-last.json` (last reply), `narrate-hotkeys.cmd` (launcher) |
