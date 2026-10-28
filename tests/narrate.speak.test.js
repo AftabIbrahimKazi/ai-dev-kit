@@ -201,15 +201,16 @@ t('chunks split at sentence ends, keep every word and stay near the size', () =>
   assert.deepStrictEqual(chunks(''), []);
 });
 t('the reading limit is set in seconds and scales with speed', () => {
-  assert.strictEqual(settings({}).max, 300 * 16);
-  assert.strictEqual(settings({ speed: 2 }).max, 300 * 16 * 2);
+  assert.strictEqual(settings({}).max, 12000); // the default 1110 s is more than the 12000-character cap
+  assert.strictEqual(settings({ maxSeconds: 300 }).max, 300 * 16);
+  assert.strictEqual(settings({ maxSeconds: 300, speed: 2 }).max, 300 * 16 * 2);
   assert.strictEqual(settings({ maxSeconds: 60, speed: 1.5 }).max, 60 * 16 * 1.5);
   assert.strictEqual(settings({ maxSeconds: 1800, speed: 2 }).max, 12000);
 });
 t('a fixed character limit overrides the time limit, and bad values fall back', () => {
   assert.strictEqual(settings({ max: 500, maxSeconds: 900 }).max, 500);
   assert.strictEqual(settings({ maxSeconds: 5 }).max, 30 * 16);
-  assert.strictEqual(settings({ maxSeconds: 'x' }).max, 300 * 16);
+  assert.strictEqual(settings({ maxSeconds: 'x' }).max, 12000);
 });
 t('--maxSeconds is saved, clamped and shown in the status', () => {
   const { home, env } = homeEnv();

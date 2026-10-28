@@ -318,7 +318,7 @@ A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1
 | `volume` | 0 to 100 | 100 | loudness |
 | `speed` | 0.5 to 2 | 1 (yours may differ) | pace; pitch is unaffected |
 | `pitch` | -12 to 12 | 0 | semitones up or down; pace is unaffected (Piper voices only) |
-| `maxSeconds` | 30 to 1800 | 300 | longest reading, in seconds of speech, converted to characters at your current speed; past it the voice says "the rest is on screen" |
+| `maxSeconds` | 30 to 1800 | 1110 | longest reading, in seconds of speech, converted to characters at your current speed and capped at 12000 characters (about 12 minutes at speed 1); past it the voice says "the rest is on screen" |
 | `status` | none | none | shows mute state, engine, voice, volume, speed, pitch and the character limit |
 
 ### Keyboard hotkeys

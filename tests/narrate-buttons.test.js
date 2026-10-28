@@ -21,7 +21,7 @@ const have = (set) => (p) => set.includes(norm(p));
     assert.strictEqual(nudged('speed', { speed: 1 }, 1), 1.1);
     assert.strictEqual(nudged('speed', { speed: 0.5 }, -1), 0.5);
     assert.strictEqual(nudged('pitch', { pitch: -12 }, -1), -12);
-    assert.strictEqual(nudged('maxSeconds', {}, 1), 330);
+    assert.strictEqual(nudged('maxSeconds', {}, 1), 1140);
   });
   await t('modeOf: manual (play button) unless the config says auto', () => {
     assert.strictEqual(modeOf({}), 'manual'); assert.strictEqual(modeOf({ mode: 'auto' }), 'auto'); assert.strictEqual(modeOf({ mode: 'x' }), 'manual');
