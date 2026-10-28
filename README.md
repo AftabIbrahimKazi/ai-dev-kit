@@ -1,8 +1,10 @@
 <div align="center">
 
-# AI Dev Kit
+# AI Dev Kit: Agent Skills, Coding Standards and Claude Code Mods
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
+
+**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 64 reusable `SKILL.md` agent skills (53 for Claude Code, 11 for OpenCode models), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 18 opt-in slash commands, 9 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
 
 Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering), an opt-in offline text-to-speech add-on that reads Claude's replies aloud, and opt-in reply personas, for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
@@ -40,7 +42,7 @@ The core installer copies markdown files only: no packages, no build step. Opt-i
 - **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
 - **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
 
-**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, narration and personas](#voice-narration-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#faq)
+**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, narration and personas](#voice-narration-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#frequently-asked-questions)
 
 ## Everything the kit does, at a glance
 
@@ -292,7 +294,7 @@ Two opt-in add-ons, never installed by default. Neither costs tokens while it ru
 
 ### Narration: Claude's replies read aloud (`narrate`)
 
-A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1-gpl), an offline neural text-to-speech engine, on your machine. No cloud service, no tokens. Code, tables and links are not read; they are announced ("Code and tables are on screen"). Each reply is spoken once and long replies are read in full, in sentence-sized pieces, up to a time limit. Replies from parallel sessions queue and play in order instead of cutting each other off. Playback uses your current default output device, so headphones and Bluetooth are followed.
+A Stop hook keeps each reply, and pressing Play reads it aloud with [Piper](https://github.com/OHF-Voice/piper1-gpl), an offline neural text-to-speech engine, on your machine (like the play button on claude.ai). Switch the mode to `auto` and every reply is spoken as it arrives. No cloud service, no tokens. Code, tables and links are not read; they are announced ("Code and tables are on screen"). A reply is spoken once on its own, and long replies are read in full, in sentence-sized pieces, up to a time limit. Replies from parallel sessions queue and play in order instead of cutting each other off. Playback uses your current default output device, so headphones and Bluetooth are followed.
 
 **Install it** by telling your agent *"set up text to speech for Claude's replies"*, or run the steps yourself (paths are `<skill-root>/narrate/` in a project, `skills/addons/narrate.*` in this repo):
 
@@ -313,7 +315,7 @@ A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1
 | `mode` | `manual`, `auto` | manual | `manual`: like the play button on claude.ai, a reply is kept until you play it; `auto`: every reply is spoken as it arrives |
 | `voice` | `male`, `female` | female | which voice (British by default: female is Jenny (Dioco), male is Northern English Male) |
 | `volume` | 0 to 100 | 100 | loudness |
-| `speed` | 0.5 to 2 | 1 (yours may differ) | pace; pitch is unaffected |
+| `speed` | 0.5 to 2 | 1 | pace; pitch is unaffected |
 | `pitch` | -12 to 12 | 0 | semitones up or down; pace is unaffected (Piper voices only) |
 | `maxSeconds` | 30 to 1800 | 1110 | longest reading, in seconds of speech, converted to characters at your current speed and capped at 12000 characters (about 12 minutes at speed 1); past it the voice says "the rest is on screen" |
 | `status` | none | none | shows mute state, engine, voice, volume, speed, pitch and the character limit |
@@ -486,10 +488,12 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
-- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 39 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
+- **Narration controls without hotkeys.** The keyboard hotkeys and voice dictation were removed: the global keyboard hook did not fire reliably and could clash with other shortcuts. Narration is now controlled by `/narration` and by the optional VS Code extension `extensions/narrate-buttons` (a footer tray, an AI Dev Kit sidebar and a Play button that turns yellow when a reply is waiting).
+- **Play-button narration and British voices.** `narrate` now defaults to manual mode (a reply is kept until you press Play, like claude.ai), with `auto` to speak every reply. The default voices are British (Jenny (Dioco) and a Northern English male); older American voices keep working until the new ones are downloaded.
+- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 37 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
 - **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 150 to 190 tokens per session; no accuracy loss on 20 objectively graded questions (Haiku and Sonnet), replies up to 36% shorter.
 - **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
-- **Lower always-on cost, no feature removed.** A normal install now costs about 1,950 tokens per session before any work, down from about 2,500 (estimates at ~4 characters per token). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (up to about 320 tokens). `install-kit` writes a leaner `CLAUDE.md` (no template preamble; the parallel-session section only with `role-session`, about 140-235 tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them (about 50 tokens in a normal install). Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
+- **Lower always-on cost, no feature removed.** Measured with `findings/harness/audit.js` (estimates at ~4 characters per token): a typical install adds about 1,750 tokens of skill descriptions per session and the full Claude Code kit about 2,440, plus the `CLAUDE.md` contract (the template is about 1,440 tokens; `install-kit` writes a leaner one without the template preamble, and adds the parallel-session section only with `role-session`). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (0 always-on tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them. Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
 - **Skill Triggers table.** The `CLAUDE.md` contract carries a short table mapping situations to skills ("commit what I have" to `pre-commit`, a failing build to `debug-protocol`, and so on), because skills load by the model's own judgment and sometimes do not. With the table, `pre-commit` loaded 4 of 4 on a "commit what I have" prompt (1 of 2 before). `install-kit` removes a row when its skill is not installed.
 - **Merge conflicts, responsive layouts, asset weight.** Three new workflow skills, each with a script and a command: [`resolve-conflicts`](skills/workflow/resolve-conflicts.md) (modes `both`, `ours`, `theirs`; role scope leaves files owned by another role alone), [`responsive-check`](skills/workflow/responsive-check.md) (viewport plan from the project's own breakpoints, then a Playwright measurement) and [`optimize-assets`](skills/workflow/optimize-assets.md) (scan, convert, compress and pre-compress images, video, fonts and SVG, checking the file signature before reading dimensions). Together with `project-context`, they triggered 14 of 14 times on haiku with no skill named in the prompt.
 - **Project docs without an MCP: `project-context`, `/ctx`, `/figma`.** An opt-in, gitignored `project-context/` folder holds requirements, brand notes and design, each folder with an `INDEX.md`; `/ctx` sets it up and tracks what changed so only new or modified files are re-read. `/figma` needs no Figma connector and no tokens: export frames from Figma as SVG (colors, fonts, type sizes, text) and PNG (reference), and a script drafts `project-context/design/figma.md` from the files. A pre-commit rule blocks staged `project-context/` files.
@@ -573,13 +577,13 @@ coding-standards/
 | Per-project lessons | `learnings.md` next to each skill | one project, git-ignored | delete the file |
 | Project docs | `<project>/project-context/` | one project, git-ignored | delete the folder |
 
-## FAQ
+## Frequently asked questions
 
 **What is an agent skill (`SKILL.md`)?** A markdown file with a short description of when it applies and the steps to follow. The agent reads the description, and loads the file only when a task matches. Every skill here is one such file.
 
 **Which AI coding tools does it work with?** Claude Code natively, plus OpenCode, Codex and any agent that reads markdown instructions. The installer detects the tool and puts the skills and the session file where that tool actually reads them (`CLAUDE.md` or `AGENTS.md`).
 
-**Does it install packages or touch my code?** The core installer copies markdown files only and never edits your code. The audit script, the Claude Code mods and the add-ons are optional and run only when you choose them. The `narrate` add-on is the one place that installs software (Piper through pip, two voice files of about 63 MB each, and with voice mode a speech model), and only after it tells you the download size and you agree.
+**Does it install packages or touch my code?** The core installer copies markdown files only and never edits your code. The audit script, the Claude Code mods and the add-ons are optional and run only when you choose them. The `narrate` add-on is the one place that installs software (Piper through pip, two voice files of about 63 MB each), and only after it tells you the download size and you agree.
 
 **Can I use only the standards, or only the skills?** Yes, either folder works alone. A project that wants the standards enforced during a session needs both, because the `coding-standards` skill is what loads the chain.
 
@@ -590,6 +594,10 @@ coding-standards/
 **Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Voice, narration and personas](#voice-narration-and-personas).
 
 **Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 150 to 190 tokens per session. In tests on Haiku and Sonnet it answered as correctly as no persona.
+
+**How many tokens does the kit add to every session?** About 1,750 tokens for a typical install's skill descriptions, or about 2,440 for the full Claude Code kit, plus the `CLAUDE.md` contract (about 1,440 for the template). Skill bodies load only when used (about 1,370 tokens on average), slash commands cost nothing until you type them, and the mods that observe or enforce add no context. Claude Code's own built-in skills and system prompt are extra and are not counted here; run `/context` in Claude Code to see the full breakdown. These are estimates at about 4 characters per token.
+
+**Can I control narration with on-screen buttons instead of hotkeys?** Yes. `node extensions/narrate-buttons/install.js` adds a footer tray, a sidebar and a Play button to VS Code. See [Voice, narration and personas](#voice-narration-and-personas).
 
 **Is it free?** Yes, MIT licensed. Optional tools state their own limits: some run locally for free, hosted ones have free tiers or need billing.
 
