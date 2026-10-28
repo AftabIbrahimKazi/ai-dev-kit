@@ -7,3 +7,6 @@ Thumbs.db
 shelved/
 
 __pycache__/
+
+# local session notes, never published
+handover.md
