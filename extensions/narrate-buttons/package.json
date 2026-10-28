@@ -1,0 +1,46 @@
+{
+  "name": "narrate-buttons",
+  "displayName": "AI Dev Kit Controls",
+  "description": "Sidebar panel and status-bar buttons for the ai-dev-kit: narration (play button like claude.ai, or auto), and persona, for when hotkeys do not work.",
+  "version": "0.2.0",
+  "publisher": "ai-dev-kit",
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "viewsContainers": { "activitybar": [{ "id": "aiDevKit", "title": "AI Dev Kit", "icon": "media/icon.svg" }] },
+    "views": { "aiDevKit": [{ "id": "aiDevKit.controls", "name": "Controls" }] },
+    "commands": [
+      { "command": "narrateButtons.play", "title": "AI Dev Kit: Play latest reply" },
+      { "command": "narrateButtons.stop", "title": "AI Dev Kit: Stop speaking" },
+      { "command": "narrateButtons.toggleMute", "title": "AI Dev Kit: Mute / unmute narration" },
+      { "command": "narrateButtons.toggleMode", "title": "AI Dev Kit: Narration mode (play button / auto)" },
+      { "command": "narrateButtons.switchVoice", "title": "AI Dev Kit: Switch voice (male / female)" },
+      { "command": "narrateButtons.stepUp", "title": "Increase", "icon": "$(add)" },
+      { "command": "narrateButtons.stepDown", "title": "Decrease", "icon": "$(remove)" },
+      { "command": "narrateButtons.pickPersona", "title": "AI Dev Kit: Choose persona" },
+      { "command": "narrateButtons.refresh", "title": "AI Dev Kit: Refresh panel" },
+      { "command": "narrateButtons.openTray", "title": "AI Dev Kit: Open controls tray" },
+      { "command": "narrateButtons.openPanel", "title": "AI Dev Kit: Open full panel" }
+    ],
+    "menus": {
+      "view/item/context": [
+        { "command": "narrateButtons.stepDown", "when": "view == aiDevKit.controls && viewItem == stepper", "group": "inline@1" },
+        { "command": "narrateButtons.stepUp", "when": "view == aiDevKit.controls && viewItem == stepper", "group": "inline@2" }
+      ],
+      "commandPalette": [
+        { "command": "narrateButtons.stepUp", "when": "false" },
+        { "command": "narrateButtons.stepDown", "when": "false" }
+      ]
+    },
+    "configuration": {
+      "title": "AI Dev Kit Controls",
+      "properties": {
+        "narrateButtons.speakPath": { "type": "string", "default": "", "description": "Full path to the installed narrate speak.js. Empty: look in the workspace and home .claude/skills/narrate, then the kit repo." },
+        "narrateButtons.footer": { "type": "string", "enum": ["tray", "tray+play"], "default": "tray", "description": "Footer buttons: one tray button holding every control, or the tray plus a separate Play button." },
+        "narrateButtons.nodePath": { "type": "string", "default": "node", "description": "Node executable used to run the kit scripts." }
+      }
+    }
+  }
+}
