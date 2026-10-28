@@ -5,7 +5,8 @@
 //
 //   node narrate.speak.js                 Stop-hook mode (stdin = hook JSON)
 //   node narrate.speak.js --say "hi"      speak this text now (test a voice)
-//   --mute | --unmute | --stop | --status | --replay   (a reply is spoken once; --replay is the only way to hear it again)
+//   --mode manual|auto   manual (default, like the play button on claude.ai): the hook only keeps the reply; auto: speaks it
+//   --mute | --unmute | --stop | --status | --play (= --replay)   (a reply is spoken once on its own; --play is how you hear it in manual mode, or again)
 //   --voice male|female   --volume 0-100   --speed 0.5-2   --pitch -12..12 (semitones)   --maxSeconds 30-1800   each saved in the config
 // Config (optional) ~/.claude/narrate.json: {"engine":"sapi|piper|command", "gender":"female", "volume":100, "speed":1,
 //   "pitch":0, "maxSeconds":300 (longest reading; becomes a character limit at the current speed), "max":0 (fixed character limit instead), "voices":{"female":"<.onnx>","male":"<.onnx>"}, "piper":{"exe":"piper","args":[]},
@@ -26,7 +27,15 @@ const STATE = path.join(HOME, 'narrate-last.json');
 const LOCK = path.join(TMP, 'narrate.lock');
 const QUEUE = path.join(TMP, 'narrate-queue');
 const MAX_PENDING = 3;
-const VOICE_FILES = { female: 'en_US-ljspeech-medium.onnx', male: 'en_US-joe-medium.onnx' };
+// British by default (easier to listen to in long sessions). Each slot lists voices best first; the first one that is
+// downloaded wins, so installs that only have an older voice keep working until `setup.js --voices` fetches the new one.
+const VOICE_FILES = { female: 'en_GB-jenny_dioco-medium.onnx', male: 'en_GB-northern_english_male-medium.onnx' };
+const VOICE_FALLBACKS = { female: ['en_US-ljspeech-medium.onnx'], male: ['en_US-joe-medium.onnx'] };
+const defaultVoice = (gender) => {
+  const dir = path.join(HOME, 'voices');
+  const have = [VOICE_FILES[gender], ...VOICE_FALLBACKS[gender]].find((f) => fs.existsSync(path.join(dir, f)));
+  return path.join(dir, have || VOICE_FILES[gender]);
+};
 const LIMITS = { volume: [0, 100], speed: [0.5, 2], pitch: [-12, 12], maxSeconds: [30, 1800] };
 // both voices speak 16-19 characters a second at speed 1; the time limit becomes a character limit at the current speed
 const CHARS_PER_SECOND = 16;
@@ -49,7 +58,7 @@ const lastReply = (jsonl) => lastReplyEntry(jsonl).text;
 
 // what was already spoken, so a reply is never read twice on its own, and the text a replay repeats
 function readState() {
-  try { const s = JSON.parse(fs.readFileSync(STATE, 'utf8')); return { seen: s.seen || {}, text: s.text || '' }; } catch { return { seen: {}, text: '' }; }
+  try { const s = JSON.parse(fs.readFileSync(STATE, 'utf8')); return { seen: s.seen || {}, text: s.text || '', pending: !!s.pending }; } catch { return { seen: {}, text: '', pending: false }; }
 }
 function writeState(st) {
   const keys = Object.keys(st.seen);
@@ -92,8 +101,8 @@ function settings(cfg = config()) {
   const num = (k, d) => (Number.isFinite(Number(cfg[k])) && cfg[k] !== '' && cfg[k] != null ? clamp(Number(cfg[k]), LIMITS[k]) : d);
   const gender = cfg.gender === 'male' ? 'male' : 'female';
   return {
-    engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
-    max: cfg.max > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 300) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || path.join(HOME, 'voices', VOICE_FILES[gender]),
+    mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
+    max: cfg.max > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 300) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || defaultVoice(gender),
     piper: cfg.piper || {}, command: cfg.command, voice: cfg.voice,
   };
 }
@@ -306,7 +315,7 @@ function readStdin() {
 
 function status() {
   const s = settings();
-  return `${isOff() ? 'muted' : 'on'} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters`;
+  return `${isOff() ? 'muted' : 'on'} | mode ${s.mode} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters`;
 }
 
 function main(argv) {
@@ -327,10 +336,15 @@ function main(argv) {
   }
   if (a === '--worker') return drain();
   if (a === '--say') return launch(clean(argv.slice(1).join(' '), settings().max), true);
-  if (a === '--replay') {
+  if (a === '--mode') {
+    if (v !== 'auto' && v !== 'manual') return console.log('use --mode manual (play button, like claude.ai) or --mode auto (speak every reply)');
+    setConfig('mode', v); return console.log(status());
+  }
+  if (a === '--replay' || a === '--play') {
     const st = readState();
     if (!st.text) return console.log('nothing to replay yet');
     if (isOff()) return console.log('muted; unmute first');
+    st.pending = false; writeState(st);
     launch(st.text, true);
     return console.log('replaying the last reply');
   }
@@ -345,8 +359,11 @@ function main(argv) {
   const text = clean(entry.text, settings().max);
   st.seen[hook.transcript_path] = entry.id;
   st.text = text;
+  // manual (the default, like the play button on claude.ai): keep the reply for --play; auto: speak it now
+  const speakNow = settings().mode === 'auto' && !isOff();
+  st.pending = !!text && !speakNow;
   writeState(st);
-  if (text && !isOff()) launch(text, false);
+  if (text && speakNow) launch(text, false);
 }
 
 if (require.main === module) {
@@ -356,4 +373,4 @@ if (require.main === module) {
   } catch { /* fail open */ }
   process.exitCode = 0;
 }
-module.exports = { lastReply, lastReplyEntry, clean, shape, settings, otherPlayer, otherSpeech, wavSeconds, chunks };
+module.exports = { defaultVoice, lastReply, lastReplyEntry, clean, shape, settings, otherPlayer, otherSpeech, wavSeconds, chunks };

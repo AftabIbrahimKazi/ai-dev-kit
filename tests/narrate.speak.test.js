@@ -69,9 +69,21 @@ t('bad values are refused and change nothing', () => {
   assert.ok(cli(env, '--speed', 'fast').startsWith('use --speed'));
   assert.ok(!fs.existsSync(path.join(home, '.claude', 'narrate.json')));
 });
+t('default voices are British; an install that only has the older American voices keeps using them', () => {
+  const pick = (files) => {
+    const { home, env } = homeEnv();
+    const dir = path.join(home, '.claude', 'voices'); fs.mkdirSync(dir, { recursive: true });
+    for (const f of files) fs.writeFileSync(path.join(dir, f), '');
+    const r = spawnSync(process.execPath, ['-e', `const s=require(${JSON.stringify(SCRIPT)});console.log(path=require('path').basename(s.defaultVoice('female'))+' '+require('path').basename(s.defaultVoice('male')))`], { env, encoding: 'utf8' });
+    return r.stdout.trim();
+  };
+  assert.strictEqual(pick([]), 'en_GB-jenny_dioco-medium.onnx en_GB-northern_english_male-medium.onnx');
+  assert.strictEqual(pick(['en_US-ljspeech-medium.onnx', 'en_US-joe-medium.onnx']), 'en_US-ljspeech-medium.onnx en_US-joe-medium.onnx');
+  assert.strictEqual(pick(['en_US-ljspeech-medium.onnx', 'en_GB-jenny_dioco-medium.onnx']), 'en_GB-jenny_dioco-medium.onnx en_GB-northern_english_male-medium.onnx');
+});
 t('settings defaults to the female voice file and picks the male one on request', () => {
-  assert.ok(settings({}).model.endsWith('en_US-ljspeech-medium.onnx'));
-  assert.ok(settings({ gender: 'male' }).model.endsWith('en_US-joe-medium.onnx'));
+  assert.ok(/en_(GB-jenny_dioco|US-ljspeech)-medium\.onnx$/.test(settings({}).model));
+  assert.ok(/en_(GB-northern_english_male|US-joe)-medium\.onnx$/.test(settings({ gender: 'male' }).model));
   assert.strictEqual(settings({ volume: 'x', speed: 9 }).speed, 2);
 });
 t('shape scales volume and raises the sample rate by the pitch', () => {
@@ -114,7 +126,7 @@ t('launcher runs hotkeys only unless dictation is chosen', () => {
 });
 t('setup --voices stands alone and builds the model and config urls', () => {
   assert.strictEqual(parseArgs(['--voices']).voices, true);
-  assert.deepStrictEqual(voiceUrls('joe').map((u) => u.split('/').pop()), ['en_US-joe-medium.onnx', 'en_US-joe-medium.onnx.json']);
+  assert.deepStrictEqual(voiceUrls('jenny_dioco').map((u) => u.split('/').pop()), ['en_GB-jenny_dioco-medium.onnx', 'en_GB-jenny_dioco-medium.onnx.json']);
   assert.ok(voiceUrls('joe')[0].startsWith('https://huggingface.co/rhasspy/piper-voices/'));
 });
 t('add-voice validates its arguments', () => {
@@ -255,4 +267,32 @@ t('--replay repeats the last reply on command, and refuses when muted or empty',
   assert.strictEqual(cli(env, '--replay'), 'replaying the last reply');
   cli(env, '--mute');
   assert.strictEqual(cli(env, '--replay'), 'muted; unmute first');
+});
+
+t('default mode is manual (play button): the hook keeps the reply as pending and queues nothing', () => {
+  const { home, tmp, env } = quiet();
+  assert.ok(cli(env, '--status').includes('mode manual'));
+  const tr = path.join(home, 'tr.jsonl'); fs.writeFileSync(tr, entry('u1', 'Read me on request.'));
+  hookRun(env, tr);
+  const st = spoken(home);
+  assert.strictEqual(st.text, 'Read me on request.'); assert.strictEqual(st.pending, true);
+  assert.ok(!fs.existsSync(path.join(tmp, 'narrate-queue')) || fs.readdirSync(path.join(tmp, 'narrate-queue')).length === 0);
+});
+t('--play speaks the pending reply and clears pending', () => {
+  const { home, env } = quiet();
+  const tr = path.join(home, 'tr.jsonl'); fs.writeFileSync(tr, entry('u1', 'Play me.'));
+  hookRun(env, tr);
+  assert.strictEqual(cli(env, '--play'), 'replaying the last reply');
+  assert.strictEqual(spoken(home).pending, false);
+});
+t('--mode auto speaks each reply by itself; bad modes are refused; the mode is saved', () => {
+  const { home, env } = quiet();
+  assert.ok(cli(env, '--mode', 'auto').includes('mode auto'));
+  assert.ok(cli(env, '--mode', 'loud').startsWith('use --mode'));
+  const tr = path.join(home, 'tr.jsonl'); fs.writeFileSync(tr, entry('u1', 'Spoken at once.'));
+  hookRun(env, tr);
+  assert.strictEqual(spoken(home).pending, false);
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(home, '.claude', 'narrate.json'), 'utf8')).mode, 'auto');
+  cli(env, '--mode', 'manual');
+  assert.ok(cli(env, '--status').includes('mode manual'));
 });

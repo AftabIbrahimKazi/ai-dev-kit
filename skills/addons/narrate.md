@@ -10,7 +10,7 @@ description: Opt-in add-on. Use when the user wants Claude's replies read aloud 
 - `listen.py` (Python): voice mode. A hotkey starts and stops recording; the speech is transcribed offline and typed into the focused window, the chat box included.
 
 ## Install
-1. **Voices (Piper, free, offline) — tell the user it downloads about 125 MB, then run** `node setup.js --voices`. It pip-installs `piper-tts`, downloads a female (`en_US-ljspeech-medium`, public domain) and a male (`en_US-joe-medium`, CC0) voice into `~/.claude/voices/`, skips files already there, and writes the config in step 2 if it is missing. Without Piper the script falls back to the built-in Windows voice, which sounds dated.
+1. **Voices (Piper, free, offline) — tell the user it downloads about 125 MB, then run** `node setup.js --voices`. It pip-installs `piper-tts`, downloads a British female (`en_GB-jenny_dioco-medium`, Jenny (Dioco), attribution required) and a British male (`en_GB-northern_english_male-medium`, CC-BY-SA 4.0) voice into `~/.claude/voices/`, skips files already there, and writes the config in step 2 if it is missing. Without Piper the script falls back to the built-in Windows voice, which sounds dated.
 2. **Config** `~/.claude/narrate.json`: `{"engine":"piper","piper":{"exe":"<full path to python>","args":["-m","piper"]}}`. Written by step 1.
 3. **Stop hook** in `~/.claude/settings.json`:
 ```json
@@ -30,7 +30,8 @@ The same settings are reachable three ways: `/narration <setting>` (commands), t
 | `pitch -12..12` | semitones up or down; pace is unaffected (piper only) |
 | `maxSeconds 30-1800` | longest reading, in seconds of speech (default 300); `status` shows the character limit it gives at the current speed |
 | `stop`, `status` | cut off speech now; show the current settings |
-| `replay` | read the last reply again; a reply is otherwise spoken exactly once |
+| `play` / `replay` | read the latest reply (the play button); a reply is otherwise spoken exactly once |
+| `mode manual` / `mode auto` | `manual` (default, like the play button on claude.ai): the hook only keeps the reply until you play it; `auto`: every reply is spoken as soon as it arrives |
 
 **Keyboard hotkeys.** While the hotkey launcher runs (`~/.claude/narrate-hotkeys.cmd`, or `python listen.py --no-dictate`), these work in any window and each change is spoken back:
 
