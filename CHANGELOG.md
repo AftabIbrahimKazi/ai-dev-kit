@@ -3,6 +3,10 @@
 ## 2026-10-28
 
 ### Added
+- `extensions/narrate-buttons`: a VS Code extension with one footer button that opens a tray of every control, and an AI Dev Kit sidebar that controls narration and persona without hotkeys (`node extensions/narrate-buttons/install.js`).
+- `narrate` modes: `--mode manual|auto`. **Default is now `manual`**: the Stop hook keeps each reply and `--play` (the Play button) reads it, like claude.ai. Set `--mode auto` to speak every reply as before.
+- `narrate` default voices are now British: `en_GB-jenny_dioco-medium` (female, Jenny (Dioco), attribution required) and `en_GB-northern_english_male-medium` (male, CC-BY-SA 4.0), easier to listen to in long sessions. Installs that only have the older American voices keep using them until `setup.js --voices` downloads the new ones.
+- `prefilter-rank` mod 0.2.0 starts Laya in the background on the first qualifying Grep/Glob when it is set up but not running.
 - README reference sections: everything at a glance (what runs by itself and what to ask for), the complete skills catalog (65 skills, by category), all nine mods, every script and the git hooks, the full narration, hotkey, dictation and persona reference, and a table of where each piece lives and how to turn it off.
 - `narrate` and `personality` add-ons with `/narration` and `/persona` (first listed under 2026-10-27; this entry records the final behavior).
 
