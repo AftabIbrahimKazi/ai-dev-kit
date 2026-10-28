@@ -301,7 +301,7 @@ async function drain() {
   }
 }
 
-// queue the text and start a detached worker so the hook returns at once. A spoken test or hotkey feedback
+// queue the text and start a detached worker so the hook returns at once. A spoken test or settings feedback
 // (interrupt) cuts in front; a reply waits for what is already playing.
 function launch(text, interrupt) {
   if (interrupt) stopAll();

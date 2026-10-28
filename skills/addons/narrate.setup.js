@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Installs the control scheme for the narrate add-on. The user picks slash commands, keyboard hotkeys, or both.
+// Installs the voices and the /narration command for the narrate add-on.
 //
 //   node narrate.setup.js --voices                      pip-install Piper, download the female and male voice (~125 MB)
 //   node narrate.setup.js --add-voice male|female <file.onnx | https://...onnx>   use your own Piper voice
-//   node narrate.setup.js --controls commands|hotkeys|both [--project D] [--skill-root P] [--dictate] [--startup]
+//   node narrate.setup.js --controls commands [--project D] [--skill-root P]
 // add-voice: registers your own Piper voice (needs the model.onnx and its model.onnx.json side by side) for the male or
 //           female slot in ~/.claude/narrate.json. A local file is used in place; a URL is downloaded (with its .json)
 //           into ~/.claude/voices first. Check the voice's licence yourself; never commit it to a shared repo.
@@ -12,8 +12,6 @@
 //           ~/.claude/narrate.json if it does not exist. Ask the user first: it is a download.
 // commands: copies commands/narration.md into <project>/.claude/commands (never overwrites), {{skill-root}} filled in
 //           (--skill-root, default .claude/skills; the script then runs as <skill-root>/narrate/speak.js).
-// hotkeys:  pip-installs `keyboard` (plus faster-whisper, sounddevice, numpy with --dictate), writes the launcher
-//           ~/.claude/narrate-hotkeys.cmd, and with --startup (Windows) a hidden launcher in the Startup folder.
 // The Stop hook itself lives in ~/.claude/settings.json and is not touched here. Exit 1 on a usage error.
 const fs = require('node:fs');
 const os = require('node:os');
@@ -21,8 +19,6 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const HERE = __dirname;
-// in the kit repo the file is narrate.listen.py; an install renames it to listen.py inside the skill folder
-const LISTEN = ['narrate.listen.py', 'listen.py'].map((f) => path.join(HERE, f)).find((f) => fs.existsSync(f)) || path.join(HERE, 'listen.py');
 const posix = (p) => p.split(path.sep).join('/');
 
 function parseArgs(argv) {
@@ -34,13 +30,12 @@ function parseArgs(argv) {
     else if (a === '--skill-root') o.skillRoot = argv[++i];
     else if (a === '--voices') o.voices = true;
     else if (a === '--add-voice') { o.addVoice = { gender: argv[++i], src: argv[++i] }; }
-    else if (a === '--dictate') o.dictate = true;
-    else if (a === '--startup') o.startup = true;
     else throw new Error(`unknown option ${a}`);
   }
-  if (o.controls && !['commands', 'hotkeys', 'both'].includes(o.controls)) throw new Error('--controls must be commands, hotkeys or both');
+  if (o.controls === 'hotkeys' || o.controls === 'both') throw new Error('hotkeys were removed; use --controls commands (or the VS Code controls extension)');
+  if (o.controls && o.controls !== 'commands') throw new Error('--controls must be commands');
   if (o.addVoice && (!['male', 'female'].includes(o.addVoice.gender) || !o.addVoice.src)) throw new Error('--add-voice needs male|female and a .onnx file or URL');
-  if (!o.controls && !o.voices && !o.addVoice) throw new Error('give --voices, --add-voice, or --controls commands|hotkeys|both');
+  if (!o.controls && !o.voices && !o.addVoice) throw new Error('give --voices, --add-voice, or --controls commands');
   return o;
 }
 
@@ -59,30 +54,6 @@ function pythonExe() {
   for (const c of ['python', 'python3', 'py']) if (spawnSync(c, ['--version'], { stdio: 'ignore' }).status === 0) return c;
   return null;
 }
-const launcherText = (py, dictate, platform = process.platform) => {
-  const flag = dictate ? '' : ' --no-dictate';
-  return platform === 'win32' ? `@echo off\r\n"${py}" "${LISTEN}"${flag}\r\n` : `#!/bin/sh\nexec "${py}" "${LISTEN}"${flag}\n`;
-};
-
-function installHotkeys(o) {
-  const py = pythonExe();
-  if (!py) return 'hotkeys: Python not found; install Python 3 and run this again';
-  const pkgs = o.dictate ? ['keyboard', 'faster-whisper', 'sounddevice', 'numpy'] : ['keyboard'];
-  const pip = spawnSync(py, ['-m', 'pip', 'install', '-q', ...pkgs], { encoding: 'utf8' });
-  if (pip.status !== 0) return `hotkeys: pip install failed: ${(pip.stderr || '').trim().split('\n').pop()}`;
-  const cmd = path.join(os.homedir(), '.claude', process.platform === 'win32' ? 'narrate-hotkeys.cmd' : 'narrate-hotkeys.sh');
-  fs.mkdirSync(path.dirname(cmd), { recursive: true });
-  fs.writeFileSync(cmd, launcherText(py, o.dictate), { mode: 0o755 });
-  let line = `hotkeys: installed ${pkgs.join(', ')}; start with ${posix(cmd)}${o.dictate ? ' (Ctrl+Alt+D dictates)' : ''}`;
-  if (o.startup) {
-    if (process.platform !== 'win32' || !process.env.APPDATA) return line + '; --startup is Windows only, skipped';
-    const dir = path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
-    fs.writeFileSync(path.join(dir, 'narrate-hotkeys.vbs'), `CreateObject("WScript.Shell").Run """${cmd}""", 0, False\r\n`);
-    line += '; starts hidden at login';
-  }
-  return line;
-}
-
 const VOICE_BASE = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB';
 const VOICES = [['jenny_dioco', 'female'], ['northern_english_male', 'male']];
 const voiceUrls = (name) => [`${VOICE_BASE}/${name}/medium/en_GB-${name}-medium.onnx`, `${VOICE_BASE}/${name}/medium/en_GB-${name}-medium.onnx.json`];
@@ -146,9 +117,8 @@ async function main(argv) {
   try { o = parseArgs(argv); } catch (e) { console.error(e.message); process.exitCode = 1; return; }
   if (o.voices) console.log(await installVoices());
   if (o.addVoice) console.log(await addVoice(o.addVoice));
-  if (o.controls && o.controls !== 'hotkeys') console.log(installCommand(o.project, o.skillRoot));
-  if (o.controls && o.controls !== 'commands') console.log(installHotkeys(o));
+  if (o.controls) console.log(installCommand(o.project, o.skillRoot));
 }
 
 if (require.main === module) main(process.argv.slice(2));
-module.exports = { addVoice, parseArgs, installCommand, launcherText, voiceUrls };
+module.exports = { addVoice, parseArgs, installCommand, voiceUrls };

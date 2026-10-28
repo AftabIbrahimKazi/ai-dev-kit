@@ -1,5 +1,5 @@
 // Kit control panel for VS Code: a sidebar view and status-bar buttons. Every click runs a kit script (`node speak.js --mute`,
-// `node inject.js --set ...`, ...), the same CLIs the hotkeys, slash commands and hooks use, so
+// `node inject.js --set ...`, ...), the same CLIs the slash commands and hooks use, so
 // nothing depends on key capture. Narration plays on a Play button by default (like claude.ai); "auto" speaks every reply.
 const vscode = require('vscode');
 const { spawn } = require('node:child_process');
@@ -68,7 +68,7 @@ function activate(context) {
   const step = async (key, dir) => {
     const v = nudged(key, readConf(), dir);
     await exec('speak', [`--${key}`, String(v)]);
-    if (key !== 'maxSeconds') await exec('speak', ['--say', `${key} ${v}`]); // spoken back, like the hotkeys do
+    if (key !== 'maxSeconds') await exec('speak', ['--say', `${key} ${v}`]); // spoken back so the change is audible
     refresh();
   };
 

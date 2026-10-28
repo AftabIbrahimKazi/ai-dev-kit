@@ -1,7 +1,7 @@
 {
   "name": "narrate-buttons",
   "displayName": "AI Dev Kit Controls",
-  "description": "Sidebar panel and status-bar buttons for the ai-dev-kit: narration (play button like claude.ai, or auto), and persona, for when hotkeys do not work.",
+  "description": "Sidebar panel and status-bar buttons for the ai-dev-kit: narration (play button like claude.ai, or auto), and persona.",
   "version": "0.2.0",
   "publisher": "ai-dev-kit",
   "license": "MIT",

@@ -2,6 +2,9 @@
 
 ## 2026-10-28
 
+### Removed
+- Narration hotkeys and voice dictation: `narrate.listen.py`, the hotkey launcher and the `--controls hotkeys|both`, `--dictate` and `--startup` options. They depended on a global keyboard hook that did not fire reliably and could clash with other shortcuts. Use the `/narration` command or the VS Code controls (`extensions/narrate-buttons`) instead.
+
 ### Added
 - `extensions/narrate-buttons`: a VS Code extension with one footer button that opens a tray of every control, and an AI Dev Kit sidebar that controls narration and persona without hotkeys (`node extensions/narrate-buttons/install.js`).
 - `narrate` modes: `--mode manual|auto`. **Default is now `manual`**: the Stop hook keeps each reply and `--play` (the Play button) reads it, like claude.ai. Set `--mode auto` to speak every reply as before.

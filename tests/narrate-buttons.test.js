@@ -15,7 +15,7 @@ const have = (set) => (p) => set.includes(norm(p));
     assert.strictEqual(norm(findScript('persona', '', ['/w'], '/h', have(['/h/.claude/skills/personality/inject.js']))), '/h/.claude/skills/personality/inject.js');
     assert.strictEqual(findScript('laya', '', ['/w'], '/h', () => false), null);
   });
-  await t('nudged: steps, clamps and rounds like the hotkeys', () => {
+  await t('nudged: steps, clamps and rounds like speak.js', () => {
     assert.strictEqual(nudged('volume', { volume: 95 }, 1), 100);
     assert.strictEqual(nudged('volume', {}, -1), 90);
     assert.strictEqual(nudged('speed', { speed: 1 }, 1), 1.1);

@@ -40,7 +40,7 @@ The core installer copies markdown files only: no packages, no build step. Opt-i
 - **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
 - **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
 
-**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, hotkeys and personas](#voice-narration-hotkeys-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#faq)
+**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, narration and personas](#voice-narration-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#faq)
 
 ## Everything the kit does, at a glance
 
@@ -59,7 +59,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Token use is recorded | The `budget-ledger` mod writes one row per turn; `/token-report` reads it | `budget-ledger` mod |
 | Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `prefilter-rank` (ranked read order) | those mods |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
-| On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code, for when hotkeys do not work | `extensions/narrate-buttons` |
+| On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
 | Replies use a chosen persona | A SessionStart hook adds a short persona text | `personality` add-on |
 
 **You ask for it**
@@ -72,7 +72,6 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Optional MCP tools | say `set up MCP servers` |
 | Claude Code mods | say `set up mods` |
 | Git hooks for every tool | type `/githooks` |
-| Keyboard shortcuts for narration and dictation | start the hotkey launcher ([hotkey table](#keyboard-hotkeys)) |
 
 ## What's in the kit
 
@@ -94,7 +93,7 @@ Full catalog: [skills/README.md](skills/README.md)
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
 | `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods), `misfire-log` (opt-in: logs when a skill/mod/addon should have fired but didn't, for the next kit update) |
-| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool), `project-context` (a private, gitignored folder of project docs with token-lean indexes, set up with `/ctx`), `narrate` (offline text to speech for Claude's replies, plus voice dictation), `personality` (six reply personas by skill level) |
+| `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool), `project-context` (a private, gitignored folder of project docs with token-lean indexes, set up with `/ctx`), `narrate` (offline text to speech for Claude's replies), `personality` (six reply personas by skill level) |
 | `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 
 ### `coding-standards/` — the layered standards system
@@ -226,7 +225,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [system1-prefilter](skills/addons/system1-prefilter.md) | Provider-agnostic System-One-typed-decision prefilter — cuts fetching-stage tokens via MCQ/boolean candidate filtering + deterministic confidence-ladder escalation (`ladder.js`). Local free provider: Laya (`laya-ctl.js` sets up and runs it offline; `prefilter-mcp.js` exposes it as an MCP tool). Opt-in only, never in any default install. |
 | [personality](skills/addons/personality.md) | Six original personas (female and male at novice, mid and pro skill levels) that change how replies are worded; SessionStart hook, `/persona`, user-replaceable persona files; wording only, never facts |
-| [narrate](skills/addons/narrate.md) | Stop hook that reads each reply aloud (play-button or auto mode, British Piper male/female voices, mute, volume, speed, pitch, reading-time limit) plus offline voice-mode dictation into the chat box; no tokens, never touches Claude |
+| [narrate](skills/addons/narrate.md) | Stop hook that reads each reply aloud (play-button or auto mode, British Piper male/female voices, mute, volume, speed, pitch, reading-time limit); no tokens, never touches Claude |
 | [project-context](skills/addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
 
 </details>
@@ -287,7 +286,7 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 
 **Get started:** install the kit, then tell your agent *"set up MCP servers"* — [`mcp-manager`](skills/mcp/mcp-manager.md) asks which tools, which AI clients, and where to keep keys, then writes the configs (merging, never overwriting) and health-checks each one.
 
-## Voice, narration, hotkeys and personas
+## Voice, narration and personas
 
 Two opt-in add-ons, never installed by default. Neither costs tokens while it runs: narration is a local script, and a persona adds a short fixed text to the session.
 
@@ -301,9 +300,7 @@ A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1
 |---|---|
 | 1. Voices and Piper (about 125 MB download, asks first) | `node setup.js --voices` |
 | 2. Add the Stop hook to `~/.claude/settings.json` | shown in [narrate.md](skills/addons/narrate.md) |
-| 3. Pick your controls: slash commands, hotkeys, or both | `node setup.js --controls commands`, `hotkeys` or `both` |
-| Optional: hide the hotkey launcher at Windows login | add `--startup` |
-| Optional: voice dictation (Whisper, offline) | add `--dictate` |
+| 3. Install the `/narration` command | `node setup.js --controls commands` |
 | Optional: use your own Piper voice for a slot | `node setup.js --add-voice male\|female <file.onnx or URL>` |
 
 **All settings** (slash command `/narration <setting>`, or `node speak.js --<setting>`; every change is saved and applies to the next reply):
@@ -321,28 +318,7 @@ A Stop hook sends each reply through [Piper](https://github.com/OHF-Voice/piper1
 | `maxSeconds` | 30 to 1800 | 1110 | longest reading, in seconds of speech, converted to characters at your current speed and capped at 12000 characters (about 12 minutes at speed 1); past it the voice says "the rest is on screen" |
 | `status` | none | none | shows mute state, engine, voice, volume, speed, pitch and the character limit |
 
-### Keyboard hotkeys
-
-Run the hotkey launcher and these work in any window. Each change is spoken back in the new setting ("volume 90"); mute only beeps. They are consumed by the launcher, so they do not also trigger VS Code shortcuts.
-
-| Keys | What it does |
-|---|---|
-| `Ctrl+Alt+D` | start or stop voice dictation (only when started with dictation) |
-| `Ctrl+Alt+M` | mute or unmute (low or high beep) |
-| `Ctrl+Alt+X` | stop speaking now |
-| `Ctrl+Alt+R` | replay the last reply |
-| `Ctrl+Alt+G` | switch between the male and female voice |
-| `Ctrl+Alt+Up` / `Ctrl+Alt+Down` | volume plus or minus 10 |
-| `Ctrl+Alt+Right` / `Ctrl+Alt+Left` | speed plus or minus 0.1 |
-| `Ctrl+Alt+PageUp` / `Ctrl+Alt+PageDown` | pitch plus or minus 1 semitone |
-
-Start the launcher with `~/.claude/narrate-hotkeys.cmd` (Windows) or `narrate-hotkeys.sh`, or `python listen.py --no-dictate` for hotkeys only, `python listen.py` to add dictation (`--key` changes the dictation key, `--model tiny.en|base.en|small.en` the speech model, `--enter` presses Enter after typing). It only works while that program is running. On Linux the `keyboard` library needs root and on macOS the terminal needs Accessibility permission; Android has no global hotkeys, so use `/narration` there.
-
-**On-screen controls instead of hotkeys (VS Code):** `node extensions/narrate-buttons/install.js`, then reload the window. It adds one footer button that opens a popup tray with every control (volume, speed, pitch and reading time have inline -/+ buttons and the tray stays open while you adjust), plus an **AI Dev Kit** sidebar with the same controls. Set `narrateButtons.footer` to `tray+play` for a separate Play button next to the tray. The controls: narration (play, when to speak, mute, voice, volume, speed, pitch, reading time with +/- buttons), persona picker. A waiting reply turns the Play button yellow. Narration plays on the Play button by default (like claude.ai); switch it to speak every reply with *When to speak*. Every click runs the same scripts the hotkeys and slash commands use. Dictation still needs the launcher. `--remove` uninstalls.
-
-### Voice dictation
-
-With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is transcribed offline by Whisper and typed into whatever window has focus, the chat box included. It never presses Enter unless you pass `--enter`. Claude Code also has its own built-in dictation (the microphone icon in the chat box); this is the offline alternative.
+**On-screen controls (VS Code):** `node extensions/narrate-buttons/install.js`, then reload the window. It adds one footer button that opens a popup tray with every control (volume, speed, pitch and reading time have inline -/+ buttons and the tray stays open while you adjust), plus an **AI Dev Kit** sidebar with the same controls. Set `narrateButtons.footer` to `tray+play` for a separate Play button next to the tray. The controls: narration (play, when to speak, mute, voice, volume, speed, pitch, reading time with +/- buttons), persona picker. A waiting reply turns the Play button yellow. Narration plays on the Play button by default (like claude.ai); switch it to speak every reply with *When to speak*. Every click runs the same scripts the slash commands use. `--remove` uninstalls.
 
 ### Voices, files and platforms
 
@@ -351,7 +327,7 @@ With dictation on, press `Ctrl+Alt+D`, speak, and press it again: your speech is
 | Default voices | British: `en_GB-jenny_dioco-medium` (female, Jenny (Dioco), attribution required, commercial use permitted) and `en_GB-northern_english_male-medium` (male, CC-BY-SA 4.0), downloaded at install, never shipped in this repo. Installs that only have the older American voices (`en_US-ljspeech-medium`, `en_US-joe-medium`) keep using them until `setup.js --voices` is run |
 | Your own voice | `--add-voice` registers any Piper `.onnx` file with its `.onnx.json`; a cloned or character voice can plug in through `"engine":"command"` (any program that reads text and writes a wav). Check the licence yourself and never commit a cloned voice or its audio. |
 | Settings file | `~/.claude/narrate.json`: `engine`, `gender`, `volume`, `speed`, `pitch`, `maxSeconds`, `max` (fixed character limit), `voices`, `piper`, `command` |
-| Other files | `~/.claude/voices/` (voices), `narrate.off` (mute switch), `narrate-last.json` (last reply), `narrate-hotkeys.cmd` (launcher) |
+| Other files | `~/.claude/voices/` (voices), `narrate.off` (mute switch), `narrate-last.json` (last reply) |
 | Windows | tested, including headphones; falls back to the built-in Windows voice without Piper |
 | macOS, Linux, Android (Termux) | player choice (`afplay`, `paplay`/`pw-play`/`aplay`, `termux-media-player`) is unit-tested only, not heard on a real device |
 
@@ -367,7 +343,7 @@ Six original personas change how replies are worded for your skill level. They c
 
 The install offers eight choices: the six personas, `none`, or `custom` (your own file or a starter to edit), and copies only the one you pick. Change it any time with `/persona set female|male novice|mid|pro`, `/persona off`, `/persona status` or `/persona list` (applies from the next session). A project can override your choice with `<project>/.claude/personality.json`. To replace a persona, put your own `<gender>-<level>.md` in `~/.claude/personas/`, or choose `custom` and edit `~/.claude/personas/custom.md`. Add the SessionStart hook shown in [personality.md](skills/addons/personality.md) once.
 
-Licences and credits for Piper, the voices and Whisper: [CREDITS.md](CREDITS.md).
+Licences and credits for Piper and the voices: [CREDITS.md](CREDITS.md).
 
 ## Claude Code mods (all nine)
 
@@ -405,7 +381,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
 | `project-context/scan.js` and `figma.js` | Tracks which project docs changed; turns exported Figma PNG or SVG files into a design summary | `/ctx`, `/figma` |
 | `install-kit/verify.js` | Re-checks an install on disk before it is reported done | by the installer |
-| `narrate/speak.js`, `listen.py`, `setup.js` | Narration, hotkeys and dictation, installer ([reference](#voice-narration-hotkeys-and-personas)) | `/narration` |
+| `narrate/speak.js`, `setup.js` | Narration and installer ([reference](#voice-narration-and-personas)) | `/narration` |
 | `personality/inject.js`, `setup.js` | Persona injector and installer | `/persona` |
 | `system1-prefilter` scripts and the MCP servers | Local decision model, image reading, image generation ([MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent)) | by tool |
 
@@ -441,7 +417,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
 | `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
 | `/format` | You want answers as a table, bullets, one-liners or yes/no | `/format bullets`; `/format reset` returns to the default (a table where the data has structure). |
-| `/narration` | You use the `narrate` add-on and want to mute, replay, or change the voice, volume, speed or pitch | `/narration mute`, `/narration replay`, `/narration voice male`, `/narration speed 1.3`. Keyboard shortcuts for the same are in [Keyboard hotkeys](#keyboard-hotkeys). |
+| `/narration` | You use the `narrate` add-on and want to mute, replay, or change the voice, volume, speed or pitch | `/narration mute`, `/narration replay`, `/narration voice male`, `/narration speed 1.3`. |
 | `/persona` | You use the `personality` add-on and want replies worded for your skill level | `/persona set female novice`, `/persona off`, `/persona list`. Applies from the next session. |
 
 ### All commands
@@ -510,7 +486,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
-- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are slash commands, global hotkeys or both, chosen at install, plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Optional voice mode transcribes your speech offline with Whisper and types it into the chat box. Covered by 39 script tests; see the status note in [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
+- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 39 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
 - **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 150 to 190 tokens per session; no accuracy loss on 20 objectively graded questions (Haiku and Sonnet), replies up to 36% shorter.
 - **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
 - **Lower always-on cost, no feature removed.** A normal install now costs about 1,950 tokens per session before any work, down from about 2,500 (estimates at ~4 characters per token). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (up to about 320 tokens). `install-kit` writes a leaner `CLAUDE.md` (no template preamble; the parallel-session section only with `role-session`, about 140-235 tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them (about 50 tokens in a normal install). Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
@@ -590,7 +566,6 @@ coding-standards/
 | Mods | installed by `mod-setup` into Claude Code | per user or per project | remove the plug-in with `/plugin` |
 | Git hooks | `<repo>/.git/hooks/` | one repository | `node pre-commit/install-hook.js uninstall` |
 | Narration hook, voices, settings | `~/.claude/settings.json`, `~/.claude/voices/`, `~/.claude/narrate.json` | this device and user, every project | `/narration mute`, or remove the Stop hook |
-| Hotkey launcher | `~/.claude/narrate-hotkeys.cmd`, optional Startup entry | this device and user | close it; delete the Startup entry |
 | VS Code controls | `~/.vscode/extensions/ai-dev-kit.narrate-buttons-*` | this device and user | `node extensions/narrate-buttons/install.js --remove` |
 | Laya server (started by `prefilter-rank`) | `~/.ai-dev-kit/laya/`, about 2 GB of RAM while loaded, unloads after 10 minutes idle | this device, never per project | `node system1-prefilter/laya-ctl.js stop`, or remove the mod |
 | Persona choice | `~/.claude/personality.json` (project override in `.claude/personality.json`) | user, or one project | `/persona off` |
@@ -612,7 +587,7 @@ coding-standards/
 
 **How do I update an install?** Pull the repository and re-run the installer. It compares each file and asks before overwriting a local change.
 
-**Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Voice, narration, hotkeys and personas](#voice-narration-hotkeys-and-personas).
+**Can Claude read its answers aloud?** Yes, with the opt-in `narrate` add-on: a Stop hook sends each reply through Piper, an offline text-to-speech engine, on your machine. It uses no tokens and no cloud service. See [Voice, narration and personas](#voice-narration-and-personas).
 
 **Can I change how Claude words its answers for my skill level?** Yes, with the opt-in `personality` add-on: six personas (female and male at novice, mid and professional level), or your own. It changes wording only, never facts or code, and adds about 150 to 190 tokens per session. In tests on Haiku and Sonnet it answered as correctly as no persona.
 
