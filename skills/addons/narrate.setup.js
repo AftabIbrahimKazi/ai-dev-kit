@@ -7,7 +7,7 @@
 // add-voice: registers your own Piper voice (needs the model.onnx and its model.onnx.json side by side) for the male or
 //           female slot in ~/.claude/narrate.json. A local file is used in place; a URL is downloaded (with its .json)
 //           into ~/.claude/voices first. Check the voice's licence yourself; never commit it to a shared repo.
-// voices:   installs piper-tts, downloads en_US-ljspeech-medium (female, public domain) and en_US-joe-medium (male, CC0)
+// voices:   installs piper-tts, downloads en_GB-jenny_dioco-medium (female, Jenny (Dioco), attribution required) and en_GB-northern_english_male-medium (male, CC-BY-SA 4.0)
 //           from huggingface.co/rhasspy/piper-voices into ~/.claude/voices (skips files already there), and writes
 //           ~/.claude/narrate.json if it does not exist. Ask the user first: it is a download.
 // commands: copies commands/narration.md into <project>/.claude/commands (never overwrites), {{skill-root}} filled in
@@ -83,9 +83,9 @@ function installHotkeys(o) {
   return line;
 }
 
-const VOICE_BASE = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US';
-const VOICES = [['ljspeech', 'female'], ['joe', 'male']];
-const voiceUrls = (name) => [`${VOICE_BASE}/${name}/medium/en_US-${name}-medium.onnx`, `${VOICE_BASE}/${name}/medium/en_US-${name}-medium.onnx.json`];
+const VOICE_BASE = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB';
+const VOICES = [['jenny_dioco', 'female'], ['northern_english_male', 'male']];
+const voiceUrls = (name) => [`${VOICE_BASE}/${name}/medium/en_GB-${name}-medium.onnx`, `${VOICE_BASE}/${name}/medium/en_GB-${name}-medium.onnx.json`];
 
 async function installVoices() {
   const py = pythonExe();
