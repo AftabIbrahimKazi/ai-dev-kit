@@ -5,7 +5,7 @@ const path = require('node:path');
 const {
   listSkills, doInstall, doUpdate, doUninstall, doArchive, doUnarchive, doMergeHooks, mergeHooks, extractCoreHooks,
   readManifest, applyContextCode, stripTemplatePreamble, detectStackSignals, eligibleCatalogNames, STACK_PRESETS,
-  loadSkillPurposes, topCategory, orderedCategories,
+  loadSkillPurposes, topCategory, orderedCategories, applyActiveStandards, STANDARD_ROW_LABELS, installStandards,
 } = require('../skills/meta/install-kit.cli.js');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
@@ -459,6 +459,61 @@ t('orderedCategories puts known categories in install-kit.md\'s documented order
     orderedCategories(['zzz', 'workflow', 'aaa']),
     ['workflow', 'aaa', 'zzz'],
   );
+});
+
+t('applyActiveStandards resolves the Script-standard placeholder to the chosen file', () => {
+  const body = '| Script standard | `coding-standards/[js-standards OR ts-standards OR js-and-ts-standards].md` |\n';
+  assert.match(applyActiveStandards(body, { scriptStandard: 'js-and-ts' }), /`coding-standards\/js-and-ts-standards\.md`/);
+  assert.match(applyActiveStandards(body, { scriptStandard: 'ts' }), /`coding-standards\/ts-standards\.md`/);
+});
+
+t('applyActiveStandards drops rows for standards not in the active set, leaves Script/Framework rows and other sections untouched', () => {
+  const body =
+    '## Active Standards\n\n| Standard | Active |\n|---|---|\n' +
+    '| CSS standard | `coding-standards/css-standards.md` |\n' +
+    '| HTML standard | `coding-standards/html-standards.md` |\n' +
+    '| Script standard | `coding-standards/[js-standards OR ts-standards OR js-and-ts-standards].md` |\n' +
+    '| SEO standard | `coding-standards/seo-standards.md` |\n' +
+    '| Framework | `coding-standards/frameworks/[framework].md` (remove if not applicable) |\n\n' +
+    '## Project-Specific Context\n\nsomething else entirely\n';
+  const out = applyActiveStandards(body, { active: new Set(['css']) });
+  assert.match(out, /CSS standard/);
+  assert.ok(!/HTML standard/.test(out));
+  assert.ok(!/SEO standard/.test(out));
+  assert.match(out, /Script standard/);
+  assert.match(out, /\| Framework \|/);
+  assert.match(out, /Project-Specific Context/);
+});
+
+t('applyActiveStandards with no active set leaves every Active Standards row in place', () => {
+  const body = '## Active Standards\n\n| CSS standard | x |\n| HTML standard | y |\n\n## Next\n';
+  assert.strictEqual(applyActiveStandards(body, {}), body);
+});
+
+t('STANDARD_ROW_LABELS excludes Script standard and the two Framework rows (resolved/left untouched separately)', () => {
+  const labels = Object.values(STANDARD_ROW_LABELS);
+  assert.ok(!labels.includes('Script standard'));
+  assert.ok(!labels.includes('Framework'));
+  assert.ok(!labels.includes('CSS Framework'));
+  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 9);
+});
+
+t('installStandards against the real CLAUDE.example.md resolves the script standard and prunes inactive rows', () => {
+  const repoRoot = path.join(__dirname, '..');
+  const target = tmp();
+  const result = installStandards(repoRoot, target, 'CLAUDE.md', {
+    activeStandards: { scriptStandard: 'ts', active: new Set(['css', 'html', 'git']) },
+  });
+  assert.ok(result.protocolCreated);
+  const body = fs.readFileSync(path.join(target, 'CLAUDE.md'), 'utf8');
+  assert.match(body, /\| Script standard \| `coding-standards\/ts-standards\.md` \|/);
+  assert.match(body, /\| CSS standard \| `coding-standards\/css-standards\.md` \|/);
+  assert.match(body, /\| HTML standard \|/);
+  assert.match(body, /\| Git standard \|/);
+  assert.ok(!/\| Versioning standard \|/.test(body));
+  assert.ok(!/\| SEO standard \|/.test(body));
+  assert.ok(!/\| QA standard \|/.test(body));
+  assert.match(body, /\| Framework \| `coding-standards\/frameworks\/\[framework\]\.md`/);
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });
