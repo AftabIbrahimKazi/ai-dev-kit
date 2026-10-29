@@ -39,18 +39,20 @@ exports.doUnarchive = doUnarchive;
 //   node install-kit.cli.js merge-hooks --library <path> --root <target> [--json]
 //
 // Interactive mode: run any command with a required flag left out on a real terminal (stdin and
-// stdout both a TTY) and the CLI prompts for exactly the missing pieces (arrow-key select / checkbox
-// multiselect / text, via `prompts` -- the same library create-next-app uses), then proceeds exactly
-// as if those flags had been passed. Anything already given on the command line is never re-asked.
-// This path exists for a human running the script directly (or an agent with no multiple-choice
-// widget of its own, e.g. OpenCode/Codex); Claude Code always passes every flag explicitly and so
-// never triggers it, --json callers should too since prompts would corrupt stdout.
+// stdout both a TTY) and the CLI prompts for exactly the missing pieces -- a plain numbered menu
+// ("1) claude  2) opencode  3) codex -- type a number"), comma-separated numbers for a multi-pick,
+// plain text otherwise -- then proceeds exactly as if those flags had been passed. Anything already
+// given on the command line is never re-asked. Built on node:readline only, deliberately: this file
+// ships as plain .js with no npm install step (the kit's install-everywhere promise), so it cannot
+// depend on a package that would only exist after `npm install`. This path exists for a human running
+// the script directly, or an agent with no multiple-choice widget of its own (OpenCode/Codex); Claude
+// Code always passes every flag explicitly and so never triggers it, --json callers should too.
 //
 // No network. Reads the manifest at <target>/.ai-dev-kit.json to know what the kit itself installed
 // (and, for archive/unarchive, what it moved aside), so no command ever touches a folder it didn't create.
 const fs = require("node:fs");
 const path = require("node:path");
-const prompts = require("prompts");
+const readline = require("node:readline");
 const verifyModule = require("./install-kit.verify");
 const { verify, ROOTS } = verifyModule;
 const MANIFEST_NAME = '.ai-dev-kit.json';
@@ -586,78 +588,123 @@ function randomContextCode() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // skip I/O -- easily confused with 1/0
     return `${letters[Math.floor(Math.random() * letters.length)]}${Math.floor(Math.random() * 10)}`;
 }
-const PROMPT_OPTS = { onCancel() { console.error('\ncancelled'); process.exit(1); } };
+// One shared readline interface for the whole run, opened on first use and closed once
+// fillInteractive is done with it -- never left open, or the process would hang on exit.
+let rl = null;
+function closeRl() { if (rl) {
+    rl.close();
+    rl = null;
+} }
+function ask(question) {
+    if (!rl)
+        rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    return new Promise((resolve) => rl.question(question, resolve));
+}
+async function askText(message, initial) {
+    const ans = (await ask(`${message} [${initial}]: `)).trim();
+    return ans || initial;
+}
+async function askYesNo(message, initialYes) {
+    const ans = (await ask(`${message} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
+    if (!ans)
+        return initialYes;
+    return ans.startsWith('y');
+}
+// A plain numbered menu -- "1) claude  2) opencode" -- typed instead of arrow-keyed, so it behaves
+// the same in every terminal (PowerShell, cmd.exe, any SSH session) with no raw-mode surprises.
+async function askSelect(message, choices, initialIndex) {
+    console.log(message);
+    choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
+    for (;;) {
+        const ans = (await ask(`Type a number [${initialIndex + 1}]: `)).trim();
+        if (!ans)
+            return choices[initialIndex].value;
+        const n = Number(ans);
+        if (Number.isInteger(n) && n >= 1 && n <= choices.length)
+            return choices[n - 1].value;
+        console.log(`Please type a number from 1 to ${choices.length}, or press Enter for ${initialIndex + 1}.`);
+    }
+}
+async function askMultiselect(message, choices) {
+    console.log(message);
+    choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
+    console.log('Type the numbers you want, separated by commas (example: 1,3,4), or "all". Press Enter for none.');
+    for (;;) {
+        const ans = (await ask('Your choice: ')).trim();
+        if (!ans)
+            return [];
+        if (ans.toLowerCase() === 'all')
+            return choices.map((c) => c.value);
+        const nums = ans.split(',').map((s) => Number(s.trim()));
+        if (nums.every((n) => Number.isInteger(n) && n >= 1 && n <= choices.length))
+            return nums.map((n) => choices[n - 1].value);
+        console.log(`Please type numbers from 1 to ${choices.length}, separated by commas, or "all".`);
+    }
+}
 // Fills in only the flags actually missing, on a real terminal -- never overrides a flag the
 // caller already passed, and never fires for a --json or non-TTY (scripted/agent) call. See the
 // "Interactive mode" note at the top of the file.
 async function fillInteractive(cmd, args) {
     if (args.json || !isInteractive())
         return;
-    if (['list', 'install', 'update', 'merge-hooks'].includes(cmd) && !args.library) {
-        const guess = defaultLibraryGuess();
-        const r = await prompts({ type: 'text', name: 'library', message: 'Path to the ai-dev-kit library', initial: guess }, PROMPT_OPTS);
-        args.library = r.library || guess;
-    }
-    if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks'].includes(cmd) && !args.root) {
-        const r = await prompts({ type: 'text', name: 'root', message: 'Target project path', initial: process.cwd() }, PROMPT_OPTS);
-        args.root = r.root || process.cwd();
-    }
-    if (cmd === 'install') {
-        if (!args.tool) {
-            const evidence = detectToolEvidence(args.root);
-            const tools = Object.keys(ROOTS);
-            const choices = tools.map((t) => ({ title: evidence[t] ? `${t} — ${evidence[t]}` : t, value: t }));
-            const detectedIndex = tools.findIndex((t) => evidence[t]);
-            const r = await prompts({ type: 'select', name: 'tool', message: 'Target tool', choices, initial: detectedIndex >= 0 ? detectedIndex : 0 }, PROMPT_OPTS);
-            args.tool = r.tool;
+    try {
+        if (['list', 'install', 'update', 'merge-hooks'].includes(cmd) && !args.library) {
+            args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
         }
-        if (!args.skills.length) {
-            const catalog = listSkills(args.library);
-            const choices = Object.entries(catalog)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([name, entry]) => ({ title: entry.dir ? `${name}  (${entry.dir})` : name, value: name }));
-            const r = await prompts({ type: 'multiselect', name: 'skills', message: 'Skills to install', choices, hint: 'space to toggle, return to confirm', instructions: false }, PROMPT_OPTS);
-            args.skills = r.skills || [];
+        if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks'].includes(cmd) && !args.root) {
+            args.root = await askText('Target project path', process.cwd());
         }
-        if (args.standards === undefined) {
-            const r = await prompts({ type: 'toggle', name: 'standards', message: 'Install the coding-standards system too?', initial: false, active: 'yes', inactive: 'no' }, PROMPT_OPTS);
-            args.standards = !!r.standards;
-        }
-        if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
-            const r = await prompts({
-                type: 'select', name: 'level', message: 'Comment style', initial: 0, choices: [
+        if (cmd === 'install') {
+            if (!args.tool) {
+                const evidence = detectToolEvidence(args.root);
+                const tools = Object.keys(ROOTS);
+                const choices = tools.map((t) => ({ title: evidence[t] ? `${t} — ${evidence[t]}` : t, value: t }));
+                const detectedIndex = tools.findIndex((t) => evidence[t]);
+                args.tool = await askSelect('Target tool:', choices, detectedIndex >= 0 ? detectedIndex : 0);
+            }
+            if (!args.skills.length) {
+                const catalog = listSkills(args.library);
+                const choices = Object.entries(catalog)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([name, entry]) => ({ title: entry.dir ? `${name}  (${entry.dir})` : name, value: name }));
+                args.skills = await askMultiselect('Skills to install:', choices);
+            }
+            if (args.standards === undefined) {
+                args.standards = await askYesNo('Install the coding-standards system too?', false);
+            }
+            if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
+                args.commentStyleLevel = await askSelect('Comment style:', [
                     { title: 'none — no comments except rule-mandated ones (recommended)', value: 'none' },
                     { title: 'terse — one short line, only when the why is non-obvious', value: 'terse' },
                     { title: 'descriptive — up to 3 short plain-language lines for tricky parts', value: 'descriptive' },
-                ],
-            }, PROMPT_OPTS);
-            args.commentStyleLevel = r.level;
-        }
-        if (args.standards && !args.contextCode) {
-            const suggestion = randomContextCode();
-            const r = await prompts({ type: 'text', name: 'code', message: `Context code (2-4 chars, e.g. ${suggestion}; or "none")`, initial: suggestion }, PROMPT_OPTS);
-            args.contextCode = r.code || suggestion;
-        }
-    }
-    if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
-        const manifest = readManifest(args.root);
-        const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
-        const names = Object.keys(pool);
-        if (!names.length) {
-            args.all = true;
-        }
-        else {
-            const scope = await prompts({ type: 'select', name: 'scope', message: `Apply ${cmd} to`, choices: [
-                    { title: 'All tracked skills', value: 'all' },
-                    { title: 'Choose specific skills', value: 'pick' },
-                ] }, PROMPT_OPTS);
-            if (scope.scope === 'all')
-                args.all = true;
-            else {
-                const r = await prompts({ type: 'multiselect', name: 'skills', message: `Which skills to ${cmd}?`, choices: names.map((n) => ({ title: n, value: n })) }, PROMPT_OPTS);
-                args.skills = r.skills || [];
+                ], 0);
+            }
+            if (args.standards && !args.contextCode) {
+                const suggestion = randomContextCode();
+                args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
             }
         }
+        if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
+            const manifest = readManifest(args.root);
+            const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
+            const names = Object.keys(pool);
+            if (!names.length) {
+                args.all = true;
+            }
+            else {
+                const scope = await askSelect(`Apply ${cmd} to:`, [
+                    { title: 'All tracked skills', value: 'all' },
+                    { title: 'Choose specific skills', value: 'pick' },
+                ], 0);
+                if (scope === 'all')
+                    args.all = true;
+                else
+                    args.skills = await askMultiselect(`Which skills to ${cmd}?`, names.map((n) => ({ title: n, value: n })));
+            }
+        }
+    }
+    finally {
+        closeRl();
     }
 }
 function parseArgs(argv) {
