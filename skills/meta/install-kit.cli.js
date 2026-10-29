@@ -23,6 +23,7 @@ exports.doArchive = doArchive;
 exports.doUnarchive = doUnarchive;
 exports.eligibleCatalogNames = eligibleCatalogNames;
 exports.detectStackSignals = detectStackSignals;
+exports.loadSkillPurposes = loadSkillPurposes;
 // Mechanical half of install-kit: install/update/uninstall/archive/unarchive skills by moving files,
 // deterministically. Claude still decides WHAT to install (mode, stack, addon opt-ins, context-code
 // value, comment-style level, which skills a session doesn't need) -- this script only executes that
@@ -685,6 +686,30 @@ function detectStackSignals(root, tool) {
     }
     return out;
 }
+const README_CATALOG_ROW_RE = /^\|\s*\[([\w.-]+)\]\([^)]*\)\s*\|(.+)\|\s*$/;
+const MD_LINK_RE = /\[([^\]]+)\]\([^)]*\)/g;
+// Pulls the one-line "Purpose" column straight out of skills/README.md's per-category tables (the
+// same text install-kit.md's Pick mode quotes in Claude Code's AskUserQuestion options), so the
+// terminal fallback's own menus can show what a skill is for instead of a bare name. Markdown links
+// inside a purpose cell (e.g. a companion doc reference) are flattened to their link text -- a
+// relative .md path means nothing printed in a terminal. Returns {} if the README is missing; the
+// catalog still works, menus just fall back to a bare name.
+function loadSkillPurposes(libraryRoot) {
+    const p = path.join(libraryRoot, 'skills', 'README.md');
+    const out = {};
+    if (!fs.existsSync(p))
+        return out;
+    for (const line of fs.readFileSync(p, 'utf8').split('\n')) {
+        const m = README_CATALOG_ROW_RE.exec(line);
+        if (!m)
+            continue;
+        out[m[1]] = m[2].trim().replace(MD_LINK_RE, '$1');
+    }
+    return out;
+}
+function truncate(s, max) {
+    return s.length <= max ? s : s.slice(0, max - 1).trimEnd() + '…';
+}
 function randomContextCode() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // skip I/O -- easily confused with 1/0
     return `${letters[Math.floor(Math.random() * letters.length)]}${Math.floor(Math.random() * 10)}`;
@@ -774,11 +799,15 @@ async function askMultiselect(message, choices) {
         console.log(`Please type numbers from 1 to ${choices.length}, separated by commas, or "all".`);
     }
 }
-function skillChoices(catalog, exclude = new Set()) {
+function skillChoices(catalog, purposes, exclude = new Set()) {
     return Object.entries(catalog)
         .filter(([name]) => !exclude.has(name))
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([name, entry]) => ({ title: entry.dir ? `${name}  (${entry.dir})` : name, value: name }));
+        .map(([name, entry]) => {
+        const base = entry.dir ? `${name}  (${entry.dir})` : name;
+        const purpose = purposes[name];
+        return { title: purpose ? `${base} — ${truncate(purpose, 80)}` : base, value: name };
+    });
 }
 // Fills in only the flags actually missing, on a real terminal -- never overrides a flag the
 // caller already passed, and never fires for a --json or non-TTY (scripted/agent) call. See the
@@ -803,6 +832,7 @@ async function fillInteractive(cmd, args) {
             }
             if (!args.skills.length) {
                 const catalog = listSkills(args.library);
+                const purposes = loadSkillPurposes(args.library);
                 const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
                 const detected = detectStackSignals(args.root, args.tool).filter((d) => catalog[d.name]);
                 const autoTitle = detected.length
@@ -817,14 +847,16 @@ async function fillInteractive(cmd, args) {
                     args.skills = eligibleCatalogNames(catalog);
                 }
                 else if (mode === 'pick') {
-                    args.skills = await askMultiselect('Skills to install:', skillChoices(catalog));
+                    args.skills = await askMultiselect('Skills to install:', skillChoices(catalog, purposes));
                 }
                 else {
                     let extra = detected.map((d) => d.name);
                     if (detected.length) {
                         console.log('Matched to this project:');
-                        for (const d of detected)
-                            console.log(`  ${d.name} -- ${d.evidence}`);
+                        for (const d of detected) {
+                            const purpose = purposes[d.name];
+                            console.log(purpose ? `  ${d.name} -- ${purpose}  (${d.evidence})` : `  ${d.name} -- ${d.evidence}`);
+                        }
                     }
                     else {
                         const presetEntries = Object.entries(exports.STACK_PRESETS);
@@ -841,7 +873,7 @@ async function fillInteractive(cmd, args) {
                     }
                     args.skills = Array.from(new Set([...standard, ...extra]));
                     if (await askYesNo('Add any other skills on top of this set?', false)) {
-                        const picked = await askMultiselect('Additional skills to install:', skillChoices(catalog, new Set(args.skills)));
+                        const picked = await askMultiselect('Additional skills to install:', skillChoices(catalog, purposes, new Set(args.skills)));
                         args.skills = Array.from(new Set([...args.skills, ...picked]));
                     }
                 }
