@@ -5,7 +5,7 @@ const path = require('node:path');
 const {
   listSkills, doInstall, doUpdate, doUninstall, doArchive, doUnarchive, doMergeHooks, mergeHooks, extractCoreHooks,
   readManifest, applyContextCode, stripTemplatePreamble, detectStackSignals, eligibleCatalogNames, STACK_PRESETS,
-  loadSkillPurposes,
+  loadSkillPurposes, topCategory, orderedCategories,
 } = require('../skills/meta/install-kit.cli.js');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
@@ -441,6 +441,24 @@ t('loadSkillPurposes parses the Skill/Purpose README tables and flattens nested 
 
 t('loadSkillPurposes returns {} when the README does not exist', () => {
   assert.deepStrictEqual(loadSkillPurposes(tmp()), {});
+});
+
+t('topCategory collapses a nested dir (models/claude) to its top-level segment', () => {
+  assert.strictEqual(topCategory('models/claude'), 'models');
+  assert.strictEqual(topCategory('models/opencode'), 'models');
+  assert.strictEqual(topCategory('workflow'), 'workflow');
+  assert.strictEqual(topCategory(''), '(uncategorized)');
+});
+
+t('orderedCategories puts known categories in install-kit.md\'s documented order, unknown ones alphabetically after', () => {
+  assert.deepStrictEqual(
+    orderedCategories(['mcp', 'addons', 'models', 'workflow']),
+    ['models', 'workflow', 'addons', 'mcp'],
+  );
+  assert.deepStrictEqual(
+    orderedCategories(['zzz', 'workflow', 'aaa']),
+    ['workflow', 'aaa', 'zzz'],
+  );
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });

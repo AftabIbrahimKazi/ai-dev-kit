@@ -24,6 +24,8 @@ exports.doUnarchive = doUnarchive;
 exports.eligibleCatalogNames = eligibleCatalogNames;
 exports.detectStackSignals = detectStackSignals;
 exports.loadSkillPurposes = loadSkillPurposes;
+exports.topCategory = topCategory;
+exports.orderedCategories = orderedCategories;
 // Mechanical half of install-kit: install/update/uninstall/archive/unarchive skills by moving files,
 // deterministically. Claude still decides WHAT to install (mode, stack, addon opt-ins, context-code
 // value, comment-style level, which skills a session doesn't need) -- this script only executes that
@@ -710,6 +712,24 @@ function loadSkillPurposes(libraryRoot) {
 function truncate(s, max) {
     return s.length <= max ? s : s.slice(0, max - 1).trimEnd() + '…';
 }
+// Dims a skill's purpose text so it reads as secondary to the name next to it, instead of both
+// blending into one flat line. Respects the NO_COLOR convention (no-color.org); this only ever runs
+// after fillInteractive's isInteractive() gate, so stdout is already confirmed a real TTY.
+const COLOR_ENABLED = !process.env.NO_COLOR;
+function dim(s) {
+    return COLOR_ENABLED ? `\x1b[2m${s}\x1b[22m` : s;
+}
+// Matches install-kit.md's nine Pick-mode categories (models/opencode and models/claude both
+// collapse to "models", the top-level grouping the skill scan already uses).
+const CATEGORY_ORDER = ['models', 'workflow', 'standards', 'memory', 'stack', 'libraries', 'meta', 'addons', 'mcp'];
+function topCategory(dir) {
+    return dir.split('/')[0] || '(uncategorized)';
+}
+function orderedCategories(present) {
+    const known = CATEGORY_ORDER.filter((c) => present.includes(c));
+    const rest = present.filter((c) => !CATEGORY_ORDER.includes(c)).sort();
+    return [...known, ...rest];
+}
 function randomContextCode() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // skip I/O -- easily confused with 1/0
     return `${letters[Math.floor(Math.random() * letters.length)]}${Math.floor(Math.random() * 10)}`;
@@ -806,8 +826,35 @@ function skillChoices(catalog, purposes, exclude = new Set()) {
         .map(([name, entry]) => {
         const base = entry.dir ? `${name}  (${entry.dir})` : name;
         const purpose = purposes[name];
-        return { title: purpose ? `${base} — ${truncate(purpose, 80)}` : base, value: name };
+        return { title: purpose ? `${base} ${dim('— ' + truncate(purpose, 80))}` : base, value: name };
     });
+}
+// Splits "Pick individually" into a category choice first, then one multiselect per chosen
+// category, instead of one flat list of every skill in the library -- the long-list-of-numbers
+// problem gets worse, not better, the more skills the catalog grows.
+async function pickSkillsByCategory(catalog, purposes, exclude = new Set()) {
+    const groups = {};
+    for (const [name, entry] of Object.entries(catalog)) {
+        if (exclude.has(name))
+            continue;
+        const cat = topCategory(entry.dir);
+        (groups[cat] = groups[cat] || []).push(name);
+    }
+    const categories = orderedCategories(Object.keys(groups));
+    if (!categories.length)
+        return [];
+    const catChoices = categories.map((c) => {
+        const n = groups[c].length;
+        return { title: `${c}  ${dim(`(${n} skill${n === 1 ? '' : 's'})`)}`, value: c };
+    });
+    const chosenCats = await askMultiselect('Which categories do you want to pick skills from?', catChoices);
+    const picked = [];
+    for (const cat of chosenCats) {
+        const subCatalog = Object.fromEntries(groups[cat].map((n) => [n, catalog[n]]));
+        const sel = await askMultiselect(`${cat} skills:`, skillChoices(subCatalog, purposes));
+        picked.push(...sel);
+    }
+    return picked;
 }
 // Fills in only the flags actually missing, on a real terminal -- never overrides a flag the
 // caller already passed, and never fires for a --json or non-TTY (scripted/agent) call. See the
@@ -847,7 +894,7 @@ async function fillInteractive(cmd, args) {
                     args.skills = eligibleCatalogNames(catalog);
                 }
                 else if (mode === 'pick') {
-                    args.skills = await askMultiselect('Skills to install:', skillChoices(catalog, purposes));
+                    args.skills = await pickSkillsByCategory(catalog, purposes);
                 }
                 else {
                     let extra = detected.map((d) => d.name);
@@ -855,7 +902,7 @@ async function fillInteractive(cmd, args) {
                         console.log('Matched to this project:');
                         for (const d of detected) {
                             const purpose = purposes[d.name];
-                            console.log(purpose ? `  ${d.name} -- ${purpose}  (${d.evidence})` : `  ${d.name} -- ${d.evidence}`);
+                            console.log(purpose ? `  ${d.name} ${dim('-- ' + purpose + '  (' + d.evidence + ')')}` : `  ${d.name} -- ${d.evidence}`);
                         }
                     }
                     else {
@@ -873,7 +920,7 @@ async function fillInteractive(cmd, args) {
                     }
                     args.skills = Array.from(new Set([...standard, ...extra]));
                     if (await askYesNo('Add any other skills on top of this set?', false)) {
-                        const picked = await askMultiselect('Additional skills to install:', skillChoices(catalog, purposes, new Set(args.skills)));
+                        const picked = await pickSkillsByCategory(catalog, purposes, new Set(args.skills));
                         args.skills = Array.from(new Set([...args.skills, ...picked]));
                     }
                 }
