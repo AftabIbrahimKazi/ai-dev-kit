@@ -8,6 +8,7 @@
 //   node install-kit.cli.js list      --library <path> [--json]
 //   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex
 //                                      --skills a,b,c[:companion+companion] [--standards]
+//                                      [--script-standard js|ts|js-and-ts] [--active-standards a,b|all|none]
 //                                      [--comment-style-level none|terse|descriptive] [--context-code X7|none]
 //                                      [--force] [--json]
 //   node install-kit.cli.js update    --library <path> --root <target> [--skills a,b | --all]
@@ -350,7 +351,59 @@ export function removeParallelSessionSection(body: string, roleSessionInstalled:
   return body.replace(/\n?## Parallel-Session Coordination[\s\S]*?(?=\n## |\s*$)/, '');
 }
 
-interface StandardsOpts { contextCode?: string; force?: boolean; installedNames?: Set<string> }
+// The Active Standards table's row label -> the key used to select/deselect it. "Script standard"
+// (resolved separately, below -- it names a file, not a yes/no) and "Framework"/"CSS Framework"
+// (left untouched -- no reliable auto-detected value to fill in from the terminal flow) are
+// deliberately absent, so pruning never touches those three rows.
+export const STANDARD_ROW_LABELS: Record<string, string> = {
+  css: 'CSS standard',
+  html: 'HTML standard',
+  git: 'Git standard',
+  versioning: 'Versioning standard',
+  seo: 'SEO standard',
+  performance: 'Performance standard',
+  accessibility: 'Accessibility standard',
+  qa: 'QA standard',
+  ai: 'AI standard',
+};
+
+const ACTIVE_STANDARDS_SECTION_RE = /## Active Standards[\s\S]*?(?=\n## |\s*$)/;
+const SCRIPT_STANDARD_ROW_RE = /(\|\s*Script standard\s*\|\s*`coding-standards\/)\[js-standards OR ts-standards OR js-and-ts-standards\](\.md`\s*\|)/;
+
+export interface ActiveStandardsOpts {
+  scriptStandard?: 'js' | 'ts' | 'js-and-ts';
+  // Keys of STANDARD_ROW_LABELS to KEEP. Omit the whole opts object (not this field) to leave the
+  // Active Standards table untouched; an empty Set here means "drop every one of the nine rows".
+  active?: Set<string>;
+}
+
+// Resolves the Script-standard placeholder to the one file that actually applies (RULE from
+// index.md: "a project uses exactly one script standard"), and -- per coding-standards/README.md's
+// own setup instructions ("Update the Active Standards table... Remove rows for standards that do
+// not apply") -- drops the rows for standards the project doesn't use, instead of leaving every
+// one of the nine present for the user to prune by hand later.
+export function applyActiveStandards(body: string, opts: ActiveStandardsOpts): string {
+  let out = body;
+  if (opts.scriptStandard) {
+    out = out.replace(SCRIPT_STANDARD_ROW_RE, `$1${opts.scriptStandard}-standards$2`);
+  }
+  if (opts.active) {
+    const m = ACTIVE_STANDARDS_SECTION_RE.exec(out);
+    if (m) {
+      const kept = m[0].split('\n').filter((line) => {
+        const row = /^\|\s*([^|]+?)\s*\|/.exec(line);
+        if (!row) return true;
+        const label = row[1].trim();
+        const key = Object.keys(STANDARD_ROW_LABELS).find((k) => STANDARD_ROW_LABELS[k] === label);
+        return !key || opts.active!.has(key);
+      });
+      out = out.slice(0, m.index) + kept.join('\n') + out.slice(m.index + m[0].length);
+    }
+  }
+  return out;
+}
+
+interface StandardsOpts { contextCode?: string; force?: boolean; installedNames?: Set<string>; activeStandards?: ActiveStandardsOpts }
 export interface StandardsResult { copied: string[]; protocolCreated: boolean; refused: boolean }
 
 export function installStandards(libraryRoot: string, root: string, protocolFile: string, opts: StandardsOpts): StandardsResult {
@@ -381,6 +434,7 @@ export function installStandards(libraryRoot: string, root: string, protocolFile
       body = pruneSkillTriggers(body, opts.installedNames);
       body = removeParallelSessionSection(body, opts.installedNames.has('role-session'));
     }
+    if (opts.activeStandards) body = applyActiveStandards(body, opts.activeStandards);
     fs.writeFileSync(protocolAbs, body);
     result.protocolCreated = true;
   } else if (opts.contextCode) {
@@ -398,6 +452,8 @@ export interface CliArgs {
   all?: boolean;
   standards?: boolean;
   removeStandards?: boolean;
+  scriptStandard?: 'js' | 'ts' | 'js-and-ts';
+  activeStandardsKeys?: string[];
   commentStyleLevel?: string;
   contextCode?: string;
   applyMigrations?: 'all' | string[];
@@ -430,10 +486,14 @@ export function doInstall(args: CliArgs): DoInstallResult {
 
   let standardsResult: StandardsResult | null = null;
   if (args.standards) {
+    const activeStandards = (args.scriptStandard || args.activeStandardsKeys)
+      ? { scriptStandard: args.scriptStandard, active: args.activeStandardsKeys ? new Set(args.activeStandardsKeys) : undefined }
+      : undefined;
     standardsResult = installStandards(args.library!, args.root!, tool.protocol, {
       contextCode: args.contextCode,
       force: args.force,
       installedNames: new Set(Object.keys(manifest.skills)),
+      activeStandards,
     });
     manifest.standards = true;
   }
@@ -739,6 +799,11 @@ const COLOR_ENABLED = !process.env.NO_COLOR;
 function dim(s: string): string {
   return COLOR_ENABLED ? `\x1b[2m${s}\x1b[22m` : s;
 }
+// A second, distinct palette entry for "what's already selected" running tallies -- cyan, so it
+// reads as a different kind of information from both the plain skill names and the dimmed purposes.
+function highlight(s: string): string {
+  return COLOR_ENABLED ? `\x1b[36m${s}\x1b[39m` : s;
+}
 
 // Matches install-kit.md's nine Pick-mode categories (models/opencode and models/claude both
 // collapse to "models", the top-level grouping the skill scan already uses).
@@ -822,14 +887,16 @@ async function askSelect(message: string, choices: Choice[], initialIndex: numbe
   }
 }
 
-async function askMultiselect(message: string, choices: Choice[]): Promise<string[]> {
+async function askMultiselect(message: string, choices: Choice[], opts: { defaultAll?: boolean } = {}): Promise<string[]> {
   console.log(message);
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
-  console.log('Type the numbers you want, separated by commas (example: 1,3,4), or "all". Press Enter for none.');
+  const defaultWord = opts.defaultAll ? 'all' : 'none';
+  console.log(`Type the numbers you want, separated by commas (example: 1,3,4), or "all"${opts.defaultAll ? ' or "none"' : ''}. Press Enter for ${defaultWord}.`);
   for (;;) {
-    const ans = (await ask('Your choice: ')).trim();
-    if (!ans) return [];
-    if (ans.toLowerCase() === 'all') return choices.map((c) => c.value);
+    const ans = (await ask('Your choice: ')).trim().toLowerCase();
+    if (!ans) return opts.defaultAll ? choices.map((c) => c.value) : [];
+    if (ans === 'all') return choices.map((c) => c.value);
+    if (ans === 'none') return [];
     const nums = ans.split(',').map((s) => Number(s.trim()));
     if (nums.every((n) => Number.isInteger(n) && n >= 1 && n <= choices.length)) return nums.map((n) => choices[n - 1].value);
     console.log(`Please type numbers from 1 to ${choices.length}, separated by commas, or "all".`);
@@ -847,9 +914,13 @@ function skillChoices(catalog: Catalog, purposes: Record<string, string>, exclud
     });
 }
 
-// Splits "Pick individually" into a category choice first, then one multiselect per chosen
-// category, instead of one flat list of every skill in the library -- the long-list-of-numbers
-// problem gets worse, not better, the more skills the catalog grows.
+// Splits "Pick individually" into one category at a time instead of either a flat list of every
+// skill in the library, or a single upfront multi-pick of categories that then runs to completion
+// with no way back -- this loops: pick one category, pick skills from it, see the running tally
+// (in its own color, distinct from both plain names and dimmed purposes), then choose whether to
+// keep going. Finishing early states plainly which categories were never reviewed (skipped, not
+// silently installed), so "did picking stop because I'm done, or because something broke" never
+// has to be guessed at.
 async function pickSkillsByCategory(catalog: Catalog, purposes: Record<string, string>, exclude: Set<string> = new Set()): Promise<string[]> {
   const groups: Record<string, string[]> = {};
   for (const [name, entry] of Object.entries(catalog)) {
@@ -857,19 +928,34 @@ async function pickSkillsByCategory(catalog: Catalog, purposes: Record<string, s
     const cat = topCategory(entry.dir);
     (groups[cat] = groups[cat] || []).push(name);
   }
-  const categories = orderedCategories(Object.keys(groups));
-  if (!categories.length) return [];
-
-  const catChoices: Choice[] = categories.map((c) => {
-    const n = groups[c].length;
-    return { title: `${c}  ${dim(`(${n} skill${n === 1 ? '' : 's'})`)}`, value: c };
-  });
-  const chosenCats = await askMultiselect('Which categories do you want to pick skills from?', catChoices);
+  const allCategories = orderedCategories(Object.keys(groups));
+  if (!allCategories.length) return [];
 
   const picked: string[] = [];
-  for (const cat of chosenCats) {
-    const subCatalog: Catalog = Object.fromEntries(groups[cat].map((n) => [n, catalog[n]]));
-    const sel = await askMultiselect(`${cat} skills:`, skillChoices(subCatalog, purposes));
+  const remaining = new Set(allCategories);
+  const DONE = '__done__';
+
+  for (;;) {
+    if (picked.length) {
+      console.log(highlight(`Selected so far (${picked.length}): ${picked.join(', ')}`));
+    }
+    if (!remaining.size) break;
+
+    const info = `${remaining.size} ${remaining.size === 1 ? 'category' : 'categories'} not yet reviewed`;
+    const catChoices: Choice[] = allCategories
+      .filter((c) => remaining.has(c))
+      .map((c) => ({ title: `${c}  ${dim(`(${groups[c].length} skills)`)}`, value: c }));
+    catChoices.push({ title: picked.length ? 'Done -- finish picking' : 'Skip -- pick nothing', value: DONE });
+
+    const choice = await askSelect(`Pick a category ${dim(`(${info})`)}:`, catChoices, catChoices.length - 1);
+    if (choice === DONE) {
+      if (remaining.size) console.log(dim(`Not reviewed, so not installed: ${[...remaining].join(', ')}`));
+      break;
+    }
+
+    remaining.delete(choice);
+    const subCatalog: Catalog = Object.fromEntries(groups[choice].map((n) => [n, catalog[n]]));
+    const sel = await askMultiselect(`${choice} skills:`, skillChoices(subCatalog, purposes));
     picked.push(...sel);
   }
   return picked;
@@ -945,6 +1031,25 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       if (args.standards === undefined) {
         args.standards = await askYesNo('Install the coding-standards system too?', false);
       }
+      if (args.standards) {
+        if (!args.scriptStandard) {
+          const pkg = readJsonSafe(path.join(args.root!, 'package.json'));
+          const looksTs = fs.existsSync(path.join(args.root!, 'tsconfig.json')) || hasDependency(pkg, 'typescript');
+          args.scriptStandard = await askSelect('Script standard for this project (index.md: exactly one applies):', [
+            { title: 'TypeScript only', value: 'ts' },
+            { title: 'JavaScript only', value: 'js' },
+            { title: 'JS and TS together', value: 'js-and-ts' },
+          ], looksTs ? 0 : 1) as 'ts' | 'js' | 'js-and-ts';
+        }
+        if (!args.activeStandardsKeys) {
+          const choices: Choice[] = Object.entries(STANDARD_ROW_LABELS).map(([key, label]) => ({ title: label, value: key }));
+          args.activeStandardsKeys = await askMultiselect(
+            "Which of these apply to this project? Most projects keep all of them -- deselect only what genuinely doesn't apply (its row is then removed from the Active Standards table, not just left unchecked):",
+            choices,
+            { defaultAll: true },
+          );
+        }
+      }
       if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
         args.commentStyleLevel = await askSelect('Comment style:', [
           { title: 'none — no comments except rule-mandated ones (recommended)', value: 'none' },
@@ -989,6 +1094,8 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--all') a.all = true;
     else if (k === '--standards') a.standards = true;
     else if (k === '--remove-standards') a.removeStandards = true;
+    else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
+    else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];
     else if (k === '--context-code') a.contextCode = argv[++i];
     else if (k === '--apply-migrations') { const v = argv[++i]; a.applyMigrations = v === 'all' ? 'all' : v.split(',').filter(Boolean); }
