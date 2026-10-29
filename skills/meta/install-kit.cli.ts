@@ -604,24 +604,34 @@ function randomContextCode(): string {
 }
 
 interface Choice { title: string; value: string }
-interface RootCandidate { path: string; label: string }
 
-// Defaulting --root to process.cwd() is wrong exactly when the library itself was cloned inside
-// the target project (a very common pattern: open a terminal in your project, `git clone` the kit
-// right there) -- cwd is then the kit's own clone folder, one level below the project that should
-// actually be installed into. Detect that case and offer the parent folder as the default instead
-// of silently guessing wrong.
-function guessRootCandidates(): RootCandidate[] {
+// A folder nobody actually means when they leave --root out: the filesystem root or the user's
+// own home directory. Installing `.claude/skills/` straight into either would be a real mistake,
+// so this is the one case the assume-first guess below refuses to make silently.
+function isUnsafeAssumeTarget(dir: string): boolean {
+  const resolved = path.resolve(dir);
+  if (resolved === path.parse(resolved).root) return true;
+  try { if (resolved === path.resolve(require('node:os').homedir())) return true; } catch { /* no homedir -- not unsafe on that account */ }
+  return false;
+}
+
+// The common pattern is cloning the kit directly inside the project you want it in (open a
+// terminal in your project, `git clone` the kit right there) -- cwd is then the kit's own clone
+// folder, one level below the real target. Assume that's what happened and use the parent folder
+// with no question asked (printing what was assumed, so it's never silent); only fall back to
+// asking when there's no such folder to assume (running from somewhere unrelated to the clone) or
+// assuming would land on the filesystem root or the home directory.
+async function resolveRoot(): Promise<string> {
   const cwd = path.resolve(process.cwd());
   const libraryGuess = path.resolve(defaultLibraryGuess());
   if (cwd === libraryGuess) {
     const parent = path.dirname(cwd);
-    return [
-      { path: parent, label: `the parent folder (${parent}) -- pick this if you cloned the kit inside your project` },
-      { path: cwd, label: `this folder (${cwd}) -- only if you really want to install into the kit's own clone` },
-    ];
+    if (!isUnsafeAssumeTarget(parent)) {
+      console.log(`Target project: ${parent}  (this kit is cloned inside that folder, so that's assumed to be your project -- pass --root to use a different one)`);
+      return parent;
+    }
   }
-  return [{ path: cwd, label: `the current folder (${cwd})` }];
+  return askText('Target project path', cwd);
 }
 
 // One shared readline interface for the whole run, opened on first use and closed once
@@ -682,14 +692,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
     }
     if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks'].includes(cmd) && !args.root) {
-      const candidates = guessRootCandidates();
-      if (candidates.length > 1) {
-        const choices: Choice[] = [...candidates.map((c) => ({ title: c.label, value: c.path })), { title: 'Type a different folder path', value: '__other__' }];
-        const picked = await askSelect('Which folder is your project? (this is where the kit gets installed)', choices, 0);
-        args.root = picked === '__other__' ? await askText('Target project path', process.cwd()) : picked;
-      } else {
-        args.root = await askText('Target project path', candidates[0].path);
-      }
+      args.root = await resolveRoot();
     }
 
     if (cmd === 'install') {
