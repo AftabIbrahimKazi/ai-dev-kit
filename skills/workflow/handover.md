@@ -76,7 +76,11 @@ Invoke the `memory-gardener` skill to do this if the file is far over; it owns t
 
 ## Skill scope for next session
 
-Only touches `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `install-kit`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), move any of these it doesn't need to `<tool-dir>/skills-archive/<name>/` (`.claude/` or `.opencode/`, matching the skill root) — move, not delete, to preserve local `learnings.md`. Record it:
+Only touches `skill-scope`'s per-session-archivable set (`perf-audit`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), archive any of these it doesn't need by running:
+```
+node <library>/skills/meta/install-kit.cli.js archive --root <target> --skills perf-audit,role-session
+```
+(`<library>` is the `ai-dev-kit` clone — same one install-kit uses.) This moves each named skill from the skill root into `<tool-dir>/skills-archive/<name>/` (`.claude/` or `.opencode/`, matching the skill root) — move, not delete, so local `learnings.md` survives — and updates `.ai-dev-kit.json` so a later `unarchive` or `update` knows where things stand. Record it:
 
 ```markdown
 ## Archived skills (this session)
@@ -84,7 +88,7 @@ Archived to `<tool-dir>/skills-archive/` — restore if scope shifts:
 - perf-audit — <tool-dir>/skills-archive/perf-audit/
 ```
 
-An explicit user override (e.g. "keep `perf-audit` pinned anyway") is honored and noted as explicit, never inferred. The next session restores on the spot if scope shifts; a skill bouncing archive→restore repeatedly should move to permanent-pinned instead, via install-kit.
+An explicit user override (e.g. "keep `perf-audit` pinned anyway") is honored and noted as explicit, never inferred. The next session restores on the spot if scope shifts — run `node <library>/skills/meta/install-kit.cli.js unarchive --root <target> --skills perf-audit` — a skill bouncing archive→restore repeatedly should move to permanent-pinned instead, via install-kit.
 
 ## Agent handovers
 

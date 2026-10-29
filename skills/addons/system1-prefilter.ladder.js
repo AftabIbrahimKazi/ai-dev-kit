@@ -1,21 +1,25 @@
+"use strict";
 // Deterministic escalation logic for system1-prefilter. No dependencies.
 // Never re-derive these thresholds in an LLM call — run this script against
 // the raw API response instead; it costs zero LLM tokens.
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveMCQ = resolveMCQ;
+exports.resolveBoolean = resolveBoolean;
+exports.fromLaya = fromLaya;
 /**
  * MCQ case: single-choice question with a ranked probability distribution.
  * Returns the ordered list of candidate ids to actually read.
  */
 function resolveMCQ(answer) {
-  const { choice, probabilities } = answer;
-  const ranked = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
-  const [topId, topP] = ranked[0];
-
-  if (topP >= 0.9) return [topId];
-  if (topP >= 0.8) return ranked.slice(0, 2).map(([id]) => id);
-  return ranked.slice(0, 3).map(([id]) => id);
+    const { probabilities } = answer;
+    const ranked = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
+    const [topId, topP] = ranked[0];
+    if (topP >= 0.9)
+        return [topId];
+    if (topP >= 0.8)
+        return ranked.slice(0, 2).map(([id]) => id);
+    return ranked.slice(0, 3).map(([id]) => id);
 }
-
 /**
  * Boolean case: one independent yes/no question per candidate, batched.
  * `answers` is a map of candidate id -> { choice: "yes"|"no", confidence }.
@@ -24,17 +28,16 @@ function resolveMCQ(answer) {
  * instead of being trusted outright.
  */
 function resolveBoolean(answers, confidenceFloor = 0.7) {
-  const toRead = [];
-  const toReVerify = [];
-
-  for (const [id, { choice, confidence }] of Object.entries(answers)) {
-    if (choice === "yes") toRead.push(id);
-    if (confidence < confidenceFloor) toReVerify.push(id);
-  }
-
-  return { toRead, toReVerify };
+    const toRead = [];
+    const toReVerify = [];
+    for (const [id, { choice, confidence }] of Object.entries(answers)) {
+        if (choice === 'yes')
+            toRead.push(id);
+        if (confidence < confidenceFloor)
+            toReVerify.push(id);
+    }
+    return { toRead, toReVerify };
 }
-
 /**
  * Laya adapter (local provider). Laya's response is `answers[id]` with
  * type "choice" (+ probabilities) or "noul" (yes-probability, 0..1).
@@ -42,13 +45,13 @@ function resolveBoolean(answers, confidenceFloor = 0.7) {
  * A noul answer's confidence is max(p, 1 - p), same as Laya reports.
  */
 function fromLaya(response) {
-  const mcq = {};
-  const boolean = {};
-  for (const [id, a] of Object.entries(response.answers || {})) {
-    if (a.type === "choice") mcq[id] = { choice: a.choice, probabilities: a.probabilities };
-    else if (a.type === "noul") boolean[id] = { choice: a.noul >= 0.5 ? "yes" : "no", confidence: Math.max(a.noul, 1 - a.noul) };
-  }
-  return { mcq, boolean };
+    const mcq = {};
+    const boolean = {};
+    for (const [id, a] of Object.entries(response.answers || {})) {
+        if (a.type === 'choice')
+            mcq[id] = { choice: a.choice, probabilities: a.probabilities };
+        else if (a.type === 'noul')
+            boolean[id] = { choice: a.noul >= 0.5 ? 'yes' : 'no', confidence: Math.max(a.noul, 1 - a.noul) };
+    }
+    return { mcq, boolean };
 }
-
-module.exports = { resolveMCQ, resolveBoolean, fromLaya };
