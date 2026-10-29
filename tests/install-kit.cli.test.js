@@ -5,6 +5,7 @@ const path = require('node:path');
 const {
   listSkills, doInstall, doUpdate, doUninstall, doArchive, doUnarchive, doMergeHooks, mergeHooks, extractCoreHooks,
   readManifest, applyContextCode, stripTemplatePreamble, detectStackSignals, eligibleCatalogNames, STACK_PRESETS,
+  loadSkillPurposes,
 } = require('../skills/meta/install-kit.cli.js');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
@@ -421,6 +422,25 @@ t('eligibleCatalogNames drops addons/MCP and the opt-in meta skills, keeps every
     eligibleCatalogNames(catalog).sort(),
     ['coding-standards', 'handover', 'skill-scope', 'threejs-scene'],
   );
+});
+
+t('loadSkillPurposes parses the Skill/Purpose README tables and flattens nested markdown links', () => {
+  const lib = tmp();
+  write(
+    lib,
+    'skills/README.md',
+    '# Skills Library\n\n## workflow/\n| Skill | Purpose |\n|---|---|\n' +
+      '| [handover](workflow/handover.md) | Session continuity via handover.md |\n' +
+      '| [role-session](workflow/role-session.md) | Parallel-session lanes (+ [templates](workflow/role-session.templates.md)) |\n',
+  );
+  const purposes = loadSkillPurposes(lib);
+  assert.strictEqual(purposes.handover, 'Session continuity via handover.md');
+  assert.strictEqual(purposes['role-session'], 'Parallel-session lanes (+ templates)');
+  assert.strictEqual(purposes['not-a-skill'], undefined);
+});
+
+t('loadSkillPurposes returns {} when the README does not exist', () => {
+  assert.deepStrictEqual(loadSkillPurposes(tmp()), {});
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });
