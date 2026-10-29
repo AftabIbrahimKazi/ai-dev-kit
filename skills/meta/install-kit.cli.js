@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.STACK_PRESETS = void 0;
 exports.listSkills = listSkills;
 exports.readManifest = readManifest;
 exports.writeManifest = writeManifest;
@@ -20,6 +21,8 @@ exports.applyRenameMigrations = applyRenameMigrations;
 exports.doUninstall = doUninstall;
 exports.doArchive = doArchive;
 exports.doUnarchive = doUnarchive;
+exports.eligibleCatalogNames = eligibleCatalogNames;
+exports.detectStackSignals = detectStackSignals;
 // Mechanical half of install-kit: install/update/uninstall/archive/unarchive skills by moving files,
 // deterministically. Claude still decides WHAT to install (mode, stack, addon opt-ins, context-code
 // value, comment-style level, which skills a session doesn't need) -- this script only executes that
@@ -58,6 +61,36 @@ const { verify, ROOTS } = verifyModule;
 const MANIFEST_NAME = '.ai-dev-kit.json';
 const EXCLUDE_DIRS = new Set(['commands']);
 const EXCLUDE_NAMES = new Set(['README.md']);
+// Mirrors skill-scope.md's classification -- keep both in sync by hand; nothing here is derived
+// from that file automatically. Used only by the terminal interactive fallback (fillInteractive)
+// to build an Auto-detect default without dumping the full catalog as one typed multiselect.
+const UNIVERSAL_SKILLS = [
+    'skill-scope', 'handover', 'coding-standards', 'comment-style', 'session-budget',
+    'agent-usage', 'mode-kernel', 'pre-merge-gate', 'pre-commit', 'debug-protocol',
+    'intent-capture', 'plan-first', 'interpretation-checkpoint',
+];
+const ARCHIVABLE_SKILLS = [
+    'perf-audit', 'code-audit', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
+    'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer',
+];
+// Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --
+// excluded from both the Auto-detect default and the Everything preset; still reachable through
+// "Pick individually".
+const OPT_IN_DIR_PREFIXES = ['addons', 'mcp'];
+const OPT_IN_NAMES = new Set(['mod-setup', 'misfire-log']);
+exports.STACK_PRESETS = {
+    astro: { label: 'Astro', skills: ['astro-page'] },
+    nextjs: {
+        label: 'Next.js',
+        skills: [],
+        gap: 'no stack skill or coding-standards framework override exists for Next.js yet (App Router / Server-Component conventions aren\'t encoded anywhere in the kit) -- only the standard skill set applies',
+    },
+    laravel: {
+        label: 'Laravel',
+        skills: [],
+        gap: 'the kit has no PHP/Blade coding-standards layer yet (html-standards.md does not cover Blade syntax) -- only the standard skill set applies',
+    },
+};
 function isMeta(relDir, name) {
     return relDir === 'meta' && name.startsWith('install-kit');
 }
@@ -584,6 +617,74 @@ function detectToolEvidence(root) {
         out.codex = '.agents/ or a bare AGENTS.md found';
     return out;
 }
+function isOptInOnly(entry, name) {
+    if (OPT_IN_NAMES.has(name))
+        return true;
+    return OPT_IN_DIR_PREFIXES.some((p) => entry.dir === p || entry.dir.startsWith(p + '/'));
+}
+// Everything, minus the categories skill-scope.md says never belong to Everything/Pick/Auto-detect
+// by default (addons, MCP, mod-setup, misfire-log) -- those stay reachable only via Pick individually.
+function eligibleCatalogNames(catalog) {
+    return Object.keys(catalog).filter((name) => !isOptInOnly(catalog[name], name));
+}
+function readJsonSafe(p) {
+    try {
+        return JSON.parse(fs.readFileSync(p, 'utf8'));
+    }
+    catch {
+        return null;
+    }
+}
+function hasDependency(pkg, name) {
+    if (!pkg)
+        return false;
+    return !!(pkg.dependencies?.[name] || pkg.devDependencies?.[name]);
+}
+function hasDependencyPrefix(pkg, prefix) {
+    if (!pkg)
+        return false;
+    const names = [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.devDependencies || {})];
+    return names.some((n) => n.startsWith(prefix));
+}
+// Scans the target for skill-scope.md's conditional-pinned signals -- only the objective, file-based
+// ones (a dependency, a config file, an existing folder). The model-lineup signals need a judgment
+// call ("which model is this project driven by") and are deliberately left out here, same spirit as
+// install-kit.md: cite the signal found, never pin on a guess.
+function detectStackSignals(root, tool) {
+    const out = [];
+    const pkgPath = path.join(root, 'package.json');
+    const pkg = fs.existsSync(pkgPath) ? readJsonSafe(pkgPath) : null;
+    if (hasDependency(pkg, 'three'))
+        out.push({ name: 'threejs-scene', evidence: '"three" in package.json dependencies' });
+    const astroConfig = ['astro.config.mjs', 'astro.config.js', 'astro.config.ts', 'astro.config.cjs']
+        .find((f) => fs.existsSync(path.join(root, f)));
+    if (astroConfig || hasDependency(pkg, 'astro')) {
+        out.push({ name: 'astro-page', evidence: astroConfig ? `${astroConfig} present` : '"astro" in package.json dependencies' });
+    }
+    if (hasDependencyPrefix(pkg, 'strata'))
+        out.push({ name: 'strata-css', evidence: 'a "strata*" package in package.json' });
+    if (hasDependencyPrefix(pkg, '@triforge/'))
+        out.push({ name: 'triforge', evidence: 'a "@triforge/*" package in package.json' });
+    const hasShopifyToml = fs.existsSync(path.join(root, 'shopify.theme.toml'));
+    const hasShopifyCli = fs.existsSync(path.join(root, '.shopifycli'));
+    const hasShopifyDirs = fs.existsSync(path.join(root, 'sections')) && fs.existsSync(path.join(root, 'snippets'));
+    if (hasShopifyToml || hasShopifyCli || hasShopifyDirs) {
+        out.push({
+            name: 'shopify-toolkit-install',
+            evidence: hasShopifyToml ? 'shopify.theme.toml present' : hasShopifyCli ? '.shopifycli present' : 'sections/ and snippets/ present',
+        });
+    }
+    if (fs.existsSync(path.join(root, 'memory-bank'))) {
+        out.push({ name: 'memory-bank', evidence: 'memory-bank/ folder already present' });
+    }
+    if (tool === 'claude') {
+        const settings = readJsonSafe(path.join(root, '.claude', 'settings.json'));
+        if (settings && settings.hooks && Object.keys(settings.hooks).length) {
+            out.push({ name: 'hooks-enforcement', evidence: '.claude/settings.json already has hooks configured' });
+        }
+    }
+    return out;
+}
 function randomContextCode() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // skip I/O -- easily confused with 1/0
     return `${letters[Math.floor(Math.random() * letters.length)]}${Math.floor(Math.random() * 10)}`;
@@ -673,6 +774,12 @@ async function askMultiselect(message, choices) {
         console.log(`Please type numbers from 1 to ${choices.length}, separated by commas, or "all".`);
     }
 }
+function skillChoices(catalog, exclude = new Set()) {
+    return Object.entries(catalog)
+        .filter(([name]) => !exclude.has(name))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, entry]) => ({ title: entry.dir ? `${name}  (${entry.dir})` : name, value: name }));
+}
 // Fills in only the flags actually missing, on a real terminal -- never overrides a flag the
 // caller already passed, and never fires for a --json or non-TTY (scripted/agent) call. See the
 // "Interactive mode" note at the top of the file.
@@ -696,10 +803,48 @@ async function fillInteractive(cmd, args) {
             }
             if (!args.skills.length) {
                 const catalog = listSkills(args.library);
-                const choices = Object.entries(catalog)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([name, entry]) => ({ title: entry.dir ? `${name}  (${entry.dir})` : name, value: name }));
-                args.skills = await askMultiselect('Skills to install:', choices);
+                const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
+                const detected = detectStackSignals(args.root, args.tool).filter((d) => catalog[d.name]);
+                const autoTitle = detected.length
+                    ? `Auto-detect (recommended) -- ${standard.length} standard skills + ${detected.length} matched to this project`
+                    : `Auto-detect (recommended) -- ${standard.length} standard skills, no framework match found here`;
+                const mode = await askSelect('Skills to install:', [
+                    { title: autoTitle, value: 'auto' },
+                    { title: 'Everything -- every skill in the library (addons/MCP/mods stay opt-in, asked separately)', value: 'everything' },
+                    { title: 'Pick individually from the full catalog', value: 'pick' },
+                ], 0);
+                if (mode === 'everything') {
+                    args.skills = eligibleCatalogNames(catalog);
+                }
+                else if (mode === 'pick') {
+                    args.skills = await askMultiselect('Skills to install:', skillChoices(catalog));
+                }
+                else {
+                    let extra = detected.map((d) => d.name);
+                    if (detected.length) {
+                        console.log('Matched to this project:');
+                        for (const d of detected)
+                            console.log(`  ${d.name} -- ${d.evidence}`);
+                    }
+                    else {
+                        const presetEntries = Object.entries(exports.STACK_PRESETS);
+                        const presetChoice = await askSelect('No framework signal detected -- pick a stack preset instead?', [
+                            ...presetEntries.map(([key, p]) => ({ title: p.label, value: key })),
+                            { title: 'None -- just the standard set', value: 'none' },
+                        ], presetEntries.length);
+                        const preset = exports.STACK_PRESETS[presetChoice];
+                        if (preset) {
+                            extra = preset.skills.filter((n) => catalog[n]);
+                            if (preset.gap)
+                                console.log(`Note: ${preset.gap}`);
+                        }
+                    }
+                    args.skills = Array.from(new Set([...standard, ...extra]));
+                    if (await askYesNo('Add any other skills on top of this set?', false)) {
+                        const picked = await askMultiselect('Additional skills to install:', skillChoices(catalog, new Set(args.skills)));
+                        args.skills = Array.from(new Set([...args.skills, ...picked]));
+                    }
+                }
             }
             if (args.standards === undefined) {
                 args.standards = await askYesNo('Install the coding-standards system too?', false);

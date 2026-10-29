@@ -149,6 +149,8 @@ If you've never used a terminal before, this is every single thing to type, in o
 
    Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
 
+   For the skills question specifically, you won't have to pick through the whole catalog by hand: the installer scans your project first and offers **Auto-detect** (a standard skill set plus anything it recognized — a three.js or Astro dependency, an existing Shopify theme, and so on — with the matches named so it's never a silent guess) as the pre-selected option. Pressing Enter there takes it, and it asks afterward whether to add anything else on top. The full numbered catalog only comes up if you choose **Pick individually**, or say yes to adding more after Auto-detect.
+
 5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
 
 **Already comfortable with command-line flags?** Skip the walkthrough and call every flag directly — see the full reference below. **Working inside Claude Code chat instead of a terminal?** Skip all of this too — just say *"read skills/README.md and install"* and answer the same questions as clickable buttons instead.

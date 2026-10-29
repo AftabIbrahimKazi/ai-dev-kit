@@ -4,7 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 const {
   listSkills, doInstall, doUpdate, doUninstall, doArchive, doUnarchive, doMergeHooks, mergeHooks, extractCoreHooks,
-  readManifest, applyContextCode, stripTemplatePreamble,
+  readManifest, applyContextCode, stripTemplatePreamble, detectStackSignals, eligibleCatalogNames, STACK_PRESETS,
 } = require('../skills/meta/install-kit.cli.js');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
@@ -341,6 +341,86 @@ t('applyContextCode substitutes the row value and "none" removes the row entirel
 t('stripTemplatePreamble drops everything above the CLAUDE.md|AGENTS.md heading', () => {
   const body = 'preamble\n---\n# [CLAUDE.md | AGENTS.md] — [Project Name]\nbody\n';
   assert.strictEqual(stripTemplatePreamble(body), '# [CLAUDE.md | AGENTS.md] — [Project Name]\nbody\n');
+});
+
+t('detectStackSignals finds nothing in an empty project', () => {
+  assert.deepStrictEqual(detectStackSignals(tmp(), 'claude'), []);
+});
+
+t('detectStackSignals matches three.js from a package.json dependency', () => {
+  const root = tmp();
+  write(root, 'package.json', JSON.stringify({ dependencies: { three: '^0.160.0' } }));
+  const matches = detectStackSignals(root, 'claude');
+  assert.strictEqual(matches.length, 1);
+  assert.strictEqual(matches[0].name, 'threejs-scene');
+  assert.match(matches[0].evidence, /package\.json/);
+});
+
+t('detectStackSignals matches Astro from a config file even with no package.json', () => {
+  const root = tmp();
+  write(root, 'astro.config.mjs', 'export default {};\n');
+  const matches = detectStackSignals(root, 'claude');
+  assert.deepStrictEqual(matches.map((m) => m.name), ['astro-page']);
+  assert.match(matches[0].evidence, /astro\.config\.mjs/);
+});
+
+t('detectStackSignals matches Astro from the dependency when there is no config file', () => {
+  const root = tmp();
+  write(root, 'package.json', JSON.stringify({ devDependencies: { astro: '^5.0.0' } }));
+  const matches = detectStackSignals(root, 'claude');
+  assert.deepStrictEqual(matches.map((m) => m.name), ['astro-page']);
+  assert.match(matches[0].evidence, /package\.json/);
+});
+
+t('detectStackSignals matches Shopify from shopify.theme.toml', () => {
+  const root = tmp();
+  write(root, 'shopify.theme.toml', 'name = "theme"\n');
+  const matches = detectStackSignals(root, 'claude');
+  assert.deepStrictEqual(matches.map((m) => m.name), ['shopify-toolkit-install']);
+});
+
+t('detectStackSignals matches an existing memory-bank/ folder', () => {
+  const root = tmp();
+  write(root, 'memory-bank/placeholder.md', 'x');
+  const matches = detectStackSignals(root, 'claude');
+  assert.deepStrictEqual(matches.map((m) => m.name), ['memory-bank']);
+});
+
+t('detectStackSignals only matches hooks-enforcement for the claude tool, and only with real hooks configured', () => {
+  const root = tmp();
+  write(root, '.claude/settings.json', JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'x' }] }] } }));
+  assert.deepStrictEqual(detectStackSignals(root, 'claude').map((m) => m.name), ['hooks-enforcement']);
+  assert.deepStrictEqual(detectStackSignals(root, 'opencode'), []);
+
+  const emptyHooksRoot = tmp();
+  write(emptyHooksRoot, '.claude/settings.json', JSON.stringify({ hooks: {} }));
+  assert.deepStrictEqual(detectStackSignals(emptyHooksRoot, 'claude'), []);
+});
+
+t('STACK_PRESETS has no row for a stack without a real skill or coding-standards gap note', () => {
+  assert.deepStrictEqual(STACK_PRESETS.astro.skills, ['astro-page']);
+  assert.strictEqual(STACK_PRESETS.astro.gap, undefined);
+  assert.deepStrictEqual(STACK_PRESETS.nextjs.skills, []);
+  assert.ok(STACK_PRESETS.nextjs.gap);
+  assert.deepStrictEqual(STACK_PRESETS.laravel.skills, []);
+  assert.ok(STACK_PRESETS.laravel.gap);
+});
+
+t('eligibleCatalogNames drops addons/MCP and the opt-in meta skills, keeps everything else', () => {
+  const catalog = {
+    handover: { dir: 'workflow', companions: [] },
+    'coding-standards': { dir: 'standards', companions: [] },
+    'threejs-scene': { dir: 'stack', companions: [] },
+    narrate: { dir: 'addons', companions: [] },
+    'mcp-manager': { dir: 'mcp', companions: [] },
+    'mod-setup': { dir: 'meta', companions: [] },
+    'misfire-log': { dir: 'meta', companions: [] },
+    'skill-scope': { dir: 'meta', companions: [] },
+  };
+  assert.deepStrictEqual(
+    eligibleCatalogNames(catalog).sort(),
+    ['coding-standards', 'handover', 'skill-scope', 'threejs-scene'],
+  );
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });
