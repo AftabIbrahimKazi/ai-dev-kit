@@ -107,7 +107,17 @@ If you've never used a terminal before, this is every single thing to type, in o
 
    (If you don't have `git`, download the ZIP from the green "Code" button on [this repo's GitHub page](https://github.com/AftabIbrahimKazi/ai-dev-kit), unzip it, and `cd` into the unzipped folder instead.)
 
-4. **Run the installer against your actual project.** There are two ways to type this command. They do the exact same thing — which one works depends only on whether you closed your terminal since step 3.
+4. **Run the installer against your actual project.** Which command to type depends on where the `ai-dev-kit` folder ended up.
+
+   **If the `ai-dev-kit` folder is sitting inside your project folder** — for example `your-project\ai-dev-kit`, because you opened a terminal inside your project and ran `git clone` right there instead of following step 3 above — that's actually the single most common setup, and you don't need to point at a project path at all. While your terminal is still inside the `ai-dev-kit` folder, just run:
+
+   ```shell
+   node skills/meta/install-kit.cli.js install
+   ```
+
+   The installer notices it's running from inside its own folder, uses the folder one level up (your project) automatically, and prints what it assumed — so it's never a silent guess. It only stops to ask for a path if there's no safe folder to assume. If it ever guesses wrong, add `--root "C:\full\path\to\your-project"` to say so explicitly.
+
+   **Otherwise** — the `ai-dev-kit` folder sits somewhere else, separate from your project (like `Documents`, if you followed step 3 above exactly) — you have to tell the installer which project folder to use with `--root`. There are two ways to type that command. They do the exact same thing — which one works depends only on whether you closed your terminal since step 3.
 
    **Option A — you never closed the terminal window from step 3.** You're still sitting inside the `ai-dev-kit` folder you just downloaded, so the installer script is right where your terminal is already looking. Type:
 
@@ -138,8 +148,6 @@ If you've never used a terminal before, this is every single thing to type, in o
    ```
 
    Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
-
-   **Cloned the kit straight into your project instead of a separate folder** (you opened a terminal inside your project and ran `git clone` right there, so you now have `your-project/ai-dev-kit/`)? That's the single most common pattern, and the installer is built around it: just leave `--root` off entirely. It notices it's running from inside its own clone and uses the parent folder — your actual project — automatically, printing what it assumed so it's never a silent guess. It only stops to ask for the path when there's no safe folder to assume (for example, running from somewhere unrelated to any project).
 
 5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
 
