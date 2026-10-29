@@ -604,6 +604,25 @@ function randomContextCode(): string {
 }
 
 interface Choice { title: string; value: string }
+interface RootCandidate { path: string; label: string }
+
+// Defaulting --root to process.cwd() is wrong exactly when the library itself was cloned inside
+// the target project (a very common pattern: open a terminal in your project, `git clone` the kit
+// right there) -- cwd is then the kit's own clone folder, one level below the project that should
+// actually be installed into. Detect that case and offer the parent folder as the default instead
+// of silently guessing wrong.
+function guessRootCandidates(): RootCandidate[] {
+  const cwd = path.resolve(process.cwd());
+  const libraryGuess = path.resolve(defaultLibraryGuess());
+  if (cwd === libraryGuess) {
+    const parent = path.dirname(cwd);
+    return [
+      { path: parent, label: `the parent folder (${parent}) -- pick this if you cloned the kit inside your project` },
+      { path: cwd, label: `this folder (${cwd}) -- only if you really want to install into the kit's own clone` },
+    ];
+  }
+  return [{ path: cwd, label: `the current folder (${cwd})` }];
+}
 
 // One shared readline interface for the whole run, opened on first use and closed once
 // fillInteractive is done with it -- never left open, or the process would hang on exit.
@@ -663,7 +682,14 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
     }
     if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks'].includes(cmd) && !args.root) {
-      args.root = await askText('Target project path', process.cwd());
+      const candidates = guessRootCandidates();
+      if (candidates.length > 1) {
+        const choices: Choice[] = [...candidates.map((c) => ({ title: c.label, value: c.path })), { title: 'Type a different folder path', value: '__other__' }];
+        const picked = await askSelect('Which folder is your project? (this is where the kit gets installed)', choices, 0);
+        args.root = picked === '__other__' ? await askText('Target project path', process.cwd()) : picked;
+      } else {
+        args.root = await askText('Target project path', candidates[0].path);
+      }
     }
 
     if (cmd === 'install') {

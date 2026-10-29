@@ -450,6 +450,9 @@ If you've never used a terminal before, this is every single thing to type, in o
    ```
 
    Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
+
+   **Cloned the kit straight into your project instead of a separate folder** (you opened a terminal inside your project and ran `git clone` right there, so you now have `your-project/ai-dev-kit/`)? That's fine too — just leave `--root` off entirely. The installer notices it's running from inside its own clone and offers the parent folder (your actual project) as the first, already-selected option when it asks where to install.
+
 5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
 
 **Already comfortable with command-line flags?** Skip the walkthrough and call every flag directly — see the full reference below. **Working inside Claude Code chat instead of a terminal?** Skip all of this too — just say *"read skills/README.md and install"* and answer the same questions as clickable buttons instead.
