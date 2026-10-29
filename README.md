@@ -264,7 +264,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [skill-writer](skills/meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
 | [mod-writer](skills/meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](skills/meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
-| [install-kit](skills/meta/install-kit.md) | Install, update, uninstall, archive/unarchive or merge git hooks into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `cli.js` does the mechanical copy/move deterministically (tracked by a `.ai-dev-kit.json` manifest), `verify.js` mechanically re-checks the result before the install is reported done; click-to-answer in Claude Code, its own arrow-key terminal menu elsewhere; runs from the library, never copied into the target project |
+| [install-kit](skills/meta/install-kit.md) | Install, update, uninstall, archive/unarchive or merge git hooks into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `cli.js` does the mechanical copy/move deterministically (tracked by a `.ai-dev-kit.json` manifest), `verify.js` mechanically re-checks the result before the install is reported done; click-to-answer in Claude Code, a plain numbered-menu prompt elsewhere (no package install needed); runs from the library, never copied into the target project |
 | [skill-scope](skills/meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 | [misfire-log](skills/meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
@@ -382,7 +382,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
 | `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
 | `project-context/scan.js` and `figma.js` | Tracks which project docs changed; turns exported Figma PNG or SVG files into a design summary | `/ctx`, `/figma` |
-| `install-kit/cli.js` | Installs, updates, uninstalls, archives/unarchives skills and merges git hooks — the mechanical half of the installer; prompts its own arrow-key terminal menu for any flag left out outside Claude Code | by the installer |
+| `install-kit/cli.js` | Installs, updates, uninstalls, archives/unarchives skills and merges git hooks — the mechanical half of the installer; asks a plain numbered-menu question for any flag left out outside Claude Code (no package install needed) | by the installer |
 | `install-kit/verify.js` | Re-checks an install on disk before it is reported done | by the installer |
 | `narrate/speak.js`, `setup.js` | Narration and installer ([reference](#voice-narration-and-personas)) | `/narration` |
 | `personality/inject.js`, `setup.js` | Persona injector and installer | `/persona` |
@@ -403,15 +403,60 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 
 | Where | How you answer | Best for |
 |---|---|---|
-| **Claude Code chat (recommended default)** | Click multiple-choice options (`AskUserQuestion`) at every decision point — mode, tool confirmation, which skills, comment style, context code. Typing only comes up for a hand-picked skill list or an override's specifics. | Anyone already working in Claude Code — fewest keystrokes, nothing to remember. |
-| **OpenCode, Codex, or a bare terminal** | `install-kit.cli.js` drops into its own arrow-key/checkbox menu for whatever flag you leave out — the same kind of prompt `create-next-app` uses. | Tools with no multiple-choice chat widget, or installing with no AI in the loop at all. |
-| **Direct CLI flags** (`--tool`, `--skills`, `--standards`, ...) | No prompts; fully scripted. | CI, re-installs across many projects, or anyone who already knows exactly what they want. |
+| **Claude Code chat (recommended default)** | Click multiple-choice options at every decision point — mode, tool confirmation, which skills, comment style, context code. Typing only comes up for a hand-picked skill list or an override's specifics. | Anyone already working in Claude Code — fewest keystrokes, nothing to remember. |
+| **OpenCode, Codex, or a plain terminal** | The installer asks each question as a plain numbered list — type the number of your answer and press Enter. No extra software to install first. | Tools with no click-to-answer chat widget, or installing with no AI in the loop at all — see the walkthrough just below. |
+| **Direct CLI flags** (`--tool`, `--skills`, `--standards`, ...) | No questions at all; fully scripted. | CI, re-installs across many projects, or anyone who already knows exactly what they want. |
 
 None of these change *what* gets installed — only how you're asked. If you're not sure, let whichever tool you're already in drive it; it'll default to the right mode for where it's running.
 
+### Installing from a terminal (PowerShell, Command Prompt, Mac/Linux shell) — a complete walkthrough
+
+If you've never used a terminal before, this is every single thing to type, in order. It's the same on Windows, Mac, or Linux except step 1.
+
+1. **Open a terminal.** Windows: click Start, type `PowerShell`, press Enter. Mac: open Terminal from Spotlight. Linux: open your usual terminal app.
+
+2. **Check that Node.js is installed.** Type this and press Enter:
+
+   ```shell
+   node --version
+   ```
+
+   If you see something like `v22.11.0`, you're set — skip to step 3. If you see an error instead, Node.js isn't installed: go to [nodejs.org](https://nodejs.org), download the button labeled **LTS**, run the installer with its defaults, then close and reopen your terminal and try step 2 again.
+
+3. **Download a copy of this kit.** Type these three lines one at a time, pressing Enter after each:
+
+   ```shell
+   cd Documents
+   git clone https://github.com/AftabIbrahimKazi/ai-dev-kit
+   cd ai-dev-kit
+   ```
+
+   (If you don't have `git`, download the ZIP from the green "Code" button on [this repo's GitHub page](https://github.com/AftabIbrahimKazi/ai-dev-kit), unzip it, and `cd` into the unzipped folder instead.)
+
+4. **Run the installer against your actual project.** Replace `C:\path\to\your-project` below with your real project's folder (drag the folder into the terminal window to paste its path automatically), then type:
+
+   ```shell
+   node skills/meta/install-kit.cli.js install --root "C:\path\to\your-project"
+   ```
+
+   You don't need to know any other flags. The script asks you the rest, one question at a time, printed like this:
+
+   ```text
+   Target tool:
+     1) claude
+     2) opencode
+     3) codex
+   Type a number [1]:
+   ```
+
+   Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
+5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
+
+**Already comfortable with command-line flags?** Skip the walkthrough and call every flag directly — see the full reference below. **Working inside Claude Code chat instead of a terminal?** Skip all of this too — just say *"read skills/README.md and install"* and answer the same questions as clickable buttons instead.
+
 ### Every `install-kit.cli.js` command and flag
 
-Run as `node <library>/skills/meta/install-kit.cli.js <command> [flags]`. **Leave any flag below out while running on a real terminal (not through Claude Code) and the script prompts for exactly that one instead of erroring** — an arrow-key menu for a single choice, a checkbox list for several, a text box for a typed value.
+Run as `node skills/meta/install-kit.cli.js <command> [flags]` from inside the kit folder (the `cd ai-dev-kit` from step 3 above). **Leave any flag below out on a real terminal and the script asks for it as a plain numbered question instead of erroring** — exactly like the walkthrough above, just for whichever piece you didn't already specify.
 
 **`list`** — prints every skill (and its companions) the library can install; nothing is written to disk.
 
@@ -563,7 +608,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
-- **Install-kit mechanized, then the whole kit ported to TypeScript.** `install-kit.cli.js` now does install/update/uninstall/archive/unarchive/merge-hooks as one deterministic script tracked by a `.ai-dev-kit.json` manifest, instead of a narrated file copy. Every question the installer asks defaults to a click (`AskUserQuestion` in Claude Code); outside a chat tool — OpenCode, Codex, a bare terminal — the same script drops into its own arrow-key/checkbox menu (via `prompts`, the library `create-next-app` uses) for whatever flag is missing. All 27 companion scripts are now authored in `.ts` and shipped as compiled `.js`.
+- **Install-kit mechanized, then the whole kit ported to TypeScript.** `install-kit.cli.js` now does install/update/uninstall/archive/unarchive/merge-hooks as one deterministic script tracked by a `.ai-dev-kit.json` manifest, instead of a narrated file copy. Every question the installer asks defaults to a click (`AskUserQuestion` in Claude Code); outside a chat tool — OpenCode, Codex, a bare terminal — the same script asks a plain numbered question for whatever flag is missing, built on Node's own `readline` so there's no extra package to install first. All 27 companion scripts are now authored in `.ts` and shipped as compiled `.js`.
 - **Narration controls without hotkeys.** The keyboard hotkeys and voice dictation were removed: the global keyboard hook did not fire reliably and could clash with other shortcuts. Narration is now controlled by `/narration` and by the optional VS Code extension `extensions/narrate-buttons` (a footer tray, an AI Dev Kit sidebar and a Play button that turns yellow when a reply is waiting).
 - **Play-button narration and British voices.** `narrate` now defaults to manual mode (a reply is kept until you press Play, like claude.ai), with `auto` to speak every reply. The default voices are British (Jenny (Dioco) and a Northern English male); older American voices keep working until the new ones are downloaded.
 - **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 37 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
