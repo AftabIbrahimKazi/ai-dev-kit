@@ -107,19 +107,25 @@ If you've never used a terminal before, this is every single thing to type, in o
 
    (If you don't have `git`, download the ZIP from the green "Code" button on [this repo's GitHub page](https://github.com/AftabIbrahimKazi/ai-dev-kit), unzip it, and `cd` into the unzipped folder instead.)
 
-4. **Run the installer against your actual project.** The command must point at `install-kit.cli.js` *inside the kit folder* — the safest way is its full path, which works no matter which folder your terminal is currently sitting in:
+4. **Run the installer against your actual project.** There are two ways to type this command. They do the exact same thing — which one works depends only on whether you closed your terminal since step 3.
 
-   ```shell
-   node "C:\full\path\to\ai-dev-kit\skills\meta\install-kit.cli.js" install --root "C:\full\path\to\your-project"
-   ```
-
-   Replace both paths with your real folders (drag a folder into the terminal window to paste its full path automatically — easier than typing it). Right after step 3, while you're still sitting inside the `ai-dev-kit` folder, the shorter form below works too:
+   **Option A — you never closed the terminal window from step 3.** You're still sitting inside the `ai-dev-kit` folder you just downloaded, so the installer script is right where your terminal is already looking. Type:
 
    ```shell
    node skills/meta/install-kit.cli.js install --root "C:\full\path\to\your-project"
    ```
 
-   **But if you come back later and open a fresh terminal inside your *project* folder instead** (not the kit's folder) and try that shorter form, it fails with `Cannot find module '...\skills\meta\install-kit.cli.js'` — Node looked for the script relative to wherever your terminal happens to be, and your project folder doesn't have one. Use the full-path form above instead; it's unaffected by which folder you're in.
+   Replace `C:\full\path\to\your-project` with the folder of the project you want the kit installed into. Don't type that path by hand — open the folder in File Explorer (or Finder/your file manager) and drag it into the terminal window; the full path gets pasted in for you automatically.
+
+   **Option B — any other time** (you closed that terminal and opened a new one, restarted your computer, or opened a terminal inside your *project* folder instead of the kit folder). The command from Option A will fail here with an error like `Cannot find module '...\skills\meta\install-kit.cli.js'` — that happens because it only looks for the installer relative to whatever folder your terminal happens to be sitting in right now, and that folder is no longer `ai-dev-kit`. Instead, give the command the full path to *both* folders, so it doesn't matter where your terminal is sitting:
+
+   ```shell
+   node "C:\full\path\to\ai-dev-kit\skills\meta\install-kit.cli.js" install --root "C:\full\path\to\your-project"
+   ```
+
+   Same trick for both paths: drag the `ai-dev-kit` folder into the terminal window to paste its path where the first one goes, then drag your project folder in for the second one.
+
+   **Not sure which option applies to you?** Use Option B — it always works, no matter where your terminal is currently sitting.
 
    You don't need to know any other flags. The script asks you the rest, one question at a time, printed like this:
 
