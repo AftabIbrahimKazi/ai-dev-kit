@@ -20,7 +20,36 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 
 ---
 
-## Quick start
+**Why use it**
+
+- **Consistent sessions.** The standards chain loads for each file you edit (the optional `standards-chain` mod makes that mechanical), and skills load when the agent recognises their trigger, so session ten behaves like session one. Skill loading is model-judged, not guaranteed; the mods are what enforce the critical gates.
+- **Fewer wasted tokens.** Skills load only when relevant, reads are targeted, cheap models take the cheap work, and a script finds violations so the agent does not have to.
+- **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
+- **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
+
+## Index
+
+- [Install into a project](#install-into-a-project) — clone it, run it, answer a few questions
+- [Everything the kit does, at a glance](#everything-the-kit-does-at-a-glance) — what happens by itself vs. what you ask for
+- [What's in the kit](#whats-in-the-kit) — `skills/` and `coding-standards/`, the two folders the kit is built from
+- [Complete skills catalog](#complete-skills-catalog) — every skill, by category, with its purpose
+- [Slash commands](#slash-commands) — every command you type, and when to reach for it
+- [Optional AI tools: free and local MCP servers](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) — UI prototyping, image reading/generation, local file prefiltering
+- [Voice, narration and personas](#voice-narration-and-personas) — opt-in text-to-speech for replies, and reply personas
+- [Claude Code mods (all nine)](#claude-code-mods-all-nine) — the plug-ins that enforce rules in code instead of relying on a skill loading
+- [Scripts and git hooks](#scripts-and-git-hooks) — what every script does, and setting up git hooks for human commits
+- [Maintaining the kit](#maintaining-the-kit) — keeping this repo and its installs in sync over time
+- [Where things live, and how to turn things off](#where-things-live-and-how-to-turn-things-off) — every file the kit writes, and how to remove each one
+- [Key ideas](#key-ideas) — the design philosophy behind the kit
+- [Repository layout](#repository-layout) — the folder tree, annotated
+- [Recent additions](#recent-additions) — latest changes, newest first
+- [Frequently asked questions](#frequently-asked-questions)
+- [Contributing and support](#contributing-and-support)
+- [License](#license)
+
+## Install into a project
+
+**Fastest path, if you're already working inside an AI coding chat** (Claude Code, OpenCode, Codex, or any agent that reads markdown):
 
 ```bash
 git clone https://github.com/AftabIbrahimKazi/ai-dev-kit.git
@@ -29,20 +58,152 @@ cp -r ai-dev-kit/skills ai-dev-kit/coding-standards your-project/
 
 On Windows PowerShell: `Copy-Item -Recurse ai-dev-kit/skills, ai-dev-kit/coding-standards your-project/`
 
-Then open Claude Code, OpenCode, Codex or any agent that reads markdown in `your-project` and say:
+Then, in `your-project`, say:
 
 > read skills/README.md and install
 
-The core installer copies markdown files only: no packages, no build step. Opt-in add-ons that need a tool (for example `narrate`, which uses Piper for speech) install it only when you ask. Full details: [Install into a project](#install-into-a-project).
+The core installer copies markdown files only: no packages, no build step. Opt-in add-ons that need a tool (for example `narrate`, which uses Piper for speech) install it only when you ask.
 
-**Why use it**
+**Working from a terminal instead, with no AI driving it** (or in OpenCode/Codex, which have no click-to-answer chat widget)? The same installer runs as a plain script with its own numbered-menu prompts — see the complete walkthrough below.
 
-- **Consistent sessions.** The standards chain loads for each file you edit (the optional `standards-chain` mod makes that mechanical), and skills load when the agent recognises their trigger, so session ten behaves like session one. Skill loading is model-judged, not guaranteed; the mods are what enforce the critical gates.
-- **Fewer wasted tokens.** Skills load only when relevant, reads are targeted, cheap models take the cheap work, and a script finds violations so the agent does not have to.
-- **Standards that are enforced, not just written down.** Rules are testable, the agent self-checks before a commit, and gaps are flagged instead of improvised.
-- **Cleanup of old or shared code.** `code-audit` counts violations across a whole project and lists the exact lines, so the agent reads only what is flagged.
+1. Copy `skills/` — and `coding-standards/` if the project should carry the standards — into the project root. (Or keep one clone of this repo anywhere and point every project at it with `--library <path>`; either way, it's the same `install-kit.cli.js` doing the work.)
+2. Open your AI coding tool in that project and say:
 
-**Jump to:** [Everything at a glance](#everything-the-kit-does-at-a-glance) · [Skills catalog](#complete-skills-catalog) · [MCP tools](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) · [Voice, narration and personas](#voice-narration-and-personas) · [Mods](#claude-code-mods-all-nine) · [Scripts and git hooks](#scripts-and-git-hooks) · [Install](#install-into-a-project) · [Slash commands](#slash-commands) · [Where things live](#where-things-live-and-how-to-turn-things-off) · [FAQ](#frequently-asked-questions)
+   > read skills/README.md and install
+
+3. Choose **everything**, **pick**, **auto-detect** (scans the project and cites the signal before pinning anything), or a **stack preset** (name the stack directly — Astro, Next.js, Laravel — no scan needed). The installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), mechanically re-verifies the result, and reports what was installed — or exactly what still needs fixing before it's reported done. `install-kit` itself is never copied into your project — it always runs from wherever the library lives, against `--root <target>`, so there's nothing left behind to clean up afterward.
+
+**How you answer those questions depends on where you're running it — pick based on that, not preference:**
+
+| Where | How you answer | Best for |
+|---|---|---|
+| **Claude Code chat (recommended default)** | Click multiple-choice options at every decision point — mode, tool confirmation, which skills, comment style, context code. Typing only comes up for a hand-picked skill list or an override's specifics. | Anyone already working in Claude Code — fewest keystrokes, nothing to remember. |
+| **OpenCode, Codex, or a plain terminal** | The installer asks each question as a plain numbered list — type the number of your answer and press Enter. No extra software to install first. | Tools with no click-to-answer chat widget, or installing with no AI in the loop at all — see the walkthrough just below. |
+| **Direct CLI flags** (`--tool`, `--skills`, `--standards`, ...) | No questions at all; fully scripted. | CI, re-installs across many projects, or anyone who already knows exactly what they want. |
+
+None of these change *what* gets installed — only how you're asked. If you're not sure, let whichever tool you're already in drive it; it'll default to the right mode for where it's running.
+
+### Installing from a terminal (PowerShell, Command Prompt, Mac/Linux shell) — a complete walkthrough
+
+If you've never used a terminal before, this is every single thing to type, in order. It's the same on Windows, Mac, or Linux except step 1.
+
+1. **Open a terminal.** Windows: click Start, type `PowerShell`, press Enter. Mac: open Terminal from Spotlight. Linux: open your usual terminal app.
+
+2. **Check that Node.js is installed.** Type this and press Enter:
+
+   ```shell
+   node --version
+   ```
+
+   If you see something like `v22.11.0`, you're set — skip to step 3. If you see an error instead, Node.js isn't installed: go to [nodejs.org](https://nodejs.org), download the button labeled **LTS**, run the installer with its defaults, then close and reopen your terminal and try step 2 again.
+
+3. **Download a copy of this kit.** Type these three lines one at a time, pressing Enter after each:
+
+   ```shell
+   cd Documents
+   git clone https://github.com/AftabIbrahimKazi/ai-dev-kit
+   cd ai-dev-kit
+   ```
+
+   (If you don't have `git`, download the ZIP from the green "Code" button on [this repo's GitHub page](https://github.com/AftabIbrahimKazi/ai-dev-kit), unzip it, and `cd` into the unzipped folder instead.)
+
+4. **Run the installer against your actual project.** The command must point at `install-kit.cli.js` *inside the kit folder* — the safest way is its full path, which works no matter which folder your terminal is currently sitting in:
+
+   ```shell
+   node "C:\full\path\to\ai-dev-kit\skills\meta\install-kit.cli.js" install --root "C:\full\path\to\your-project"
+   ```
+
+   Replace both paths with your real folders (drag a folder into the terminal window to paste its full path automatically — easier than typing it). Right after step 3, while you're still sitting inside the `ai-dev-kit` folder, the shorter form below works too:
+
+   ```shell
+   node skills/meta/install-kit.cli.js install --root "C:\full\path\to\your-project"
+   ```
+
+   **But if you come back later and open a fresh terminal inside your *project* folder instead** (not the kit's folder) and try that shorter form, it fails with `Cannot find module '...\skills\meta\install-kit.cli.js'` — Node looked for the script relative to wherever your terminal happens to be, and your project folder doesn't have one. Use the full-path form above instead; it's unaffected by which folder you're in.
+
+   You don't need to know any other flags. The script asks you the rest, one question at a time, printed like this:
+
+   ```text
+   Target tool:
+     1) claude
+     2) opencode
+     3) codex
+   Type a number [1]:
+   ```
+
+   Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
+
+   **Cloned the kit straight into your project instead of a separate folder** (you opened a terminal inside your project and ran `git clone` right there, so you now have `your-project/ai-dev-kit/`)? That's the single most common pattern, and the installer is built around it: just leave `--root` off entirely. It notices it's running from inside its own clone and uses the parent folder — your actual project — automatically, printing what it assumed so it's never a silent guess. It only stops to ask for the path when there's no safe folder to assume (for example, running from somewhere unrelated to any project).
+
+5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
+
+**Already comfortable with command-line flags?** Skip the walkthrough and call every flag directly — see the full reference below. **Working inside Claude Code chat instead of a terminal?** Skip all of this too — just say *"read skills/README.md and install"* and answer the same questions as clickable buttons instead.
+
+### Every `install-kit.cli.js` command and flag
+
+Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flags]` — use its full path (safest, works from any folder) or a relative one if your terminal is already sitting inside the kit folder. **Leave any flag below out on a real terminal and the script asks for it as a plain numbered question instead of erroring** — exactly like the walkthrough above, just for whichever piece you didn't already specify.
+
+**`list`** — prints every skill (and its companions) the library can install; nothing is written to disk.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. Path to the ai-dev-kit repo or any clone of it. |
+| `--json` | Prints machine-readable JSON instead of plain text. |
+
+**`install`** — copies the chosen skills (and, optionally, the standards system) into a target project. Safe to re-run; only files that actually differ get touched.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. Where the skills are copied *from*. |
+| `--root <path>` | Required. The target project to install *into*. |
+| `--tool claude\|opencode\|codex` | Required. Which tool's skill root and session file to route to (`.claude/skills/`+`CLAUDE.md`, `.opencode/skills/`+`AGENTS.md`, or `.agents/skills/`+`AGENTS.md`). |
+| `--skills a,b,c` | The skill names to install, comma-separated. Append `:companion1+companion2` to a name to install only specific companions of it (e.g. `mcp-manager:stitch`) instead of all of them. |
+| `--standards` | Also copies `coding-standards/` and generates the project's `CLAUDE.md`/`AGENTS.md` (only if that file doesn't already exist). |
+| `--comment-style-level none\|terse\|descriptive` | Sets how much the AI comments its own code. Only meaningful when `comment-style` is in `--skills`; carries forward automatically on a later `install`/`update` if you don't repeat it. |
+| `--context-code X7\|none` | The 2–4 character marker RULE AI-01 asks for, stamped into the generated session-protocol file. Only used together with `--standards`. `none` writes a bare `[CX]` instead. |
+| `--force` | Overwrites an existing `coding-standards/` folder wholesale instead of only merging the files that changed. |
+| `--json` | Prints the result (including the verify check) as JSON instead of plain text. |
+
+**`update`** — re-syncs already-installed skills with whatever the library currently has, and offers any pending skill-rename migrations.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. |
+| `--root <path>` | Required. |
+| `--skills a,b` | Which already-installed skills to refresh. |
+| `--all` | Refresh every skill the manifest (`.ai-dev-kit.json`) already tracks, instead of naming them. |
+| `--context-code X7\|none` | Re-applies a new context code if the project has `coding-standards/` installed. |
+| `--apply-migrations a,b\|all` | Applies pending rename migrations for the named old skill name(s), or `all` of them — carries `learnings.md` forward, deletes the old folder only after the new one lands. Without this flag, a pending migration is only reported, never applied. |
+| `--json` | Prints the result as JSON. |
+
+**`uninstall`** — removes skill folders this kit installed. Never touches a hand-authored or third-party folder sharing the same skill root, even with `--all`.
+
+| Flag | What it does |
+|---|---|
+| `--root <path>` | Required. |
+| `--skills a,b` | Which installed skills to remove. |
+| `--all` | Remove every skill the manifest tracks. |
+| `--remove-standards` | Also deletes `coding-standards/`. The session-protocol file (`CLAUDE.md`/`AGENTS.md`) is **never** deleted by any flag — it may carry your own edits; remove it yourself if you want it gone too. |
+| `--json` | Prints the result as JSON. |
+
+**`archive`** / **`unarchive`** — move a skill between the active skill root and `<tool-dir>/skills-archive/` (still on disk, just invisible to the tool) and back. This is what `handover` calls to "mount/unmount" a skill for a session that doesn't need it.
+
+| Flag | What it does |
+|---|---|
+| `--root <path>` | Required. |
+| `--skills a,b` | Which skills to archive (must currently be installed) or unarchive (must currently be archived). |
+| `--all` | Archive every currently-installed skill, or unarchive every currently-archived one. |
+| `--json` | Prints the result as JSON. |
+
+**`merge-hooks`** — merges the sample Claude Code hooks documented in `hooks-enforcement.md` into `.claude/settings.json`, deduped, never touching anything else already in that file.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. |
+| `--root <path>` | Required. |
+| `--json` | Prints the result as JSON. |
+
+Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
 ## Everything the kit does, at a glance
 
@@ -270,6 +431,79 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 
 </details>
 
+## Slash commands
+
+Slash commands are shortcuts **you** type; the agent never runs them on its own. Anything typed after the name is passed to the command (`/audit src/components`). Most of the kit needs no command: the mods and git hooks fire by themselves, and skills load when the agent recognises their trigger. Reach for a command at the moments below. Type `/kit` in a session for this table.
+
+### Most useful commands
+
+| Command | Use it when | How to use it |
+|---|---|---|
+| `/commit-check` | You are about to commit | `/commit-check` or `/commit-check --message "feat: add nav"`. Reports secrets, secret files, stray files and message format; a BLOCK means do not commit. |
+| `/audit` | You want a health check of the whole project | `/audit`, `/audit src/` or `/audit --standard css,html`. Prints counts per rule and the worst files. |
+| `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
+| `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
+| `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
+| `/pickup` | Starting a session | `/pickup`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
+| `/wrap-up` | Ending a session | `/wrap-up` or `/wrap-up next task is the pricing section`. Rewrites `handover.md` in place (no ever-growing log); the task you name goes first under Next steps. Does not commit. |
+| `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
+| `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
+| `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
+| `/format` | You want answers as a table, bullets, one-liners or yes/no | `/format bullets`; `/format reset` returns to the default (a table where the data has structure). |
+| `/narration` | You use the `narrate` add-on and want to mute, replay, or change the voice, volume, speed or pitch | `/narration mute`, `/narration replay`, `/narration voice male`, `/narration speed 1.3`. |
+| `/persona` | You use the `personality` add-on and want replies worded for your skill level | `/persona set female novice`, `/persona off`, `/persona list`. Applies from the next session. |
+
+### All commands
+
+**Kit commands** (templates in [`skills/commands/`](skills/commands/); installed on request by `install-kit` into `.claude/commands/` or `.opencode/commands/`; each runs a kit script and hands the output to the agent, so no skill has to be matched first):
+
+| Command | What it does | Arguments | Needs |
+|---|---|---|---|
+| `/audit` | Standards audit of the project | script options: a path, `--standard`, `--rule`, `--top N` | `code-audit` |
+| `/commit-check` | Mechanical pre-commit check of the staged change | `--message "…"`, `--all` | `pre-commit` |
+| `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
+| `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
+| `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
+| `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
+| `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
+| `/githooks` | Shows git hook status and offers to install them | none | `pre-commit` |
+| `/resolve-conflicts` | Resolves merge/rebase conflicts: mode `both` (default), `ours`, `theirs`; pace `all`, `auto` (default), `step`; role guardrails | `--role frontend|backend`, `--out leave|ours|theirs`, `--note "…"` | `resolve-conflicts` |
+| `/responsive-check` | Checks a page at range-based viewports (the six RULE 17 zones by default) and proposes range-based fixes | `--range a-b` (repeatable), `--min N`, `--max N`, `--width W`, `--ranges a-b,…`, `--detect`, `--max-probes N` | `responsive-check` |
+| `/optimize-assets` | Finds heavy assets, converts them (`webp`, `avif`, `jpg`, `mp4`, `woff2`, ...) or compresses them in place of the same format; originals are never touched | `scan [dir]`, `convert <paths> --to webp,avif`, `compress <paths>`, `precompress <paths>`, `tools`, `refs <assets>`, `--preset vision|web` | `optimize-assets` |
+| `/ctx <init|analyze|status|add|detect>` | Sets up and maintains the private `project-context/` docs folder: folders by auto-detect, project type or your own list; an `INDEX.md` per folder so Claude reads facts, not raw files | `init [--folders a,b] [--copy]`, `analyze [folder]`, `status`, `add <folder> <file>`, `detect` | `project-context` |
+| `/figma <folder>` | Turns exported Figma PNG/SVG files into `project-context/design/figma.md`: frame sizes, colors, fonts, type sizes, text. No MCP, no Figma account tokens, no connector cost | a folder or files of exports, optional `--link <figma url>`, `--write` to save | `project-context` |
+| `/narration <setting>` | Controls reply narration without opening a file | `mute`, `unmute`, `stop`, `replay`, `status`, `voice male|female`, `volume 0-100`, `speed 0.5-2`, `pitch -12..12`, `maxSeconds 30-1800` | `narrate` |
+| `/persona <setting>` | Chooses how replies are worded; applies from the next session | `set female|male novice|mid|pro`, `off`, `status`, `list` | `personality` |
+| `/kit` | This cheat sheet | optional: describe your situation | none |
+| `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |
+| `/format <name>` | Sets the response shape for the session, no script | `table`, `bullets`, `oneline`, `bool`, `reset` | none |
+
+**Mod command** (Claude Code, from the `budget-ledger` mod): `/budget` shows the same ledger report.
+
+**Skills by name** (Claude Code turns every installed skill into `/<skill-name> <free text>`, which loads it on purpose instead of waiting for the agent to match it):
+
+| Group | Commands | Use when |
+|---|---|---|
+| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/pickup` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session`, `/resolve-conflicts`, `/responsive-check`, `/optimize-assets` | the situation in each skill's description |
+| Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
+| Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
+| Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
+| Add-ons | `/project-context`, `/narrate`, `/personality` | setting up that add-on |
+| Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
+| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
+| OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
+
+**Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
+
+**Good to know**
+- **What is reliable and what is not.** Mechanical layers (the git hooks, the mods, the scripts) always run; skills load by the model's judgment. In live runs on haiku and Sonnet the new skills triggered reliably, but `debug-protocol` did not always (it loaded in roughly 1 of 3 runs on a failing build; the `debug-nudge` mod raises that). `pre-commit` loaded in 30 of 30 haiku runs whenever there was something to commit. Treat the contract and the mods as the guarantee, and skills as the judgment layer.
+- **New add-ons:** the `narrate` skill loaded on 6 of 6 prompts asking for spoken replies or dictation and the `personality` skill on 5 of 6 prompts asking to set up a persona (haiku), with no false trigger across 10 control runs. `/narration` and `/persona` ran in an installed-layout scratch project on haiku.
+- **Tested:** all script-backed kit commands (`/pickup` and `/wrap-up` included) ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` is untested (no script to run headless); `/figma` is covered by unit tests only, not a live run — it's a plain instruction template, same shape as `/kit`. In OpenCode (1.18, free `glm-5.3-flash-free` model) a clean kit install answered with the `[CX]` marker and loaded the right skill on 3 of 3 prompts (`optimize-assets`, `resolve-conflicts`, `responsive-check`) with no skill on a control question. Skills by name were checked for `/debug-protocol` in Claude Code only; Codex was not run.
+- **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
+- **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
+- **`prefilter-rank` mod:** automates `system1-prefilter`'s local-Laya narrowing after Grep/Glob (5-40 results) — adds a ranked read-order reminder, never removes a result. Loopback-only (`127.0.0.1`, checked in code, never the hosted-provider path), fails open if Laya isn't configured or reachable. If Laya is set up but not running, the first qualifying Grep/Glob starts it in the background (`laya-ctl.js start`, at most once per 5 minutes) and goes unranked; later ones are ranked. On CPU, Laya scores about 3 candidates a second (17 files in 5 to 6 s), so the ranking wait is up to 20 s; a GPU makes it near-instant. Needs the addon's local-Laya path already set up; `mod-setup` won't offer it before that.
+- **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
+- **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/githooks`, by git hooks (every tool).
 
 ## Optional AI tools: free and local MCP servers for any coding agent
 
@@ -390,212 +624,28 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 
 **Git hooks.** `/githooks` (or `node pre-commit/install-hook.js install`) writes two hooks into your repository: `pre-commit` runs `check.js --staged` and fails before the editor opens on secrets or secret files, and `commit-msg` adds the message-format check. Only BLOCK findings fail a commit; warnings print and pass. A missing `node` never blocks a commit. `git commit --no-verify` skips hooks, which the `pre-commit` skill forbids. An existing hook of yours is never overwritten without `--force`, and `--force` keeps a copy.
 
-## Install into a project
+## Maintaining the kit
 
-1. Copy `skills/` — and `coding-standards/` if the project should carry the standards — into the project root. (Or keep one clone of this repo anywhere and point every project at it with `--library <path>`; either way, it's the same `install-kit.cli.js` doing the work.)
-2. Open your AI coding tool in that project and say:
+- **This repo is the canonical home.** Improve skills here, then re-run the install into projects; the installer diffs before overwriting so locally-evolved copies are never silently clobbered.
+- New skills follow the quality bar in [skills/meta/skill-writer.md](skills/meta/skill-writer.md).
+- Standards edits follow the repo's own principles ([index.md → Principles](coding-standards/index.md)): testable, declarative, wrong/right examples mandatory. Machine-checkable rule changes update [`coding-standards/tooling/`](coding-standards/tooling/) in the same commit.
+- `learnings.md` files are gitignored — they belong to the project that earned them. Lessons worth keeping forever get promoted into skill bodies (see `memory-gardener`).
 
-   > read skills/README.md and install
+## Where things live, and how to turn things off
 
-3. Choose **everything**, **pick**, **auto-detect** (scans the project and cites the signal before pinning anything), or a **stack preset** (name the stack directly — Astro, Next.js, Laravel — no scan needed). The installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), mechanically re-verifies the result, and reports what was installed — or exactly what still needs fixing before it's reported done. `install-kit` itself is never copied into your project — it always runs from wherever the library lives, against `--root <target>`, so there's nothing left behind to clean up afterward.
-
-**How you answer those questions depends on where you're running it — pick based on that, not preference:**
-
-| Where | How you answer | Best for |
-|---|---|---|
-| **Claude Code chat (recommended default)** | Click multiple-choice options at every decision point — mode, tool confirmation, which skills, comment style, context code. Typing only comes up for a hand-picked skill list or an override's specifics. | Anyone already working in Claude Code — fewest keystrokes, nothing to remember. |
-| **OpenCode, Codex, or a plain terminal** | The installer asks each question as a plain numbered list — type the number of your answer and press Enter. No extra software to install first. | Tools with no click-to-answer chat widget, or installing with no AI in the loop at all — see the walkthrough just below. |
-| **Direct CLI flags** (`--tool`, `--skills`, `--standards`, ...) | No questions at all; fully scripted. | CI, re-installs across many projects, or anyone who already knows exactly what they want. |
-
-None of these change *what* gets installed — only how you're asked. If you're not sure, let whichever tool you're already in drive it; it'll default to the right mode for where it's running.
-
-### Installing from a terminal (PowerShell, Command Prompt, Mac/Linux shell) — a complete walkthrough
-
-If you've never used a terminal before, this is every single thing to type, in order. It's the same on Windows, Mac, or Linux except step 1.
-
-1. **Open a terminal.** Windows: click Start, type `PowerShell`, press Enter. Mac: open Terminal from Spotlight. Linux: open your usual terminal app.
-
-2. **Check that Node.js is installed.** Type this and press Enter:
-
-   ```shell
-   node --version
-   ```
-
-   If you see something like `v22.11.0`, you're set — skip to step 3. If you see an error instead, Node.js isn't installed: go to [nodejs.org](https://nodejs.org), download the button labeled **LTS**, run the installer with its defaults, then close and reopen your terminal and try step 2 again.
-
-3. **Download a copy of this kit.** Type these three lines one at a time, pressing Enter after each:
-
-   ```shell
-   cd Documents
-   git clone https://github.com/AftabIbrahimKazi/ai-dev-kit
-   cd ai-dev-kit
-   ```
-
-   (If you don't have `git`, download the ZIP from the green "Code" button on [this repo's GitHub page](https://github.com/AftabIbrahimKazi/ai-dev-kit), unzip it, and `cd` into the unzipped folder instead.)
-
-4. **Run the installer against your actual project.** Replace `C:\path\to\your-project` below with your real project's folder (drag the folder into the terminal window to paste its path automatically), then type:
-
-   ```shell
-   node skills/meta/install-kit.cli.js install --root "C:\path\to\your-project"
-   ```
-
-   You don't need to know any other flags. The script asks you the rest, one question at a time, printed like this:
-
-   ```text
-   Target tool:
-     1) claude
-     2) opencode
-     3) codex
-   Type a number [1]:
-   ```
-
-   Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
-
-   **Cloned the kit straight into your project instead of a separate folder** (you opened a terminal inside your project and ran `git clone` right there, so you now have `your-project/ai-dev-kit/`)? That's fine too — just leave `--root` off entirely. The installer notices it's running from inside its own clone and offers the parent folder (your actual project) as the first, already-selected option when it asks where to install.
-
-5. When it's done, it prints a summary of exactly what was installed and where. That's the whole process — there's nothing else to run afterward, and nothing extra to install first (no `npm install`, no other software).
-
-**Already comfortable with command-line flags?** Skip the walkthrough and call every flag directly — see the full reference below. **Working inside Claude Code chat instead of a terminal?** Skip all of this too — just say *"read skills/README.md and install"* and answer the same questions as clickable buttons instead.
-
-### Every `install-kit.cli.js` command and flag
-
-Run as `node skills/meta/install-kit.cli.js <command> [flags]` from inside the kit folder (the `cd ai-dev-kit` from step 3 above). **Leave any flag below out on a real terminal and the script asks for it as a plain numbered question instead of erroring** — exactly like the walkthrough above, just for whichever piece you didn't already specify.
-
-**`list`** — prints every skill (and its companions) the library can install; nothing is written to disk.
-
-| Flag | What it does |
-|---|---|
-| `--library <path>` | Required. Path to the ai-dev-kit repo or any clone of it. |
-| `--json` | Prints machine-readable JSON instead of plain text. |
-
-**`install`** — copies the chosen skills (and, optionally, the standards system) into a target project. Safe to re-run; only files that actually differ get touched.
-
-| Flag | What it does |
-|---|---|
-| `--library <path>` | Required. Where the skills are copied *from*. |
-| `--root <path>` | Required. The target project to install *into*. |
-| `--tool claude\|opencode\|codex` | Required. Which tool's skill root and session file to route to (`.claude/skills/`+`CLAUDE.md`, `.opencode/skills/`+`AGENTS.md`, or `.agents/skills/`+`AGENTS.md`). |
-| `--skills a,b,c` | The skill names to install, comma-separated. Append `:companion1+companion2` to a name to install only specific companions of it (e.g. `mcp-manager:stitch`) instead of all of them. |
-| `--standards` | Also copies `coding-standards/` and generates the project's `CLAUDE.md`/`AGENTS.md` (only if that file doesn't already exist). |
-| `--comment-style-level none\|terse\|descriptive` | Sets how much the AI comments its own code. Only meaningful when `comment-style` is in `--skills`; carries forward automatically on a later `install`/`update` if you don't repeat it. |
-| `--context-code X7\|none` | The 2–4 character marker RULE AI-01 asks for, stamped into the generated session-protocol file. Only used together with `--standards`. `none` writes a bare `[CX]` instead. |
-| `--force` | Overwrites an existing `coding-standards/` folder wholesale instead of only merging the files that changed. |
-| `--json` | Prints the result (including the verify check) as JSON instead of plain text. |
-
-**`update`** — re-syncs already-installed skills with whatever the library currently has, and offers any pending skill-rename migrations.
-
-| Flag | What it does |
-|---|---|
-| `--library <path>` | Required. |
-| `--root <path>` | Required. |
-| `--skills a,b` | Which already-installed skills to refresh. |
-| `--all` | Refresh every skill the manifest (`.ai-dev-kit.json`) already tracks, instead of naming them. |
-| `--context-code X7\|none` | Re-applies a new context code if the project has `coding-standards/` installed. |
-| `--apply-migrations a,b\|all` | Applies pending rename migrations for the named old skill name(s), or `all` of them — carries `learnings.md` forward, deletes the old folder only after the new one lands. Without this flag, a pending migration is only reported, never applied. |
-| `--json` | Prints the result as JSON. |
-
-**`uninstall`** — removes skill folders this kit installed. Never touches a hand-authored or third-party folder sharing the same skill root, even with `--all`.
-
-| Flag | What it does |
-|---|---|
-| `--root <path>` | Required. |
-| `--skills a,b` | Which installed skills to remove. |
-| `--all` | Remove every skill the manifest tracks. |
-| `--remove-standards` | Also deletes `coding-standards/`. The session-protocol file (`CLAUDE.md`/`AGENTS.md`) is **never** deleted by any flag — it may carry your own edits; remove it yourself if you want it gone too. |
-| `--json` | Prints the result as JSON. |
-
-**`archive`** / **`unarchive`** — move a skill between the active skill root and `<tool-dir>/skills-archive/` (still on disk, just invisible to the tool) and back. This is what `handover` calls to "mount/unmount" a skill for a session that doesn't need it.
-
-| Flag | What it does |
-|---|---|
-| `--root <path>` | Required. |
-| `--skills a,b` | Which skills to archive (must currently be installed) or unarchive (must currently be archived). |
-| `--all` | Archive every currently-installed skill, or unarchive every currently-archived one. |
-| `--json` | Prints the result as JSON. |
-
-**`merge-hooks`** — merges the sample Claude Code hooks documented in `hooks-enforcement.md` into `.claude/settings.json`, deduped, never touching anything else already in that file.
-
-| Flag | What it does |
-|---|---|
-| `--library <path>` | Required. |
-| `--root <path>` | Required. |
-| `--json` | Prints the result as JSON. |
-
-Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
-
-## Slash commands
-
-Slash commands are shortcuts **you** type; the agent never runs them on its own. Anything typed after the name is passed to the command (`/audit src/components`). Most of the kit needs no command: the mods and git hooks fire by themselves, and skills load when the agent recognises their trigger. Reach for a command at the moments below. Type `/kit` in a session for this table.
-
-### Most useful commands
-
-| Command | Use it when | How to use it |
-|---|---|---|
-| `/commit-check` | You are about to commit | `/commit-check` or `/commit-check --message "feat: add nav"`. Reports secrets, secret files, stray files and message format; a BLOCK means do not commit. |
-| `/audit` | You want a health check of the whole project | `/audit`, `/audit src/` or `/audit --standard css,html`. Prints counts per rule and the worst files. |
-| `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
-| `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
-| `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
-| `/pickup` | Starting a session | `/pickup`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
-| `/wrap-up` | Ending a session | `/wrap-up` or `/wrap-up next task is the pricing section`. Rewrites `handover.md` in place (no ever-growing log); the task you name goes first under Next steps. Does not commit. |
-| `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
-| `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
-| `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
-| `/format` | You want answers as a table, bullets, one-liners or yes/no | `/format bullets`; `/format reset` returns to the default (a table where the data has structure). |
-| `/narration` | You use the `narrate` add-on and want to mute, replay, or change the voice, volume, speed or pitch | `/narration mute`, `/narration replay`, `/narration voice male`, `/narration speed 1.3`. |
-| `/persona` | You use the `personality` add-on and want replies worded for your skill level | `/persona set female novice`, `/persona off`, `/persona list`. Applies from the next session. |
-
-### All commands
-
-**Kit commands** (templates in [`skills/commands/`](skills/commands/); installed on request by `install-kit` into `.claude/commands/` or `.opencode/commands/`; each runs a kit script and hands the output to the agent, so no skill has to be matched first):
-
-| Command | What it does | Arguments | Needs |
+| Thing | Where it lives | Scope | Turn it off |
 |---|---|---|---|
-| `/audit` | Standards audit of the project | script options: a path, `--standard`, `--rule`, `--top N` | `code-audit` |
-| `/commit-check` | Mechanical pre-commit check of the staged change | `--message "…"`, `--all` | `pre-commit` |
-| `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
-| `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
-| `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
-| `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
-| `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
-| `/githooks` | Shows git hook status and offers to install them | none | `pre-commit` |
-| `/resolve-conflicts` | Resolves merge/rebase conflicts: mode `both` (default), `ours`, `theirs`; pace `all`, `auto` (default), `step`; role guardrails | `--role frontend|backend`, `--out leave|ours|theirs`, `--note "…"` | `resolve-conflicts` |
-| `/responsive-check` | Checks a page at range-based viewports (the six RULE 17 zones by default) and proposes range-based fixes | `--range a-b` (repeatable), `--min N`, `--max N`, `--width W`, `--ranges a-b,…`, `--detect`, `--max-probes N` | `responsive-check` |
-| `/optimize-assets` | Finds heavy assets, converts them (`webp`, `avif`, `jpg`, `mp4`, `woff2`, ...) or compresses them in place of the same format; originals are never touched | `scan [dir]`, `convert <paths> --to webp,avif`, `compress <paths>`, `precompress <paths>`, `tools`, `refs <assets>`, `--preset vision|web` | `optimize-assets` |
-| `/ctx <init|analyze|status|add|detect>` | Sets up and maintains the private `project-context/` docs folder: folders by auto-detect, project type or your own list; an `INDEX.md` per folder so Claude reads facts, not raw files | `init [--folders a,b] [--copy]`, `analyze [folder]`, `status`, `add <folder> <file>`, `detect` | `project-context` |
-| `/figma <folder>` | Turns exported Figma PNG/SVG files into `project-context/design/figma.md`: frame sizes, colors, fonts, type sizes, text. No MCP, no Figma account tokens, no connector cost | a folder or files of exports, optional `--link <figma url>`, `--write` to save | `project-context` |
-| `/narration <setting>` | Controls reply narration without opening a file | `mute`, `unmute`, `stop`, `replay`, `status`, `voice male|female`, `volume 0-100`, `speed 0.5-2`, `pitch -12..12`, `maxSeconds 30-1800` | `narrate` |
-| `/persona <setting>` | Chooses how replies are worded; applies from the next session | `set female|male novice|mid|pro`, `off`, `status`, `list` | `personality` |
-| `/kit` | This cheat sheet | optional: describe your situation | none |
-| `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |
-| `/format <name>` | Sets the response shape for the session, no script | `table`, `bullets`, `oneline`, `bool`, `reset` | none |
-
-**Mod command** (Claude Code, from the `budget-ledger` mod): `/budget` shows the same ledger report.
-
-**Skills by name** (Claude Code turns every installed skill into `/<skill-name> <free text>`, which loads it on purpose instead of waiting for the agent to match it):
-
-| Group | Commands | Use when |
-|---|---|---|
-| Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/pickup` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session`, `/resolve-conflicts`, `/responsive-check`, `/optimize-assets` | the situation in each skill's description |
-| Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
-| Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
-| Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
-| Add-ons | `/project-context`, `/narrate`, `/personality` | setting up that add-on |
-| Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
-| Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
-| OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
-
-**Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
-
-**Good to know**
-- **What is reliable and what is not.** Mechanical layers (the git hooks, the mods, the scripts) always run; skills load by the model's judgment. In live runs on haiku and Sonnet the new skills triggered reliably, but `debug-protocol` did not always (it loaded in roughly 1 of 3 runs on a failing build; the `debug-nudge` mod raises that). `pre-commit` loaded in 30 of 30 haiku runs whenever there was something to commit. Treat the contract and the mods as the guarantee, and skills as the judgment layer.
-- **New add-ons:** the `narrate` skill loaded on 6 of 6 prompts asking for spoken replies or dictation and the `personality` skill on 5 of 6 prompts asking to set up a persona (haiku), with no false trigger across 10 control runs. `/narration` and `/persona` ran in an installed-layout scratch project on haiku.
-- **Tested:** all script-backed kit commands (`/pickup` and `/wrap-up` included) ran in Claude Code (`/audit` was last re-checked at script level after its `--no-fail` change); `/audit` also runs in OpenCode. `/eta` is untested (no script to run headless); `/figma` is covered by unit tests only, not a live run — it's a plain instruction template, same shape as `/kit`. In OpenCode (1.18, free `glm-5.3-flash-free` model) a clean kit install answered with the `[CX]` marker and loaded the right skill on 3 of 3 prompts (`optimize-assets`, `resolve-conflicts`, `responsive-check`) with no skill on a control question. Skills by name were checked for `/debug-protocol` in Claude Code only; Codex was not run.
-- **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
-- **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
-- **`prefilter-rank` mod:** automates `system1-prefilter`'s local-Laya narrowing after Grep/Glob (5-40 results) — adds a ranked read-order reminder, never removes a result. Loopback-only (`127.0.0.1`, checked in code, never the hosted-provider path), fails open if Laya isn't configured or reachable. If Laya is set up but not running, the first qualifying Grep/Glob starts it in the background (`laya-ctl.js start`, at most once per 5 minutes) and goes unranked; later ones are ranked. On CPU, Laya scores about 3 candidates a second (17 files in 5 to 6 s), so the ranking wait is up to 20 s; a GPU makes it near-instant. Needs the addon's local-Laya path already set up; `mod-setup` won't offer it before that.
-- **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
-- **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/githooks`, by git hooks (every tool).
+| Skills and standards | `<project>/.claude/skills/`, `<project>/coding-standards/` | one project | delete the folder |
+| Slash commands | `<project>/.claude/commands/` | one project | delete the file |
+| Mods | installed by `mod-setup` into Claude Code | per user or per project | remove the plug-in with `/plugin` |
+| Git hooks | `<repo>/.git/hooks/` | one repository | `node pre-commit/install-hook.js uninstall` |
+| Narration hook, voices, settings | `~/.claude/settings.json`, `~/.claude/voices/`, `~/.claude/narrate.json` | this device and user, every project | `/narration mute`, or remove the Stop hook |
+| VS Code controls | `~/.vscode/extensions/ai-dev-kit.narrate-buttons-*` | this device and user | `node extensions/narrate-buttons/install.js --remove` |
+| Laya server (started by `prefilter-rank`) | `~/.ai-dev-kit/laya/`, about 2 GB of RAM while loaded, unloads after 10 minutes idle | this device, never per project | `node system1-prefilter/laya-ctl.js stop`, or remove the mod |
+| Persona choice | `~/.claude/personality.json` (project override in `.claude/personality.json`) | user, or one project | `/persona off` |
+| MCP tools, models, keys | `~/.ai-dev-kit/` | this device, never per project | remove the MCP entry from your tool's config |
+| Per-project lessons | `learnings.md` next to each skill | one project, git-ignored | delete the file |
+| Project docs | `<project>/project-context/` | one project, git-ignored | delete the folder |
 
 ## Key ideas
 
@@ -608,46 +658,6 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 - **Intent before implementation, a self-check before handoff.** `intent-capture` pins down goal/constraints/done-when on ambiguous asks before any plan is made; `pre-merge-gate` re-checks a diff against the loaded standards before a commit or review handoff — both are prose protocols, not tool-specific.
 - **Measured, not promised.** Where a claim has a number, the number and its sample size are stated: Haiku 5.5 running a written plan cost $0.049 against $0.581 for Sonnet 5.5 on six test plans (both passed all six); the audit script found the same lines as a model-led audit in 0.2 s with no tokens, where the model cost $0.026 and missed one file (one project, three rules); the output compactor shrank a verbose passing test log by 59% and failure output by about 0%. These are small samples from the author's own projects: indicative, not guarantees.
 - **Claude Code enhancements stay optional and isolated.** Where a Claude Code-only mechanism (like hook-based enforcement in `hooks-enforcement`) can mechanically assist a rule, it lives under `skills/models/claude/` as an opt-in add-on — the underlying contract in `coding-standards/ai-standards.md` works the same with or without it, on any tool.
-
-## Recent additions
-
-- **Install-kit mechanized, then the whole kit ported to TypeScript.** `install-kit.cli.js` now does install/update/uninstall/archive/unarchive/merge-hooks as one deterministic script tracked by a `.ai-dev-kit.json` manifest, instead of a narrated file copy. Every question the installer asks defaults to a click (`AskUserQuestion` in Claude Code); outside a chat tool — OpenCode, Codex, a bare terminal — the same script asks a plain numbered question for whatever flag is missing, built on Node's own `readline` so there's no extra package to install first. All 27 companion scripts are now authored in `.ts` and shipped as compiled `.js`.
-- **Narration controls without hotkeys.** The keyboard hotkeys and voice dictation were removed: the global keyboard hook did not fire reliably and could clash with other shortcuts. Narration is now controlled by `/narration` and by the optional VS Code extension `extensions/narrate-buttons` (a footer tray, an AI Dev Kit sidebar and a Play button that turns yellow when a reply is waiting).
-- **Play-button narration and British voices.** `narrate` now defaults to manual mode (a reply is kept until you press Play, like claude.ai), with `auto` to speak every reply. The default voices are British (Jenny (Dioco) and a Northern English male); older American voices keep working until the new ones are downloaded.
-- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 37 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
-- **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 150 to 190 tokens per session; no accuracy loss on 20 objectively graded questions (Haiku and Sonnet), replies up to 36% shorter.
-- **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
-- **Lower always-on cost, no feature removed.** Measured with `findings/harness/audit.js` (estimates at ~4 characters per token): a typical install adds about 1,750 tokens of skill descriptions per session and the full Claude Code kit about 2,440, plus the `CLAUDE.md` contract (the template is about 1,440 tokens; `install-kit` writes a leaner one without the template preamble, and adds the parallel-session section only with `role-session`). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (0 always-on tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them. Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
-- **Skill Triggers table.** The `CLAUDE.md` contract carries a short table mapping situations to skills ("commit what I have" to `pre-commit`, a failing build to `debug-protocol`, and so on), because skills load by the model's own judgment and sometimes do not. With the table, `pre-commit` loaded 4 of 4 on a "commit what I have" prompt (1 of 2 before). `install-kit` removes a row when its skill is not installed.
-- **Merge conflicts, responsive layouts, asset weight.** Three new workflow skills, each with a script and a command: [`resolve-conflicts`](skills/workflow/resolve-conflicts.md) (modes `both`, `ours`, `theirs`; role scope leaves files owned by another role alone), [`responsive-check`](skills/workflow/responsive-check.md) (viewport plan from the project's own breakpoints, then a Playwright measurement) and [`optimize-assets`](skills/workflow/optimize-assets.md) (scan, convert, compress and pre-compress images, video, fonts and SVG, checking the file signature before reading dimensions). Together with `project-context`, they triggered 14 of 14 times on haiku with no skill named in the prompt.
-- **Project docs without an MCP: `project-context`, `/ctx`, `/figma`.** An opt-in, gitignored `project-context/` folder holds requirements, brand notes and design, each folder with an `INDEX.md`; `/ctx` sets it up and tracks what changed so only new or modified files are re-read. `/figma` needs no Figma connector and no tokens: export frames from Figma as SVG (colors, fonts, type sizes, text) and PNG (reference), and a script drafts `project-context/design/figma.md` from the files. A pre-commit rule blocks staged `project-context/` files.
-- **`debug-nudge` reminds at the first failed check too.** The mod used to speak only at the second failed fix; it now also gives one short reminder at the first failed test or build command of a session, because `debug-protocol` often does not load by itself at that moment. It also reads failure text, because a pipe such as `npm test | tail` hides the exit code and the mod used to see nothing. On a bug with an unclear cause, `debug-protocol` loaded in 3 of 6 haiku runs with the mod and 0 of 6 without (small sample; the bug was fixed in all 12).
-- **Command names that no longer collide.** `/resume` is now `/pickup` and `/hooks` is now `/githooks`, because Claude Code ships built-ins with the old names. `/eta`, `/format`, `/ctx` and `/figma` are new.
-- **`install-kit` removes itself after a clean install** (`install-kit.verify.js --finish`); later additions run from the kit repo.
-- **Time estimates & checkpointing.** `plan-first` now states a time estimate (as a range, not false precision) before any task estimated past 5 minutes, or anything backgrounded or part of a sequential/parallel chain, and designs that work into self-contained checkpoints (target ≤10 min, worst case ≤15, longer only when a step is genuinely unsplittable). The new `/eta` command restates the current estimate/checkpoint on demand without re-deriving it from scratch. The `eta-nudge` mod makes the reminder half deterministic instead of memory-dependent (nudges on a backgrounded call, and every 10 minutes past the first 5). The estimate itself stays the model's judgment call — nothing can mechanize that — but `session-budget.report.js` now surfaces each turn's real wall-clock duration (`budget-ledger` already logged it, just never read it back), so an estimate can finally be checked against what actually happened instead of staying pure vibes.
-- **`prefilter-rank` mod.** Automates `system1-prefilter`'s local-Laya narrowing: ranks a Grep/Glob result (5-40 files) by relevance to the task and adds a read-order reminder, instead of requiring the agent to call the `prefilter` MCP tool itself every time. Task text comes from the session transcript's last user message (`$.session.messages()` — free, no model call). Loopback-only by a host check in code (never trusts `SYSTEM1_BASE_URL` alone), never the hosted-provider path (no-ops if `SYSTEM1_API_KEY` is set instead), fails open if Laya isn't reachable. It also runs `laya-ctl.js start` to bring Laya up (a fixed script path, no user input). `mod-writer.md`'s "no network" rule now carries this one narrow, disclosed exception.
-- **Install protocol, enforced.** [`install-kit`](skills/meta/install-kit.md)'s Step 4 now runs `install-kit.verify.js`, a mechanical re-check of the actual files on disk (flat skill layout, the CommonJS `package.json` shield, the session-protocol file with its Context-code placeholder actually filled in, `comment-style`'s level actually answered, `coding-standards/index.md` present) instead of trusting the agent's own narration — the install isn't reported done while it fails. A new **Stack preset** mode lets the user name a stack directly (Astro, Next.js, Laravel) instead of waiting on Auto-detect's scan; Next.js and Laravel presets install what the kit actually has and say plainly, in the report, which framework-specific layer doesn't exist yet rather than papering over the gap.
-- **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
-- **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
-- **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships nine opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank` and `eta-nudge`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
-- **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
-- **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
-- **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
-
-- **MCP manager and free local/hosted tools.** [`mcp-manager`](skills/mcp/mcp-manager.md) is a meta skill that owns setup interviews, per-client config writing (Claude Code, OpenCode, others), MCP-first-then-fallback routing and global-first layout for every optional MCP server; adding a server is one data file. Shipped servers: Stitch UI prototyping, local image reading (Qwen3-VL), image generation with provider fallback and limit protection, and the Laya-backed file prefilter. All run from one global home (`~/.ai-dev-kit/`) and were verified in a real OpenCode session.
-- **Local decision model.** [`system1-prefilter`](skills/addons/system1-prefilter.md) now supports a free offline provider (Laya, 421M parameters) with a hardware-aware installer and a `prefilter` MCP tool; measured guidance on phrasing, checkpoint choice and thresholds is recorded in the skill.
-- **Controlled-writing rule.** [`skill-writer`](skills/meta/skill-writer.md) now asks for imperative steps, one term per concept and explicit conditions (borrowed from ASD-STE100's disambiguation rules). Measured on two skills: about 16% fewer tokens with equal-or-better rule-following.
-- **Kit audit.** Every skill was checked for frontmatter, trigger-rich descriptions, length, catalog coverage and classification; stale descriptions and an install-kit contradiction were fixed.
-
-- **Tool-routed installs.** `install-kit` now detects the target tool and routes both the skill root and the session-protocol file (`CLAUDE.md` for Claude Code, `AGENTS.md` for OpenCode/Codex) — a contract in a file the tool never opens can no longer pass as a successful install. Parallel-session claims moved from a shared `locks.md` table to atomic `handover/locks.d/` claims with per-session ids, so concurrent Claude Code and OpenCode sessions can't silently clobber each other.
-- **Agent-tool discipline.** [`agent-usage`](skills/workflow/agent-usage.md) defaults every session to inline work — no Agent-tool delegation — unless the user names an agent explicitly or a scope-anchored need is judged and approved first; [`mode-kernel`](skills/workflow/mode-kernel.md) is the shared table governing how that gate (and three other skills' own stop-and-wait gates) behaves across autonomous, planning, and background session modes.
-- **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated session-protocol file/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
-- **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's skill root at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
-- **Tool-compatibility checkpoint.** Any skill that depends on a mechanism only one AI coding tool provides (Claude Code hooks, for example) now declares it structurally via a `compat: <tool>-only` frontmatter field, checked automatically by `install-kit` at install time — so tool-specific features get flagged and kept out of incompatible projects instead of failing silently.
-- **Comment level.** [`comment-style`](skills/standards/comment-style.md) sets one project-wide level for AI-written code comments — `none` (default), `terse`, or `descriptive` — because comments cost output tokens when written and input tokens on every re-read. `install-kit` asks at install; the user can change it any time in-session. Rule-mandated comments (TS `as` justifications, suppression-directive reasons, tool pragmas) still apply at `none`.
-- **Claude 5.5 generation.** [`sonnet-5-5`](skills/models/claude/sonnet-5-5.md), [`opus-5-5`](skills/models/claude/opus-5-5.md), [`opus-5`](skills/models/claude/opus-5.md), and [`fable-5-1`](skills/models/claude/fable-5-1.md) join the lineup, and `claude-all-models` now routes across the current gears with the previous generation kept for pinned projects. These stay universal (no `compat` field) — they encode model behavior and API rules, not any one tool's mechanisms — and each new-generation skill flags the breaking API changes (forced `tool_choice` rejected, thinking blocks bound to model + conversation) that bite when moving up from its predecessor.
-- **Opt-in addons.** [`system1-prefilter`](skills/addons/system1-prefilter.md) introduces a fourth skill-scope category — a capability that's never stack-detected or installed by default, only turned on when the user explicitly asks, then stays pinned as their own durable choice. `skill-scope` now tracks this category alongside permanent-pinned and per-session-archivable.
 
 ## Repository layout
 
@@ -678,28 +688,44 @@ coding-standards/
   CLAUDE.example.md← session-protocol template — wire into CLAUDE.md (Claude Code) or AGENTS.md (OpenCode)
 ```
 
-## Maintaining the kit
+## Recent additions
 
-- **This repo is the canonical home.** Improve skills here, then re-run the install into projects; the installer diffs before overwriting so locally-evolved copies are never silently clobbered.
-- New skills follow the quality bar in [skills/meta/skill-writer.md](skills/meta/skill-writer.md).
-- Standards edits follow the repo's own principles ([index.md → Principles](coding-standards/index.md)): testable, declarative, wrong/right examples mandatory. Machine-checkable rule changes update [`coding-standards/tooling/`](coding-standards/tooling/) in the same commit.
-- `learnings.md` files are gitignored — they belong to the project that earned them. Lessons worth keeping forever get promoted into skill bodies (see `memory-gardener`).
+- **Install-kit mechanized, then the whole kit ported to TypeScript.** `install-kit.cli.js` now does install/update/uninstall/archive/unarchive/merge-hooks as one deterministic script tracked by a `.ai-dev-kit.json` manifest, instead of a narrated file copy. Every question the installer asks defaults to a click (`AskUserQuestion` in Claude Code); outside a chat tool — OpenCode, Codex, a bare terminal — the same script asks a plain numbered question for whatever flag is missing, built on Node's own `readline` so there's no extra package to install first. It also assumes the most common layout (the kit cloned directly inside the target project) and skips the `--root` question entirely when that holds, instead of guessing from the current folder. All 27 companion scripts are now authored in `.ts` and shipped as compiled `.js`.
+- **Narration controls without hotkeys.** The keyboard hotkeys and voice dictation were removed: the global keyboard hook did not fire reliably and could clash with other shortcuts. Narration is now controlled by `/narration` and by the optional VS Code extension `extensions/narrate-buttons` (a footer tray, an AI Dev Kit sidebar and a Play button that turns yellow when a reply is waiting).
+- **Play-button narration and British voices.** `narrate` now defaults to manual mode (a reply is kept until you press Play, like claude.ai), with `auto` to speak every reply. The default voices are British (Jenny (Dioco) and a Northern English male); older American voices keep working until the new ones are downloaded.
+- **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 37 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).
+- **Reply personas: `personality`.** Six original personas (female and male at novice, mid and pro level) that change wording only. The install asks for one of eight choices and copies only that persona. About 150 to 190 tokens per session; no accuracy loss on 20 objectively graded questions (Haiku and Sonnet), replies up to 36% shorter.
+- **Command name clash avoided.** The narration command is `/narration`, because `/narrate` is the name of the skill and Claude Code launched the skill instead of the command.
+- **Lower always-on cost, no feature removed.** Measured with `findings/harness/audit.js` (estimates at ~4 characters per token): a typical install adds about 1,750 tokens of skill descriptions per session and the full Claude Code kit about 2,440, plus the `CLAUDE.md` contract (the template is about 1,440 tokens; `install-kit` writes a leaner one without the template preamble, and adds the parallel-session section only with `role-session`). Command templates carry `disable-model-invocation: true`, so Claude Code keeps their descriptions out of the model's context while you can still type them (0 always-on tokens). Model-skill descriptions dropped their feature lists, since the model name is what triggers them. Measured on haiku: the shortened model skills still triggered 8 of 8 with no false trigger. Details in [`findings/2026-10-27-new-features-audit.md`](findings/2026-10-27-new-features-audit.md).
+- **Skill Triggers table.** The `CLAUDE.md` contract carries a short table mapping situations to skills ("commit what I have" to `pre-commit`, a failing build to `debug-protocol`, and so on), because skills load by the model's own judgment and sometimes do not. With the table, `pre-commit` loaded 4 of 4 on a "commit what I have" prompt (1 of 2 before). `install-kit` removes a row when its skill is not installed.
+- **Merge conflicts, responsive layouts, asset weight.** Three new workflow skills, each with a script and a command: [`resolve-conflicts`](skills/workflow/resolve-conflicts.md) (modes `both`, `ours`, `theirs`; role scope leaves files owned by another role alone), [`responsive-check`](skills/workflow/responsive-check.md) (viewport plan from the project's own breakpoints, then a Playwright measurement) and [`optimize-assets`](skills/workflow/optimize-assets.md) (scan, convert, compress and pre-compress images, video, fonts and SVG, checking the file signature before reading dimensions). Together with `project-context`, they triggered 14 of 14 times on haiku with no skill named in the prompt.
+- **Project docs without an MCP: `project-context`, `/ctx`, `/figma`.** An opt-in, gitignored `project-context/` folder holds requirements, brand notes and design, each folder with an `INDEX.md`; `/ctx` sets it up and tracks what changed so only new or modified files are re-read. `/figma` needs no Figma connector and no tokens: export frames from Figma as SVG (colors, fonts, type sizes, text) and PNG (reference), and a script drafts `project-context/design/figma.md` from the files. A pre-commit rule blocks staged `project-context/` files.
+- **`debug-nudge` reminds at the first failed check too.** The mod used to speak only at the second failed fix; it now also gives one short reminder at the first failed test or build command of a session, because `debug-protocol` often does not load by itself at that moment. It also reads failure text, because a pipe such as `npm test | tail` hides the exit code and the mod used to see nothing. On a bug with an unclear cause, `debug-protocol` loaded in 3 of 6 haiku runs with the mod and 0 of 6 without (small sample; the bug was fixed in all 12).
+- **Command names that no longer collide.** `/resume` is now `/pickup` and `/hooks` is now `/githooks`, because Claude Code ships built-ins with the old names. `/eta`, `/format`, `/ctx` and `/figma` are new.
+- **Time estimates & checkpointing.** `plan-first` now states a time estimate (as a range, not false precision) before any task estimated past 5 minutes, or anything backgrounded or part of a sequential/parallel chain, and designs that work into self-contained checkpoints (target ≤10 min, worst case ≤15, longer only when a step is genuinely unsplittable). The new `/eta` command restates the current estimate/checkpoint on demand without re-deriving it from scratch. The `eta-nudge` mod makes the reminder half deterministic instead of memory-dependent (nudges on a backgrounded call, and every 10 minutes past the first 5). The estimate itself stays the model's judgment call — nothing can mechanize that — but `session-budget.report.js` now surfaces each turn's real wall-clock duration (`budget-ledger` already logged it, just never read it back), so an estimate can finally be checked against what actually happened instead of staying pure vibes.
+- **`prefilter-rank` mod.** Automates `system1-prefilter`'s local-Laya narrowing: ranks a Grep/Glob result (5-40 files) by relevance to the task and adds a read-order reminder, instead of requiring the agent to call the `prefilter` MCP tool itself every time. Task text comes from the session transcript's last user message (`$.session.messages()` — free, no model call). Loopback-only by a host check in code (never trusts `SYSTEM1_BASE_URL` alone), never the hosted-provider path (no-ops if `SYSTEM1_API_KEY` is set instead), fails open if Laya isn't reachable. It also runs `laya-ctl.js start` to bring Laya up (a fixed script path, no user input). `mod-writer.md`'s "no network" rule now carries this one narrow, disclosed exception.
+- **Install protocol, enforced.** [`install-kit`](skills/meta/install-kit.md)'s Step 4 now runs `install-kit.verify.js`, a mechanical re-check of the actual files on disk (flat skill layout, the CommonJS `package.json` shield, the session-protocol file with its Context-code placeholder actually filled in, `comment-style`'s level actually answered, `coding-standards/index.md` present) instead of trusting the agent's own narration — the install isn't reported done while it fails. A new **Stack preset** mode lets the user name a stack directly (Astro, Next.js, Laravel) instead of waiting on Auto-detect's scan; Next.js and Laravel presets install what the kit actually has and say plainly, in the report, which framework-specific layer doesn't exist yet rather than papering over the gap.
+- **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
+- **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
+- **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships nine opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank` and `eta-nudge`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
+- **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
+- **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
 
-## Where things live, and how to turn things off
+- **MCP manager and free local/hosted tools.** [`mcp-manager`](skills/mcp/mcp-manager.md) is a meta skill that owns setup interviews, per-client config writing (Claude Code, OpenCode, others), MCP-first-then-fallback routing and global-first layout for every optional MCP server; adding a server is one data file. Shipped servers: Stitch UI prototyping, local image reading (Qwen3-VL), image generation with provider fallback and limit protection, and the Laya-backed file prefilter. All run from one global home (`~/.ai-dev-kit/`) and were verified in a real OpenCode session.
+- **Local decision model.** [`system1-prefilter`](skills/addons/system1-prefilter.md) now supports a free offline provider (Laya, 421M parameters) with a hardware-aware installer and a `prefilter` MCP tool; measured guidance on phrasing, checkpoint choice and thresholds is recorded in the skill.
+- **Controlled-writing rule.** [`skill-writer`](skills/meta/skill-writer.md) now asks for imperative steps, one term per concept and explicit conditions (borrowed from ASD-STE100's disambiguation rules). Measured on two skills: about 16% fewer tokens with equal-or-better rule-following.
+- **Kit audit.** Every skill was checked for frontmatter, trigger-rich descriptions, length, catalog coverage and classification; stale descriptions and an install-kit contradiction were fixed.
 
-| Thing | Where it lives | Scope | Turn it off |
-|---|---|---|---|
-| Skills and standards | `<project>/.claude/skills/`, `<project>/coding-standards/` | one project | delete the folder |
-| Slash commands | `<project>/.claude/commands/` | one project | delete the file |
-| Mods | installed by `mod-setup` into Claude Code | per user or per project | remove the plug-in with `/plugin` |
-| Git hooks | `<repo>/.git/hooks/` | one repository | `node pre-commit/install-hook.js uninstall` |
-| Narration hook, voices, settings | `~/.claude/settings.json`, `~/.claude/voices/`, `~/.claude/narrate.json` | this device and user, every project | `/narration mute`, or remove the Stop hook |
-| VS Code controls | `~/.vscode/extensions/ai-dev-kit.narrate-buttons-*` | this device and user | `node extensions/narrate-buttons/install.js --remove` |
-| Laya server (started by `prefilter-rank`) | `~/.ai-dev-kit/laya/`, about 2 GB of RAM while loaded, unloads after 10 minutes idle | this device, never per project | `node system1-prefilter/laya-ctl.js stop`, or remove the mod |
-| Persona choice | `~/.claude/personality.json` (project override in `.claude/personality.json`) | user, or one project | `/persona off` |
-| MCP tools, models, keys | `~/.ai-dev-kit/` | this device, never per project | remove the MCP entry from your tool's config |
-| Per-project lessons | `learnings.md` next to each skill | one project, git-ignored | delete the file |
-| Project docs | `<project>/project-context/` | one project, git-ignored | delete the folder |
+- **Tool-routed installs.** `install-kit` now detects the target tool and routes both the skill root and the session-protocol file (`CLAUDE.md` for Claude Code, `AGENTS.md` for OpenCode/Codex) — a contract in a file the tool never opens can no longer pass as a successful install. Parallel-session claims moved from a shared `locks.md` table to atomic `handover/locks.d/` claims with per-session ids, so concurrent Claude Code and OpenCode sessions can't silently clobber each other.
+- **Agent-tool discipline.** [`agent-usage`](skills/workflow/agent-usage.md) defaults every session to inline work — no Agent-tool delegation — unless the user names an agent explicitly or a scope-anchored need is judged and approved first; [`mode-kernel`](skills/workflow/mode-kernel.md) is the shared table governing how that gate (and three other skills' own stop-and-wait gates) behaves across autonomous, planning, and background session modes.
+- **Skill ablation.** [`skill-ablation`](skills/memory/skill-ablation.md) is a periodic companion to `memory-gardener`: archive the accumulated session-protocol file/skills/hooks, run real work with none of it, and restore only what repeated real-world evidence proves is still needed — catching obsolete instructions a line-count cap alone can't.
+- **Live-pulled Shopify skills.** [`shopify-toolkit-install`](skills/stack/shopify-toolkit-install.md) clones Shopify's own AI toolkit straight into a target project's skill root at install time — this kit never stores or forks Shopify-authored files, so authorship and their telemetry hook stay exactly where they belong.
+- **Tool-compatibility checkpoint.** Any skill that depends on a mechanism only one AI coding tool provides (Claude Code hooks, for example) now declares it structurally via a `compat: <tool>-only` frontmatter field, checked automatically by `install-kit` at install time — so tool-specific features get flagged and kept out of incompatible projects instead of failing silently.
+- **Comment level.** [`comment-style`](skills/standards/comment-style.md) sets one project-wide level for AI-written code comments — `none` (default), `terse`, or `descriptive` — because comments cost output tokens when written and input tokens on every re-read. `install-kit` asks at install; the user can change it any time in-session. Rule-mandated comments (TS `as` justifications, suppression-directive reasons, tool pragmas) still apply at `none`.
+- **Claude 5.5 generation.** [`sonnet-5-5`](skills/models/claude/sonnet-5-5.md), [`opus-5-5`](skills/models/claude/opus-5-5.md), [`opus-5`](skills/models/claude/opus-5.md), and [`fable-5-1`](skills/models/claude/fable-5-1.md) join the lineup, and `claude-all-models` now routes across the current gears with the previous generation kept for pinned projects. These stay universal (no `compat` field) — they encode model behavior and API rules, not any one tool's mechanisms — and each new-generation skill flags the breaking API changes (forced `tool_choice` rejected, thinking blocks bound to model + conversation) that bite when moving up from its predecessor.
+- **Opt-in addons.** [`system1-prefilter`](skills/addons/system1-prefilter.md) introduces a fourth skill-scope category — a capability that's never stack-detected or installed by default, only turned on when the user explicitly asks, then stays pinned as their own durable choice. `skill-scope` now tracks this category alongside permanent-pinned and per-session-archivable.
 
 ## Frequently asked questions
 
