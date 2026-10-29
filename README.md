@@ -264,7 +264,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | [skill-writer](skills/meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
 | [mod-writer](skills/meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](skills/meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
-| [install-kit](skills/meta/install-kit.md) | Install skills + standards into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `verify.js` companion mechanically re-checks the result before the install is reported done; removes its own project copy once the install verifies clean |
+| [install-kit](skills/meta/install-kit.md) | Install, update, uninstall, archive/unarchive or merge git hooks into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `cli.js` does the mechanical copy/move deterministically (tracked by a `.ai-dev-kit.json` manifest), `verify.js` mechanically re-checks the result before the install is reported done; click-to-answer in Claude Code, its own arrow-key terminal menu elsewhere; runs from the library, never copied into the target project |
 | [skill-scope](skills/meta/skill-scope.md) | Canonical pinned/conditional-pinned/archivable classification — install-kit and handover both read this, edited nowhere else |
 | [misfire-log](skills/meta/misfire-log.md) | Opt-in add-on — logs a misfire (a skill/mod/addon that should have fired but didn't, or got bypassed) the moment one is noticed; `misfire-log.report.js` ranks the repeat offenders for the next kit update |
 
@@ -382,6 +382,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
 | `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
 | `project-context/scan.js` and `figma.js` | Tracks which project docs changed; turns exported Figma PNG or SVG files into a design summary | `/ctx`, `/figma` |
+| `install-kit/cli.js` | Installs, updates, uninstalls, archives/unarchives skills and merges git hooks — the mechanical half of the installer; prompts its own arrow-key terminal menu for any flag left out outside Claude Code | by the installer |
 | `install-kit/verify.js` | Re-checks an install on disk before it is reported done | by the installer |
 | `narrate/speak.js`, `setup.js` | Narration and installer ([reference](#voice-narration-and-personas)) | `/narration` |
 | `personality/inject.js`, `setup.js` | Persona injector and installer | `/persona` |
@@ -391,12 +392,86 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 
 ## Install into a project
 
-1. Copy `skills/` — and `coding-standards/` if the project should carry the standards — into the project root.
-2. Open Claude Code (or your AI coding tool) in that project and say:
+1. Copy `skills/` — and `coding-standards/` if the project should carry the standards — into the project root. (Or keep one clone of this repo anywhere and point every project at it with `--library <path>`; either way, it's the same `install-kit.cli.js` doing the work.)
+2. Open your AI coding tool in that project and say:
 
    > read skills/README.md and install
 
-3. Choose **everything**, **pick**, **auto-detect** (scans the project and cites the signal before pinning anything), or a **stack preset** (name the stack directly — Astro, Next.js, Laravel — no scan needed). The installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), mechanically re-verifies the result (`install-kit.verify.js`), and reports what was installed — or exactly what still needs fixing before it's reported done.
+3. Choose **everything**, **pick**, **auto-detect** (scans the project and cites the signal before pinning anything), or a **stack preset** (name the stack directly — Astro, Next.js, Laravel — no scan needed). The installer detects which coding tool you're in, copies the chosen skills to that tool's skill root (`.claude/skills/` for Claude Code, `.opencode/skills/` for OpenCode), wires the standards into that tool's session file (`CLAUDE.md` or `AGENTS.md` respectively), mechanically re-verifies the result, and reports what was installed — or exactly what still needs fixing before it's reported done. `install-kit` itself is never copied into your project — it always runs from wherever the library lives, against `--root <target>`, so there's nothing left behind to clean up afterward.
+
+**How you answer those questions depends on where you're running it — pick based on that, not preference:**
+
+| Where | How you answer | Best for |
+|---|---|---|
+| **Claude Code chat (recommended default)** | Click multiple-choice options (`AskUserQuestion`) at every decision point — mode, tool confirmation, which skills, comment style, context code. Typing only comes up for a hand-picked skill list or an override's specifics. | Anyone already working in Claude Code — fewest keystrokes, nothing to remember. |
+| **OpenCode, Codex, or a bare terminal** | `install-kit.cli.js` drops into its own arrow-key/checkbox menu for whatever flag you leave out — the same kind of prompt `create-next-app` uses. | Tools with no multiple-choice chat widget, or installing with no AI in the loop at all. |
+| **Direct CLI flags** (`--tool`, `--skills`, `--standards`, ...) | No prompts; fully scripted. | CI, re-installs across many projects, or anyone who already knows exactly what they want. |
+
+None of these change *what* gets installed — only how you're asked. If you're not sure, let whichever tool you're already in drive it; it'll default to the right mode for where it's running.
+
+### Every `install-kit.cli.js` command and flag
+
+Run as `node <library>/skills/meta/install-kit.cli.js <command> [flags]`. **Leave any flag below out while running on a real terminal (not through Claude Code) and the script prompts for exactly that one instead of erroring** — an arrow-key menu for a single choice, a checkbox list for several, a text box for a typed value.
+
+**`list`** — prints every skill (and its companions) the library can install; nothing is written to disk.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. Path to the ai-dev-kit repo or any clone of it. |
+| `--json` | Prints machine-readable JSON instead of plain text. |
+
+**`install`** — copies the chosen skills (and, optionally, the standards system) into a target project. Safe to re-run; only files that actually differ get touched.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. Where the skills are copied *from*. |
+| `--root <path>` | Required. The target project to install *into*. |
+| `--tool claude\|opencode\|codex` | Required. Which tool's skill root and session file to route to (`.claude/skills/`+`CLAUDE.md`, `.opencode/skills/`+`AGENTS.md`, or `.agents/skills/`+`AGENTS.md`). |
+| `--skills a,b,c` | The skill names to install, comma-separated. Append `:companion1+companion2` to a name to install only specific companions of it (e.g. `mcp-manager:stitch`) instead of all of them. |
+| `--standards` | Also copies `coding-standards/` and generates the project's `CLAUDE.md`/`AGENTS.md` (only if that file doesn't already exist). |
+| `--comment-style-level none\|terse\|descriptive` | Sets how much the AI comments its own code. Only meaningful when `comment-style` is in `--skills`; carries forward automatically on a later `install`/`update` if you don't repeat it. |
+| `--context-code X7\|none` | The 2–4 character marker RULE AI-01 asks for, stamped into the generated session-protocol file. Only used together with `--standards`. `none` writes a bare `[CX]` instead. |
+| `--force` | Overwrites an existing `coding-standards/` folder wholesale instead of only merging the files that changed. |
+| `--json` | Prints the result (including the verify check) as JSON instead of plain text. |
+
+**`update`** — re-syncs already-installed skills with whatever the library currently has, and offers any pending skill-rename migrations.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. |
+| `--root <path>` | Required. |
+| `--skills a,b` | Which already-installed skills to refresh. |
+| `--all` | Refresh every skill the manifest (`.ai-dev-kit.json`) already tracks, instead of naming them. |
+| `--context-code X7\|none` | Re-applies a new context code if the project has `coding-standards/` installed. |
+| `--apply-migrations a,b\|all` | Applies pending rename migrations for the named old skill name(s), or `all` of them — carries `learnings.md` forward, deletes the old folder only after the new one lands. Without this flag, a pending migration is only reported, never applied. |
+| `--json` | Prints the result as JSON. |
+
+**`uninstall`** — removes skill folders this kit installed. Never touches a hand-authored or third-party folder sharing the same skill root, even with `--all`.
+
+| Flag | What it does |
+|---|---|
+| `--root <path>` | Required. |
+| `--skills a,b` | Which installed skills to remove. |
+| `--all` | Remove every skill the manifest tracks. |
+| `--remove-standards` | Also deletes `coding-standards/`. The session-protocol file (`CLAUDE.md`/`AGENTS.md`) is **never** deleted by any flag — it may carry your own edits; remove it yourself if you want it gone too. |
+| `--json` | Prints the result as JSON. |
+
+**`archive`** / **`unarchive`** — move a skill between the active skill root and `<tool-dir>/skills-archive/` (still on disk, just invisible to the tool) and back. This is what `handover` calls to "mount/unmount" a skill for a session that doesn't need it.
+
+| Flag | What it does |
+|---|---|
+| `--root <path>` | Required. |
+| `--skills a,b` | Which skills to archive (must currently be installed) or unarchive (must currently be archived). |
+| `--all` | Archive every currently-installed skill, or unarchive every currently-archived one. |
+| `--json` | Prints the result as JSON. |
+
+**`merge-hooks`** — merges the sample Claude Code hooks documented in `hooks-enforcement.md` into `.claude/settings.json`, deduped, never touching anything else already in that file.
+
+| Flag | What it does |
+|---|---|
+| `--library <path>` | Required. |
+| `--root <path>` | Required. |
+| `--json` | Prints the result as JSON. |
 
 Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
@@ -488,6 +563,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 ## Recent additions
 
+- **Install-kit mechanized, then the whole kit ported to TypeScript.** `install-kit.cli.js` now does install/update/uninstall/archive/unarchive/merge-hooks as one deterministic script tracked by a `.ai-dev-kit.json` manifest, instead of a narrated file copy. Every question the installer asks defaults to a click (`AskUserQuestion` in Claude Code); outside a chat tool — OpenCode, Codex, a bare terminal — the same script drops into its own arrow-key/checkbox menu (via `prompts`, the library `create-next-app` uses) for whatever flag is missing. All 27 companion scripts are now authored in `.ts` and shipped as compiled `.js`.
 - **Narration controls without hotkeys.** The keyboard hotkeys and voice dictation were removed: the global keyboard hook did not fire reliably and could clash with other shortcuts. Narration is now controlled by `/narration` and by the optional VS Code extension `extensions/narrate-buttons` (a footer tray, an AI Dev Kit sidebar and a Play button that turns yellow when a reply is waiting).
 - **Play-button narration and British voices.** `narrate` now defaults to manual mode (a reply is kept until you press Play, like claude.ai), with `auto` to speak every reply. The default voices are British (Jenny (Dioco) and a Northern English male); older American voices keep working until the new ones are downloaded.
 - **Read replies aloud: `narrate`.** An opt-in Stop hook speaks each reply with Piper, offline, with a male and a female voice, mute, volume, speed and pitch. Controls are the `/narration` slash command plus VS Code buttons (`extensions/narrate-buttons`). By default a reply is kept and played with the Play button (`/narration play`), like claude.ai; `/narration mode auto` speaks every reply as it arrives. The default voices are British (Jenny and a Northern English male). Replies from parallel sessions queue instead of cutting each other off, each reply is spoken once on its own, `/narration replay` plays it again, and playback follows the Windows default output, so headphones work. Voices are downloaded at install and are not in the repo; custom Piper voices can be added. Covered by 37 script tests; see the status note in [Voice, narration and personas](#voice-narration-and-personas).

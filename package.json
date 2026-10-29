@@ -1,0 +1,17 @@
+{
+  "name": "ai-dev-kit",
+  "private": true,
+  "description": "Build tooling for the kit library itself. Never installed into a target project -- see skills/meta/install-kit.md.",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/prompts": "^2.4.9",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
+}

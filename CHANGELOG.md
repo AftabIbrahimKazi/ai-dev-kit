@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-29
+
+### Added
+- `install-kit.cli.js`: install/update/uninstall/archive/unarchive/merge-hooks run as one deterministic script instead of a narrated file copy, tracked by a `.ai-dev-kit.json` manifest at the target root so later runs only ever touch what the kit itself put there.
+- `archive`/`unarchive` commands: move a skill in and out of `<tool-dir>/skills-archive/` without hand-moving files; `handover`'s per-session archive step now calls this instead of a manual move.
+- `merge-hooks` command: pulls the `<!-- hook:core -->`-marked sample hook JSON straight out of `hooks-enforcement.md` and merges it into `.claude/settings.json`, deduped, never touching anything else already there.
+- A standalone interactive terminal mode in `install-kit.cli.js`, via `prompts` (the same library `create-next-app` uses): any command run with a flag left out, on a real terminal, now prompts with an arrow-key/checkbox menu for exactly what's missing. For OpenCode, Codex, or anyone running the script directly with no multiple-choice chat tool in the loop; Claude Code always passes every flag explicitly, so this path never fires for it.
+- `install-kit.md`'s own conversational flow now defaults to multiple-choice clicks (`AskUserQuestion`) at every decision point instead of typed prose, with typing reserved for genuinely open-ended answers (an override's specifics, a hand-picked skill list, a rejected context-code suggestion).
+
+### Changed
+- All 27 kit companion scripts ported `.js` → `.ts` (root `package.json` + `tsconfig.json`, `npm run build`). Both are committed: the `.js` is the real shipped artifact (a target project never runs a build), the `.ts` is how it's maintained.
+
+### Removed
+- `install-kit`'s self-removal step (`install-kit.verify.js --finish`, added 2026-10-27). `install-kit` is no longer copied into a target project at all, so there is nothing left to remove — every command now runs from the library against `--root <target>`.
+
+### Fixed
+- `wavSeconds` (`narrate.speak.ts`) and `readDims` (`optimize-assets.convert.ts`) were missing `export`, left over from the TypeScript port — their own test files were silently failing on the compiled output.
+
 ## 2026-10-28
 
 ### Removed

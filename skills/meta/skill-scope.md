@@ -56,7 +56,9 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
 ### Per-session archivable (handover toggles from the stated next task)
-`perf-audit`, `code-audit`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `install-kit`
+`perf-audit`, `code-audit`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`
+
+`install-kit` is no longer installed into a project at all (it runs from the library against `--root <target>`, per its own skill file), so it has nothing to archive and is not part of this set.
 
 `code-audit` is archivable like `perf-audit`: it fires on a cleanup or audit task. `pre-merge-gate`'s `edit-check.js` uses its engine when present and falls back to its own frozen copy of the per-edit rules when it is archived, so archiving breaks nothing.
 

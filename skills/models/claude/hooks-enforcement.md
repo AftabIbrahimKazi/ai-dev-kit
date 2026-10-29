@@ -24,6 +24,7 @@ This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy
 
 ## Sample config
 `SessionStart` hook — injects the AI-02 declaration reminder into every new session's context, since a model under context pressure is the one most likely to skip it unprompted:
+<!-- hook:core -->
 ```json
 {
   "hooks": {
@@ -34,6 +35,7 @@ This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy
 }
 ```
 `PreToolUse` hook (matcher `Edit|Write`) — blocks the first edit until the model has completed its own AI-02 declaration:
+<!-- hook:core -->
 ```json
 {
   "hooks": {
@@ -46,6 +48,7 @@ This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy
 The marker file is written by the **model**, as the last step of its AI-02 declaration — never by the hook itself, which only checks for it.
 
 `UserPromptSubmit` hook — re-injects the AI-01 reminder on every user message, because the token tends to drop in long sessions once the original instruction is far back in context. It names no code, so it never goes stale; the model reads the code from `CLAUDE.md`:
+<!-- hook:core -->
 ```json
 {
   "hooks": {
@@ -57,7 +60,11 @@ The marker file is written by the **model**, as the last step of its AI-02 decla
 ```
 Costs roughly 25 input tokens per user message, mostly served from cache after the first turn.
 
-Merge these into the target's `.claude/settings.json` — never overwrite an existing one.
+**Merge these into the target's `.claude/settings.json` — never overwrite an existing one. Mechanical merge, run it instead of hand-editing:**
+```
+node <library>/skills/meta/install-kit.cli.js merge-hooks --library <library> --root <target>
+```
+It reads the three `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
 
 ## Pre-commit gate (separate from AI-01–AI-03, same hook mechanism)
 
