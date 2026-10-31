@@ -30,10 +30,7 @@ The kit holds all six, but an install copies **one**, because a session needs on
 | 7 | `none` | nothing; no personality is applied |
 | 8 | `custom` | a persona of the user's own: their file, or a starter to edit |
 
-Run `node setup.js --install <choice> [--to <skill-root>/personality] [--file my-persona.md]`. It copies the injector, this doc and the chosen persona (never the other five), and saves the choice. Then add the hook to `~/.claude/settings.json` (skip for `none`):
-```json
-{ "hooks": { "SessionStart": [{ "hooks": [{ "type": "command", "command": "node \"<skill-root>/personality/inject.js\"" }] }] } }
-```
+Run `node setup.js --install <choice> --hook [--file my-persona.md]`. It installs into `~/.claude/skills/personality/` (the injector, this doc and the chosen persona, never the other five), saves the choice, and points the SessionStart hook in `~/.claude/settings.json` at that copy, adding the hook or repairing one that names another (stale) copy. Skip the hook for `none`. Re-run after a kit update. Without `--hook` you can still use `--to <skill-root>/personality` and add the hook by hand, but a hook into one project's folder goes stale.
 A persona that is not installed can be added later by running setup again from the kit repo; switching with `--set` to one that is not installed is refused with that hint. `--status`, `--list`, `--show` (prints the exact text injected) and `--off` work too, as `/persona <setting>` once the command is installed. A project can override the choice with `<project>/.claude/personality.json`, for example `{"gender":"male","level":"pro"}` or `{"custom":true}`.
 
 ## Change or replace a persona
