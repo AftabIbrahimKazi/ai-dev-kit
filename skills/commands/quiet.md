@@ -1,5 +1,5 @@
 ---
-description: Run a noisy command (tests, build, install) with its output shortened; failures always kept
+description: Run a noisy command with shortened output; failures kept
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

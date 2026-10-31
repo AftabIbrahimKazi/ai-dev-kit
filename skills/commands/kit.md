@@ -1,5 +1,5 @@
 ---
-description: Cheat sheet - which ai-dev-kit command to use for the situation you are in
+description: Cheat sheet: which kit command fits your situation
 disable-model-invocation: true
 ---
 Answer from this table only. If the user typed a situation after `/kit`, name the single best command for it and one line on how to use it; otherwise print the table.

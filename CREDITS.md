@@ -23,6 +23,15 @@ This repository (skills, standards, scripts) is [MIT-licensed](LICENSE). It buil
 
 The Laya server speaks a "Jev-compatible" wire protocol (per Laya's own documentation); the typed-decision contract that `system1-prefilter` is written against follows that shape.
 
+## Adapted from MIT-licensed skills
+
+Both are MIT-licensed; their notices are kept here. The kit's versions are condensed rewrites, not copies, and the originals are not bundled.
+
+| Source | Created by | Used for |
+|---|---|---|
+| [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | Cloudflare | `security-audit` skill and `QA-SEC-14` to `QA-SEC-20`: five-part finding bar, `confirmed` vs `needs_validation`, attack classes, sandbox-before-run rule |
+| [Nutlope/hallmark](https://github.com/Nutlope/hallmark) | Nutlope (Together AI) | `ui-design` skill and `design-standards.md`: Floor/Reflex/Finish tiers, job-first shape, ask-once, Picks block |
+
 ## Ideas borrowed (no text or data copied)
 
 - **ASD-STE100 Simplified Technical English** — ASD, the AeroSpace and Defence Industries Association of Europe. `skill-writer`'s controlled-writing rule borrows its disambiguation principles (one term per concept, explicit conditions, short imperative steps). No part of the specification or its dictionary is reproduced; the specification is ASD's and is obtained from them.

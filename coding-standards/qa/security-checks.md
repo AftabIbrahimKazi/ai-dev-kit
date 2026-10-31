@@ -191,3 +191,74 @@ All form input validation that exists on the client side must be treated as
 a UX convenience only — never as a security control. Claude must flag any
 form that relies solely on client-side validation for security-critical
 fields.
+
+---
+
+## RULE QA-SEC-14 — Authorization is checked per resource on every path
+
+Authentication proves who the caller is; it does not prove the caller may touch
+this record. Every route, action and background job that reads or changes a
+resource checks the caller's right to that specific resource, on the server.
+
+- The same state change reached by another path (bulk, batch, import, export,
+  API versus UI, webhook) enforces the same check.
+- A request field never overrides what the permission system restricts
+  (`role`, `userId`, `tenantId`, `isAdmin`).
+- Take the owner from the session, never from the request body or URL.
+
+```js
+// Wrong — trusts the id in the URL
+const invoice = await db.invoices.get(req.params.id);
+
+// Right — scoped to the caller
+const invoice = await db.invoices.get(req.params.id, { ownerId: session.userId });
+if (!invoice) return notFound();
+```
+
+---
+
+## RULE QA-SEC-15 — Untrusted data reaches no dangerous sink raw
+
+Every value from a user, header, file, queue or other service reaches queries, shell, paths, redirects, templates, fetches and deserialisers only in a safe form (parameters, argument arrays, allow-lists).
+
+- Safe-when-stored data is re-checked at the sink (a slug used as a path, a name used as a template).
+- No server fetch of a user-supplied URL without an allow-list; re-check the address after each redirect and block internal ranges.
+- A path built from input is resolved, then checked to sit inside the intended directory.
+
+---
+
+## RULE QA-SEC-16 — Security failures close, never open
+
+Missing config, an unreachable auth service, a failed signature check, a failed
+decrypt and an unknown role all deny the request. No `catch` falls back to the
+unauthenticated, unencrypted or unchecked path.
+
+---
+
+## RULE QA-SEC-17 — Responses do not reveal what the caller may not see
+
+"Does not exist" and "no access" return the same status, body and similar timing. Login, reset and invite answer the same for known and unknown accounts. Search, filter and sort never expose out-of-scope fields. Preview tokens cover one item.
+
+---
+
+## RULE QA-SEC-18 — Debug, admin and sample access is gated
+
+Debug mode, `/debug`, `/admin`, `/env`, `/metrics`, seed accounts and sample
+credentials cannot be reached in production: not by environment variable, query
+parameter or header. `.env`, `*.pem` and `*.key` are in `.gitignore`.
+
+---
+
+## RULE QA-SEC-19 — Check-then-act on shared state is atomic
+
+Balances, stock, one-time tokens, approvals and quotas change inside a
+transaction or with a conditional write. A read followed by a separate write
+lets two requests both pass the check.
+
+---
+
+## RULE QA-SEC-20 — A security fix ships with a test that fails without it
+
+Fix a confirmed finding with the smallest change that closes the boundary, and
+add a regression test that fails on the old code. A fix without a test is
+treated as unverified.

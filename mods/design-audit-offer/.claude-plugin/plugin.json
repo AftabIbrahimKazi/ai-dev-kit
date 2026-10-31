@@ -1,0 +1,8 @@
+{
+  "name": "design-audit-offer",
+  "version": "0.1.0",
+  "description": "After the second edit to a UI file (html, css, tsx, vue, svelte, astro and similar) in a project that has a design source (DESIGN.md, project-context/design/, .hallmark/), adds one line telling the model to offer a UI/UX audit against the design standards once. Reminder only; it never audits, never blocks and never changes the design. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

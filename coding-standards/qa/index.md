@@ -69,6 +69,6 @@ new prefix here — it never touches another file's numbering.
 | [definition-of-done.md](definition-of-done.md) | What "done" means; Claude's self-directed QA pass |
 | [branch-gates.md](branch-gates.md) | dev → test → beta → main promotion checklists |
 | [logic-and-error-checks.md](logic-and-error-checks.md) | Code-path tracing, async error handling, null checks, state coverage |
-| [security-checks.md](security-checks.md) | XSS, secrets, eval, CSP, dependency vulnerabilities, and related checks |
+| [security-checks.md](security-checks.md) | XSS, secrets, eval, CSP, dependencies, authorization, injection sinks, fail-closed, enumeration, races (QA-SEC-01–20) |
 | [e2e-testing.md](e2e-testing.md) | Playwright fixtures/POM reuse, when specs are authored, keeping specs current |
 | [bug-reporting.md](bug-reporting.md) | Standard bug report format and severity levels |

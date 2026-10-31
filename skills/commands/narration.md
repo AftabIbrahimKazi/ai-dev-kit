@@ -1,5 +1,5 @@
 ---
-description: Control reply narration: play, mode manual|auto, mute, unmute, voice male|female, volume, speed, pitch, status
+description: Control reply narration: play, mode, mute, voice, volume, speed, status
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

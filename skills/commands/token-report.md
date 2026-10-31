@@ -1,5 +1,5 @@
 ---
-description: Token and cost report for recent sessions from the budget-ledger log (same data as the mod's /budget)
+description: Token and cost report for recent sessions (same data as /budget)
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

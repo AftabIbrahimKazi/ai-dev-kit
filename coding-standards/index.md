@@ -119,6 +119,7 @@ When editing a file, identify its role first, then load the correct partial from
 | [performance-standards.md](performance-standards.md) | Performance — assets, scripts, CSS, Core Web Vitals |
 | [accessibility-standards.md](accessibility-standards.md) | Accessibility — WCAG 2.1 AA, keyboard, ARIA, contrast |
 | [qa/index.md](qa/index.md) | QA umbrella — definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
+| [design-standards.md](design-standards.md) | What to make — Floor/Reflex/Finish rules against generated-looking UI (DES-01–15) |
 | [ai-standards.md](ai-standards.md) | AI behaviour — hallucination detection, token efficiency |
 | [frameworks/astro.md](frameworks/astro.md) | Astro-specific additions and overrides |
 | [frameworks/bootstrap.md](frameworks/bootstrap.md) | Bootstrap conflicts, violations, and workarounds |

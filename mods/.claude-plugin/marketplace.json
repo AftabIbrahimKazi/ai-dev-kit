@@ -56,6 +56,16 @@
       "description": "Reminder only: nudges once when a Bash/PowerShell call is backgrounded, and every 10 minutes of wall-clock task time after the first 5, to restate or give a time estimate and checkpoint (plan-first's rule). Never computes the estimate itself, never blocks."
     },
     {
+      "name": "design-audit-offer",
+      "source": "./design-audit-offer",
+      "description": "Reminder only: after the second distinct UI file edit (html, css, tsx, vue, svelte, astro) in a project with a design source (DESIGN.md, project-context/design/, .hallmark/), adds one line telling the model to offer a UI/UX audit against the design standards once. Never audits, blocks or changes the design."
+    },
+    {
+      "name": "marker-guard",
+      "source": "./marker-guard",
+      "description": "Enforces AI-01 for the user. The [CX] marker shows the AI has not forgotten the project context. When a main-loop reply does not start with the marker the project's CLAUDE.md or AGENTS.md defines (with its Context code), shows one warning line beneath it. Never writes the marker itself, never discards or blocks. After a real compaction it also shows one notice that the standards may have left the context. Does nothing without a protocol file that defines the marker."
+    },
+    {
       "name": "aiignore-guard",
       "source": "./aiignore-guard",
       "description": "Keeps the AI out of files it should not read: the project's .aiignore, paths that belong to another role (conflict-roles.json: the active role's out list, or anything another role lists under in), the current task's scope (/focus, else the role's board row) and folders local Laya judges unrelated to the prompt. The first touch of such a path is denied with the snag protocol (rank names with prefilter, retry once); unscoped Grep and Glob results come back without ignored and out-of-role files. Does nothing without these files."

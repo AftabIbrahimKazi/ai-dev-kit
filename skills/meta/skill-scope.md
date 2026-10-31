@@ -56,7 +56,7 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
 ### Per-session archivable (handover toggles from the stated next task)
-`perf-audit`, `code-audit`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
+`perf-audit`, `code-audit`, `security-audit`, `ui-design`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
 
 `install-kit` is no longer installed into a project at all (it runs from the library against `--root <target>`, per its own skill file), so it has nothing to archive and is not part of this set.
 
@@ -69,7 +69,7 @@ Each fires only on a specific task instance nameable in a next-task line, not a 
 
 `mcp-manager` is the opt-in router for every MCP server: one skill, one companion file per server, chosen individually in its own setup interview. Adding a server never adds a skill or a classification row.
 
-`mod-setup` is the same for Claude Code mods (`compat: claude-code-only`): one skill, one folder per mod under `mods/`, each chosen individually after a review of what it touches. Adding a mod adds no skill and no classification row. Four mods run an engine script, a companion of a universal skill that installs with it: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`), `budget-ledger`'s `/budget` (`session-budget`) and `output-compact` (`session-budget`'s `compact.js`). `guard`, `debug-nudge`, `standards-chain`, `eta-nudge` and `aiignore-guard` carry their own rules and need no engine.
+`mod-setup` is the same for Claude Code mods (`compat: claude-code-only`): one skill, one folder per mod under `mods/`, each chosen individually after a review of what it touches. Adding a mod adds no skill and no classification row. Four mods run an engine script, a companion of a universal skill that installs with it: `precommit-gate` (`pre-commit`), `edit-check` (`pre-merge-gate`), `budget-ledger`'s `/budget` (`session-budget`) and `output-compact` (`session-budget`'s `compact.js`). `guard`, `debug-nudge`, `standards-chain`, `eta-nudge`, `design-audit-offer`, `marker-guard` and `aiignore-guard` carry their own rules and need no engine.
 
 `misfire-log` is a standalone logging aid (one gitignored file, two scripts) — it needs no key and no service, and nothing else in the kit depends on it or degrades if it's absent.
 

@@ -75,7 +75,7 @@ const UNIVERSAL_SKILLS = [
     'intent-capture', 'plan-first', 'interpretation-checkpoint',
 ];
 const ARCHIVABLE_SKILLS = [
-    'perf-audit', 'code-audit', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
+    'perf-audit', 'code-audit', 'security-audit', 'ui-design', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
     'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer', 'command-writer', 'cli-writer',
 ];
 // Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --

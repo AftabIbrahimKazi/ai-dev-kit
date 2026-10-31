@@ -16,6 +16,8 @@ Rules AI-01 to AI-03 exist to detect and recover from context loss. A response p
 
 ## RULE AI-01 — Every response begins with [CX]
 
+**Purpose: the marker is for the user.** It lets you see at a glance that the AI has not forgotten the project context. A reply without it tells you to stop trusting the session, not that the AI skipped a formality.
+
 The AI must begin every response with the token `[CX]` before any other content, including during the thinking stage. This is a context-active signal — it confirms the AI has the project standards loaded and is operating within them.
 
 If the project's `CLAUDE.md` sets a **Context code** (a 2–4 character token the developer chose, e.g. `X7`), the token is `[CX <code>]` instead — the code must be read from `CLAUDE.md`, never guessed or carried over from another project. A bare `[CX]` in any other rule's example stands for whichever full token this project uses.
