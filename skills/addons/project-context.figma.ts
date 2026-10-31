@@ -142,7 +142,7 @@ export function scan(o: FigmaArgs): FigmaScanResult {
 }
 
 const dims = (s: Dims | null | undefined): string => (s ? `${Math.round(s[0])} x ${Math.round(s[1])}` : 'unknown');
-const cell = (s: unknown): string => String(s).replace(/\|/g, '\\|').replace(/\s+/g, ' ');
+const cell = (s: unknown): string => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\s+/g, ' ');
 
 export function render(r: FigmaScanResult): string {
   const L = ['# Figma intake', '', r.link ? `Source: ${r.link}` : 'Source: exported frames (no link recorded)', '',
