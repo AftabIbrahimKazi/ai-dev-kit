@@ -22,7 +22,7 @@ A commit is the one operation where sloppiness becomes permanent history. This p
 
 ## Step 2 — Project standards
 - Read the project's git standard if one exists (`coding-standards/git-standards.md`, CONTRIBUTING, etc.) and follow its message format exactly — otherwise default to imperative summary ≤72 chars + body explaining *why* when non-obvious.
-- **Versioning:** if the project has a versioning standard/changelog, check whether this change class requires a bump/entry — do it in the same commit.
+- **Versioning:** if the project has a versioning standard/changelog, check whether this change class requires a bump/entry and do it in the same commit using the `version-bump` skill (`node <skill-root>/version-bump/bump.js <major|feature|patch> [scope] --added/--fixed/--changed "…"`) if it is installed.
 - Branch check: if on the default branch and the project's flow uses feature branches, branch first.
 - Hooks: never bypass (`--no-verify` is off the table); a failing hook is a bug to fix, not an obstacle.
 
