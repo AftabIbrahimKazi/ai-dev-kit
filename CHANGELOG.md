@@ -6,6 +6,7 @@
 - `security-audit` skill and `QA-SEC-14` to `QA-SEC-20` in `coding-standards/qa/security-checks.md`: authorization per resource, sinks, fail-closed, enumeration, gated debug access, atomic check-then-act, fix plus regression test. Adapted from Cloudflare's MIT `security-audit-skill`.
 - `ui-design` skill and `coding-standards/design-standards.md` (`DES-01` to `DES-15`): says what to build, not only how to write it, in Floor/Reflex/Finish tiers. Adapted from Hallmark (MIT). Both skills are archivable.
 - `design-audit-offer` mod: after the second UI file edit in a project with a design source, adds one line so the model offers a UI/UX audit once. Added because the same instruction in `CLAUDE.md` was ignored in headless runs; live run showed the offer line. Reminder only.
+- Token trims: 30 skill descriptions shortened (triggers kept); `CLAUDE.example.md` lost a duplicated section; `handover` and `plan-first` now keep their rarely used parts in companion files (`handover/extras.md`, `plan-first/delegated.md`) that load only when needed, cutting about 1,000 tokens from each `handover` load and about 800 from each `plan-first` load.
 - `marker-guard` mod: enforces AI-01. When a main-loop reply lacks the `[CX]` marker (or its Context code), shows one warning line beneath it. It never writes the marker itself, since that would fake the signal. `ai-standards.md` and `CLAUDE.example.md` now state the purpose: the marker lets the user see the AI has not forgotten the project context.
 
 ## 2026-10-31
