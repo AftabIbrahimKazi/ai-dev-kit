@@ -255,3 +255,25 @@ t('a layout with a <slot> keeps its head checks but is not judged on main, h1 or
   const layout = lines('<!doctype html>', '<html lang="en"><head><title>T</title></head>', '<body><main><slot /></main></body></html>');
   assert.deepStrictEqual(hits('Layout.astro', layout).sort(), ['seo-02@1', 'seo-06@1', 'seo-07@1']);
 });
+t('cli: .aiignore skips listed dirs and globs, ignores comments and blanks', () => {
+  const d = tmp();
+  put(d, 'src/a.js', 'console.log(1);\n'); put(d, 'gen/b.js', 'console.log(1);\n'); put(d, 'x/old.js', 'console.log(1);\n'); put(d, 'keep.js', 'console.log(1);\n');
+  put(d, '.aiignore', '# generated output\n\n/gen/\nx/*.js\n');
+  assert.match(cli(d).stdout, /^audit: 2 files scanned, 2 findings/);
+  assert.strictEqual(JSON.parse(spawnSync('node', [SCRIPT, '--json', '--cwd', d, '--no-git'], { encoding: 'utf8' }).stdout).aiIgnored, 2);
+});
+t('cli: git findings are cached per ref state and recomputed when a ref moves', () => {
+  const d = tmp(); put(d, '.claude/keep', '');
+  const git = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: d, encoding: 'utf8' });
+  const run = () => spawnSync('node', [SCRIPT, '--cwd', d], { encoding: 'utf8' }).stdout;
+  git('init', '-q'); put(d, 'a.txt', 'x'); git('add', '.'); git('commit', '-q', '-m', 'bad message');
+  assert.match(run(), /g-06/);
+  const cache = path.join(d, '.claude', 'code-audit.cache.json');
+  assert.ok(fs.existsSync(cache));
+  const stamp = fs.statSync(cache).mtimeMs;
+  assert.match(run(), /g-06/);
+  assert.strictEqual(fs.statSync(cache).mtimeMs, stamp); // second run reused the cache
+  git('commit', '-q', '--allow-empty', '-m', 'fix: ok'); // HEAD moved
+  assert.match(run(), /g-06/);
+  assert.notStrictEqual(fs.statSync(cache).mtimeMs, stamp);
+});

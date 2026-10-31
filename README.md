@@ -4,7 +4,7 @@
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 64 reusable `SKILL.md` agent skills (53 for Claude Code, 11 for OpenCode models), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 18 opt-in slash commands, 9 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
+**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 64 reusable `SKILL.md` agent skills (53 for Claude Code, 11 for OpenCode models), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 18 opt-in slash commands, 10 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
 
 Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering), an opt-in offline text-to-speech add-on that reads Claude's replies aloud, and opt-in reply personas, for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
@@ -36,7 +36,7 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 - [Slash commands](#slash-commands) — every command you type, and when to reach for it
 - [Optional AI tools: free and local MCP servers](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) — UI prototyping, image reading/generation, local file prefiltering
 - [Voice, narration and personas](#voice-narration-and-personas) — opt-in text-to-speech for replies, and reply personas
-- [Claude Code mods (all nine)](#claude-code-mods-all-nine) — the plug-ins that enforce rules in code instead of relying on a skill loading
+- [Claude Code mods (all ten)](#claude-code-mods-all-ten) — the plug-ins that enforce rules in code instead of relying on a skill loading
 - [Scripts and git hooks](#scripts-and-git-hooks) — what every script does, and setting up git hooks for human commits
 - [Maintaining the kit](#maintaining-the-kit) — keeping this repo and its installs in sync over time
 - [Where things live, and how to turn things off](#where-things-live-and-how-to-turn-things-off) — every file the kit writes, and how to remove each one
@@ -601,7 +601,7 @@ The install offers eight choices: the six personas, `none`, or `custom` (your ow
 
 Licences and credits for Piper and the voices: [CREDITS.md](CREDITS.md).
 
-## Claude Code mods (all nine)
+## Claude Code mods (all ten)
 
 Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in code, so unlike skills they fire every time. Each one fails open (if it breaks, your work continues), none depends on another, and nothing in the kit needs them. Install them by saying `set up mods`; [`mod-setup`](skills/meta/mod-setup.md) reviews what each one touches first. Claude Code only.
 
@@ -615,6 +615,7 @@ Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in c
 | `debug-nudge` | One reminder at the first failed test or build, and one at the second failed fix, to stop editing and apply `debug-protocol`; also reads failure text hidden by pipes | reminds | the `debug-protocol` skill |
 | `eta-nudge` | Reminds the agent to state a time estimate when a call is backgrounded, and every 10 minutes after the first 5 | reminds | the `plan-first` skill |
 | `output-compact` | Shortens long Bash and PowerShell output before the model reads it; every failure line survives | rewrites output | the `session-budget` skill |
+| `aiignore-guard` | Keeps the AI out of files it should not read: the project's `.aiignore`, paths that belong to another role (`conflict-roles.json`: the active role's `out` list, or anything another role lists under `in`), the current task's scope (`/focus`, else the role's board row) and folders local Laya is confident the prompt does not need. The first touch of such a path is denied with the way in (rank the names with `prefilter`, then retry once); unscoped Grep and Glob results come back without ignored and out-of-role files | blocks | `.aiignore`; optional `conflict-roles.json`, role-session board, local Laya |
 | `prefilter-rank` | Ranks Grep and Glob results (5 to 40 files) by relevance using the local Laya model, so low-relevance files can be skipped; local only, removes nothing; starts Laya itself on the first big Grep or Glob and waits up to 20 s for the ranking on CPU | reminds | the `system1-prefilter` add-on with local Laya set up |
 
 ## Scripts and git hooks
@@ -695,7 +696,7 @@ skills/
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
   commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
-mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
+mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, aiignore-guard), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
@@ -729,7 +730,7 @@ coding-standards/
 - **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
 - **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships nine opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank` and `eta-nudge`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships ten opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank`, `eta-nudge` and `aiignore-guard`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
 - **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
 - **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.
