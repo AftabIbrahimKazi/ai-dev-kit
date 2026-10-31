@@ -90,3 +90,10 @@ test('PowerShell calls are compacted the same way', async ($, on) => {
   const r: any = await $.tool.call({ tool: 'PowerShell', command: 'npm test' })
   expect(r.result.stdout).toBe('SHORT')
 })
+
+test('an errored call that still carries stdout is compacted', async ($, on) => {
+  world(on, { stdoutOut: 'SHORT', result: { isError: true, result: { stdout: 'STDOUT-INPUT ' + LONG, stderr: '' }, text: 'x' } })
+  const r: any = await bash($)
+  expect(r.result.stdout).toBe('SHORT')
+  expect(r.isError).toBe(true)
+})

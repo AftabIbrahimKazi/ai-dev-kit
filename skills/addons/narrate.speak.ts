@@ -77,6 +77,7 @@ function writeState(st: NarrateState): void {
 // markdown to speakable prose, cut at a sentence end near max characters
 export function clean(md: string, max = 6000): string {
   const lines = md
+    .replace(/^\s*\[CX(?: [^\]]*)?\]\s*/, '')
     .replace(/```[\s\S]*?```/g, '\n')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')

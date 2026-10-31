@@ -34,7 +34,6 @@ export const register: Register = (on) => {
     const ran = await next(e)
     try {
       if ('deny' in ran && ran.deny) return ran
-      if ('isError' in ran && ran.isError) return ran
       const result = 'result' in ran ? (ran.result as any) : null
       if (!result || typeof result.stdout !== 'string') return ran
       const engine = await findEngine($)
