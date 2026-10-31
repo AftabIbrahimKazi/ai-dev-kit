@@ -1,6 +1,6 @@
 ---
 name: image-gen
-description: Image generation for websites and apps — Gemini "Nano Banana", then Cloudflare FLUX.1 [schnell], switching before limits are hit, then a labelled placeholder. CLI + stdio MCP tool; tells the user about every switch and pause.
+description: Image generation for websites and apps, plus enhance_image (ImageMagick colour grading/levels/sharpen for existing photos, no AI) and ai_edit_image (small AI edits, as an extra) — Gemini "Nano Banana", then Cloudflare FLUX.1 [schnell], switching before limits are hit, then a labelled placeholder. CLI + stdio MCP tool; tells the user about every switch and pause.
 trigger: generate_image — hero/feature/illustration/icon/mockup images needed for a site or app, or any request to "make/create an image"
 replaces: a text/CSS/SVG placeholder, or ask the user to supply the image
 transport: stdio
@@ -16,7 +16,22 @@ verified: 2026-10-04 — live Gemini (key valid, free tier 429 -> fallback) and 
 
 Open models and Claude alike cannot make images. This tool calls hosted models and degrades cleanly: **Gemini → Cloudflare FLUX → placeholder**. It never blocks a task, never spends past your caps, and **reports every switch, warning, pause and placeholder** as a `NOTICE`.
 
-## Tool
+## enhance_image — fix existing photos (no AI)
+For client-supplied photos that need colour grading and basic editing, **use this, not generate_image**: traditional editing through ImageMagick (`magick`), so the subject is never changed or invented, it costs nothing, uses no network and has no quota. Needs ImageMagick installed (or `IMAGEMAGICK_BIN`); nothing else.
+`enhance_image(input_path, preset?, brightness?, contrast?, saturation?, warmth?, gamma?, sharpen?, denoise?, max_width?, quality?, output_path?)` — also `node image-gen.js enhance <file> --preset natural --warmth 10 --denoise 5 --max-width 1600`.
+- Presets: `natural` (default for dull photos), `vivid`, `warm`, `cool`, `matte`, `product-clean`, `bw`. Explicit numbers override a preset. Ranges: brightness/contrast/saturation/warmth -100..100, gamma 0.2..5, sharpen 0..5, denoise 0..20 %.
+- Order applied: denoise, auto-level, gamma, brightness/contrast, warmth, saturation, resize (downscale only), sharpen. Output is `<name>-enhanced.<ext>` next to the original, which is never overwritten. JPEG quality 92 by default; EXIF rotation is applied.
+- Compare with the original and re-run with adjusted numbers. It cannot add detail to a low-resolution photo (no AI upscaling).
+
+## ai_edit_image — small AI edits, only when traditional editing can't
+`ai_edit_image(input_path, prompt, strength?, output_path?)` — also `node image-gen.js ai-edit <file> "remove the blue cast from the background" [--strength 0.35] [--out f]`. Sends the photo plus your instruction to Gemini "Nano Banana"; if Gemini is unavailable it falls back to Cloudflare Stable Diffusion 1.5 img2img (`strength` applies only there). Same keys, daily caps, 80%/90% rules and cooldowns as generate_image, shared counters. Writes `<name>-ai-edit.<ext>` beside the original, which is never overwritten.
+- **Order of preference for client photos: `enhance_image` first.** Use this only for things sliders cannot do (local colour casts, dim backgrounds, small cleanups), with a specific, minimal prompt. The wrapper already tells the model to keep subject, faces, products, text and logos unchanged.
+- It re-renders the whole image, so details can drift and resolution may change. **Always compare with the original and tell the user it was AI-edited.** The Cloudflare fallback is weaker (SD 1.5, lower resolution) and its notice says so.
+- Unlike generate_image it never returns a placeholder: if no provider works it errors, the original stays untouched, and the message points to `enhance_image`.
+- Prompts and the photo go to Google/Cloudflare: do not send confidential or personal photos without the user's OK.
+- Verified 2026-10-31 against fake servers only (request shape, fallback, notices, MCP listing); live calls could not run because the stored Gemini and Cloudflare keys returned 401.
+
+## Tool (generate_image)
 `generate_image(prompt, style?, aspect?, output_path?)` (~3 s via Cloudflare) — also `node image-gen.js generate "<prompt>" [--style s] [--aspect 16:9] [--out file]`. Returns the saved path, which provider made it, and which providers were skipped and why. The file extension is corrected to the real format (Cloudflare returns JPEG).
 - `style` presets: `saas-illustration`, `isometric`, `business-photo`, `icon-3d`, `product-mockup` — a look is appended to your prompt. For plain gradients use CSS, not an image.
 - `aspect`: 1:1, 16:9 (default), 9:16, 4:3, 3:4, 3:2, 2:3 — Gemini only; Cloudflare returns 1024×1024 (crop in CSS with `object-fit`).
