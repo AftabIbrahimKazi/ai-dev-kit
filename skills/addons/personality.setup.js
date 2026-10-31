@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CHOICES = void 0;
 exports.parseArgs = parseArgs;
 exports.install = install;
+exports.registerHook = registerHook;
 // Installs the personality add-on with exactly one persona. Eight choices: the six built-ins, none, or a custom one.
 //
 //   node personality.setup.js --install <choice> [--to <installed skill folder>] [--file my-persona.md]
@@ -13,7 +14,9 @@ exports.install = install;
 // none:   installs nothing and clears any saved choice.
 // custom: copies --file to ~/.claude/personas/custom.md, or writes a starter there to edit. A custom persona lives in
 //         the user's folder, so kit updates never touch it.
-// The saved choice goes to ~/.claude/personality.json. The SessionStart hook is a separate step (see personality.md).
+// --hook  installs into ~/.claude/skills/personality (overrides --to) and points the SessionStart hook in ~/.claude/settings.json
+//         at that copy, adding the hook or repairing one that names another (stale) copy. Re-run after a kit update.
+// The saved choice goes to ~/.claude/personality.json.
 // Exit 1 on a usage error.
 const fs = require("node:fs");
 const os = require("node:os");
@@ -23,6 +26,7 @@ const CONF = path.join(HOME, 'personality.json');
 const CUSTOM = path.join(HOME, 'personas', 'custom.md');
 const LIBRARY = path.join(__dirname, 'personality.personas');
 const SIX = ['female-novice', 'female-mid', 'female-pro', 'male-novice', 'male-mid', 'male-pro'];
+const USER_SKILL = path.join(HOME, 'skills', 'personality');
 exports.CHOICES = [...SIX, 'none', 'custom'];
 const posix = (p) => p.split(path.sep).join('/');
 const STARTER = `# Your persona — one line on the voice
@@ -45,6 +49,10 @@ function parseArgs(argv) {
             o.choice = argv[++i];
         else if (a === '--to')
             o.to = path.resolve(argv[++i]);
+        else if (a === '--hook') {
+            o.hook = true;
+            o.to = USER_SKILL;
+        }
         else if (a === '--file')
             o.file = path.resolve(argv[++i]);
         else
@@ -102,6 +110,43 @@ function install(o) {
     save({ gender, level });
     return `personality: ${o.choice} installed (${posix(o.to)}); applies from the next session`;
 }
+// Registers (or repairs) a user-level hook in ~/.claude/settings.json so it runs the per-user copy of the script, never a
+// project's copy that goes stale. Any existing hook whose command names `marker` is repointed; otherwise one is added.
+function registerHook(event, marker, script) {
+    const file = path.join(os.homedir(), '.claude', 'settings.json');
+    let s = {};
+    if (fs.existsSync(file)) {
+        try {
+            s = JSON.parse(fs.readFileSync(file, 'utf8'));
+        }
+        catch {
+            return `hook: ${posix(file)} is not valid JSON; fix it, then run this again`;
+        }
+    }
+    const command = `node "${posix(script)}"`;
+    s.hooks = s.hooks || {};
+    const groups = (s.hooks[event] = s.hooks[event] || []);
+    let found = false, changed = false;
+    for (const g of groups)
+        for (const h of g.hooks || []) {
+            if (typeof h.command === 'string' && h.command.includes(marker)) {
+                found = true;
+                if (h.command !== command) {
+                    h.command = command;
+                    changed = true;
+                }
+            }
+        }
+    if (!found) {
+        groups.push({ hooks: [{ type: 'command', command }] });
+        changed = true;
+    }
+    if (!changed)
+        return `hook: ${event} already runs ${posix(script)}`;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(s, null, 2) + '\n');
+    return `hook: ${event} now runs ${posix(script)}`;
+}
 function main(argv) {
     let o;
     try {
@@ -113,6 +158,8 @@ function main(argv) {
         return;
     }
     console.log(install(o));
+    if (o.hook && o.choice !== 'none')
+        console.log(registerHook('SessionStart', 'inject.js', path.join(o.to, 'inject.js')));
 }
 if (require.main === module)
     main(process.argv.slice(2));

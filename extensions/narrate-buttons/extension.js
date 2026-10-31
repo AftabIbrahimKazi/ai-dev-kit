@@ -51,6 +51,22 @@ function activate(context) {
   const timer = setInterval(refresh, 2000); context.subscriptions.push({ dispose: () => clearInterval(timer) });
   refresh(); refreshExtra();
 
+  // The Stop hook runs whichever speak.js settings.json names; an old copy has no manual mode and speaks every reply.
+  (function checkHook() {
+    try {
+      const os = require('node:os'), path = require('node:path'), fs = require('node:fs');
+      const s = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.claude', 'settings.json'), 'utf8'));
+      const cmds = ((s.hooks && s.hooks.Stop) || []).flatMap((g) => g.hooks || []).map((h) => h.command || '');
+      const m = cmds.map((c) => /"([^"]*speak\.js)"|(\S*speak\.js)/.exec(c)).find(Boolean);
+      const script = m && (m[1] || m[2]);
+      if (!script) return;
+      const out = require('node:child_process').spawn(cfg().get('nodePath') || 'node', [script, '--status'], { windowsHide: true });
+      let text = ''; out.stdout.on('data', (d) => { text += d; });
+      out.on('close', () => { if (!/\bmode\b/.test(text)) vscode.window.showWarningMessage(`AI Dev Kit: the Stop hook runs an outdated narrate script (${script}), so "When to speak" is ignored. Point the hook at the current speak.js in ~/.claude/settings.json.`); });
+      out.on('error', () => {});
+    } catch { /* no settings or no hook: nothing to check */ }
+  })();
+
   // --- the sidebar tree ---
   const provider = {
     onDidChangeTreeData: changed.event,

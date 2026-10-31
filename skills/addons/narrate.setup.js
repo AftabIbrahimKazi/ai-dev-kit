@@ -5,6 +5,8 @@ exports.voiceUrls = void 0;
 exports.parseArgs = parseArgs;
 exports.installCommand = installCommand;
 exports.addVoice = addVoice;
+exports.registerHook = registerHook;
+exports.installHook = installHook;
 // Installs the voices and the /narration command for the narrate add-on.
 //
 //   node narrate.setup.js --voices                      pip-install Piper, download the female and male voice (~125 MB)
@@ -18,7 +20,8 @@ exports.addVoice = addVoice;
 //           ~/.claude/narrate.json if it does not exist. Ask the user first: it is a download.
 // commands: copies commands/narration.md into <project>/.claude/commands (never overwrites), {{skill-root}} filled in
 //           (--skill-root, default .claude/skills; the script then runs as <skill-root>/narrate/speak.js).
-// The Stop hook itself lives in ~/.claude/settings.json and is not touched here. Exit 1 on a usage error.
+// hook:     copies speak.js to ~/.claude/skills/narrate/ and points the Stop hook in ~/.claude/settings.json at that copy,
+//           adding the hook or repairing one that names another (stale) copy. Re-run after a kit update. Exit 1 on a usage error.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -27,7 +30,7 @@ const { spawnSync } = childProcess;
 const HERE = __dirname;
 const posix = (p) => p.split(path.sep).join('/');
 function parseArgs(argv) {
-    const o = { controls: '', voices: false, addVoice: null, project: process.cwd() };
+    const o = { controls: '', voices: false, hook: false, addVoice: null, project: process.cwd() };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === '--controls')
@@ -38,6 +41,8 @@ function parseArgs(argv) {
             o.skillRoot = argv[++i];
         else if (a === '--voices')
             o.voices = true;
+        else if (a === '--hook')
+            o.hook = true;
         else if (a === '--add-voice') {
             o.addVoice = { gender: argv[++i], src: argv[++i] };
         }
@@ -50,8 +55,8 @@ function parseArgs(argv) {
         throw new Error('--controls must be commands');
     if (o.addVoice && (!['male', 'female'].includes(o.addVoice.gender) || !o.addVoice.src))
         throw new Error('--add-voice needs male|female and a .onnx file or URL');
-    if (!o.controls && !o.voices && !o.addVoice)
-        throw new Error('give --voices, --add-voice, or --controls commands');
+    if (!o.controls && !o.voices && !o.hook && !o.addVoice)
+        throw new Error('give --voices, --hook, --add-voice, or --controls commands');
     return o;
 }
 // copy the /narration command template into the project; returns a status line
@@ -142,6 +147,52 @@ async function addVoice({ gender, src }) {
         return `add-voice: ${e.message}`;
     }
 }
+// Registers (or repairs) a user-level hook in ~/.claude/settings.json so it runs the per-user copy of the script, never a
+// project's copy that goes stale. Any existing hook whose command names `marker` is repointed; otherwise one is added.
+function registerHook(event, marker, script) {
+    const file = path.join(os.homedir(), '.claude', 'settings.json');
+    let s = {};
+    if (fs.existsSync(file)) {
+        try {
+            s = JSON.parse(fs.readFileSync(file, 'utf8'));
+        }
+        catch {
+            return `hook: ${posix(file)} is not valid JSON; fix it, then run this again`;
+        }
+    }
+    const command = `node "${posix(script)}"`;
+    s.hooks = s.hooks || {};
+    const groups = (s.hooks[event] = s.hooks[event] || []);
+    let found = false, changed = false;
+    for (const g of groups)
+        for (const h of g.hooks || []) {
+            if (typeof h.command === 'string' && h.command.includes(marker)) {
+                found = true;
+                if (h.command !== command) {
+                    h.command = command;
+                    changed = true;
+                }
+            }
+        }
+    if (!found) {
+        groups.push({ hooks: [{ type: 'command', command }] });
+        changed = true;
+    }
+    if (!changed)
+        return `hook: ${event} already runs ${posix(script)}`;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(s, null, 2) + '\n');
+    return `hook: ${event} now runs ${posix(script)}`;
+}
+function installHook() {
+    const dest = path.join(os.homedir(), '.claude', 'skills', 'narrate', 'speak.js');
+    const src = path.join(HERE, 'narrate.speak.js');
+    if (!fs.existsSync(src))
+        return 'hook: narrate.speak.js is not next to this script; run setup from the kit repo';
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+    return registerHook('Stop', 'speak.js', dest);
+}
 async function main(argv) {
     let o;
     try {
@@ -156,6 +207,8 @@ async function main(argv) {
         console.log(await installVoices());
     if (o.addVoice)
         console.log(await addVoice(o.addVoice));
+    if (o.hook)
+        console.log(installHook());
     if (o.controls)
         console.log(installCommand(o.project, o.skillRoot));
 }

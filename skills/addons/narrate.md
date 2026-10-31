@@ -11,10 +11,7 @@ description: Opt-in add-on. Use when the user wants Claude's replies read aloud 
 ## Install
 1. **Voices (Piper, free, offline) — tell the user it downloads about 125 MB, then run** `node setup.js --voices`. It pip-installs `piper-tts`, downloads a British female (`en_GB-jenny_dioco-medium`, Jenny (Dioco), attribution required) and a British male (`en_GB-northern_english_male-medium`, CC-BY-SA 4.0) voice into `~/.claude/voices/`, skips files already there, and writes the config in step 2 if it is missing. Without Piper the script falls back to the built-in Windows voice, which sounds dated.
 2. **Config** `~/.claude/narrate.json`: `{"engine":"piper","piper":{"exe":"<full path to python>","args":["-m","piper"]}}`. Written by step 1.
-3. **Stop hook** in `~/.claude/settings.json`:
-```json
-{ "hooks": { "Stop": [{ "hooks": [{ "type": "command", "command": "node \"<skill-root>/narrate/speak.js\"" }] }] } }
-```
+3. **Stop hook:** run `node setup.js --hook`. It copies `speak.js` to `~/.claude/skills/narrate/` and points the Stop hook in `~/.claude/settings.json` at that copy, adding the hook or repairing one that names another copy. The file is user-wide, so a hook pointing into one project's folder goes stale when the kit updates (an old script has no `mode` and speaks every reply). Re-run it after a kit update; `node speak.js --status` must list `mode`.
 4. **Controls:** the `/narration` slash command (`mute|voice|volume|speed|pitch|play|mode`): run `node setup.js --controls commands [--project <dir>]`. The kit has no keyboard hotkeys or dictation; for on-screen buttons in VS Code, install `extensions/narrate-buttons` (see the README).
 
 ## Controls
