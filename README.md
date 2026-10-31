@@ -271,7 +271,7 @@ Full catalog: [skills/README.md](skills/README.md)
 | `memory/` | Persistent knowledge across sessions | `memory-bank` (repo-committed context/decisions), `memory-gardener` (prunes/merges learnings) |
 | `stack/` | Technology-specific discipline | `threejs-scene` (shaders, disposal, render hygiene), `astro-page` (convention-driven scaffolding) |
 | `libraries/` | The author's own libraries | `strata-css`, `triforge` |
-| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods), `misfire-log` (opt-in: logs when a skill/mod/addon should have fired but didn't, for the next kit update) |
+| `meta/` | Maintains the library itself | `skill-writer` (quality bar), `install-kit` (installer), `skill-scope` (pinned/archivable/addon classification), `mod-writer` and `mod-setup` (Claude Code mods), `command-writer` (slash-command standard), `cli-writer` (CLI and installer standard), `misfire-log` (opt-in: logs when a skill/mod/addon should have fired but didn't, for the next kit update) |
 | `addons/` | Optional, user-opted capabilities — never installed by default | `system1-prefilter` (typed-decision prefiltering; hosted endpoint or the free local Laya model, exposed as the `prefilter` MCP tool), `project-context` (a private, gitignored folder of project docs with token-lean indexes, set up with `/ctx`), `narrate` (offline text to speech for Claude's replies), `personality` (six reply personas by skill level) |
 | `mcp/` | Optional MCP servers behind one meta skill — never installed by default | `mcp-manager` (setup interview, global-first per-tool config, MCP-first-then-fallback) + one companion per server: `stitch`, `local-vision`, `image-gen` |
 
@@ -440,6 +440,8 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | Skill | Purpose |
 |---|---|
 | [skill-writer](skills/meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
+| [command-writer](skills/meta/command-writer.md) | Quality bar for slash commands in `skills/commands/` — script first, one scoped permission, capped output, registration checklist. Used only when building the kit, never in normal dev work |
+| [cli-writer](skills/meta/cli-writer.md) | Quality bar for CLI tools and installers — zero dependencies, prompts only on a TTY, safe re-runs, novice walkthrough first, cold-start tests. Used only when building the kit, never in normal dev work |
 | [mod-writer](skills/meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](skills/meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
 | [install-kit](skills/meta/install-kit.md) | Install, update, uninstall, archive/unarchive or merge git hooks into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `cli.js` does the mechanical copy/move deterministically (tracked by a `.ai-dev-kit.json` manifest), `verify.js` mechanically re-checks the result before the install is reported done; click-to-answer in Claude Code, a plain numbered-menu prompt elsewhere (no package install needed); runs from the library, never copied into the target project |
@@ -505,7 +507,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | Workflow | `/debug-protocol`, `/plan-first`, `/intent-capture`, `/interpretation-checkpoint`, `/handover` (the skill; `/pickup` and `/wrap-up` are its read and write commands), `/pre-commit`, `/pre-merge-gate`, `/session-budget`, `/agent-usage`, `/mode-kernel`, `/perf-audit`, `/e2e-scaffold`, `/role-session`, `/resolve-conflicts`, `/responsive-check`, `/optimize-assets`, `/version-bump` | the situation in each skill's description |
 | Standards | `/coding-standards`, `/code-audit`, `/comment-style` | editing code, auditing, or changing comment level |
 | Memory | `/memory-bank`, `/memory-gardener`, `/skill-ablation` | recording decisions, pruning notes, testing which skills are still needed |
-| Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
+| Setup and authoring | `/install-kit`, `/mod-setup`, `/mod-writer`, `/command-writer`, `/cli-writer`, `/skill-scope`, `/skill-writer` | installing the kit or mods, writing a skill or mod |
 | Add-ons | `/project-context`, `/narrate`, `/personality` | setting up that add-on |
 | Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
 | Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |

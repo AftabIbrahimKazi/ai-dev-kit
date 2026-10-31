@@ -24,6 +24,8 @@ Thanks for helping. This repository is the canonical home of the skills and stan
 ## Scripts and mods
 
 - Scripts are plain Node with no dependencies. Run a test with `node tests/<name>.test.js`.
+- A slash command lives in `skills/commands/<name>.md`. Read [skills/meta/command-writer.md](skills/meta/command-writer.md) first; it also lists where a new command must be registered.
+- A CLI tool or installer follows [skills/meta/cli-writer.md](skills/meta/cli-writer.md): no runtime dependencies, plain `.js` built from `.ts`, a novice walkthrough in its doc.
 - A mod lives in `mods/<name>/`. Validate and test it with `claude plugin validate` and `claude plugin test` from inside its folder. Read [skills/meta/mod-writer.md](skills/meta/mod-writer.md) first.
 - Do not edit a regex through a shell heredoc; backslashes get mangled. Use an editor.
 

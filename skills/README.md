@@ -115,6 +115,8 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 | Skill | Purpose |
 |---|---|
 | [skill-writer](meta/skill-writer.md) | The quality bar for writing new skills — triggers, checkable rules, loop |
+| [command-writer](meta/command-writer.md) | Quality bar for slash commands in `skills/commands/` — script first, one scoped permission, capped output, registration checklist. Used only when building the kit, never in normal dev work |
+| [cli-writer](meta/cli-writer.md) | Quality bar for CLI tools and installers — zero dependencies, prompts only on a TTY, safe re-runs, novice walkthrough first, cold-start tests. Used only when building the kit, never in normal dev work |
 | [mod-writer](meta/mod-writer.md) | Quality bar for Claude Code mods — mod vs script vs hook, fail-open rules, validate/test loop, API traps. Claude Code only |
 | [mod-setup](meta/mod-setup.md) | Opt-in installer for the kit's mods in [`mods/`](../mods/) — version/surface check, review of what each mod touches, install, confirm. Claude Code only |
 | [install-kit](meta/install-kit.md) | Install, update, uninstall, archive/unarchive or merge git hooks into any project — all at once, hand-picked, auto-detected, or by named stack preset (Astro/Next.js/Laravel); `cli.js` does the mechanical copy/move deterministically, `verify.js` mechanically re-checks the result before the install is reported done; click-to-answer in Claude Code, a plain numbered-menu prompt elsewhere (no package install needed); runs from the library, never copied into the target project |
