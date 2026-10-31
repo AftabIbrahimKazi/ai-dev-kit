@@ -3,7 +3,7 @@ import { expect, test } from 'claude-code/testing'
 // A noul answer's "yes" probability per candidate; built in the same order as `ids`.
 function world(on: any, opts: {
   baseUrl?: string | null; apiKey?: string | null; up?: boolean; nouls?: number[]; httpFails?: boolean;
-  lastUserText?: string | null; result?: any; setUp?: boolean;
+  lastUserText?: string | null; result?: any; setUp?: boolean; aiignore?: string;
 } = {}) {
   const calls: string[] = []
   on('env.get', (_$: any, e: any) => {
@@ -24,7 +24,8 @@ function world(on: any, opts: {
   })
   const started: string[][] = []
   ;(calls as any).started = started
-  on('fs.exists', (_$: any, e: any) => { const p = String(e.path).split(String.fromCharCode(92)).join('/'); return { value: !!opts.setUp && (p.endsWith('/venv') || p.endsWith('laya-ctl.js')) } })
+  on('fs.exists', (_$: any, e: any) => { const p = String(e.path).split(String.fromCharCode(92)).join('/'); return { value: (opts.aiignore !== undefined && p.endsWith('/.aiignore')) || (!!opts.setUp && (p.endsWith('/venv') || p.endsWith('laya-ctl.js'))) } })
+  on('fs.read', () => ({ value: opts.aiignore ?? '' }))
   on('process.run', (_$: any, e: any) => { started.push(e.argv); return { value: { exitCode: 0, stdout: '', stderr: '' } } })
   on('session.messages', () => ({ value: opts.lastUserText === null ? [] : [{ role: 'user', text: opts.lastUserText ?? 'find the auth bug' }] }))
   on('tool.call', () => opts.result ?? { result: { filenames: ['a.js', 'b.js', 'c.js', 'd.js', 'e.js'] }, text: '5 files' })
@@ -40,7 +41,7 @@ test('ranks and adds a read-order reminder when results split high/low confidenc
   expect(r.context.length).toBe(1)
   expect(r.context[0]).toContain('a.js')
   expect(r.context[0]).toContain('c.js')
-  expect(r.context[0]).toContain('Lower relevance')
+  expect(r.context[0]).toContain('ranked lower')
 })
 
 test('Glob is ranked the same way as Grep', async ($, on) => {
@@ -150,4 +151,12 @@ test('more than 40 candidates: skipped, not chunked', async ($, on) => {
   const r: any = await grep($)
   expect(r.context).toBeUndefined()
   expect(calls.length).toBe(0)
+})
+
+test('files .aiignore hides are never ranked or named in the reminder', async ($, on) => {
+  const six = ['a.js', 'b.js', 'c.js', 'd.js', 'e.js', 'f.js']
+  world(on, { aiignore: 'b.js', nouls: [0.9, 0.9, 0.1, 0.1, 0.1], result: { result: { filenames: six }, text: '6 files' } })
+  const r: any = await grep($)
+  expect(r.context[0]).toContain('a.js')
+  expect(r.context[0]).not.toContain('b.js')
 })

@@ -88,6 +88,18 @@ async function lastUserTask($: any): Promise<string | null> {
   } catch { return null }
 }
 
+// Never name a file .aiignore hides (aiignore-guard may run before or after this mod).
+async function withoutIgnored($: any, ids: string[]): Promise<string[]> {
+  try {
+    if (!(await $.fs.exists('.aiignore'))) return ids
+    const lines: string[] = String(await $.fs.read('.aiignore')).split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('!'))
+    const res = lines.map((l) => l.replace(/^\//, '').replace(/\/$/, '/**')).map((g) => new RegExp('(^|/)' + g
+      .replace(/[.+^${}()|[\]]/g, '\\$&').replace(/\*\*\//g, '\u0001').replace(/\*\*/g, '\u0002').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]')
+      .replace(/\u0001/g, '(?:.*/)?').replace(/\u0002/g, '.*') + '$'))
+    return ids.filter((id) => { const p = id.split(String.fromCharCode(92)).join('/'); return !res.some((r) => r.test(p)) })
+  } catch { return ids }
+}
+
 async function rankCandidates($: any, base: string, task: string, ids: string[]) {
   const states = ids.map((id) => `Task: ${task}. Candidate file: ${id}`)
   const questions = { q: { type: 'noul', instructions: 'Does the candidate file need to be read or changed to complete the task?' } }
@@ -103,7 +115,7 @@ async function rankCandidates($: any, base: string, task: string, ids: string[])
 
 function reminder(toRead: string[], toReVerify: string[], skipped: string[]) {
   const lines = [`prefilter (local Laya): read first (${toRead.length}): ${toRead.join(', ') || 'none'}.`]
-  if (skipped.length) lines.push(`Lower relevance, skip unless they turn out needed (${skipped.length}): ${skipped.join(', ')}.`)
+  if (skipped.length) lines.push(`${skipped.length} others ranked lower: skip unless they turn out needed.`)
   if (toReVerify.length) lines.push(`Low confidence either way -- don't trust this ranking for these, read/check directly: ${toReVerify.join(', ')}.`)
   lines.push('Ranking only, not a security/correctness judgment -- never skip a file this would normally flag as relevant to a security/auth/payment check.')
   return lines.join('\n')
@@ -116,7 +128,8 @@ export const register: Register = (on) => {
       if ('deny' in ran && ran.deny) return ran
       if ('isError' in ran && ran.isError) return ran
       const result = 'result' in ran ? (ran.result as any) : null
-      const ids: string[] | undefined = result?.filenames
+      const all: string[] | undefined = result?.filenames
+      const ids = Array.isArray(all) ? await withoutIgnored($, all) : all
       if (!Array.isArray(ids) || ids.length < MIN_CANDIDATES || ids.length > MAX_CANDIDATES) return ran
 
       const base = await loopbackBase($)

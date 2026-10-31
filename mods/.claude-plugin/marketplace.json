@@ -46,6 +46,11 @@
       "description": "Ranks Grep/Glob results (5-40 files) by relevance to the task using the local Laya prefilter (system1-prefilter addon); calls 127.0.0.1 only, checked in code. No-ops if the addon isn't configured for local Laya, if a hosted provider's key is set instead, or if Laya isn't reachable within a short timeout."
     },
     {
+      "name": "learnings-inject",
+      "source": "./learnings-inject",
+      "description": "Adds a skill's learnings.md to the Skill call result once per session, so the skill's start-of-skill read needs no tool call. Context only; never blocks."
+    },
+    {
       "name": "eta-nudge",
       "source": "./eta-nudge",
       "description": "Reminder only: nudges once when a Bash/PowerShell call is backgrounded, and every 10 minutes of wall-clock task time after the first 5, to restate or give a time estimate and checkpoint (plan-first's rule). Never computes the estimate itself, never blocks."

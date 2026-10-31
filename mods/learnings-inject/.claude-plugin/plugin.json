@@ -1,0 +1,8 @@
+{
+  "name": "learnings-inject",
+  "version": "0.1.0",
+  "description": "When a skill is loaded, adds that skill's learnings.md (if it has one) to the result, so the skill's 'read learnings.md at start' step needs no Read call and no failed read of a missing file. Once per skill per session, capped at 3000 characters. Observes and adds context only; never blocks; fails open. Reads env: USERPROFILE, HOME.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

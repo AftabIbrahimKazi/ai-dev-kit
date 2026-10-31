@@ -96,6 +96,7 @@ function writeState(st) {
 // markdown to speakable prose, cut at a sentence end near max characters
 function clean(md, max = 6000) {
     const lines = md
+        .replace(/^\s*\[CX(?: [^\]]*)?\]\s*/, '')
         .replace(/```[\s\S]*?```/g, '\n')
         .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
         .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')

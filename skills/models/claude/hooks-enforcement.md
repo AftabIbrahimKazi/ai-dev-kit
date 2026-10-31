@@ -40,12 +40,12 @@ This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy
 {
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "test -f .claude/.standards-declared || { echo 'Standards not declared yet (AI-02) — state loaded standards, then create .claude/.standards-declared, before editing.' >&2; exit 2; }" }] }
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "test -f .claude/.standards-declared || { echo 'Standards not declared yet (AI-02) — state loaded standards, then create the marker with Bash (touch .claude/.standards-declared; Write is gated by this same hook), before editing.' >&2; exit 2; }" }] }
     ]
   }
 }
 ```
-The marker file is written by the **model**, as the last step of its AI-02 declaration — never by the hook itself, which only checks for it.
+If the `standards-chain` mod is installed it gates the same first edit and makes this hook redundant (two denials for one edit): skip this block then. The marker file is written by the **model**, as the last step of its AI-02 declaration — never by the hook itself, which only checks for it.
 
 `UserPromptSubmit` hook — re-injects the AI-01 reminder on every user message, because the token tends to drop in long sessions once the original instruction is far back in context. It names no code, so it never goes stale; the model reads the code from `CLAUDE.md`:
 <!-- hook:core -->
