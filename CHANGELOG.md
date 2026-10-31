@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-31
+
+### Added
+- `version-bump` skill + `/version-bump` command: bumps a `package.json` version (major/feature/patch/alpha/beta/rc/release per `coding-standards/versioning-standards.md`) and inserts the matching `CHANGELOG.md` entry in place, without reformatting either file. Scope is a path: omitted bumps every `package.json` under the current directory, a folder scopes to a group, a direct `package.json` path scopes to one package — so one command covers the whole project, a frontend/backend split, or a single module.
+
 ## 2026-10-29
 
 ### Added
