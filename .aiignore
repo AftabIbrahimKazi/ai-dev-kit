@@ -1,0 +1,5 @@
+# Kit maintenance: keep the AI out of dependencies, scratch work, shelved experiments and old audit records.
+node_modules/
+_sandbox/
+shelved/
+findings/
