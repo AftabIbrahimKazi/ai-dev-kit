@@ -94,7 +94,7 @@ async function withoutIgnored($: any, ids: string[]): Promise<string[]> {
     if (!(await $.fs.exists('.aiignore'))) return ids
     const lines: string[] = String(await $.fs.read('.aiignore')).split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('!'))
     const res = lines.map((l) => l.replace(/^\//, '').replace(/\/$/, '/**')).map((g) => new RegExp('(^|/)' + g
-      .replace(/[.+^${}()|[\]]/g, '\\$&').replace(/\*\*\//g, '\u0001').replace(/\*\*/g, '\u0002').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]')
+      .replace(/[\\.+^${}()|[\]]/g, '\\$&').replace(/\*\*\//g, '\u0001').replace(/\*\*/g, '\u0002').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]')
       .replace(/\u0001/g, '(?:.*/)?').replace(/\u0002/g, '.*') + '$'))
     return ids.filter((id) => { const p = id.split(String.fromCharCode(92)).join('/'); return !res.some((r) => r.test(p)) })
   } catch { return ids }
