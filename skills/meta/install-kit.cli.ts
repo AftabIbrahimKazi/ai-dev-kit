@@ -365,6 +365,7 @@ export const STANDARD_ROW_LABELS: Record<string, string> = {
   accessibility: 'Accessibility standard',
   qa: 'QA standard',
   ai: 'AI standard',
+  design: 'Design standard',
 };
 
 const ACTIVE_STANDARDS_SECTION_RE = /## Active Standards[\s\S]*?(?=\n## |\s*$)/;
@@ -373,7 +374,7 @@ const SCRIPT_STANDARD_ROW_RE = /(\|\s*Script standard\s*\|\s*`coding-standards\/
 export interface ActiveStandardsOpts {
   scriptStandard?: 'js' | 'ts' | 'js-and-ts';
   // Keys of STANDARD_ROW_LABELS to KEEP. Omit the whole opts object (not this field) to leave the
-  // Active Standards table untouched; an empty Set here means "drop every one of the nine rows".
+  // Active Standards table untouched; an empty Set here means "drop every one of the ten rows".
   active?: Set<string>;
 }
 
@@ -381,7 +382,7 @@ export interface ActiveStandardsOpts {
 // index.md: "a project uses exactly one script standard"), and -- per coding-standards/README.md's
 // own setup instructions ("Update the Active Standards table... Remove rows for standards that do
 // not apply") -- drops the rows for standards the project doesn't use, instead of leaving every
-// one of the nine present for the user to prune by hand later.
+// one of the ten present for the user to prune by hand later.
 export function applyActiveStandards(body: string, opts: ActiveStandardsOpts): string {
   let out = body;
   if (opts.scriptStandard) {
@@ -1140,6 +1141,11 @@ async function main(): Promise<void> {
   let res: unknown;
   try {
     await fillInteractive(cmd, args);
+    if (['uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
+      console.error(red(`${cmd} needs --skills a,b or --all`));
+      process.exit(2);
+      return;
+    }
     if (cmd === 'list') res = listSkills(args.library!);
     else if (cmd === 'install') res = doInstall(args);
     else if (cmd === 'update') res = doUpdate(args);

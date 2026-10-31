@@ -495,7 +495,7 @@ t('STANDARD_ROW_LABELS excludes Script standard and the two Framework rows (reso
   assert.ok(!labels.includes('Script standard'));
   assert.ok(!labels.includes('Framework'));
   assert.ok(!labels.includes('CSS Framework'));
-  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 9);
+  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 10);
 });
 
 t('installStandards against the real CLAUDE.example.md resolves the script standard and prunes inactive rows', () => {
@@ -514,6 +514,22 @@ t('installStandards against the real CLAUDE.example.md resolves the script stand
   assert.ok(!/\| SEO standard \|/.test(body));
   assert.ok(!/\| QA standard \|/.test(body));
   assert.match(body, /\| Framework \| `coding-standards\/frameworks\/\[framework\]\.md`/);
+});
+
+t('the Design standard row is pruned unless design is active, and kept when it is', () => {
+  const body = ['## Active Standards', '', '| Standard | Active |', '|---|---|', '| QA standard | `a` |', '| Design standard | `b` |', '', '## Next', ''].join('\n');
+  assert.ok(!/Design standard/.test(applyActiveStandards(body, { active: new Set(['qa']) })));
+  assert.match(applyActiveStandards(body, { active: new Set(['qa', 'design']) }), /Design standard/);
+});
+
+t('uninstall, archive and unarchive without --skills or --all fail with exit 2 instead of doing nothing', () => {
+  const { spawnSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'skills', 'meta', 'install-kit.cli.js');
+  for (const cmd of ['uninstall', 'archive', 'unarchive']) {
+    const r = spawnSync(process.execPath, [cli, cmd, '--root', tmp(), '--tool', 'claude'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    assert.strictEqual(r.status, 2, cmd);
+    assert.match(r.stderr, /needs --skills a,b or --all/);
+  }
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });
