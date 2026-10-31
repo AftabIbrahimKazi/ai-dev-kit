@@ -382,7 +382,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | Skill | Purpose |
 |---|---|
 | [memory-bank](skills/memory/memory-bank.md) | Repo-committed project memory — decisions, context, solved mysteries |
-| [memory-gardener](skills/memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds; `stale.js` companion lists bullets that name deleted files |
+| [memory-gardener](skills/memory/memory-gardener.md) | Prune/merge learnings.md files and memory banks so knowledge compounds; `stale.js` companion lists bullets that name deleted files; `feedback.js` records lessons that help any project in a local, gitignored `kit-feedback.md` (scrub-checked, never pushed) |
 | [skill-ablation](skills/memory/skill-ablation.md) | Periodic archive-and-run-bare pass — restore only instructions real work proves are missing |
 
 </details>

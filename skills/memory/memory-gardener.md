@@ -33,6 +33,8 @@ Collapse multiple dated sections into a single `## Last session`. In parallel mo
 
 **Promote:** a lesson that has held up repeatedly stops being a dated anecdote and moves to the top as a standing rule — or, if it's universal enough, gets proposed as an edit to the skill body itself (the highest form of promotion: learning → skill text). Propose body edits, apply on approval.
 
+**Share with the kit (owner's choice, never automatic):** a lesson that would help any project, with nothing specific to this one, can be recorded with `node <skill-root>/memory-gardener/feedback.js add --skill <name> --text "<lesson>"`. It goes to `kit-feedback.md` in the project root, a local file that is in `.gitignore` and created only by this command. The kit repo is public and may be used in a workplace: the script refuses a lesson containing a URL, email, IP, absolute path, long token or a word from the deny lists (`.kit-feedback-deny` in the project, `~/.ai-dev-kit/feedback-deny.txt` for every project, e.g. an employer name). Write it with no company, client or product details. Nothing sends or pushes this file. To share a lesson, the owner runs `feedback.js check`, reads the file, and applies it to the kit by hand; never offer to push it, and ask before even drafting an issue or pull request.
+
 **Demote/delete:**
 - Contradicted by a later bullet → delete the loser, keep the winner with a note.
 - One-off tied to a specific bug/file/date with no general pattern after N sessions → delete.
