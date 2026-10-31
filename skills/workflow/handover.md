@@ -8,8 +8,8 @@ description: Maintain handover.md so sessions resume cold with zero re-explainin
 Cold-start context rebuilding is the biggest hidden token cost in long-running projects. This skill makes `handover.md` in the project root the single source of session-to-session truth.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what a fresh session was missing, what sections proved useless. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (what a fresh session was missing, what sections proved useless). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Mode detection (first thing, every time)
 - **Classic (sequential):** project has a single `handover.md` (or nothing) → the protocol below, unchanged.

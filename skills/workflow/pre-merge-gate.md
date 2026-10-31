@@ -1,6 +1,6 @@
 ---
 name: pre-merge-gate
-description: Use whenever a change is about to be called done, ready for review, handed off or committed. Load this BEFORE saying done or committing.
+description: A change is about to be called done, ready for review, handed off or committed. Load BEFORE saying done or committing.
 ---
 
 # Pre-Merge Gate — Check Your Own Diff Before Handing It Off
@@ -8,8 +8,8 @@ description: Use whenever a change is about to be called done, ready for review,
 A change that violates a standard it was written under is cheaper to catch now than after a dev's review cycle finds it. This is the author's own check, not a substitute for that review.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a violation this caught before handoff, or a rule that produced a false flag. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a violation this caught before handoff, or a rule that produced a false flag). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Rules
 1. **Scope is exactly the files edited this task** — in `role-session` parallel mode, exactly the files you hold claims on in `handover/locks.d/`. Never a whole-tree `git diff`, never another role's rows.

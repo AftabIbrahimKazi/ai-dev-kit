@@ -1,6 +1,6 @@
 ---
 name: pre-commit
-description: Use whenever the user asks to commit, "ship it" or "save this", or a git commit is about to run. Load this BEFORE running git commit.
+description: Asked to commit, "ship it" or "save this", or a git commit is about to run. Load BEFORE running git commit.
 ---
 
 # Pre-Commit — Nothing Accidental Ships
@@ -8,8 +8,8 @@ description: Use whenever the user asks to commit, "ship it" or "save this", or 
 A commit is the one operation where sloppiness becomes permanent history. This pass takes ~1 minute and catches the classics: stray files, debug leftovers, mixed concerns, vague messages.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what this pass caught, or a check that never fires and could be dropped. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (what this pass caught, or a check that never fires and could be dropped). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 0 — Run the mechanical check
 `node <skill-root>/pre-commit/check.js --staged --message "<draft message>"` (add `--all` before `git commit -a`, `--push` before a push). It reports debug leftovers, secrets and secret files (values masked), untracked and half-staged files, and message format against the git standard. Read its findings instead of re-reading the diff for those categories; any BLOCK stops the commit. The optional `precommit-gate` mod (Claude Code) runs it on every `git commit` and `git push`: a BLOCK stops every attempt; warnings (a header over 50 characters, untracked files) stop the first attempt for a staged change set, and running the same command again commits. No declaration file is needed. For human commits and tools with no mods (OpenCode, Codex), `node <skill-root>/pre-commit/install-hook.js` installs the same check as real git hooks (`pre-commit` for secrets and files, `commit-msg` for the message format); only BLOCK findings fail a commit, and `uninstall` removes only hooks it wrote.

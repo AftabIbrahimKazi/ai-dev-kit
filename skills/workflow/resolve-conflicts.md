@@ -1,6 +1,6 @@
 ---
 name: resolve-conflicts
-description: Use whenever a merge, rebase, cherry-pick or pull stops with conflicts, or the user says "fix the merge". Load this BEFORE editing a conflicted file.
+description: Merge, rebase, cherry-pick or pull stops with conflicts, or "fix the merge". Load BEFORE editing a conflicted file.
 ---
 
 # Resolve Conflicts — Safe Resolution With Role Guardrails
@@ -8,8 +8,8 @@ description: Use whenever a merge, rebase, cherry-pick or pull stops with confli
 A conflict resolved by guessing silently drops one side's work, or edits code the developer does not own. This skill fixes the mode, the pace and the scope before the first edit.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a conflict shape that needed a different mode, or a guardrail that fired. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a conflict shape that needed a different mode, or a guardrail that fired). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Read the conflict set
 Run `node <skill-root>/resolve-conflicts/scope.js list [--role R]`. It prints which branch is **ours** and which is **theirs**, then one row per file: hunks, `code` or `generated`, and `scope` (`in`, `out`, or `-` with no role). It also saves the set for Step 4. State the legend to the user in one line before any edit: the words "incoming" and "outgoing" change meaning between merge and rebase, so use only **ours** and **theirs**.

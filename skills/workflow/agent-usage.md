@@ -1,6 +1,6 @@
 ---
 name: agent-usage
-description: Use whenever an Agent (subagent) call is being considered, for any task. Load this BEFORE spawning any agent; the default is never, with two scope-anchored exceptions and an approval gate.
+description: Agent/subagent call being considered. Load BEFORE spawning any agent; default is never (two exceptions, approval gate).
 ---
 
 # Agent Usage — Default Off, Judged Exceptions
@@ -8,8 +8,8 @@ description: Use whenever an Agent (subagent) call is being considered, for any 
 Delegating to an Agent tool carries a large fixed token tax regardless of task size, independent of what it actually finds. Most sessions are short, procedural, single-goal, and end rather than run long — so "delegate to save context window" rarely pays off and often burns tokens instead of saving them.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a delegation that paid off vs. one that wasted tokens, a Case-2 scope call that turned out wrong. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a delegation that paid off vs. one that wasted tokens, a Case-2 scope call that turned out wrong). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Default
 

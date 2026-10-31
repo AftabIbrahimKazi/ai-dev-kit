@@ -1,18 +1,10 @@
----
-name: minimax-m3
-description: MiniMax M3 protocol: cheap 1M-context fan-out and bulk-edit worker. Trigger when working with, routing to or configuring MiniMax M3.
----
-
+<!-- Read when: MiniMax M3 protocol: cheap 1M-context fan-out and bulk-edit worker. Trigger when working with, routing to or configuring MiniMax M3. -->
 # MiniMax M3 — Volume Gear Protocol
 
 Open weights · 1M context / 512K max output · video input · ~$0.60 in / $2.40 out per MTok (~40% under Kimi K2.6). Frontier-cluster coding (69.4% SWE-bench Verified) at the lowest price in the cluster — the open fleet's Haiku: fan-out, bulk work, and huge-context/huge-output jobs.
 
 ## Staleness guard
 Facts verified 2026-07 (web). Re-verify pricing/limits against the provider / models.dev before load-bearing decisions; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, jobs it handled above/below its weight. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Fan-out and bulk edits: many parallel workers, repetitive multi-file changes, classification/triage over large sets — cost per item is the whole game and M3 wins it.

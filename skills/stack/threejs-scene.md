@@ -1,6 +1,6 @@
 ---
 name: threejs-scene
-description: Use whenever working on Three.js scenes, meshes, shaders, materials, cameras, scroll/animation bindings, or visual glitches. Load this BEFORE editing scene code.
+description: Three.js scenes, meshes, shaders, materials, cameras, scroll/animation bindings, or visual glitches. Load BEFORE editing scene code.
 ---
 
 # Three.js Scene — Hard-Won Patterns
@@ -12,7 +12,7 @@ Three.js moves fast and API facts here (colorspace handling, disposal semantics,
 
 ## Self-improvement (do this first and last)
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons — past rendering bugs WILL recur in new form.
-2. **At end of every use:** append one dated bullet — symptom → cause → fix for any visual bug solved; any pattern that kept a scene clean. Merge instead of duplicating; delete disproven bullets.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (symptom → cause → fix for any visual bug solved; any pattern that kept a scene clean). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Shaders
 - **A failed shader compile fails silently in production paths** — the mesh just doesn't render or renders wrong (ghost/black objects). After any GLSL edit, check the console for `THREE.WebGLProgram` errors before debugging anything else.

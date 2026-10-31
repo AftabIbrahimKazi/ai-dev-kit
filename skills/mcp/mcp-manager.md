@@ -1,6 +1,6 @@
 ---
 name: mcp-manager
-description: Use when asked to add, set up or fix an MCP, mentions Stitch or "MCP first", or a configured server covers the task. Load BEFORE wiring or calling any MCP.
+description: Adding, setting up or fixing an MCP, Stitch or "MCP first", or a configured server covers the task. Load BEFORE wiring or calling any MCP.
 ---
 
 # MCP Manager — Opt-In MCP Servers, One Set of Rules
@@ -8,8 +8,8 @@ description: Use when asked to add, set up or fix an MCP, mentions Stitch or "MC
 **Opt-in only, never in a default install.** Every server adds an external dependency, often a key, and its tool schemas cost tokens. Shared rules live here; each server is a data file `<name>.md` (installed as a companion, see Registry). A missing or failing server must degrade to the normal flow — never block a task.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a config-format quirk, a server failure mode, a fallback that fired wrongly. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a config-format quirk, a server failure mode, a fallback that fired wrongly). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Registry
 Installed servers = the `<server>.md` companion files in this skill's folder, e.g. `.claude/skills/mcp-manager/stitch.md` (library source: `mcp/mcp-manager.<server>.md`; any `.md` there with a `trigger:` frontmatter field is a server file). Each has frontmatter: `trigger` (tasks it serves), `replaces` (the normal flow it falls back to), `transport`, `url`/`command`, optional `setup` (local install command + size), `auth` (none / api-key / oauth + default env var name), `cost` (free / limited / paid), `verified` (date its facts were last checked). Read a server file only when its trigger matches or during setup — never load all of them.

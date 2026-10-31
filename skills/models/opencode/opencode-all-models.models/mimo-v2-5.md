@@ -1,18 +1,10 @@
----
-name: mimo-v2-5
-description: MiMo-V2.5 protocol (Xiaomi's open model, 1M context, free tier on Zen). Trigger when working with, routing to or configuring MiMo-V2.5.
----
-
+<!-- Read when: MiMo-V2.5 protocol (Xiaomi's open model, 1M context, free tier on Zen). Trigger when working with, routing to or configuring MiMo-V2.5. -->
 # MiMo-V2.5 — Dark-Horse Agent Protocol
 
 Xiaomi · open weights · 1M context / 128K max output · ~$0.435 in / $0.87 out per MTok (Pro). Top rankings on SWE-bench Pro, ClawEval, and GDPVal — a long-horizon agentic performer at DeepSeek prices, less battle-tested in the community than the GLM/Qwen/Kimi cluster.
 
 ## Staleness guard
 Facts verified 2026-07 (web). Newer entrant — reputation and pricing are both still settling; re-verify against the provider / models.dev before load-bearing decisions and log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — where it beat or trailed the established cluster, tool-calling quirks, cost surprises. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Long-horizon agent tasks at low cost: 1M context + strong SWE-bench Pro at DeepSeek-tier pricing — the value alternative to GLM-5.2 for extended agent runs.

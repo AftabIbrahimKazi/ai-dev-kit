@@ -14,8 +14,8 @@ A misfire is any gap between what the kit was supposed to do and what happened: 
 This skill never blocks or slows a task to log something. Logging is a side note, not a gate: append after the task has moved on, never make the user wait on it.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a misfire category that kept recurring, a noise source worth excluding. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a misfire category that kept recurring, a noise source worth excluding). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Setup (once per project, at install or whenever the user opts in later)
 

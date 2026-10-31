@@ -1,6 +1,6 @@
 ---
 name: session-budget
-description: Use whenever the user mentions tokens, token usage, cost, budget, expense or a filling context, or a long task starts. Load this BEFORE answering or reading files.
+description: Tokens, token usage, cost, budget or a filling context mentioned, or a long task starts. Load BEFORE answering or reading files.
 ---
 
 # Session Budget — Drive Efficiently
@@ -8,8 +8,8 @@ description: Use whenever the user mentions tokens, token usage, cost, budget, e
 The model skills pick the gear; this skill drives it. Every rule targets the actual waste patterns: redundant reads, oversized reads, restated content, and premium-model grunt work.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — the biggest token sink observed this session and how to avoid it. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (the biggest token sink observed this session and how to avoid it). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Reading discipline (input tokens)
 - **Grep/glob before read.** Locate the target line range, then read that range — not the whole file. Reading a 2000-line file to edit 10 lines is a 100× overspend.

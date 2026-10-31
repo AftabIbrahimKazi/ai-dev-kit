@@ -11,8 +11,8 @@ Treat the lineup as one machine with four gears. The single biggest lever for co
 The lineup table below was verified 2026-10-08. Model lineups change: before load-bearing routing/cost decisions, confirm the current lineup (Models API / platform.claude.com or the claude-api skill). New models slot into the same gear logic; update the table and log the change in `learnings.md`.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — routing decisions that paid off or backfired, cost surprises, delegation patterns that worked. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (routing decisions that paid off or backfired, cost surprises, delegation patterns that worked). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The lineup (current, verified)
 

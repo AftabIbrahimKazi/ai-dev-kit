@@ -1,6 +1,6 @@
 ---
 name: debug-protocol
-description: Use when something fails or misbehaves and the cause is unknown (bug, regression, failing build or test), or after two failed fixes. Load BEFORE investigating or editing.
+description: Something fails or misbehaves and the cause is unknown (bug, regression, failing build or test), or after two failed fixes. Load BEFORE investigating or editing.
 ---
 
 # Debug Protocol — No Shotgun Edits
@@ -8,8 +8,8 @@ description: Use when something fails or misbehaves and the cause is unknown (bu
 The expensive failure mode is "edit things until it works": it burns tokens, masks the real cause, and plants regressions. This loop is slower per step and much faster to resolution.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — root-cause class found, which hypothesis-shortcut worked, what wasted time. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (root-cause class found, which hypothesis-shortcut worked, what wasted time). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The loop
 

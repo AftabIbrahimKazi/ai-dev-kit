@@ -73,6 +73,7 @@ If the token is ever missing from a response — or the Context code is missing 
 - Every response starts with `[CX <Context code>]` (bare `[CX]` if no code is set)
 - First response of every session declares standards as not-yet-loaded; standards load lazily on first file-touching turn, not eagerly at session start
 - No restating the task, trailing summaries or filler
+- Code comments follow the `comment-style` level (default none: only tool-required ones: `as`/suppression justifications, pragmas, license headers)
 - Response shape follows the data (RULE AI-18): table for 2+ items with 2+ attributes, one line for one fact, yes/no for yes/no; `/format` overrides
 - Where the tool renders links, file references are markdown links, not bare or inline-code paths (RULE AI-17)
 - No invented rules — gaps in standards are flagged to the developer

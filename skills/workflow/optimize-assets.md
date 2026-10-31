@@ -1,6 +1,6 @@
 ---
 name: optimize-assets
-description: Use whenever the user asks to convert, compress, shrink or optimize images, video, fonts or SVG, or wants webp or avif. Load this BEFORE converting any asset.
+description: Converting, compressing, shrinking or optimizing images, video, fonts or SVG; webp/avif. Load BEFORE converting any asset.
 ---
 
 # Optimize Assets — Convert and Compress Without Losing the Original
@@ -8,8 +8,8 @@ description: Use whenever the user asks to convert, compress, shrink or optimize
 Heavy assets cost page weight, repo size and, for images an AI model reads, tokens. This skill finds them, converts or compresses them with the converters the machine already has, and leaves every original in place until the user decides.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a quality setting that looked wrong, or a converter that failed on a file type. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a quality setting that looked wrong, or a converter that failed on a file type). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The tool
 `node <skill-root>/optimize-assets/convert.js <command>`. Plain Node; it drives sharp, ImageMagick, ffmpeg, svgo, woff2_compress and oxipng when they are installed. It never edits or deletes an original.

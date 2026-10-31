@@ -1,18 +1,10 @@
----
-name: big-pickle
-description: Big Pickle protocol: OpenCode Zen's free coding model (about GLM-4.6), 200K context, free-tier caveats, exit plan. Trigger when working with or routing to Big Pickle.
----
-
+<!-- Read when: Big Pickle protocol: OpenCode Zen's free coding model (about GLM-4.6), 200K context, free-tier caveats, exit plan. Trigger when working with or routing to Big Pickle. -->
 # Big Pickle — Free Stealth Workhorse Protocol
 
 OpenCode Zen · stealth (identity undisclosed; community consensus: GLM-4.6 by Zhipu AI) · 200K context / 32K max output · **$0 in/out/cached for a limited time**. Roughly Claude Sonnet 4.5/4.6-class on coding — frontier-adjacent quality at zero token cost, which makes it the default daily gear while the free period lasts.
 
 ## Staleness guard
 Facts verified 2026-07 (web). A stealth free model is the least stable fact in the fleet: the free period WILL end, and the underlying model can be swapped without notice. Re-verify on Zen before relying on it; log changes in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — task classes it handled or fumbled, behavior shifts suggesting a model swap, quirks vs. documented GLM behavior. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Daily-driver coding at zero cost: features, fixes, refactors that would otherwise burn paid tokens — route here first, escalate only on demonstrated failure.

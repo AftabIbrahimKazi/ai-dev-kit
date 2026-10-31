@@ -1,6 +1,6 @@
 ---
 name: astro-page
-description: Use whenever adding an Astro page, component, overlay or entry script, or wiring CSS/TS into an Astro site. Load this BEFORE scaffolding.
+description: Adding an Astro page, component, overlay or entry script, or wiring CSS/TS into Astro. Load BEFORE scaffolding.
 ---
 
 # Astro Page — Convention-Driven Scaffolding
@@ -8,8 +8,8 @@ description: Use whenever adding an Astro page, component, overlay or entry scri
 New surface area in an Astro project should be indistinguishable from existing surface area. This skill front-loads convention discovery so nothing gets invented that the project already standardizes.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a convention discovered the hard way, a scaffolding step that was missing. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a convention discovered the hard way, a scaffolding step that was missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Discover the project's conventions (never assume)
 Before writing anything, establish from the project itself:

@@ -1,6 +1,6 @@
 ---
 name: skill-scope
-description: Use whenever classifying, installing, pinning or archiving a skill. Load this BEFORE changing any skill's status; edit the classification here only.
+description: Classifying, installing, pinning or archiving a skill. Load BEFORE changing any skill status; edit the classification here only.
 metadata:
   type: reference
 ---
@@ -57,6 +57,8 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 
 ### Per-session archivable (handover toggles from the stated next task)
 `perf-audit`, `code-audit`, `security-audit`, `ui-design`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
+
+**Manual-only skills** carry `disable-model-invocation: true`: `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`, `skill-ablation` and the previous-generation model protocols (`opus-4-8`, `sonnet-5`, `opus-5`, `fable-5`, `haiku-4-5`, `opus-as-fable`). They are absent from the model's skill list (about 50 tokens each saved per turn) and run only when the user types `/<name>`. Measured with `/context`.
 
 `install-kit` is no longer installed into a project at all (it runs from the library against `--root <target>`, per its own skill file), so it has nothing to archive and is not part of this set.
 

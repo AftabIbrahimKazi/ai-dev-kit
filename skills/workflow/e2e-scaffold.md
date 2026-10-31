@@ -1,6 +1,6 @@
 ---
 name: e2e-scaffold
-description: Use when asked to set up e2e or Playwright testing, or before a first Playwright spec in a project with no fixtures layer. Load BEFORE writing any spec.
+description: Setting up e2e/Playwright testing, or before a first Playwright spec with no fixtures layer. Load BEFORE writing any spec.
 ---
 
 # E2E Scaffold — Write the Plumbing Once, Reuse It Forever
@@ -15,7 +15,7 @@ system is installed — that file is the *rule*, this skill is the *scaffold* th
 following it the path of least resistance. Works standalone if standards aren't installed.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
 2. **At end of every use:** append one dated bullet — a stack this needed extra handling
    for, a detection heuristic that guessed wrong. Merge instead of duplicating.
 

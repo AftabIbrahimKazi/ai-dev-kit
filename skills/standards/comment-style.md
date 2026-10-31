@@ -1,15 +1,15 @@
 ---
 name: comment-style
-description: Use whenever writing or editing code, or when the user asks to change comment style or verbosity, or to add or remove comments. Load this BEFORE writing code; the default is no comments.
+description: Writing or editing code, or changing comment style or verbosity. Load BEFORE writing code; default is no comments.
 ---
 
 # Comment Style — Per-Project Comment Level
 
-Comments cost output tokens when written and input tokens on every later re-read of the file. This skill fixes one project-wide level so the AI stops improvising comment volume per edit.
+One project-wide comment level, so the AI stops improvising comment volume per edit.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a case that was wrongly commented or wrongly left bare, or an exception category that turned out to be missing. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a case that was wrongly commented or wrongly left bare, or an exception category that turned out to be missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Active level
 **Active level: none**
@@ -24,7 +24,7 @@ Read the line above before writing any code; it is the only setting. `install-ki
 | `terse` | A comment only when the *why* is non-obvious (hidden constraint, workaround, surprising behavior). One line, plain words, no more than ~80 characters. Never restate what the code does. |
 | `descriptive` | Same triggers as `terse`, but up to 3 short lines in simple words — what the tricky part is, why it's done that way, and what breaks if changed. Still never narrates obvious code line by line. |
 
-`terse` matches `coding-standards` RULE AI-11. `descriptive` deliberately loosens AI-11 for this project by the user's own choice — say so in the install report.
+`terse` matches RULE AI-11; `descriptive` loosens it by the user's choice (say so in the install report).
 
 ## Exceptions that apply at every level, including `none`
 A comment is still written when a rule or tool requires one. Only these categories qualify:
@@ -32,10 +32,9 @@ A comment is still written when a rule or tool requires one. Only these categori
 2. **Directive/pragma comments a tool consumes** — `// @ts-check`, `/** @jsx */`, `// prettier-ignore`, bundler hints like `/* webpackChunkName */`, and a license header the project requires.
 3. **JSDoc as the type system** in a JS-only project whose standard mandates it — and only the type tags, not prose.
 
-Anything not on this list gets no comment at `none`. If a case looks similar but you're unsure it qualifies, default to no comment. When the user names a new mandatory case, add it here (not to the code base) and note it in `learnings.md`.
+Anything else gets no comment at `none`; when unsure, write none. A new mandatory case the user names goes in this list.
 
-## Where the reasoning goes instead
-At `none`, a non-obvious why still matters — surface it in the end-of-turn summary or the commit message, one line, never in the code. That keeps the context lean without losing the rationale.
+At `none`, put a non-obvious why in the end-of-turn note or the commit message, one line, never in the code.
 
 ## Boundaries
 - Governs comments you **write**. Never strip or rewrite existing comments in a file you're editing, and never comment-out code (RULE TS-09 / JT-10 / JS-08).

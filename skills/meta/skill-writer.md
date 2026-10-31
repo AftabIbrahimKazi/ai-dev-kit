@@ -1,5 +1,6 @@
 ---
 name: skill-writer
+disable-model-invocation: true
 description: Use whenever creating, reviewing, improving or rewriting the description of a skill or SKILL.md. Load this BEFORE writing or editing any skill file.
 ---
 
@@ -8,8 +9,8 @@ description: Use whenever creating, reviewing, improving or rewriting the descri
 Every skill added to the library should match one quality bar. This is that bar.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a structural choice that made a skill get triggered (or missed), phrasing that models followed well or ignored. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a structural choice that made a skill get triggered (or missed), phrasing that models followed well or ignored). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Anatomy of a skill
 Location: `<skill-root>/<kebab-name>/SKILL.md` (auto-invocable; `.claude/skills/` Claude Code, `.opencode/skills/` OpenCode) — optionally mirror a portable copy elsewhere (e.g. a root `skills/` folder) for reuse across projects.
@@ -24,7 +25,7 @@ compat: universal            ← omit for universal (the default); see Tool-comp
 # Title — one-line identity
 One or two sentences: what failure mode this skill exists to prevent.
 
-## Self-improvement (first and last)   ← every skill gets this loop
+## Self-improvement (first and last)   ← every skill gets this loop; read learnings.md only if the learnings-inject mod supplied it, append only a new non-obvious lesson
 ## <2–5 content sections>
 ```
 
@@ -63,5 +64,6 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - [ ] Self-improvement loop present
 - [ ] Tool-specific mechanism? → has `compat: <tool>-only` in frontmatter + the bold dependency line, and any rule it assists still works without it
 - [ ] Under ~120 lines; no section that merely restates another
+- [ ] Names follow CONTRIBUTING.md "File and folder names" (skill name 24 characters or fewer, file names 30 or fewer, 3+ `.md` companions in a folder); `node tests/naming.test.js` passes
 - [ ] Facts (APIs, prices, versions) verified against current docs, not memory — stale facts are worse than none
 - [ ] Renaming or merging a skill? Add a row to `migrations/RENAMES.md` (repo root) in the same change and update every cross-reference (grep the whole library for the old name) — a rename without a ledger row strands existing installs

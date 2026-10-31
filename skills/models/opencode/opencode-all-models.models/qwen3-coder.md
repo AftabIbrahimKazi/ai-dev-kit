@@ -1,8 +1,4 @@
----
-name: qwen3-coder
-description: Qwen3-Coder protocol (480B and Next 80B-A3B, self-hosting, Apache-2.0). Trigger when working with, routing to or configuring any Qwen3-Coder variant.
----
-
+<!-- Read when: Qwen3-Coder protocol (480B and Next 80B-A3B, self-hosting, Apache-2.0). Trigger when working with, routing to or configuring any Qwen3-Coder variant. -->
 # Qwen3-Coder — Apache Workhorse Protocol
 
 Apache-2.0 · two tiers, one family:
@@ -11,10 +7,6 @@ Apache-2.0 · two tiers, one family:
 
 ## Staleness guard
 Facts verified 2026-07 (web). Qwen releases iterate fast — re-verify variants/pricing against the provider / models.dev before load-bearing decisions; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, hosting configs that mattered. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Cheapest frontier-grade coding tokens on the market — the default for high-volume coding pipelines.
