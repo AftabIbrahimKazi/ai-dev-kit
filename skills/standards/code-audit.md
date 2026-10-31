@@ -23,7 +23,7 @@ It does not replace review. It replaces the searching. Rules a script cannot che
 | One standard | `audit.js --standard css,html` (also `js ts a11y seo perf git version`) |
 | Part of the tree | `audit.js src/components` |
 | Every hit of one rule | `audit.js --rule css-14` (`--context` adds the source line, `--limit N` raises the 200 cap) |
-| Leave out third-party code | `audit.js --ignore 'vendor/**'` or `ignore` in `.claude/code-audit.json` |
+| Leave out third-party code | `audit.js --ignore 'vendor/**'`, a line in `.aiignore` (gitignore-style, e.g. `vendor/`), or `ignore` in `.claude/code-audit.json` |
 | See what is and is not checked | `audit.js --list` |
 | Track progress | `audit.js --baseline` once, then plain `audit.js`; exit code 1 only if a count rose |
 
@@ -33,6 +33,14 @@ It does not replace review. It replaces the searching. Rules a script cannot che
 3. Work one rule at a time, starting with the cheapest to fix. `--rule <id> --context` gives the file, line and source. Open only those files.
 4. Rerun the overview after each batch. The counts are the progress report.
 5. Report what is left as `rule: count`, not prose.
+
+## The ignore list (`.aiignore`)
+It lists code the AI should leave alone (generated, vendored, large fixtures). The audit skips those files silently; `--json` reports how many (`aiIgnored`).
+- **Do not read `.aiignore` up front.** Knowing it exists is enough.
+- **Only when stuck** (a symbol, import or bug that must live in an ignored file): read `.aiignore` once, list the files under the matching paths with `Glob` (names only), then call the `prefilter` tool (Laya) with the task and those names plus a first line of each. Open only what it ranks first. Laya is a hint, not proof; verify before editing.
+- Never edit an ignored file without telling the user.
+- With the `aiignore-guard` mod installed this is enforced: the first `Read`, `Edit`, `Write`, `Grep` or `Glob` that names an ignored path, or `Bash`/`PowerShell` command that mentions one, is denied with these steps, and retrying the exact same path or command once goes through. Unscoped `Grep` and `Glob` results come back without the ignored files, plus one line saying how many were hidden. Shell detection is a word-level heuristic, so a path built from a variable gets through. Without the mod, only the audit honours `.aiignore`.
+- The mod adds three narrower layers on the same deny-once rule, each unlocking the whole top-level folder after one denial: paths that **belong to another role** (`conflict-roles.json`: the active role's `out` list, or anything another role lists under `in` that the active role does not, so a folder another role made is covered the moment its role lists it; the role is read from a prompt like "you are the frontend dev", from `AI_ROLE`, or from role-session), the **current task's scope** (`/focus src/styles`, else the role's `handover/board.md` Files cell) and **folders local Laya is confident the prompt does not need**. They apply to direct reads, edits and named searches only, never to `Bash`. Laya is optional: without it that layer does nothing. `/focus off` clears a scope.
 
 ## Kinds of finding
 - **rule**: a violation of a standard. Fix it, or tell the user why it stays.

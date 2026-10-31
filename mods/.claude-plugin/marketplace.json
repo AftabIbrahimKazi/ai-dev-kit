@@ -49,6 +49,11 @@
       "name": "eta-nudge",
       "source": "./eta-nudge",
       "description": "Reminder only: nudges once when a Bash/PowerShell call is backgrounded, and every 10 minutes of wall-clock task time after the first 5, to restate or give a time estimate and checkpoint (plan-first's rule). Never computes the estimate itself, never blocks."
+    },
+    {
+      "name": "aiignore-guard",
+      "source": "./aiignore-guard",
+      "description": "Keeps the AI out of files it should not read: the project's .aiignore, paths that belong to another role (conflict-roles.json: the active role's out list, or anything another role lists under in), the current task's scope (/focus, else the role's board row) and folders local Laya judges unrelated to the prompt. The first touch of such a path is denied with the snag protocol (rank names with prefilter, retry once); unscoped Grep and Glob results come back without ignored and out-of-role files. Does nothing without these files."
     }
   ]
 }

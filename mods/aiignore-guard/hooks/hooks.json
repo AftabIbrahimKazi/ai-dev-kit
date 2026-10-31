@@ -1,0 +1,4 @@
+{
+  "description": "aiignore-guard hooks module",
+  "modules": ["./register.ts"]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "aiignore-guard",
+  "version": "0.5.0",
+  "description": "Keeps the AI out of files it should not read, in four layers: the project's .aiignore (always), paths that belong to another role (the active role's \"out\" list, or any path another role lists under \"in\" that the active role does not; .claude/conflict-roles.json; the role comes from AI_ROLE, a prompt such as 'you are the frontend dev', or role-session), the current task's scope (/focus paths, else the role's handover/board.md Files cell) and folders the local Laya model is confident the current prompt does not need. The first Read, Edit, Write, Grep or Glob that names such a path, or Bash or PowerShell command that mentions an .aiignore or role path, is denied with the way in (list names, rank them with the prefilter tool); retrying the exact path or command once goes through, and a role, scope or Laya denial unlocks the whole top-level folder. An unscoped Grep or Glob is not denied: .aiignore and role files are dropped from what it returns, with one line saying how many. Shell detection is a word-level heuristic. Skips handover/. Does nothing without these files. Calls Laya locally at 127.0.0.1 only (the host is checked in code, never trusted from the env var alone) at each task prompt, with an 8 s limit; no other network access. Fails open on its own errors and when Laya is absent or answers late. Reads env: AI_ROLE, SYSTEM1_API_KEY (only to stand down when a hosted provider is set), SYSTEM1_BASE_URL, LAYA_PORT, LAYA_HOME, USERPROFILE, HOME.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

@@ -14,6 +14,7 @@ exports.listRules = listRules;
 //
 // Findings are "rule" (a violation) or "review" (a heuristic candidate that needs judgement) or "info" (a count).
 // Exit 0 normally; with a saved baseline (.claude/code-audit.baseline.json) exit 1 only when a count rose.
+// Ignore list (optional): <cwd>/.aiignore, gitignore-style, merged with the "ignore" globs below.
 // Config (optional): <cwd>/.claude/code-audit.json
 //   { "ignore": ["glob"...], "skipRules": ["id"...], "styleBlocks": "count|forbid", "commits": 200 }
 // Also used by the edit-check engine (profile "edit": the small set of rules it has always run per edit).
@@ -402,11 +403,37 @@ function checkText(rel, text, cfg = {}, profile = 'audit') {
     return f.filter((x) => !skip.has(x.rule)).sort((a, b) => a.line - b.line);
 }
 // ---- repository-level packs ----
-function gitChecks(cwd, cfg) {
+const GIT_CACHE = path.join('.claude', 'code-audit.cache.json');
+const GIT_CACHE_V = 1; // bump when the commit or branch rules change, so old cached findings are not reused
+// Every ref tip plus HEAD: the commit and branch findings can only change when one of these does. null = not a git repo.
+function gitState(cwd, commits) {
+    const refs = run('git', ['for-each-ref', '--format=%(objectname) %(refname)'], cwd, 5000);
+    if (refs.status !== 0)
+        return null;
+    const head = run('git', ['rev-parse', '--verify', '-q', 'HEAD'], cwd, 5000);
+    return `${GIT_CACHE_V}|${commits}|${(head.stdout || '').trim()}|${refs.stdout}`;
+}
+function gitChecks(cwd, cfg, state) {
     const out = [];
-    const inside = run('git', ['rev-parse', '--is-inside-work-tree'], cwd, 5000);
-    if (inside.status !== 0)
+    if (state === null)
         return out;
+    try {
+        const hit = JSON.parse(fs.readFileSync(path.join(cwd, GIT_CACHE), 'utf8'));
+        if (hit.state === state)
+            return hit.findings;
+    }
+    catch { /* no cache yet */ }
+    out.push(...gitScan(cwd, cfg));
+    // only write where the kit's folder already exists; the audit never creates .claude on its own
+    try {
+        if (fs.existsSync(path.join(cwd, '.claude')))
+            fs.writeFileSync(path.join(cwd, GIT_CACHE), JSON.stringify({ state, findings: out }));
+    }
+    catch { /* read-only checkout */ }
+    return out;
+}
+function gitScan(cwd, cfg) {
+    const out = [];
     const add = (file, rule, msg, detail) => { out.push({ file, line: 0, rule, msg, detail }); };
     const TYPES = 'feat|fix|patch|style|refactor|chore|docs|test|remove';
     const log = run('git', ['log', '-n', String(cfg.commits || 200), '--no-merges', '--format=%h%x09%s'], cwd);
@@ -474,6 +501,19 @@ function versionChecks(cwd, inGit) {
     return out;
 }
 // ---- audit driver ----
+// <cwd>/.aiignore: gitignore-style lines for files the AI should not scan or read (generated output, vendored code, big fixtures).
+// "#" comments and blank lines are skipped, "dist/" means everything under dist, a leading "/" is dropped, "!" negation is not supported.
+function readAiIgnore(cwd) {
+    let text = '';
+    try {
+        text = fs.readFileSync(path.join(cwd, '.aiignore'), 'utf8');
+    }
+    catch {
+        return [];
+    }
+    return text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('!'))
+        .map((l) => l.replace(/^\//, '').replace(/\/$/, '/**'));
+}
 function listFiles(cwd) {
     const g = run('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd);
     if (g.status === 0 && g.stdout)
@@ -505,6 +545,8 @@ function audit(cwd, cfg = {}, opt = {}) {
     const skipped = [];
     const markSkipped = (rel) => { generated++; skipped.push(rel); };
     const only = (opt.paths || []).map((p) => norm(p).replace(/^\.\//, '').replace(/\/$/, ''));
+    const aiIgnores = readAiIgnore(cwd).map(globRe);
+    let aiIgnored = 0;
     const ignores = [...(cfg.ignore || []), ...(opt.ignore || [])].map(globRe);
     const stds = opt.standard ? new Set(opt.standard) : null;
     for (const rel of listFiles(cwd)) {
@@ -514,6 +556,10 @@ function audit(cwd, cfg = {}, opt = {}) {
             continue;
         if (SKIP_DIRS.test(rel) || ignores.some((re) => re.test(rel)))
             continue;
+        if (aiIgnores.some((re) => re.test(rel))) {
+            aiIgnored++;
+            continue;
+        }
         if (!opt.includeGenerated && GENERATED_NAME.test(path.basename(rel))) {
             markSkipped(rel);
             continue;
@@ -539,13 +585,13 @@ function audit(cwd, cfg = {}, opt = {}) {
     }
     let inGit = false;
     if (!opt.noGit && !only.length) {
-        const g = gitChecks(cwd, cfg);
-        inGit = run('git', ['rev-parse', '--is-inside-work-tree'], cwd, 5000).status === 0;
-        findings.push(...g, ...versionChecks(cwd, inGit));
+        const state = gitState(cwd, cfg.commits || 200);
+        inGit = state !== null;
+        findings.push(...gitChecks(cwd, cfg, state), ...versionChecks(cwd, inGit));
     }
     const skip = new Set(cfg.skipRules || []);
     const kept = findings.filter((f) => !skip.has(f.rule) && (!stds || stds.has(exports.RULES[f.rule].std)));
-    return { scanned, generated, skipped, findings: kept };
+    return { scanned, generated, aiIgnored, skipped, findings: kept };
 }
 function tally(findings) {
     const t = {}; // rule -> file -> [lines]
