@@ -1,8 +1,4 @@
----
-name: gpt-oss
-description: gpt-oss protocol (OpenAI open weights, 120b/20b): harmony format, tool calling. Trigger when working with, routing to or self-hosting gpt-oss.
----
-
+<!-- Read when: gpt-oss protocol (OpenAI open weights, 120b/20b): harmony format, tool calling. Trigger when working with, routing to or self-hosting gpt-oss. -->
 # gpt-oss — OpenAI Open-Weight Protocol
 
 Apache-2.0 · MoE, MXFP4-quantized at training time · two sizes:
@@ -13,10 +9,6 @@ Reasoning-and-agentic generalists with strong tool calling (Tau-Bench), not codi
 
 ## Staleness guard
 Facts verified 2026-07 (web). Re-verify against OpenAI's model card / models.dev before load-bearing decisions; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, serving configs that mattered, harmony-format gotchas. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Self-hosted agent loops on modest hardware: 20b is the best local option for reasoning + reliable tool calls on a 16 GB machine — above the qwen2.5-coder tier, below datacenter models.

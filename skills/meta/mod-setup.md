@@ -1,6 +1,6 @@
 ---
 name: mod-setup
-description: Use whenever the user asks to install, enable, review or remove mods, set up budget-ledger, or mods are not loading. Load this BEFORE running any plugin command.
+description: Installing, enabling, reviewing or removing mods, setting up budget-ledger, or mods not loading. Load BEFORE any plugin command.
 compat: claude-code-only
 ---
 
@@ -11,8 +11,8 @@ compat: claude-code-only
 A mod runs with the user's permissions and sees every prompt and tool call. Install only after the user has seen what it does and said yes.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a check that failed, a surface that behaved differently, an install step that was missing. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a check that failed, a surface that behaved differently, an install step that was missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Check the environment
 1. Version: run `claude --version` (VS Code: the bundled `claude.exe` under `~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/`). Below 2.1.287: stop and tell the user to update.

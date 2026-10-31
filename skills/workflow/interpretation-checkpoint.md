@@ -1,15 +1,15 @@
 ---
 name: interpretation-checkpoint
-description: Use whenever a task touches 2+ files AND changes 2+ distinct parameters or aspects. Load this BEFORE the first edit; skip it for one change repeated mechanically across files.
+description: Task touches 2+ files AND changes 2+ distinct parameters. Load BEFORE the first edit; skip for one change repeated across files.
 ---
 
 # Interpretation Checkpoint — Verify the Read Before Writing
 
-`intent-capture` pins *what* was asked; `plan-first` decides *how*. Neither catches drift in the fine detail — the exact values, files, and parameters I inferred from a clear request. On wide-blast-radius tasks that drift is expensive to discover after the edit; this catches it before.
+`intent-capture` pins *what*; `plan-first` decides *how*. Neither catches drift in the fine detail — the exact values, files, and parameters I inferred from a clear request. On wide-blast-radius tasks that drift is expensive to discover after the edit; this catches it before.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — did this catch real drift, or fire on a task that didn't need it? Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (did this catch real drift, or fire on a task that didn't need it?). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## When it applies
 Both must be true:
@@ -32,7 +32,3 @@ Present this, then wait for correction or confirmation before editing — a sing
 - **List real files** (checked via glob/grep), not a guess from memory.
 - **One line per distinct change** — if there's only one after listing them out, this skill didn't need to fire; say so and proceed.
 - **Assumptions must be visible**, not folded silently into Changes — that's the whole point of the checkpoint.
-- Not a substitute for `plan-first`'s Approach/Verify-by — this only checks the parsed detail, not the strategy.
-
-## Failure mode this prevents
-A multi-file, multi-parameter change built correctly against a misread detail (wrong value, wrong file, wrong scope) — discovered only after generation, when the fix costs a redo instead of a one-line correction.

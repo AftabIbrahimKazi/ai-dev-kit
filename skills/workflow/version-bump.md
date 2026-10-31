@@ -1,6 +1,6 @@
 ---
 name: version-bump
-description: Use whenever a push is about to happen and the project follows coding-standards/versioning-standards.md, or the user says "bump the version"/"cut a release". Load this BEFORE running git push.
+description: A push is about to happen in a project following versioning-standards.md, or "bump the version" / "cut a release". Load BEFORE git push.
 ---
 
 # Version Bump — Mechanical [major].[feature].[patch] + Changelog
@@ -8,8 +8,8 @@ description: Use whenever a push is about to happen and the project follows codi
 Version bumps happen at push time only, as the last step before a push (RULE V-04), and every bump needs a changelog entry (RULE V-08). This skill does both in one mechanical step so neither is ever missed or hand-typed inconsistently.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a scope or changelog edge case that surprised you. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a scope or changelog edge case that surprised you). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The tool
 `node <skill-root>/version-bump/bump.js <major|feature|patch|alpha|beta|rc|release> [scope] [options]`. Plain Node, no dependencies. It edits `package.json`'s `"version"` field in place (regex substitution, so the rest of the file's formatting is untouched) and inserts a `## [x.y.z] — date` block into the sibling `CHANGELOG.md`, newest entry first.

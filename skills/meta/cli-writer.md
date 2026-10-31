@@ -1,5 +1,6 @@
 ---
 name: cli-writer
+disable-model-invocation: true
 description: Use whenever creating, reviewing or improving a command-line tool, installer, setup script or any kit script a person runs from a terminal. Load this BEFORE writing or editing one. Not for development work.
 ---
 
@@ -10,8 +11,8 @@ description: Use whenever creating, reviewing or improving a command-line tool, 
 A kit CLI runs on a machine the author never saw: Windows with a space in the path, no `node_modules`, no TTY, an agent instead of a person. This is the bar that survives that.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a cold-start failure, an OS quirk, a prompt that confused a tester. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a cold-start failure, an OS quirk, a prompt that confused a tester). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 0 — Choose the tool
 | Need | Use |

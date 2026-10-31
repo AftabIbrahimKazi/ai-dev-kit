@@ -323,16 +323,16 @@ Every skill in the kit, by category, with what it is for. Click a category to op
 | Skill | Purpose |
 |---|---|
 | [opencode-all-models](skills/models/opencode/opencode-all-models.md) | Open-weight fleet routing in OpenCode — GLM/DeepSeek/Kimi/Qwen/MiniMax, local vs. hosted |
-| [big-pickle](skills/models/opencode/big-pickle.md) | Big Pickle — Zen's free stealth model (≈GLM-4.6, Sonnet-4.5/4.6-class); free-tier caveats, exit plan |
-| [glm-5-2](skills/models/opencode/glm-5-2.md) | GLM-5.2 — open-weight flagship for long-horizon agents; latency/caching discipline |
-| [deepseek-v4](skills/models/opencode/deepseek-v4.md) | DeepSeek V4 Pro — cheap frontier reasoning; promo-pricing and cache discipline |
-| [kimi-k2-6](skills/models/opencode/kimi-k2-6.md) | Kimi K2.6 — retry-native agentic coder, best-in-class tool calling, vision-to-UI |
-| [qwen3-coder](skills/models/opencode/qwen3-coder.md) | Qwen3-Coder 480B & Next — Apache-2.0 coding workhorse, self-hosting pick |
-| [minimax-m3](skills/models/opencode/minimax-m3.md) | MiniMax M3 — cheapest frontier-cluster tokens; fan-out/bulk-edit worker |
-| [devstral-2](skills/models/opencode/devstral-2.md) | Devstral 2 — Mistral's repo-surgery specialist, top open SWE-bench per dollar |
-| [mimo-v2-5](skills/models/opencode/mimo-v2-5.md) | MiMo-V2.5 — Xiaomi dark horse, 1M context long-horizon agent at DeepSeek prices |
-| [gpt-oss](skills/models/opencode/gpt-oss.md) | gpt-oss 120b/20b — OpenAI open weights, self-hosted reasoning + tool calling, harmony format |
-| [local-small-models](skills/models/opencode/local-small-models.md) | ≤32B local tier — Ollama setup rules, context floor, tool-call smoke test, task ceiling |
+| [big-pickle](skills/models/opencode/opencode-all-models.models/big-pickle.md) | Big Pickle — Zen's free stealth model (≈GLM-4.6, Sonnet-4.5/4.6-class); free-tier caveats, exit plan |
+| [glm-5-2](skills/models/opencode/opencode-all-models.models/glm-5-2.md) | GLM-5.2 — open-weight flagship for long-horizon agents; latency/caching discipline |
+| [deepseek-v4](skills/models/opencode/opencode-all-models.models/deepseek-v4.md) | DeepSeek V4 Pro — cheap frontier reasoning; promo-pricing and cache discipline |
+| [kimi-k2-6](skills/models/opencode/opencode-all-models.models/kimi-k2-6.md) | Kimi K2.6 — retry-native agentic coder, best-in-class tool calling, vision-to-UI |
+| [qwen3-coder](skills/models/opencode/opencode-all-models.models/qwen3-coder.md) | Qwen3-Coder 480B & Next — Apache-2.0 coding workhorse, self-hosting pick |
+| [minimax-m3](skills/models/opencode/opencode-all-models.models/minimax-m3.md) | MiniMax M3 — cheapest frontier-cluster tokens; fan-out/bulk-edit worker |
+| [devstral-2](skills/models/opencode/opencode-all-models.models/devstral-2.md) | Devstral 2 — Mistral's repo-surgery specialist, top open SWE-bench per dollar |
+| [mimo-v2-5](skills/models/opencode/opencode-all-models.models/mimo-v2-5.md) | MiMo-V2.5 — Xiaomi dark horse, 1M context long-horizon agent at DeepSeek prices |
+| [gpt-oss](skills/models/opencode/opencode-all-models.models/gpt-oss.md) | gpt-oss 120b/20b — OpenAI open weights, self-hosted reasoning + tool calling, harmony format |
+| [local-small-models](skills/models/opencode/opencode-all-models.models/local-small-models.md) | ≤32B local tier — Ollama setup rules, context floor, tool-call smoke test, task ceiling |
 
 </details>
 
@@ -511,7 +511,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | Add-ons | `/project-context`, `/narrate`, `/personality` | setting up that add-on |
 | Stack and tools | `/astro-page`, `/threejs-scene`, `/shopify-toolkit-install`, `/mcp-manager`, `/system1-prefilter`, `/strata-css`, `/triforge` | working in that stack or setting up that tool |
 | Claude models | `/claude-all-models`, `/fable-5-1`, `/fable-5`, `/opus-5-5`, `/opus-5`, `/opus-4-8`, `/opus-as-fable`, `/sonnet-5-5`, `/sonnet-5`, `/haiku-5-5`, `/haiku-4-5`, `/hooks-enforcement` | choosing or prompting a Claude model |
-| OpenCode models | `/opencode-all-models`, `/big-pickle`, `/deepseek-v4`, `/devstral-2`, `/glm-5-2`, `/gpt-oss`, `/kimi-k2-6`, `/local-small-models`, `/mimo-v2-5`, `/minimax-m3`, `/qwen3-coder` | choosing or prompting an open-weight model |
+| OpenCode models | `/opencode-all-models` (holds all the per-model protocols) | choosing or prompting an open-weight model |
 
 **Claude Code built-ins** (not part of the kit): `/help`, `/clear`, `/compact`, `/context`, `/model`, `/mcp`, `/plugin`, `/resume`, `/config`, and bundled skills such as `/code-review`, `/simplify`, `/security-review`, `/init`, `/loop` and `/schedule`. `/help` lists what your version has.
 

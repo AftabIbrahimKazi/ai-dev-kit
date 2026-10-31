@@ -12,8 +12,8 @@ description: Opt-in add-on: rank candidates or answer binary/MCQ questions with 
 A System-One-typed-decision provider takes a state string + one or more typed questions and returns, per question, a chosen option plus a calibrated probability per option and an overall confidence — never generated text. This skill is a thin, provider-agnostic client against that contract (reference shape: `POST <base_url>/v1/systemone`, Bearer auth). It works unchanged against any compatible provider — hosted or self-hosted — because only `base_url` changes, never the logic. It must never be pointed at a general chat/completion LLM: those don't return real calibrated probabilities, and the escalation logic below depends on the numbers being trustworthy.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a case where the ladder escalated correctly/incorrectly, a provider quirk. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a case where the ladder escalated correctly/incorrectly, a provider quirk). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Setup (once per project, at install or whenever the user opts in later)
 

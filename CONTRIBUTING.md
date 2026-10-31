@@ -29,6 +29,14 @@ Thanks for helping. This repository is the canonical home of the skills and stan
 - A mod lives in `mods/<name>/`. Validate and test it with `claude plugin validate` and `claude plugin test` from inside its folder. Read [skills/meta/mod-writer.md](skills/meta/mod-writer.md) first.
 - Do not edit a regex through a shell heredoc; backslashes get mangled. Use an editor.
 
+## File and folder names
+
+- A skill name is kebab-case, 24 characters or fewer, and matches its file. Prefer the short form (`scope-check`, not `interpretation-checkpoint`). Names are read every turn in the skill list.
+- A companion file is `<skill>.<role>.<ext>`. The role is a short word that does not repeat the skill name: `prefilter.mcp.js`, not `system1-prefilter.prefilter-mcp.js`.
+- A skill with three or more `.md` companions keeps them in a folder named `<skill>.<kind>/` with short file names (`opencode-all-models.models/kimi-k2-6.md`).
+- No file name is longer than 30 characters. `tests/naming.test.js` enforces this; its legacy list holds the old exceptions and gets no new entries.
+- Renaming an existing skill for length alone is not worth it: it breaks installs and typed `/names`. If you do rename one, add a row to `migrations/RENAMES.md`.
+
 ## Commits and pull requests
 
 - Commits follow [git-standards](coding-standards/git-standards.md): `type: summary`, with a type from `feat fix patch style refactor chore docs test remove`, a header of at most 50 characters, no trailing period, present tense.

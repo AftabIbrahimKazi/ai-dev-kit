@@ -10,8 +10,8 @@ The user maintains a portable, layered standards system (`coding-standards/` in 
 **This skill deliberately contains zero rule content.** The actual rules — `[CX]` response contract (ai-standards), data-attribute-driven state (css RULE 23), no inline styles (css RULE 08), token variables, selector signatures, and all the rest — live only in the standards files. Duplicating them here would create a second source of truth that drifts the moment a standard is edited. The skill's whole job is making sure the right files get loaded and obeyed; when standards update, this skill is current by construction.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a chain-loading shortcut that worked, a standards gap flagged, a violation class that keeps appearing. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a chain-loading shortcut that worked, a standards gap flagged, a violation class that keeps appearing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The three layers (read top → down, per file being edited)
 1. **Universal global rules** — `coding-standards/{discipline}-standards.md` (css, html, js / ts / js-and-ts, plus git, versioning, seo, performance, accessibility, qa, ai).

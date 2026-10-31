@@ -1,5 +1,6 @@
 ---
 name: opus-as-fable
+disable-model-invocation: true
 description: Push Opus 4.8 toward Fable 5-grade rigor: verification depth, outcome-first output. Trigger when running on Opus 4.8 and Fable-level rigor is wanted.
 ---
 
@@ -8,8 +9,8 @@ description: Push Opus 4.8 toward Fable 5-grade rigor: verification depth, outco
 Honest scope: a skill cannot change model weights. What it CAN do is close the *behavioral* gap — most of Fable 5's practical advantage on everyday work comes from working habits (verification depth, up-front planning, grounded reporting, delegation) that Opus 4.8 executes well when explicitly instructed. Apply everything below as standing orders for the session.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — which directive measurably helped, which was noise, where Opus still fell short of Fable behavior. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (which directive measurably helped, which was noise, where Opus still fell short of Fable behavior). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Setup (API callers)
 `model: "claude-opus-4-8"` · `thinking: {type: "adaptive"}` (explicitly — off by default on 4.8) · `output_config: {effort: "xhigh"}` for the task at hand (`high` for routine passes) · large `max_tokens` (≥64K at xhigh) · streaming. In Claude Code, this protocol is prompt-level: just follow the directives.

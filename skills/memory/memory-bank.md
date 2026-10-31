@@ -1,6 +1,6 @@
 ---
 name: memory-bank
-description: Use when starting work in a previously-touched area, after solving something non-obvious, on a lasting decision, or on "remember this" / "why did we do X". Load BEFORE answering or recording.
+description: Starting work in a previously-touched area, after a non-obvious solution or lasting decision, or on "remember this" / "why did we do X". Load BEFORE answering or recording.
 ---
 
 # Memory Bank — Durable Project Knowledge
@@ -14,8 +14,8 @@ The missing memory layer: knowledge that must outlive sessions AND machines AND 
 - **memory-bank = this project's durable truths**: decisions + why, domain context, constraints, solved-mystery writeups. If it belongs in git history or code comments, it doesn't belong here.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a recall that saved rework, a capture format that proved useful/useless. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a recall that saved rework, a capture format that proved useful/useless). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Structure
 ```

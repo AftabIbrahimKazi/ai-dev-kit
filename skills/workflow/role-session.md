@@ -1,6 +1,6 @@
 ---
 name: role-session
-description: Use whenever the user assigns a role ("you are the tester", "frontend session") or a handover/ board or locks folder exists. Load this BEFORE touching any file in a parallel-session project.
+description: A role is assigned ("you are the tester", "frontend session") or a handover/ board or locks folder exists. Load BEFORE touching files in a parallel-session project.
 ---
 
 # Role Session — One Lane of the GPU
@@ -14,8 +14,8 @@ The user runs multiple parallel AI sessions (Claude Code, OpenCode, or both), ea
 **Legacy projects:** a project activated before claims moved to `locks.d/` has a `handover/locks.md` table. If it has no live rows, delete it and create `locks.d/`; if it has live rows, finish or release those lanes first (the dev decides) — never run both mechanisms at once.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a coordination failure seen, a rule that saved a conflict, friction worth removing. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a coordination failure seen, a rule that saved a conflict, friction worth removing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The coordination files (in `handover/`)
 ```

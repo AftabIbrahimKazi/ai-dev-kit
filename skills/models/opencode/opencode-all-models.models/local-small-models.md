@@ -1,18 +1,10 @@
----
-name: local-small-models
-description: Protocol for running small (up to 32B) local coding models as OpenCode agents: context floor, tool-call smoke test, task ceiling. Trigger on Ollama/LM Studio or local-model setup.
----
-
+<!-- Read when: Protocol for running small (up to 32B) local coding models as OpenCode agents: context floor, tool-call smoke test, task ceiling. Trigger on Ollama/LM Studio or local-model setup. -->
 # Local Small Models — Consumer-Hardware Protocol
 
 The ≤32B tier that runs on ordinary machines via Ollama / LM Studio / any OpenAI-compatible server. Reference picks (verified 2026-07): `qwen2.5-coder:7b` (Apache-2.0, strong tool calling, 8 GB RAM) as the floor; `gpt-oss-20b` (16 GB, best local reasoning — see the `gpt-oss` skill); larger Qwen3-Coder quants as VRAM allows. This tier trades capability for privacy and zero token cost — the protocol is about not pretending otherwise.
 
 ## Staleness guard
 Facts verified 2026-07 (web). Local-model best-picks churn constantly — re-verify against Ollama's library / models.dev before recommending a tag; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a tag that worked/failed, a quant or context config that mattered, a task class this tier can't handle. Merge instead of duplicating; delete disproven bullets.
 
 ## Where this tier shines
 - Confidential repos and offline work — nothing leaves the machine.

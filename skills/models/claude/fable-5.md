@@ -1,5 +1,6 @@
 ---
 name: fable-5
+disable-model-invocation: true
 description: Claude Fable 5 (claude-fable-5) protocol. Trigger when working with, routing to, or writing code that calls Fable 5.
 ---
 

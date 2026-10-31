@@ -1,18 +1,10 @@
----
-name: kimi-k2-6
-description: Kimi K2.6 protocol: agentic coder with strong tool use and UI generation. Trigger when working with, routing to or configuring Kimi K2.6.
----
-
+<!-- Read when: Kimi K2.6 protocol: agentic coder with strong tool use and UI generation. Trigger when working with, routing to or configuring Kimi K2.6. -->
 # Kimi K2.6 — Retry-Native Agent Protocol
 
 Moonshot AI · open weights · 256K context · ~$0.95 in / $4 out per MTok · multimodal. Midpack single-attempt coder (65.8% SWE-bench Verified) that becomes the best open agentic coder when allowed retries (71.6% multi-attempt) — near-perfect tool calling (95.9% Tau-2).
 
 ## Staleness guard
 Facts verified 2026-07 (web). Re-verify pricing/limits against the provider / models.dev before load-bearing decisions; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, what you'd configure differently. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Agentic loops with verification: give it a test suite or checkable criterion and room to retry — its ~6-point multi-attempt gain is the whole reason to pick it.

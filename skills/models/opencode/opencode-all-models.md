@@ -1,6 +1,6 @@
 ---
 name: opencode-all-models
-description: Route tasks across open-weight models in OpenCode (GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax), hosted vs local. Trigger on any OpenCode or open-weight model choice.
+description: Route tasks across open-weight models in OpenCode (GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax, Big Pickle, MiMo, Devstral, gpt-oss, local small models), hosted vs local; holds the per-model protocols. Trigger on any OpenCode or open-weight model choice or setup.
 ---
 
 # OpenCode Open Models — Fleet Protocol
@@ -11,8 +11,8 @@ OpenCode is the tool; the open-weight models are its gears. Same principle as th
 The lineup below was verified 2026-07 via web search. Open-weight releases move faster than the Claude lineup — before a load-bearing choice, re-verify against models.dev / OpenCode Zen's tested list, update the table, and log the change in `learnings.md`.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a routing choice that paid off or backfired, a config gotcha, a model that under/over-performed its benchmark reputation. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a routing choice that paid off or backfired, a config gotcha, a model that under/over-performed its benchmark reputation). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The lineup (verified 2026-07)
 
@@ -30,7 +30,7 @@ The lineup below was verified 2026-07 via web search. Open-weight releases move 
 | gpt-oss-120b / 20b | Apache-2.0 | large | o4-mini / o3-mini-class reasoning; 1×80GB GPU / 16GB RAM | Self-hosted reasoning + tool-call generalist |
 | qwen2.5-coder:7b (Ollama) | Apache-2.0 | set ≥64K | Small, strong tool-calling, runs on 8GB RAM | Local starting point on ordinary hardware |
 
-Per-model depth lives in the sibling skills: `big-pickle`, `glm-5-2`, `deepseek-v4`, `kimi-k2-6`, `qwen3-coder`, `minimax-m3`, `devstral-2`, `mimo-v2-5`, `gpt-oss`, `local-small-models` — load the one matching the model you're actually driving.
+Per-model depth: read `models/<name>.md` in this skill's folder when working with that model: `big-pickle`, `glm-5-2`, `deepseek-v4`, `kimi-k2-6`, `qwen3-coder`, `minimax-m3`, `devstral-2`, `mimo-v2-5`, `gpt-oss`, `local-small-models`.
 
 ## Routing rules
 1. **Start one gear lower than instinct.** MiniMax M3 or a mid Qwen handles most of what people reflexively send to GLM-5.2. Escalate on demonstrated failure, not anticipated difficulty; two failures on the same model → escalate with the failure context attached.

@@ -8,8 +8,8 @@ description: Opt-in add-on. Use whenever the user asks to set up project docs (r
 **This is opt-in only, never part of any default install.** Some projects, mostly office work, come with requirements, brand and taste notes, assets, feature lists and Figma links. This add-on keeps them in one gitignored folder, `project-context/`, and gives each sub-folder an `INDEX.md` so the agent finds a fact without reading the raw files.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — an index layout that saved reads, or a file type that was misread. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (an index layout that saved reads, or a file type that was misread). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## The tool
 `node <skill-root>/project-context/scan.js <command>` (plain Node). It does the mechanical work so the agent reads only what changed.

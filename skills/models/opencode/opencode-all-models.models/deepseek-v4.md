@@ -1,18 +1,10 @@
----
-name: deepseek-v4
-description: DeepSeek V4 protocol (Pro/Flash): cheap reasoning, cache-hit pricing discipline. Trigger when working with, routing to or configuring DeepSeek V4.
----
-
+<!-- Read when: DeepSeek V4 protocol (Pro/Flash): cheap reasoning, cache-hit pricing discipline. Trigger when working with, routing to or configuring DeepSeek V4. -->
 # DeepSeek V4 Pro — Cost-Efficient Reasoner Protocol
 
 MIT license · ~$0.435 in (cache-miss) / $0.87 out per MTok — **note: this is a promotional discount (originally through 2026-05-31, still live 2026-07); expect up to ~4× higher when it ends.** Frontier-adjacent reasoning (~70% SWE-bench Verified) at near-Haiku prices — the value pick for deep reasoning and review.
 
 ## Staleness guard
 Facts verified 2026-07 (web). The discount pricing is explicitly temporary — re-verify price before any cost-based routing decision; log corrections in `learnings.md`.
-
-## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, what you'd prompt differently. Merge instead of duplicating; delete disproven bullets.
 
 ## Where it shines
 - Deep reasoning on a budget: code review, architecture analysis, debugging hypotheses — tasks where you want frontier-grade thinking but the volume makes GLM-5.2 pricing sting.

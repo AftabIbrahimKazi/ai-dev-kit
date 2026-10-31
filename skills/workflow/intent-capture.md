@@ -1,15 +1,15 @@
 ---
 name: intent-capture
-description: Use whenever a request is vague, has two or more plausible readings, or names no acceptance criterion ("make it better", "clean this up"). Load this BEFORE planning or editing.
+description: Vague request, two or more plausible readings, or no acceptance criterion ("make it better", "clean this up"). Load BEFORE planning or editing.
 ---
 
 # Intent Capture — Pin the Ask Before Acting
 
-A plan built on a misread request fails regardless of execution quality. This skill forces the read to become explicit and checkable before `plan-first` or any edit runs.
+Make the read of a request explicit before `plan-first` or any edit.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a misread this caught, or a case where it fired on an already-clear request and wasted a turn. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a misread this caught, or a case where it fired on an already-clear request and wasted a turn). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## When it applies
 Same threshold as `plan-first`, so the two compose instead of double-gating every turn:
@@ -31,8 +31,4 @@ Then proceed — this is not a pause for approval unless a genuine fork exists (
 ## Rules
 - **Constraints come from the request or a direct confirmation, never from assumption.** If a needed constraint is missing, ask one specific question rather than guessing — a wrong guess here poisons every downstream step.
 - **Done-when must be checkable by someone else**, not just "it works" — a command that passes, a screen that renders, a file that exists.
-- **This is not `plan-first`.** `plan-first` breaks approved intent into files/approach; this skill exists one step earlier, to pin down *what* before `plan-first` decides *how*. On a task that already has a clear goal, skip straight to `plan-first`.
-- **Three lines, not a document.** Padding this into paragraphs defeats its purpose — it's a fast anchor, not a spec.
-
-## Failure mode this prevents
-Executing a full multi-file change against the wrong reading of the request, discovered only after the work is done — the cost of that redo dwarfs the cost of three lines up front.
+- This pins *what*; `plan-first` decides *how*. With a clear goal, skip to `plan-first`.

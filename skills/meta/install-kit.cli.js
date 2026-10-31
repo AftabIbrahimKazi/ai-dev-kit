@@ -543,8 +543,13 @@ function applyRenameMigrations(libraryRoot, root, manifest, apply) {
                 const r = installOneSkill(libraryRoot, absSkillRoot, catalog, newName, {});
                 manifest.skills[newName] = { dir: catalog[newName].dir, companions: r.companions || [] };
                 const oldLearnings = path.join(absSkillRoot, oldName, 'learnings.md');
-                if (fs.existsSync(oldLearnings))
-                    copyRecursive(oldLearnings, path.join(absSkillRoot, newName, 'learnings.md'));
+                if (fs.existsSync(oldLearnings)) {
+                    const dest = path.join(absSkillRoot, newName, 'learnings.md');
+                    if (fs.existsSync(dest))
+                        fs.appendFileSync(dest, `\n## From ${oldName}\n` + fs.readFileSync(oldLearnings, 'utf8'));
+                    else
+                        copyRecursive(oldLearnings, dest);
+                }
                 fs.rmSync(path.join(absSkillRoot, oldName), { recursive: true, force: true });
                 delete manifest.skills[oldName];
                 entry.applied = true;

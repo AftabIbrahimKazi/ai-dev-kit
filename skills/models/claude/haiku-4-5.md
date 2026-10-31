@@ -1,5 +1,6 @@
 ---
 name: haiku-4-5
+disable-model-invocation: true
 description: Claude Haiku 4.5 protocol (previous generation; new work uses haiku-5-5). Trigger when working with or routing to Haiku 4.5.
 ---
 
@@ -11,8 +12,8 @@ Model ID: `claude-haiku-4-5` (full: `claude-haiku-4-5-20251001`) · 200K context
 Model facts here (ID, pricing, limits, API rules) were verified 2026-07. Haiku 5.5 (`haiku-5-5` skill) superseded this model on 2026-10-07; use this file only for projects pinned to 4.5. If the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill), follow the live source, and log the correction in `learnings.md`.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, what you'd prompt differently. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Hard API rules (older-generation surface — different from Opus/Sonnet 5)
 - Thinking uses the **legacy config**: `thinking: {type: "enabled", budget_tokens: N}` — N ≥ 1024 and strictly less than `max_tokens`. Adaptive thinking is not available; omit `thinking` for no thinking (the usual choice for Haiku work).

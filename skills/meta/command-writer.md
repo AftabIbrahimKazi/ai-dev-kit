@@ -1,5 +1,6 @@
 ---
 name: command-writer
+disable-model-invocation: true
 description: Use whenever creating, reviewing or improving a slash command or anything in skills/commands/. Load this BEFORE writing or editing a command template. Not for development work.
 ---
 
@@ -10,8 +11,8 @@ description: Use whenever creating, reviewing or improving a slash command or an
 A command is a markdown template the user types as `/name`. It runs a script, injects the output into the prompt, and tells the model what to do with it in a few lines. A bad command wastes tokens on every use or runs something the user did not expect.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a template trap, a quoting problem on one OS, a rule that blocked a bad command. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a template trap, a quoting problem on one OS, a rule that blocked a bad command). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 0 — Choose the tool
 | Need | Use |

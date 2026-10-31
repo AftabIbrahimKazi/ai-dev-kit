@@ -1,5 +1,6 @@
 ---
 name: skill-ablation
+disable-model-invocation: true
 description: Use on "ablation", "delete protocol", "run bare" or "prune skills", after a major model upgrade, or ~6 months since the last run. Load BEFORE archiving any skill.
 ---
 
@@ -8,8 +9,8 @@ description: Use on "ablation", "delete protocol", "run bare" or "prune skills",
 `memory-gardener` prunes bloat inside instructions that stay. This skill tests whether an instruction should exist at all — a periodic ablation pass, not continuous pruning. A skill under the line cap can still be 100% obsolete; only removing it and watching for a real stumble proves that.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — which instruction turned out obsolete, which was proven load-bearing, any restore that took more than one stumble to justify. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (which instruction turned out obsolete, which was proven load-bearing, any restore that took more than one stumble to justify). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## When to run
 - The project's primary coding-agent model changed (new major version, new vendor default).

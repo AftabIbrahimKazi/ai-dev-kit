@@ -12,7 +12,7 @@ Model facts here (ID, pricing, limits, API rules) were verified 2026-09-25. If a
 
 ## Self-improvement (do this first and last)
 1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply every relevant lesson.
-2. **At end of every use:** append one dated bullet — what worked, what wasted tokens, what you'd prompt differently. Merge instead of duplicating; delete disproven bullets.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## When to route work here
 Only the top of the difficulty range: long-horizon autonomous runs, hard architecture/debugging other models failed, first-shot builds of well-specified systems. At `low` effort it is often competitive with Opus/Sonnet on cost per task — evaluate that before defaulting down a gear. Routine work belongs on Opus 5.5.

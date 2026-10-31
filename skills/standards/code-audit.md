@@ -1,6 +1,6 @@
 ---
 name: code-audit
-description: Use for a cleanup, audit or retrofit across a whole project or folder, or "find all violations of ...". Load BEFORE reading files; it runs a script.
+description: Whole-project or folder cleanup, audit or retrofit, "find all violations of ...". Load BEFORE reading files; it runs a script.
 compat: node
 ---
 
@@ -11,8 +11,8 @@ A project-wide hunt for violations by grepping and opening files spends tokens o
 It does not replace review. It replaces the searching. Rules a script cannot check stay with you (see "Not covered").
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a false-positive pattern met, an ignore that was needed, a rule the audit missed. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a false-positive pattern met, an ignore that was needed, a rule the audit missed). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Run it
 `node <skill-root>/code-audit/audit.js` from the project root (or `--cwd <dir>`). It works in any tool that can run Node.

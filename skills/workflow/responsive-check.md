@@ -1,6 +1,6 @@
 ---
 name: responsive-check
-description: Use whenever the user asks if a layout works at screen sizes or widths, on phones or tablets, or reports horizontal scroll or breakpoint bugs. Load this BEFORE changing any media query.
+description: Does the layout work at screen sizes, widths, phones or tablets; horizontal scroll or breakpoint bugs. Load BEFORE changing any media query.
 ---
 
 # Responsive Check — Range-Based Viewport Check and Fix
@@ -8,8 +8,8 @@ description: Use whenever the user asks if a layout works at screen sizes or wid
 Responsive bugs hide at breakpoint edges and bleed across zones. This skill fixes the zones to check, measures each one in a real browser, and writes every fix as an isolated range (`css-standards.md` RULE 17).
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a breakpoint pattern that hid a bug, or a check that gave a false finding. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a breakpoint pattern that hid a bug, or a check that gave a false finding). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Plan the viewports
 Run `node <skill-root>/responsive-check/probes.js [flags]`. It prints the probe list and any warnings. Show the plan in one line before measuring.

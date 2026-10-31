@@ -1,6 +1,6 @@
 ---
 name: perf-audit
-description: Use whenever the user raises performance, slowness, bundle size, Lighthouse or page weight on a web project, or a pre-release check. Load this BEFORE auditing or optimizing.
+description: Performance, slowness, bundle size, Lighthouse or page weight on a web project, or a pre-release check. Load BEFORE auditing or optimizing.
 ---
 
 # Perf Audit — Measure, Rank, Fix the Top Item
@@ -8,8 +8,8 @@ description: Use whenever the user raises performance, slowness, bundle size, Li
 Performance work fails two ways: optimizing without measuring (fixing the wrong thing) and reporting a wall of findings nobody acts on. This pass produces a ranked shortlist with numbers.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — the biggest win found and its measured impact, or a check that produced noise. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (the biggest win found and its measured impact, or a check that produced noise). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Weigh the payload (static, no server needed)
 - Production build → sizes: total JS, total CSS, largest chunks. Flag any single JS chunk > ~150KB gzip and note what's in it (build analyzer if the project has one; otherwise inspect the dist folder).

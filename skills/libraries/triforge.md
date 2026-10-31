@@ -15,7 +15,7 @@ Facts below WILL drift as packages get updates. Before relying on any node name,
 4. If the repo contradicts this skill, follow the repo AND log the correction in `learnings.md` so the skill self-heals.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
 2. **At end of every use:** append one dated bullet — a gap discovered (and whether it was logged in the package's FINDINGS/backlog), an API surprise, a package-combination pattern that worked. Record package versions with version-sensitive facts. Merge instead of duplicating; delete bullets obsoleted by updates.
 
 ## Core model (verified against repo — re-verify on version change)

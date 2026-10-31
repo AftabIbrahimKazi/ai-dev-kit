@@ -1,6 +1,6 @@
 ---
 name: memory-gardener
-description: Use when asked to clean or prune skills or memory, a learnings.md passes ~30 bullets, or a handover passes 120 lines. Load BEFORE deleting or merging notes.
+description: Asked to clean or prune skills or memory, learnings.md over ~30 bullets, or handover over 120 lines. Load BEFORE deleting or merging notes.
 ---
 
 # Memory Gardener — Keep the Compounding Compounding
@@ -8,8 +8,8 @@ description: Use when asked to clean or prune skills or memory, a learnings.md p
 Self-improving skills only work if their learnings stay short, true, and deduplicated. Unpruned, a learnings file becomes a per-use context tax full of stale one-offs. This skill is the maintenance pass.
 
 ## Self-improvement (do this first and last)
-1. **At start:** read `learnings.md` in this skill's folder if it exists. Apply relevant lessons.
-2. **At end of every use:** append one dated bullet — a pruning heuristic that worked, a class of bullet that always turns out stale. Merge instead of duplicating; delete disproven bullets.
+1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
+2. **At end:** append one dated bullet only for a new, non-obvious lesson (a pruning heuristic that worked, a class of bullet that always turns out stale). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Scope
 Glob for every `learnings.md` under the skills directories (`<skill-root>/*/`), the project's `memory-bank/` (INDEX.md + entries — see the `memory-bank` skill), **the project's handover notes (`handover.md`, or `handover/<role>.md` + `handover/board.md` in parallel mode — see the `handover` skill)**, plus the user's persistent memory index if present. Report per-file sizes first; garden the files over ~15 bullets, over the handover ceiling, or explicitly named.

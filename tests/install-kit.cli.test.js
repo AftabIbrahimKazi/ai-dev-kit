@@ -201,6 +201,24 @@ t('applying a rename migration moves learnings.md forward and removes the old fo
   assert.match(fs.readFileSync(path.join(target, '.claude/skills/handover/learnings.md'), 'utf8'), /learned something/);
 });
 
+t('merging two old skills into one keeps both learnings.md files', () => {
+  const lib = makeLibrary();
+  write(lib, 'migrations/RENAMES.md', ['| Date | Old name | New name | Notes |', '|---|---|---|---|', '| 2026-01-01 | `old-a` | `handover` | merged |', '| 2026-01-01 | `old-b` | `handover` | merged |', ''].join('\n'));
+  const target = tmp();
+  for (const n of ['old-a', 'old-b']) {
+    write(target, '.claude/skills/' + n + '/SKILL.md', '---\nname: ' + n + '\n---\n# old\n');
+    write(target, '.claude/skills/' + n + '/learnings.md', '- lesson from ' + n + '\n');
+  }
+  const manifest = readManifest(target);
+  manifest.tool = 'claude'; manifest.skillRoot = '.claude/skills'; manifest.protocolFile = 'CLAUDE.md';
+  manifest.skills['old-a'] = { dir: 'workflow', companions: [] }; manifest.skills['old-b'] = { dir: 'workflow', companions: [] };
+  require('../skills/meta/install-kit.cli.js').writeManifest(target, manifest);
+  doUpdate({ library: lib, root: target, skills: [], applyMigrations: 'all' });
+  const text = fs.readFileSync(path.join(target, '.claude/skills/handover/learnings.md'), 'utf8');
+  assert.match(text, /lesson from old-a/);
+  assert.match(text, /lesson from old-b/);
+});
+
 t('uninstall removes only manifested skills and leaves an untracked folder alone', () => {
   const lib = makeLibrary();
   const target = tmp();
