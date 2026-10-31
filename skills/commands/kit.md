@@ -20,6 +20,7 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Check or install git hooks | `/githooks` |
 | Merge or rebase stopped with conflicts | `/resolve-conflicts` (optional: `ours`, `theirs`, `step`, `--role backend`) |
 | Does this page work at every screen size | `/responsive-check` (optional: `--range 600-900`, `--width 375`, `--detect`) |
+| Bump a package version and its changelog entry | `/version-bump <major|feature|patch|alpha|beta|rc|release>` (optional: a scope path, `--dry-run`) |
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
 | A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <export folder>` (opt-in add-on) |
 | Read answers aloud, mute or tune the voice | `/narration mute|unmute|voice male|volume 80|speed 1.2|pitch 2` (opt-in `narrate` add-on) |

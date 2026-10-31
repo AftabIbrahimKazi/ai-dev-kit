@@ -4,6 +4,8 @@
 
 ### Added
 - `enhance_image` and `ai_edit_image` in `image-gen`: `enhance_image` edits existing photos with ImageMagick (presets, brightness/contrast/saturation/warmth/gamma/sharpen/denoise/resize; no AI, no quota, original never overwritten). `ai_edit_image` makes small prompt-driven edits with Gemini, falling back to Cloudflare SD 1.5 img2img, sharing the existing daily caps. Verified against fake servers only; the stored keys returned 401 live.
+- `cli-writer` meta skill: the standard for CLI tools and installers (zero dependencies, prompts only on a real terminal, `--dry-run`/`--json`, exit codes, colour rules, Windows path handling, novice-first docs, cold-start and non-TTY tests), distilled from `install-kit`, `narrate.setup` and `local-vision`. Archivable; used only when building the kit.
+- `command-writer` meta skill: the quality bar and registration checklist for slash commands in `skills/commands/` (script first, one scoped permission, capped output, no hidden writes, tested on the exact injected line). Archivable like `skill-writer` and `mod-writer`; used only when building the kit.
 - `version-bump` skill + `/version-bump` command: bumps a `package.json` version (major/feature/patch/alpha/beta/rc/release per `coding-standards/versioning-standards.md`) and inserts the matching `CHANGELOG.md` entry in place, without reformatting either file. Scope is a path: omitted bumps every `package.json` under the current directory, a folder scopes to a group, a direct `package.json` path scopes to one package — so one command covers the whole project, a frontend/backend split, or a single module.
 
 ## 2026-10-29

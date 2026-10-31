@@ -52,7 +52,7 @@ const UNIVERSAL_SKILLS = [
 ];
 const ARCHIVABLE_SKILLS = [
   'perf-audit', 'code-audit', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
-  'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer',
+  'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer', 'command-writer', 'cli-writer',
 ];
 // Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --
 // excluded from both the Auto-detect default and the Everything preset; still reachable through
@@ -1128,6 +1128,8 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--apply-migrations') { const v = argv[++i]; a.applyMigrations = v === 'all' ? 'all' : v.split(',').filter(Boolean); }
     else if (k === '--force') a.force = true;
     else if (k === '--json') a.json = true;
+    // An unknown flag used to be dropped silently, so a mistyped or unsupported one (--dry-run) ran the real install.
+    else if (k.startsWith('-')) { console.error(red(`error: unknown option ${k}`)); process.exit(2); }
   }
   return a;
 }
