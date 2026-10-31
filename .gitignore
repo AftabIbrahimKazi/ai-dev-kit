@@ -9,4 +9,10 @@ shelved/
 __pycache__/
 
 # local session notes, never published
-handover.md
+/handover.md
+
+# local tool state and notes that must never be published
+.claude/code-audit.cache.json
+.claude/settings.local.json
+kit-feedback.md
+.kit-feedback-deny
