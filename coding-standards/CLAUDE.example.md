@@ -21,7 +21,7 @@ This file is auto-loaded by your coding tool (Claude Code, OpenCode, …) at the
 
 At the start of every session the AI assistant must:
 
-1. Begin every response with `[CX <Context code>]` (or bare `[CX]` if no code is set below) — signals context is active
+1. Begin every response with `[CX <Context code>]` (or bare `[CX]` if no code is set below) — it tells the user you have not forgotten the project context
 2. On the first response, declare standards as **not yet loaded**
 3. Read `coding-standards/index.md` — loads the full standards map — only on the first turn that actually touches a file (edit, create, or a request needing a convention). Conversational, planning, or review-only turns never trigger this read.
 4. Once loaded, confirm active standards below and declare them loaded from that point on
@@ -43,6 +43,7 @@ If the token is ever missing from a response — or the Context code is missing 
 | Performance standard | `coding-standards/performance-standards.md` |
 | Accessibility standard | `coding-standards/accessibility-standards.md` |
 | QA standard | `coding-standards/qa/index.md` |
+| Design standard | `coding-standards/design-standards.md` (remove if not applicable). Leads only for new UI from scratch. If a design doc, Figma file or design system exists: after UI work, offer once "Want a UI/UX audit against the design standards?"; never audit or change the design unasked. |
 | AI standard | `coding-standards/ai-standards.md` |
 | Framework | `coding-standards/frameworks/[framework].md` (remove if not applicable) |
 | CSS Framework | `coding-standards/frameworks/[bootstrap OR other].md` (remove if not applicable) |

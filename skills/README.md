@@ -71,6 +71,8 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 |---|---|
 | [coding-standards](standards/coding-standards.md) | Load & enforce the layered coding-standards/ chain before any edit |
 | [code-audit](standards/code-audit.md) | Project-wide audit of the script-checkable standards rules (CSS, HTML, JS/TS, page SEO/a11y/perf, git history, versioning) for cleanup of old or multi-dev code; `audit.js` companion counts violations by rule and lists `file:line`, so the model reads only what is flagged |
+| [security-audit](standards/security-audit.md) | Security audit procedure — five-part finding bar (principal, action, control, boundary, result), `confirmed` vs `needs_validation`, attack classes by app type, report format; pairs with `qa/security-checks.md` |
+| [ui-design](standards/ui-design.md) | Leads design only when starting from scratch; with a design doc or Figma it only offers a UI/UX audit on request. What to build for a new UI — pre-flight, ask-once, job-first shape, tone, Picks block, sweep; pairs with `coding-standards/design-standards.md` |
 | [comment-style](standards/comment-style.md) | Per-project comment level — none (default) / terse / descriptive — asked at install, changeable any time; saves tokens |
 
 ## memory/ — persistent knowledge

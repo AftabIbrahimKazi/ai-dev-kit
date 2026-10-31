@@ -1,5 +1,5 @@
 ---
-description: Resume from handover.md - loads the project's current state so nothing has to be re-explained
+description: Resume from handover.md without re-explaining
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

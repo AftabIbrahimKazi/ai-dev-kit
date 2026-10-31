@@ -24,7 +24,7 @@ Then apply project-specific context (session-protocol file / handover: prefixes,
 - **Load per file-role, lazily.** Editing one component stylesheet needs: index (once per session) → css global → component-files partial → framework css layer if any. Not the whole folder.
 - **Once per session per chain.** Track which chains are already loaded; re-read only if the task moves to a new discipline or file role.
 - **Exactly one script standard per project** — the project's session-protocol file (`CLAUDE.md`/`AGENTS.md`) or handover declares JS-only, TS-only, or combined. Never read more than one.
-- Cross-cutting standards (accessibility, performance, seo, qa) load at their checkpoint (new page → seo + accessibility; pre-release → qa + performance), not on every edit.
+- Cross-cutting standards (accessibility, performance, seo, qa) load at their checkpoint (new page → seo + accessibility; new UI from scratch → design; auth, input or server code, or pre-release → qa (incl. security) + performance), not on every edit.
 - If the project has no `coding-standards/` folder, this skill doesn't apply — say so rather than importing rules from another project.
 
 ## Enforcement discipline

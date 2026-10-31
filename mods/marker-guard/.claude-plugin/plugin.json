@@ -1,0 +1,8 @@
+{
+  "name": "marker-guard",
+  "version": "0.1.0",
+  "description": "Enforces AI-01 for the user's benefit. The [CX] marker exists so the user can see that the AI has not forgotten the project context. When a main-loop answer does not start with the marker the project's CLAUDE.md or AGENTS.md defines (with its Context code, if one is set), this mod shows one warning line beneath the answer. It never writes the marker itself (that would fake the signal), never discards the answer and never blocks. After a real compaction it also shows one notice that the standards may have left the context. Does nothing without a session-protocol file that defines the marker. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

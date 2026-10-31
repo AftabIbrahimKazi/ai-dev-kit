@@ -1,0 +1,4 @@
+{
+  "description": "design-audit-offer hooks module",
+  "modules": ["./register.ts"]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "marker-guard hooks module",
+  "modules": ["./register.ts"]
+}

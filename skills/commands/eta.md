@@ -1,5 +1,5 @@
 ---
-description: Ask for the current task's time estimate and next checkpoint, instead of asking in prose
+description: Ask for the current task's time estimate and next checkpoint
 disable-model-invocation: true
 ---
 Report, in a few lines, no more:
