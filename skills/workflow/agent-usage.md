@@ -49,4 +49,4 @@ A dispatched agent acts under its parent session's identity, not its own — bou
 
 Any dispatched agent must:
 1. Return a short, compressed final report to the parent session.
-2. Write its full raw findings to an agent-handover file (see the `handover` skill's "Agent handovers" section) — never only the compressed report. This is what makes a wrong Case-2 call recoverable at near-zero cost instead of requiring a second agent to redo the discovery.
+2. Write its full raw findings to an agent-handover file (see "Agent handovers" in the `handover` skill's `extras.md`) — never only the compressed report. This is what makes a wrong Case-2 call recoverable at near-zero cost instead of requiring a second agent to redo the discovery.
