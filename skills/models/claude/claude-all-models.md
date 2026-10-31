@@ -1,6 +1,6 @@
 ---
 name: claude-all-models
-description: Route tasks across the Claude lineup — model selection, delegation, cost/speed trade-offs, cache discipline. Trigger for any model-selection, routing, multi-model, or cost-optimization decision.
+description: Route tasks across the Claude lineup: model choice, delegation, cost/speed, cache discipline. Trigger on any model-selection or cost-optimization decision.
 ---
 
 # All Models — Fleet Protocol

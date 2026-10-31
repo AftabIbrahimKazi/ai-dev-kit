@@ -1,6 +1,6 @@
 ---
 name: memory-gardener
-description: Use whenever the user asks to clean, garden or prune skills or memory, a learnings.md exceeds ~30 bullets, or a handover file exceeds 120 lines. Load this BEFORE deleting or merging notes.
+description: Use when asked to clean or prune skills or memory, a learnings.md passes ~30 bullets, or a handover passes 120 lines. Load BEFORE deleting or merging notes.
 ---
 
 # Memory Gardener — Keep the Compounding Compounding

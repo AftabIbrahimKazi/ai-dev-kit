@@ -1,6 +1,6 @@
 ---
 name: opencode-all-models
-description: Route tasks across open-weight models in OpenCode — GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax; hosted (Zen/provider) vs. local (Ollama) selection, config gotchas. Trigger for any OpenCode model choice, open-source/open-weight model question, or local-model setup.
+description: Route tasks across open-weight models in OpenCode (GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax), hosted vs local. Trigger on any OpenCode or open-weight model choice.
 ---
 
 # OpenCode Open Models — Fleet Protocol

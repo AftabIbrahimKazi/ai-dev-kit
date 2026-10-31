@@ -1,6 +1,6 @@
 ---
 name: misfire-log
-description: Opt-in add-on: logs a skill, mod or addon that should have triggered but didn't, to drive a later kit fix. Trigger only when configured per "Setup"; never install by default.
+description: Opt-in add-on: logs a skill, mod or addon that should have triggered but did not. Trigger only when configured per "Setup"; never install by default.
 ---
 
 # Misfire Log — Opt-In Add-On

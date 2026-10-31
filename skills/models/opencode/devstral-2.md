@@ -1,6 +1,6 @@
 ---
 name: devstral-2
-description: Devstral 2 protocol — Mistral's agentic coding specialist, 72.2% SWE-bench Verified, 123B dense, 256K context. Trigger when working with, routing to, or configuring Devstral 2 (2512) in OpenCode or any harness.
+description: Devstral 2 protocol (Mistral's agentic coding model, 256K context). Trigger when working with, routing to or configuring Devstral 2.
 ---
 
 # Devstral 2 — Codebase Surgeon Protocol

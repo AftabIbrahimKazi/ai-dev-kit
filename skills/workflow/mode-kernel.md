@@ -1,6 +1,6 @@
 ---
 name: mode-kernel
-description: Use whenever a stop-and-wait gate (agent-usage, debug-protocol, coding-standards, perf-audit) is about to apply outside plain interactive mode: autonomous, planning or background. Load this BEFORE pausing or asking.
+description: Use when a stop-and-wait gate (agent-usage, debug-protocol, coding-standards, perf-audit) is about to apply in autonomous, planning or background mode. Load BEFORE pausing or asking.
 ---
 
 # Mode Kernel — Gate Behavior Per Session Mode

@@ -1,6 +1,6 @@
 ---
 name: plan-first
-description: Use whenever a task touches 3+ files, has ambiguous scope, or bundles several deliverables (feature, refactor, redesign), or plan mode is on for big or repetitive work. Load this BEFORE the first edit.
+description: Use when a task touches 3+ files, has ambiguous scope or several deliverables, or plan mode is on for big work. Load BEFORE the first edit.
 ---
 
 # Plan First — Cheap Insurance Before Expensive Runs

@@ -1,6 +1,6 @@
 ---
 name: security-audit
-description: Use whenever the user asks for a security audit, security review, pen-test style review, "is this safe", or to hunt vulnerabilities in a codebase, API or service. Load this BEFORE reading code; it sets the evidence bar and the report format.
+description: Use when asked for a security audit or review, "is this safe", or to hunt vulnerabilities in a codebase, API or service. Load BEFORE reading code.
 ---
 
 # Security Audit — Boundary, Evidence, Fix

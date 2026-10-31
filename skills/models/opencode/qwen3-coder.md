@@ -1,6 +1,6 @@
 ---
 name: qwen3-coder
-description: Qwen3-Coder protocol — 480B flagship and Next 80B-A3B for self-hosting; Apache-2.0, cheapest frontier coding tokens. Trigger when working with, routing to, self-hosting, or configuring any Qwen3-Coder variant (incl. via Ollama).
+description: Qwen3-Coder protocol (480B and Next 80B-A3B, self-hosting, Apache-2.0). Trigger when working with, routing to or configuring any Qwen3-Coder variant.
 ---
 
 # Qwen3-Coder — Apache Workhorse Protocol

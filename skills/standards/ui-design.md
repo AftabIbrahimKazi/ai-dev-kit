@@ -1,6 +1,6 @@
 ---
 name: ui-design
-description: Use whenever the user asks to design a new page, screen, landing page, site, dashboard or component from scratch with no design doc or Figma, or asks for a UI/UX audit or second opinion. Load this BEFORE writing markup. With an existing design source it only suggests an audit; it changes nothing unless approved.
+description: Use when designing a new page, screen or component from scratch with no design doc or Figma, or when asked for a UI/UX audit. Load BEFORE writing markup. With an existing design it only offers an audit.
 ---
 
 # UI Design — Decide What to Make

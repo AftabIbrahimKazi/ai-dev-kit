@@ -1,6 +1,6 @@
 ---
 name: triforge
-description: Triforge (user's own @triforge Three.js node-workflow suite) — package selection, APIs, debugging, fixing at source; verifies against the live repo. Trigger on any @triforge package (shader-core, geometry-nodes, particle-core, physics-core, compositor-core, etc.) or Blender-style node work in Three.js.
+description: Triforge (user's @triforge Three.js node suite): package choice, APIs, debugging, fixing at source. Trigger on any @triforge package or Blender-style node work in Three.js.
 ---
 
 # Triforge — Author's-Own-Suite Protocol

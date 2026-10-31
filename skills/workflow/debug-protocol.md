@@ -1,6 +1,6 @@
 ---
 name: debug-protocol
-description: Use whenever something fails, errors or behaves unexpectedly and the cause is unknown: a bug, regression, failing build or test, "why is this broken", or after two failed fixes. Load this BEFORE investigating or editing.
+description: Use when something fails or misbehaves and the cause is unknown (bug, regression, failing build or test), or after two failed fixes. Load BEFORE investigating or editing.
 ---
 
 # Debug Protocol — No Shotgun Edits
