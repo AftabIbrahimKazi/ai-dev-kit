@@ -792,17 +792,44 @@ function truncate(s: string, max: number): string {
   return s.length <= max ? s : s.slice(0, max - 1).trimEnd() + '…';
 }
 
-// Dims a skill's purpose text so it reads as secondary to the name next to it, instead of both
-// blending into one flat line. Respects the NO_COLOR convention (no-color.org); this only ever runs
-// after fillInteractive's isInteractive() gate, so stdout is already confirmed a real TTY.
-const COLOR_ENABLED = !process.env.NO_COLOR;
+// A small, semantic palette instead of one undifferentiated dim/plain split -- each role gets its
+// own color so the eye can tell them apart at a glance without reading every word. Respects the
+// NO_COLOR convention (no-color.org) and, separately, whether this is really an interactive TTY --
+// red() is also used in main()'s catch/usage path, which runs outside fillInteractive's own gate
+// (a --json call, or any piped/non-interactive run, must never leak raw escape codes into output
+// someone is scripting against). Never applied to the final `console.log(JSON.stringify(res, ...))`
+// in main() regardless -- that output is for piping, and an escape code embedded in it would
+// corrupt a `--json` caller's parse even when color is otherwise enabled.
+const COLOR_ENABLED = !process.env.NO_COLOR && isInteractive();
+// The question itself, on every ask* prompt -- the one constant anchor to orient on before reading
+// a long list of choices.
+function bold(s: string): string {
+  return COLOR_ENABLED ? `\x1b[1m${s}\x1b[22m` : s;
+}
+// Secondary, descriptive text that explains a choice rather than being one -- a skill's purpose, a
+// category's skill count, "type numbers separated by commas" style instructions.
 function dim(s: string): string {
   return COLOR_ENABLED ? `\x1b[2m${s}\x1b[22m` : s;
 }
-// A second, distinct palette entry for "what's already selected" running tallies -- cyan, so it
-// reads as a different kind of information from both the plain skill names and the dimmed purposes.
-function highlight(s: string): string {
+// A running tally of what's already chosen (the category picker's "Selected so far" line) -- its
+// own color so a cumulative-state line never reads as just another skill name or description.
+function cyan(s: string): string {
   return COLOR_ENABLED ? `\x1b[36m${s}\x1b[39m` : s;
+}
+// Something the tool found, matched, or assumed on the project's behalf -- a detected stack signal,
+// the auto-assumed --root, detected-tool evidence. Positive, confirmatory information.
+function green(s: string): string {
+  return COLOR_ENABLED ? `\x1b[32m${s}\x1b[39m` : s;
+}
+// A notice worth a second look without being an error -- a stack preset's known coding-standards
+// gap, categories left unreviewed when picking finished early.
+function yellow(s: string): string {
+  return COLOR_ENABLED ? `\x1b[33m${s}\x1b[39m` : s;
+}
+// Actual failures only (main()'s caught-error and usage lines) -- never used for anything the user
+// chose on purpose, so red stays a reliable "something went wrong" signal.
+function red(s: string): string {
+  return COLOR_ENABLED ? `\x1b[31m${s}\x1b[39m` : s;
 }
 
 // Matches install-kit.md's nine Pick-mode categories (models/opencode and models/claude both
@@ -846,7 +873,7 @@ async function resolveRoot(): Promise<string> {
   if (cwd === libraryGuess) {
     const parent = path.dirname(cwd);
     if (!isUnsafeAssumeTarget(parent)) {
-      console.log(`Target project: ${parent}  (this kit is cloned inside that folder, so that's assumed to be your project -- pass --root to use a different one)`);
+      console.log(green(`Target project: ${parent}`) + dim(`  (this kit is cloned inside that folder, so that's assumed to be your project -- pass --root to use a different one)`));
       return parent;
     }
   }
@@ -863,12 +890,12 @@ function ask(question: string): Promise<string> {
 }
 
 async function askText(message: string, initial: string): Promise<string> {
-  const ans = (await ask(`${message} [${initial}]: `)).trim();
+  const ans = (await ask(`${bold(message)} [${initial}]: `)).trim();
   return ans || initial;
 }
 
 async function askYesNo(message: string, initialYes: boolean): Promise<boolean> {
-  const ans = (await ask(`${message} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
+  const ans = (await ask(`${bold(message)} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
   if (!ans) return initialYes;
   return ans.startsWith('y');
 }
@@ -876,7 +903,7 @@ async function askYesNo(message: string, initialYes: boolean): Promise<boolean> 
 // A plain numbered menu -- "1) claude  2) opencode" -- typed instead of arrow-keyed, so it behaves
 // the same in every terminal (PowerShell, cmd.exe, any SSH session) with no raw-mode surprises.
 async function askSelect(message: string, choices: Choice[], initialIndex: number): Promise<string> {
-  console.log(message);
+  console.log(bold(message));
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
   for (;;) {
     const ans = (await ask(`Type a number [${initialIndex + 1}]: `)).trim();
@@ -888,10 +915,10 @@ async function askSelect(message: string, choices: Choice[], initialIndex: numbe
 }
 
 async function askMultiselect(message: string, choices: Choice[], opts: { defaultAll?: boolean } = {}): Promise<string[]> {
-  console.log(message);
+  console.log(bold(message));
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
   const defaultWord = opts.defaultAll ? 'all' : 'none';
-  console.log(`Type the numbers you want, separated by commas (example: 1,3,4), or "all"${opts.defaultAll ? ' or "none"' : ''}. Press Enter for ${defaultWord}.`);
+  console.log(dim(`Type the numbers you want, separated by commas (example: 1,3,4), or "all"${opts.defaultAll ? ' or "none"' : ''}. Press Enter for ${defaultWord}.`));
   for (;;) {
     const ans = (await ask('Your choice: ')).trim().toLowerCase();
     if (!ans) return opts.defaultAll ? choices.map((c) => c.value) : [];
@@ -937,7 +964,7 @@ async function pickSkillsByCategory(catalog: Catalog, purposes: Record<string, s
 
   for (;;) {
     if (picked.length) {
-      console.log(highlight(`Selected so far (${picked.length}): ${picked.join(', ')}`));
+      console.log(cyan(`Selected so far (${picked.length}): ${picked.join(', ')}`));
     }
     if (!remaining.size) break;
 
@@ -949,7 +976,7 @@ async function pickSkillsByCategory(catalog: Catalog, purposes: Record<string, s
 
     const choice = await askSelect(`Pick a category ${dim(`(${info})`)}:`, catChoices, catChoices.length - 1);
     if (choice === DONE) {
-      if (remaining.size) console.log(dim(`Not reviewed, so not installed: ${[...remaining].join(', ')}`));
+      if (remaining.size) console.log(yellow(`Not reviewed, so not installed: ${[...remaining].join(', ')}`));
       break;
     }
 
@@ -978,7 +1005,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       if (!args.tool) {
         const evidence = detectToolEvidence(args.root!);
         const tools = Object.keys(ROOTS) as Tool[];
-        const choices: Choice[] = tools.map((t) => ({ title: evidence[t] ? `${t} — ${evidence[t]}` : t, value: t }));
+        const choices: Choice[] = tools.map((t) => ({ title: evidence[t] ? `${t}  ${green('— ' + evidence[t])}` : t, value: t }));
         const detectedIndex = tools.findIndex((t) => evidence[t]);
         args.tool = await askSelect('Target tool:', choices, detectedIndex >= 0 ? detectedIndex : 0);
       }
@@ -988,12 +1015,12 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
         const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
         const detected = detectStackSignals(args.root!, args.tool).filter((d) => catalog[d.name]);
 
-        const autoTitle = detected.length
-          ? `Auto-detect (recommended) -- ${standard.length} standard skills + ${detected.length} matched to this project`
-          : `Auto-detect (recommended) -- ${standard.length} standard skills, no framework match found here`;
+        const autoStats = detected.length
+          ? `${standard.length} standard skills + ${detected.length} matched to this project`
+          : `${standard.length} standard skills, no framework match found here`;
         const mode = await askSelect('Skills to install:', [
-          { title: autoTitle, value: 'auto' },
-          { title: 'Everything -- every skill in the library (addons/MCP/mods stay opt-in, asked separately)', value: 'everything' },
+          { title: `Auto-detect ${green('(recommended)')} ${dim('-- ' + autoStats)}`, value: 'auto' },
+          { title: `Everything ${dim('-- every skill in the library (addons/MCP/mods stay opt-in, asked separately)')}`, value: 'everything' },
           { title: 'Pick individually from the full catalog', value: 'pick' },
         ], 0);
 
@@ -1004,21 +1031,21 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
         } else {
           let extra = detected.map((d) => d.name);
           if (detected.length) {
-            console.log('Matched to this project:');
+            console.log(green('Matched to this project:'));
             for (const d of detected) {
               const purpose = purposes[d.name];
-              console.log(purpose ? `  ${d.name} ${dim('-- ' + purpose + '  (' + d.evidence + ')')}` : `  ${d.name} -- ${d.evidence}`);
+              console.log(purpose ? `  ${d.name} ${dim(purpose)}  ${green('(' + d.evidence + ')')}` : `  ${d.name} ${green('(' + d.evidence + ')')}`);
             }
           } else {
             const presetEntries = Object.entries(STACK_PRESETS);
             const presetChoice = await askSelect('No framework signal detected -- pick a stack preset instead?', [
               ...presetEntries.map(([key, p]) => ({ title: p.label, value: key })),
-              { title: 'None -- just the standard set', value: 'none' },
+              { title: `None ${dim('-- just the standard set')}`, value: 'none' },
             ], presetEntries.length);
             const preset = STACK_PRESETS[presetChoice];
             if (preset) {
               extra = preset.skills.filter((n) => catalog[n]);
-              if (preset.gap) console.log(`Note: ${preset.gap}`);
+              if (preset.gap) console.log(yellow(`Note: ${preset.gap}`));
             }
           }
           args.skills = Array.from(new Set([...standard, ...extra]));
@@ -1052,9 +1079,9 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       }
       if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
         args.commentStyleLevel = await askSelect('Comment style:', [
-          { title: 'none — no comments except rule-mandated ones (recommended)', value: 'none' },
-          { title: 'terse — one short line, only when the why is non-obvious', value: 'terse' },
-          { title: 'descriptive — up to 3 short plain-language lines for tricky parts', value: 'descriptive' },
+          { title: `none ${green('(recommended)')} ${dim('— no comments except rule-mandated ones')}`, value: 'none' },
+          { title: `terse ${dim('— one short line, only when the why is non-obvious')}`, value: 'terse' },
+          { title: `descriptive ${dim('— up to 3 short plain-language lines for tricky parts')}`, value: 'descriptive' },
         ], 0);
       }
       if (args.standards && !args.contextCode) {
@@ -1118,9 +1145,9 @@ async function main(): Promise<void> {
     else if (cmd === 'unarchive') res = doUnarchive(args);
     else if (cmd === 'uninstall') res = doUninstall(args);
     else if (cmd === 'merge-hooks') res = doMergeHooks(args);
-    else { console.error('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks> [options]'); process.exit(2); return; }
+    else { console.error(red('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks> [options]')); process.exit(2); return; }
   } catch (e) {
-    console.error('error: ' + (e as Error).message);
+    console.error(red('error: ' + (e as Error).message));
     process.exit(1);
     return;
   }
