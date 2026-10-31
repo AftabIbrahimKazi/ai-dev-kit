@@ -1,6 +1,6 @@
 ---
 name: system1-prefilter
-description: Opt-in add-on — prefilter candidates, or answer the user's own binary/MCQ questions, with a typed-decision model (calibrated probabilities, no generated text). Trigger only when configured per "Setup"; never assume it exists, never install by default.
+description: Opt-in add-on: rank candidates or answer binary/MCQ questions with a typed-decision model. Trigger only when configured per "Setup"; never install by default.
 ---
 
 # System-1 Prefilter — Typed-Decision Add-On

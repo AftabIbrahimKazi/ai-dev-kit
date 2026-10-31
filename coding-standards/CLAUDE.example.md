@@ -67,29 +67,16 @@ If the token is ever missing from a response — or the Context code is missing 
 
 ---
 
-## How to Load Standards Per File
-
-Before editing any file identify its role using the table in `coding-standards/index.md` then load:
-
-1. The relevant discipline global standard (`css-standards.md`, `html-standards.md`, etc.)
-2. The relevant file-role partial (`css-standards/component-files.md`, etc.)
-3. The relevant framework file if applicable (`frameworks/astro.md`, etc.)
-
-Never edit a file without loading its standard chain first.
-
----
-
 ## AI Behavioural Contract
 
+- Before editing a file, load its standard chain (role table in `coding-standards/index.md`): discipline standard, file-role partial, framework file
 - Every response starts with `[CX <Context code>]` (bare `[CX]` if no code is set)
 - First response of every session declares standards as not-yet-loaded; standards load lazily on first file-touching turn, not eagerly at session start
-- No restating the task before acting
-- No trailing summaries after completing work
-- No filler phrases
+- No restating the task, trailing summaries or filler
 - Response shape follows the data (RULE AI-18): table for 2+ items with 2+ attributes, one line for one fact, yes/no for yes/no; `/format` overrides
 - Where the tool renders links, file references are markdown links, not bare or inline-code paths (RULE AI-17)
 - No invented rules — gaps in standards are flagged to the developer
-- **Decision preference (all session modes, including autonomous/no-pause and planning modes):** favor token efficiency and correct results with minimal-to-no Agent tool use. This is a weighting input for autonomous judgment calls, not a restriction on making them — see the `agent-usage` and `mode-kernel` skills for the detailed decision logic this preference feeds into.
+- **Decision preference (every mode):** weigh token efficiency and correct results first, with minimal Agent-tool use (see `agent-usage`, `mode-kernel`).
 - Full rules in `coding-standards/ai-standards.md`
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: minimax-m3
-description: MiniMax M3 protocol — cheapest frontier-cluster tokens, 1M context, 512K output, video input; fan-out and bulk-edit workhorse. Trigger when working with, routing to, or configuring MiniMax M3 in OpenCode or any harness.
+description: MiniMax M3 protocol: cheap 1M-context fan-out and bulk-edit worker. Trigger when working with, routing to or configuring MiniMax M3.
 ---
 
 # MiniMax M3 — Volume Gear Protocol

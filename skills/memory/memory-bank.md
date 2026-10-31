@@ -1,6 +1,6 @@
 ---
 name: memory-bank
-description: Use whenever starting work in a previously-touched area, after solving something non-obvious, on a lasting decision, or on "remember this" / "why did we do X". Load this BEFORE answering or recording.
+description: Use when starting work in a previously-touched area, after solving something non-obvious, on a lasting decision, or on "remember this" / "why did we do X". Load BEFORE answering or recording.
 ---
 
 # Memory Bank — Durable Project Knowledge

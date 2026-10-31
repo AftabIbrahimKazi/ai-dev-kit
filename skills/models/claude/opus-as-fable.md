@@ -1,6 +1,6 @@
 ---
 name: opus-as-fable
-description: Push Opus 4.8 toward Fable 5-grade working style — verification depth, outcome-first output, long-horizon discipline. Trigger when running on Opus 4.8 and Fable-level rigor is wanted.
+description: Push Opus 4.8 toward Fable 5-grade rigor: verification depth, outcome-first output. Trigger when running on Opus 4.8 and Fable-level rigor is wanted.
 ---
 
 # Opus-as-Fable — Emulation Protocol

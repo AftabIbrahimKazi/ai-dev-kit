@@ -1,6 +1,6 @@
 ---
 name: local-small-models
-description: Local small-model protocol — running ≤32B coding models (qwen2.5-coder, gpt-oss-20b, small Ollama tags) as OpenCode agents on consumer hardware; context floor, tool-call smoke test, task ceiling. Trigger for any Ollama/LM Studio/local model setup or "run a model locally" request.
+description: Protocol for running small (up to 32B) local coding models as OpenCode agents: context floor, tool-call smoke test, task ceiling. Trigger on Ollama/LM Studio or local-model setup.
 ---
 
 # Local Small Models — Consumer-Hardware Protocol

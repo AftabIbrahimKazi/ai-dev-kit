@@ -1,6 +1,6 @@
 ---
 name: kimi-k2-6
-description: Kimi K2.6 protocol — best multi-attempt agentic coder, 95.9% tool-use accuracy, multimodal UI generation, agent swarms. Trigger when working with, routing to, or configuring Kimi K2.6 in OpenCode or any harness.
+description: Kimi K2.6 protocol: agentic coder with strong tool use and UI generation. Trigger when working with, routing to or configuring Kimi K2.6.
 ---
 
 # Kimi K2.6 — Retry-Native Agent Protocol

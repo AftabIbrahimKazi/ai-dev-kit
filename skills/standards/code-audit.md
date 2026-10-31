@@ -1,6 +1,6 @@
 ---
 name: code-audit
-description: Use whenever the user asks for a cleanup, audit, retrofit or review across a whole project or folder, an old or multi-dev codebase, or "find all violations of ...". Load this BEFORE reading files; it runs a script.
+description: Use for a cleanup, audit or retrofit across a whole project or folder, or "find all violations of ...". Load BEFORE reading files; it runs a script.
 compat: node
 ---
 

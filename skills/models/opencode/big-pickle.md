@@ -1,6 +1,6 @@
 ---
 name: big-pickle
-description: Big Pickle protocol — OpenCode Zen's free stealth coding model (community-identified GLM-4.6, ~Sonnet 4.5/4.6-class), 200K context; free-tier caveats and exit plan. Trigger when working with, routing to, or asked about Big Pickle on OpenCode.
+description: Big Pickle protocol: OpenCode Zen's free coding model (about GLM-4.6), 200K context, free-tier caveats, exit plan. Trigger when working with or routing to Big Pickle.
 ---
 
 # Big Pickle — Free Stealth Workhorse Protocol

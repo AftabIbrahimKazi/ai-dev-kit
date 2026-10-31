@@ -1,6 +1,6 @@
 ---
 name: e2e-scaffold
-description: Use whenever the user asks to set up e2e or Playwright testing, or a first Playwright spec is about to be written in a project without a fixtures layer. Load this BEFORE writing any spec.
+description: Use when asked to set up e2e or Playwright testing, or before a first Playwright spec in a project with no fixtures layer. Load BEFORE writing any spec.
 ---
 
 # E2E Scaffold — Write the Plumbing Once, Reuse It Forever

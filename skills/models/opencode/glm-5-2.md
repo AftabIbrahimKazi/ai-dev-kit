@@ -1,6 +1,6 @@
 ---
 name: glm-5-2
-description: GLM-5.2 protocol — open-weight SWE-bench leader, 1M context, long-horizon agents; latency/caching discipline. Trigger when working with, routing to, or configuring GLM-5.2 (in OpenCode or any harness).
+description: GLM-5.2 protocol: open-weight, 1M context, long-horizon agents, latency/caching discipline. Trigger when working with, routing to or configuring GLM-5.2.
 ---
 
 # GLM-5.2 — Open-Weight Flagship Protocol

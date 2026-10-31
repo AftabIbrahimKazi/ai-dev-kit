@@ -1,6 +1,6 @@
 ---
 name: gpt-oss
-description: gpt-oss protocol — OpenAI's Apache-2.0 open-weight pair (120b on one 80GB GPU, 20b on 16GB); harmony format requirement, tool-calling strengths. Trigger when working with, routing to, or self-hosting gpt-oss-120b/20b.
+description: gpt-oss protocol (OpenAI open weights, 120b/20b): harmony format, tool calling. Trigger when working with, routing to or self-hosting gpt-oss.
 ---
 
 # gpt-oss — OpenAI Open-Weight Protocol

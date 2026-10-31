@@ -1,6 +1,6 @@
 ---
 name: mimo-v2-5
-description: MiMo-V2.5 protocol — Xiaomi's open model, strong SWE-bench Pro and long-horizon agent scores, 1M context, DeepSeek-tier pricing; free tier on Zen. Trigger when working with, routing to, or configuring MiMo-V2.5 (Pro/Free).
+description: MiMo-V2.5 protocol (Xiaomi's open model, 1M context, free tier on Zen). Trigger when working with, routing to or configuring MiMo-V2.5.
 ---
 
 # MiMo-V2.5 — Dark-Horse Agent Protocol

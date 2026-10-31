@@ -1,6 +1,6 @@
 ---
 name: mcp-manager
-description: Use whenever the user asks to add, set up or configure an MCP, mentions Stitch or "MCP first", an MCP is not working, or a task a configured server covers. Load this BEFORE wiring or calling any MCP.
+description: Use when asked to add, set up or fix an MCP, mentions Stitch or "MCP first", or a configured server covers the task. Load BEFORE wiring or calling any MCP.
 ---
 
 # MCP Manager — Opt-In MCP Servers, One Set of Rules

@@ -1,6 +1,6 @@
 ---
 name: deepseek-v4
-description: DeepSeek V4 Pro protocol — cheap frontier-adjacent reasoning, MIT license, cache-hit pricing discipline. Trigger when working with, routing to, or configuring DeepSeek V4 (Pro/Flash) in OpenCode or any harness.
+description: DeepSeek V4 protocol (Pro/Flash): cheap reasoning, cache-hit pricing discipline. Trigger when working with, routing to or configuring DeepSeek V4.
 ---
 
 # DeepSeek V4 Pro — Cost-Efficient Reasoner Protocol
