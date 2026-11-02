@@ -13,7 +13,7 @@
 //                                      [--force] [--json]
 //   node install-kit.cli.js update    --library <path> --root <target> [--skills a,b | --all]
 //                                      [--context-code X7|none] [--apply-migrations a,b|all] [--json]
-//   node install-kit.cli.js uninstall --root <target> [--skills a,b | --all] [--remove-standards] [--json]
+//   node install-kit.cli.js uninstall --root <target> [--skills a,b | --all] [--remove-standards] [--remove-hooks] [--json]
 //   node install-kit.cli.js archive   --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js unarchive --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js merge-hooks --library <path> --root <target> [--json]
@@ -218,6 +218,48 @@ export function doMergeHooks(args: CliArgs): MergeHooksResult {
   return mergeHooks(args.root!, configs);
 }
 
+function coreEntries(configs: HookConfig[]): { event: string; json: string }[] {
+  return configs.flatMap((c) => Object.entries(c.hooks || {}).flatMap(([event, entries]) => entries.map((e) => ({ event, json: JSON.stringify(e) }))));
+}
+
+function readSettings(root: string): Settings | null {
+  const p = path.join(root, '.claude', 'settings.json');
+  if (!fs.existsSync(p)) return null;
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')) as Settings; } catch { return null; }
+}
+
+// True when settings.json already holds at least one entry identical to a kit core hook: the project opted in earlier.
+export function hasKitHooks(root: string, configs: HookConfig[]): boolean {
+  const settings = readSettings(root);
+  if (!settings || !settings.hooks) return false;
+  const core = coreEntries(configs);
+  return Object.entries(settings.hooks).some(([event, entries]) => entries.some((e) => core.some((c) => c.event === event && c.json === JSON.stringify(e))));
+}
+
+// Removes only entries identical to a kit core hook; every other hook and setting stays.
+export function removeKitHooks(root: string, configs: HookConfig[]): number {
+  const p = path.join(root, '.claude', 'settings.json');
+  const settings = readSettings(root);
+  if (!settings || !settings.hooks) return 0;
+  const core = coreEntries(configs);
+  let removed = 0;
+  for (const event of Object.keys(settings.hooks)) {
+    const kept = settings.hooks[event].filter((e) => {
+      const hit = core.some((c) => c.event === event && c.json === JSON.stringify(e));
+      if (hit) removed++;
+      return !hit;
+    });
+    if (kept.length) settings.hooks[event] = kept; else delete settings.hooks[event];
+  }
+  if (!Object.keys(settings.hooks).length) delete settings.hooks;
+  if (removed) fs.writeFileSync(p, JSON.stringify(settings, null, 2) + '\n');
+  return removed;
+}
+
+function coreHooksOrNull(library: string | undefined): HookConfig[] | null {
+  try { return extractCoreHooks(library || defaultLibraryGuess()); } catch { return null; }
+}
+
 export interface InstallOneResult { name: string; error?: string; changed?: boolean; companions?: string[] }
 interface InstallOneOpts { commentStyleLevel?: string }
 
@@ -396,6 +438,7 @@ export interface CliArgs {
   all?: boolean;
   standards?: boolean;
   removeStandards?: boolean;
+  removeHooks?: boolean;
   scriptStandard?: 'js' | 'ts' | 'js-and-ts';
   activeStandardsKeys?: string[];
   commentStyleLevel?: string;
@@ -456,7 +499,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
-export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify> }
+export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[] }
 
 export function doUpdate(args: CliArgs): DoUpdateResult {
   const manifest = readManifest(args.root!);
@@ -492,8 +535,12 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
   writeManifest(args.root!, manifest);
+  // A newer kit can add hook blocks. Merge them only where the project already opted in to kit hooks.
+  let hooksAdded: string[] = [];
+  const core = manifest.tool === 'claude' ? coreHooksOrNull(args.library) : null;
+  if (core && hasKitHooks(args.root!, core)) hooksAdded = mergeHooks(args.root!, core).added;
   const verifyResult = verify({ root: args.root!, tool: manifest.tool });
-  return { skills: results, migrations, verify: verifyResult };
+  return { skills: results, migrations, verify: verifyResult, hooksAdded };
 }
 
 interface RenameRow { oldName: string; newName: string }
@@ -570,6 +617,14 @@ export function doUninstall(args: CliArgs): UninstallResult {
   }
   if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0) fs.rmdirSync(absArchiveRoot);
   if (removeShieldIfUnneeded(absSkillRoot)) removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
+
+  const core = coreHooksOrNull(args.library);
+  if (args.removeHooks && core) {
+    const n = removeKitHooks(args.root!, core);
+    if (n) removed.push(`.claude/settings.json (${n} kit hook${n === 1 ? '' : 's'})`);
+  } else if (core && hasKitHooks(args.root!, core)) {
+    kept.push('.claude/settings.json kit hooks left in place (pass --remove-hooks to remove only the entries the kit added)');
+  }
 
   if (args.removeStandards && manifest.standards) {
     const dir = path.join(args.root!, 'coding-standards');
@@ -1032,6 +1087,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--all') a.all = true;
     else if (k === '--standards') a.standards = true;
     else if (k === '--remove-standards') a.removeStandards = true;
+    else if (k === '--remove-hooks') a.removeHooks = true;
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

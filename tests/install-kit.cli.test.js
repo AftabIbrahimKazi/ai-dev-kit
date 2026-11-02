@@ -593,3 +593,56 @@ t('ARCHIVABLE_SKILLS comes from skill-scope.triggers.json and includes ux-theory
   assert.deepStrictEqual([...ARCHIVABLE_SKILLS].sort(), keys.sort());
   assert.ok(ARCHIVABLE_SKILLS.includes('ux-theory'));
 });
+
+// Hooks lifecycle: update adds new kit hooks only where the project opted in; uninstall --remove-hooks removes only the kit's entries.
+function hooksLibrary() {
+  const lib = makeLibrary();
+  write(lib, 'skills/models/claude/hooks-enforcement.md',
+    '# hooks\n<!-- hook:core -->\n```json\n{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo one"}]}]}}\n```\n' +
+    '<!-- hook:core -->\n```json\n{"hooks":{"UserPromptSubmit":[{"hooks":[{"type":"command","command":"echo two"}]}]}}\n```\n');
+  return lib;
+}
+const readSettingsFile = (root) => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'settings.json'), 'utf8'));
+
+t('update adds a newly shipped kit hook when the project already has a kit hook', () => {
+  const lib = hooksLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover'] });
+  write(target, '.claude/settings.json', JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'echo one' }] }] } }));
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.deepStrictEqual(res.hooksAdded, ['UserPromptSubmit']);
+  assert.ok(readSettingsFile(target).hooks.UserPromptSubmit);
+});
+
+t('update leaves settings.json alone when the project never opted in to kit hooks', () => {
+  const lib = hooksLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover'] });
+  write(target, '.claude/settings.json', JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'echo mine' }] }] } }));
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.deepStrictEqual(res.hooksAdded, []);
+  assert.strictEqual(readSettingsFile(target).hooks.UserPromptSubmit, undefined);
+});
+
+t('uninstall --remove-hooks removes only the kit entries and keeps the user hooks and settings', () => {
+  const lib = hooksLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover'] });
+  doMergeHooks({ library: lib, root: target, skills: [] });
+  const s = readSettingsFile(target);
+  s.hooks.SessionStart.push({ hooks: [{ type: 'command', command: 'echo mine' }] });
+  s.permissions = { allow: ['Bash(ls)'] };
+  write(target, '.claude/settings.json', JSON.stringify(s));
+  const res = doUninstall({ library: lib, root: target, all: true, removeHooks: true, skills: [] });
+  assert.ok(res.removed.some((r) => r.includes('2 kit hooks')));
+  const after = readSettingsFile(target);
+  assert.deepStrictEqual(after.hooks.SessionStart, [{ hooks: [{ type: 'command', command: 'echo mine' }] }]);
+  assert.strictEqual(after.hooks.UserPromptSubmit, undefined);
+  assert.deepStrictEqual(after.permissions, { allow: ['Bash(ls)'] });
+});
+
+t('uninstall without --remove-hooks keeps the hooks and says so', () => {
+  const lib = hooksLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover'] });
+  doMergeHooks({ library: lib, root: target, skills: [] });
+  const res = doUninstall({ library: lib, root: target, all: true, skills: [] });
+  assert.ok(res.kept.some((k) => k.includes('--remove-hooks')));
+  assert.ok(readSettingsFile(target).hooks.SessionStart);
+});

@@ -6,6 +6,8 @@ exports.listSkills = listSkills;
 exports.extractCoreHooks = extractCoreHooks;
 exports.mergeHooks = mergeHooks;
 exports.doMergeHooks = doMergeHooks;
+exports.hasKitHooks = hasKitHooks;
+exports.removeKitHooks = removeKitHooks;
 exports.installOneSkill = installOneSkill;
 exports.stripTemplatePreamble = stripTemplatePreamble;
 exports.applyContextCode = applyContextCode;
@@ -37,7 +39,7 @@ exports.orderedCategories = orderedCategories;
 //                                      [--force] [--json]
 //   node install-kit.cli.js update    --library <path> --root <target> [--skills a,b | --all]
 //                                      [--context-code X7|none] [--apply-migrations a,b|all] [--json]
-//   node install-kit.cli.js uninstall --root <target> [--skills a,b | --all] [--remove-standards] [--json]
+//   node install-kit.cli.js uninstall --root <target> [--skills a,b | --all] [--remove-standards] [--remove-hooks] [--json]
 //   node install-kit.cli.js archive   --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js unarchive --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js merge-hooks --library <path> --root <target> [--json]
@@ -214,6 +216,62 @@ function mergeHooks(root, configs) {
 function doMergeHooks(args) {
     const configs = extractCoreHooks(args.library);
     return mergeHooks(args.root, configs);
+}
+function coreEntries(configs) {
+    return configs.flatMap((c) => Object.entries(c.hooks || {}).flatMap(([event, entries]) => entries.map((e) => ({ event, json: JSON.stringify(e) }))));
+}
+function readSettings(root) {
+    const p = path.join(root, '.claude', 'settings.json');
+    if (!fs.existsSync(p))
+        return null;
+    try {
+        return JSON.parse(fs.readFileSync(p, 'utf8'));
+    }
+    catch {
+        return null;
+    }
+}
+// True when settings.json already holds at least one entry identical to a kit core hook: the project opted in earlier.
+function hasKitHooks(root, configs) {
+    const settings = readSettings(root);
+    if (!settings || !settings.hooks)
+        return false;
+    const core = coreEntries(configs);
+    return Object.entries(settings.hooks).some(([event, entries]) => entries.some((e) => core.some((c) => c.event === event && c.json === JSON.stringify(e))));
+}
+// Removes only entries identical to a kit core hook; every other hook and setting stays.
+function removeKitHooks(root, configs) {
+    const p = path.join(root, '.claude', 'settings.json');
+    const settings = readSettings(root);
+    if (!settings || !settings.hooks)
+        return 0;
+    const core = coreEntries(configs);
+    let removed = 0;
+    for (const event of Object.keys(settings.hooks)) {
+        const kept = settings.hooks[event].filter((e) => {
+            const hit = core.some((c) => c.event === event && c.json === JSON.stringify(e));
+            if (hit)
+                removed++;
+            return !hit;
+        });
+        if (kept.length)
+            settings.hooks[event] = kept;
+        else
+            delete settings.hooks[event];
+    }
+    if (!Object.keys(settings.hooks).length)
+        delete settings.hooks;
+    if (removed)
+        fs.writeFileSync(p, JSON.stringify(settings, null, 2) + '\n');
+    return removed;
+}
+function coreHooksOrNull(library) {
+    try {
+        return extractCoreHooks(library || defaultLibraryGuess());
+    }
+    catch {
+        return null;
+    }
 }
 // Copies one skill (by name) from the library into the target skill root.
 function installOneSkill(libraryRoot, absSkillRoot, catalog, token, opts) {
@@ -460,8 +518,13 @@ function doUpdate(args) {
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
+    // A newer kit can add hook blocks. Merge them only where the project already opted in to kit hooks.
+    let hooksAdded = [];
+    const core = manifest.tool === 'claude' ? coreHooksOrNull(args.library) : null;
+    if (core && hasKitHooks(args.root, core))
+        hooksAdded = mergeHooks(args.root, core).added;
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
-    return { skills: results, migrations, verify: verifyResult };
+    return { skills: results, migrations, verify: verifyResult, hooksAdded };
 }
 function parseRenameLedger(libraryRoot) {
     const p = path.join(libraryRoot, 'migrations', 'RENAMES.md');
@@ -541,6 +604,15 @@ function doUninstall(args) {
         fs.rmdirSync(absArchiveRoot);
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
+    const core = coreHooksOrNull(args.library);
+    if (args.removeHooks && core) {
+        const n = removeKitHooks(args.root, core);
+        if (n)
+            removed.push(`.claude/settings.json (${n} kit hook${n === 1 ? '' : 's'})`);
+    }
+    else if (core && hasKitHooks(args.root, core)) {
+        kept.push('.claude/settings.json kit hooks left in place (pass --remove-hooks to remove only the entries the kit added)');
+    }
     if (args.removeStandards && manifest.standards) {
         const dir = path.join(args.root, 'coding-standards');
         if (fs.existsSync(dir))
@@ -1005,6 +1077,8 @@ function parseArgs(argv) {
             a.standards = true;
         else if (k === '--remove-standards')
             a.removeStandards = true;
+        else if (k === '--remove-hooks')
+            a.removeHooks = true;
         else if (k === '--script-standard')
             a.scriptStandard = argv[++i];
         else if (k === '--active-standards') {
