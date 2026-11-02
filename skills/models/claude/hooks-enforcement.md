@@ -83,11 +83,23 @@ Costs roughly 25 input tokens per user message, mostly served from cache after t
 }
 ```
 
+`SessionStart` hook — warns when `handover.md` is over 120 lines, has more than one session section, or a `learnings.md` is over 30 bullets. Prints nothing when all are within limits, so it costs no tokens until a limit is crossed, and fails open:
+<!-- hook:core -->
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/handover/size.js check --quiet || true" }] }
+    ]
+  }
+}
+```
+
 **Merge these into the target's `.claude/settings.json` — never overwrite an existing one. Mechanical merge, run it instead of hand-editing:**
 ```
 node <library>/skills/meta/install-kit.cli.js merge-hooks --library <library> --root <target>
 ```
-It reads the five `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
+It reads the six `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
 
 ## Pre-commit gate (separate from AI-01–AI-03, same hook mechanism)
 

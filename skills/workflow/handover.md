@@ -64,7 +64,7 @@ The test is tense, and it is mechanical: **if a sentence is past-tense narrative
 
 ## Size ceiling — enforced, not aspirational
 
-**Hard ceiling: 120 lines.** Past that the file has stopped being a resume aid and become an archive that every future session pays for.
+**Hard ceiling: 120 lines.** `size.js check` in this skill's folder measures it; a session-start hook and `/wrap-up` run it, and it prints only when a limit is crossed. Past that the file has stopped being a resume aid and become an archive that every future session pays for.
 
 "Delete aggressively" is a judgment call, and judgment loses to append pressure — at session end you are already editing this file, so everything drifts into it. The ceiling is the guard that doesn't depend on discipline.
 

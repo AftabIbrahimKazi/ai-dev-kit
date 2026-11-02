@@ -7,7 +7,11 @@ Repository state:
 
 !`node -e "process.stdout.write(require('child_process').execFileSync('git',['status','--short','--branch'],{encoding:'utf8'}))"`
 
-Update `handover.md` in the project root in place, replacing stale content instead of appending a log (create it if missing; if a `handover/` folder exists, follow the `role-session` skill and write the per-role file instead). Keep these sections, under 120 lines in total:
+Size check (empty means within limits):
+
+!`node {{skill-root}}/handover/size.js check`
+
+If the size check lists a problem, fix it in this rewrite (demote or delete per the `handover` skill, keep one `## Last session` block). Update `handover.md` in the project root in place, replacing stale content instead of appending a log (create it if missing; if a `handover/` folder exists, follow the `role-session` skill and write the per-role file instead). Keep these sections, under 120 lines in total:
 
 1. `Updated: <date> · Branch: <branch>`
 2. **Current state:** 2 to 4 sentences, what works and what is mid-flight.

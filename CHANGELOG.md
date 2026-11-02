@@ -3,6 +3,7 @@
 ## 2026-11-02
 
 ### Added
+- `handover/size.js check`: counts handover lines, session sections and `learnings.md` bullets and prints a line only when a limit is crossed. Run by a new session-start `hook:core` block and by `/wrap-up`, which fixes what it names in the same rewrite. Until now the 120-line ceiling was a rule the model had to remember; this project's own handover reached 121 lines with six stacked sessions.
 - `ux-theory` skill: colour, type, composition (layout, hierarchy, proximity, alignment, balance, white space), motion (transitions, easing, micro-interactions) and fx (sfx, vfx) in field terms, one topic file each, read on demand. Archivable: it matters while a theme is built or extended, not after. Existing tokens always win over it.
 - Automatic skill archiving. `skill-scope.auto.js` archives every per-session-archivable skill and restores one when the stated task names its trigger word (`skill-scope.triggers.json`, single source). Two `hook:core` hooks in `hooks-enforcement` run it at session start (archive all) and per prompt (restore only, silent unless it restored something); `/next <task>` is the explicit version and works in any tool. Archive and manifest code moved into the shared `skill-scope.move` companion so a project without `install-kit` still has it. Replaces the passive "only if the user volunteers the next task" rule in `handover`.
 
