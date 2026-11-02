@@ -36,9 +36,9 @@ async function changeSetKey($: any, d: Detect, report: string): Promise<string> 
 
 export const register: Register = (on) => {
   // PowerShell too: on Windows the model may commit through it, and a Bash-only gate would be skipped.
-  on('tool.call', { tool: ['Bash', 'PowerShell'] }, async ($, e, next) => {
+  on('tool.call', { tool: ['Bash', 'PowerShell', 'Monitor'] }, async ($, e, next) => {
     const cmd = e.command
-    if (!/commit|push/.test(cmd)) return next(e) // cheap filter: no process for ordinary commands
+    if (!cmd || !/commit|push/.test(cmd)) return next(e) // cheap filter: no process for ordinary commands
     let engine: string | null = null
     let d: Detect
     try {
