@@ -23,6 +23,8 @@ Cold-start context rebuilding is the biggest hidden token cost in long-running p
 ## On session end (or when asked to wrap up)
 Never ask for the next task. Archiving is automatic: the session-start hook archives the archivable set, the prompt hook restores a skill when the message names its trigger, and `/next <task>` does both on demand. If the user volunteers the next task here, run `/next <task>` logic in "Skill scope for next session" below.
 
+If `kit-feedback.md` exists in the project root and `memory-gardener` is installed, record this session's token cost first: `node <skill-root>/memory-gardener/feedback.js cost --sid <session id>`. It needs the `budget-ledger` mod and updates the session's line in place. Skip silently otherwise.
+
 Update `handover.md` in place — never append an ever-growing log. First fold in any agent-handover files from this session (see `extras.md`). Structure:
 
 ```markdown
