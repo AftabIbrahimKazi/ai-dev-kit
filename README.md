@@ -246,7 +246,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | What | How |
 |---|---|
 | Install the kit into a project | say `read skills/README.md and install` |
-| Slash commands | type them: `/audit`, `/commit-check`, `/pickup`, `/wrap-up`, `/narration`, `/persona` and more ([full list](#slash-commands)) |
+| Slash commands | type them: `/audit`, `/commit-check`, `/pickup`, `/wrap-up`, `/next`, `/narration`, `/persona` and more ([full list](#slash-commands)) |
 | A skill on purpose | type `/<skill-name>` (for example `/debug-protocol`) |
 | Optional MCP tools | say `set up MCP servers` |
 | Claude Code mods | say `set up mods` |
@@ -485,6 +485,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
 | `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
 | `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
+| `/next` | Loads only the skills the next task needs and archives the rest (hooks do the same automatically) | the task, optional `--keep a,b`, `--dry-run` | `skill-scope` |
 | `/githooks` | Shows git hook status and offers to install them | none | `pre-commit` |
 | `/resolve-conflicts` | Resolves merge/rebase conflicts: mode `both` (default), `ours`, `theirs`; pace `all`, `auto` (default), `step`; role guardrails | `--role frontend|backend`, `--out leave|ours|theirs`, `--note "…"` | `resolve-conflicts` |
 | `/responsive-check` | Checks a page at range-based viewports (the six RULE 17 zones by default) and proposes range-based fixes | `--range a-b` (repeatable), `--min N`, `--max N`, `--width W`, `--ranges a-b,…`, `--detect`, `--max-probes N` | `responsive-check` |
@@ -698,7 +699,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, design-audit-offer, marker-guard, learnings-inject, aiignore-guard), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/

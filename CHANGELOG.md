@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02
+
+### Added
+- Automatic skill archiving. `skill-scope.auto.js` archives every per-session-archivable skill and restores one when the stated task names its trigger word (`skill-scope.triggers.json`, single source). Two `hook:core` hooks in `hooks-enforcement` run it at session start (archive all) and per prompt (restore only, silent unless it restored something); `/next <task>` is the explicit version and works in any tool. Archive and manifest code moved into the shared `skill-scope.move` companion so a project without `install-kit` still has it. Replaces the passive "only if the user volunteers the next task" rule in `handover`.
+
 ## 2026-11-01
 
 ### Added

@@ -139,6 +139,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/githooks` | git-hook status | `pre-commit` |
 | `/pickup` | loads `handover.md` as the project state (reads only) | `handover` |
 | `/wrap-up` | rewrites `handover.md` in place | `handover` |
+| `/next` | loads only the skills the next task needs, archives the rest | `skill-scope` |
 | `/resolve-conflicts` | conflict set + role scope, then guided resolution | `resolve-conflicts` |
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |

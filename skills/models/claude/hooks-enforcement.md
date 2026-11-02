@@ -60,11 +60,34 @@ If the `standards-chain` mod is installed it gates the same first edit and makes
 ```
 Costs roughly 25 input tokens per user message, mostly served from cache after the first turn.
 
+`SessionStart` hook — archives every per-session-archivable skill, so a session starts lean and nobody has to remember to do it. Silent, and fails open (`|| true`):
+<!-- hook:core -->
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/skill-scope.auto.js apply --quiet || true" }] }
+    ]
+  }
+}
+```
+`UserPromptSubmit` hook — restores an archived skill when the message names one of its trigger words (`skill-scope.triggers.json`). It only adds, never archives, and prints one line only when it restored something. The `/next` command is the explicit version of the same step:
+<!-- hook:core -->
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/skill-scope.auto.js apply --add-only --quiet \"$(node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).prompt||'')}catch(e){}})\")\" || true" }] }
+    ]
+  }
+}
+```
+
 **Merge these into the target's `.claude/settings.json` — never overwrite an existing one. Mechanical merge, run it instead of hand-editing:**
 ```
 node <library>/skills/meta/install-kit.cli.js merge-hooks --library <library> --root <target>
 ```
-It reads the three `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
+It reads the five `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
 
 ## Pre-commit gate (separate from AI-01–AI-03, same hook mechanism)
 
