@@ -62,12 +62,29 @@ function triggerRegex(t) {
         ? new RegExp('(?<![a-z0-9])' + esc(t.slice(0, -1)), 'i')
         : new RegExp('(?<![a-z0-9])' + esc(t) + '(?:e?s)?(?![a-z0-9])', 'i');
 }
-function matchSkills(task, triggers) {
-    return Object.keys(triggers.skills).filter((name) => triggers.skills[name].some((t) => triggerRegex(t).test(task)));
+function isLocked(l, root) {
+    if (!root)
+        return false;
+    return l.files.some((f) => {
+        try {
+            return fs.readFileSync(path.join(root, f), 'utf8').toLowerCase().includes(l.contains.toLowerCase());
+        }
+        catch {
+            return false;
+        }
+    });
+}
+function activeTriggers(e, root) {
+    if (Array.isArray(e))
+        return e;
+    return e.locked && isLocked(e.locked, root) ? e.locked.triggers : e.triggers;
+}
+function matchSkills(task, triggers, root) {
+    return Object.keys(triggers.skills).filter((name) => activeTriggers(triggers.skills[name], root).some((t) => triggerRegex(t).test(task)));
 }
 // Pure: decides what moves, given what is installed and archived right now.
-function plan(task, forced, triggers, installed, archived) {
-    const wanted = new Set([...matchSkills(task, triggers), ...forced]);
+function plan(task, forced, triggers, installed, archived, root) {
+    const wanted = new Set([...matchSkills(task, triggers, root), ...forced]);
     const set = Object.keys(triggers.skills);
     return {
         archive: set.filter((n) => installed.includes(n) && !wanted.has(n)),
@@ -127,7 +144,7 @@ function main() {
         const manifest = (0, skill_scope_move_1.readManifest)(root);
         if (!manifest.tool)
             throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
-        const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived));
+        const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
         if (args.addOnly)
             p.archive = [];
         if (args.cmd === 'apply' && !args.dryRun) {

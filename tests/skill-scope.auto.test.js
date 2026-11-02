@@ -105,3 +105,18 @@ t('--add-only archives nothing; --quiet prints nothing unless a skill was restor
   assert.deepStrictEqual(active(root), ['ui-design']);
   assert.ok(/ui-design/.test(hit.stdout));
 });
+
+t('locked theme: ux-theory restores on expansion words only; unlocked: on any theory word', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lock space-'));
+  assert.ok(matchSkills('tweak the colour', triggers, root).includes('ux-theory'));
+  fs.writeFileSync(path.join(root, 'DESIGN.md'), '# Theme\n\n## Component inventory\n- button\n');
+  assert.ok(!matchSkills('tweak the colour', triggers, root).includes('ux-theory'));
+  assert.ok(matchSkills('add a new card variant', triggers, root).includes('ux-theory'));
+  assert.ok(matchSkills('retheme the site', triggers, root).includes('ux-theory'));
+});
+
+t('a DESIGN.md without the inventory heading does not lock', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lock-'));
+  fs.writeFileSync(path.join(root, 'DESIGN.md'), '# Theme draft\n');
+  assert.ok(matchSkills('pick a palette', triggers, root).includes('ux-theory'));
+});
