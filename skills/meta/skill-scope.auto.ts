@@ -16,7 +16,12 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { doArchive, doUnarchive, readManifest } from './skill-scope.move';
 
-export interface Triggers { skills: Record<string, string[]> }
+// A skill maps to its trigger words, or to { triggers, locked }: when a project file in locked.files exists and
+// contains locked.contains, locked.triggers replace the normal ones (a finished theme restores its design
+// skill only on expansion words, not on every colour mention).
+export interface Locked { files: string[]; contains: string; triggers: string[] }
+export type Entry = string[] | { triggers: string[]; locked?: Locked };
+export interface Triggers { skills: Record<string, Entry> }
 export interface Plan { archive: string[]; restore: string[]; keep: string[]; loaded: string[] }
 
 export function loadTriggers(file = path.join(__dirname, 'skill-scope.triggers.json')): Triggers {
@@ -31,13 +36,25 @@ function triggerRegex(t: string): RegExp {
     : new RegExp('(?<![a-z0-9])' + esc(t) + '(?:e?s)?(?![a-z0-9])', 'i');
 }
 
-export function matchSkills(task: string, triggers: Triggers): string[] {
-  return Object.keys(triggers.skills).filter((name) => triggers.skills[name].some((t) => triggerRegex(t).test(task)));
+function isLocked(l: Locked, root: string | undefined): boolean {
+  if (!root) return false;
+  return l.files.some((f) => {
+    try { return fs.readFileSync(path.join(root, f), 'utf8').toLowerCase().includes(l.contains.toLowerCase()); } catch { return false; }
+  });
+}
+
+function activeTriggers(e: Entry, root: string | undefined): string[] {
+  if (Array.isArray(e)) return e;
+  return e.locked && isLocked(e.locked, root) ? e.locked.triggers : e.triggers;
+}
+
+export function matchSkills(task: string, triggers: Triggers, root?: string): string[] {
+  return Object.keys(triggers.skills).filter((name) => activeTriggers(triggers.skills[name], root).some((t) => triggerRegex(t).test(task)));
 }
 
 // Pure: decides what moves, given what is installed and archived right now.
-export function plan(task: string, forced: string[], triggers: Triggers, installed: string[], archived: string[]): Plan {
-  const wanted = new Set([...matchSkills(task, triggers), ...forced]);
+export function plan(task: string, forced: string[], triggers: Triggers, installed: string[], archived: string[], root?: string): Plan {
+  const wanted = new Set([...matchSkills(task, triggers, root), ...forced]);
   const set = Object.keys(triggers.skills);
   return {
     archive: set.filter((n) => installed.includes(n) && !wanted.has(n)),
@@ -89,7 +106,7 @@ function main(): void {
   try {
     const manifest = readManifest(root);
     if (!manifest.tool) throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
-    const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived));
+    const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
     if (args.addOnly) p.archive = [];
     if (args.cmd === 'apply' && !args.dryRun) {
       if (p.archive.length) doArchive({ root, skills: p.archive });

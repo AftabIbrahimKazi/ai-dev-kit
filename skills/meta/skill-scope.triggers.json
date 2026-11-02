@@ -1,11 +1,18 @@
 {
-  "_note": "Single source for the per-session archivable set. A skill listed here is archived by default and restored when the stated task contains one of its triggers. 'word' matches the whole word (plural s/es allowed); 'word*' matches any word starting with it.",
+  "_note": "Single source for the per-session archivable set. A skill listed here is archived by default and restored when the stated task contains one of its triggers. 'word' matches the whole word (plural s/es allowed); 'word*' matches any word starting with it. An entry may be { triggers, locked }: when a locked.files file exists and contains the locked.contains text, locked.triggers are used instead.",
   "skills": {
     "perf-audit": ["perf*", "slow", "lighthouse", "bundle", "speed", "vitals", "latency"],
     "code-audit": ["audit", "cleanup", "refactor", "dead", "debt", "lint"],
     "security-audit": ["security", "vulnerab*", "owasp", "secret", "xss", "csrf", "injection"],
     "ui-design": ["design", "ui", "ux", "theme", "mockup", "redesign", "landing", "layout"],
-    "ux-theory": ["theme", "palette", "typography", "typeface", "easing", "animation", "transition*", "micro*", "hierarchy", "spacing", "colour", "color"],
+    "ux-theory": {
+      "triggers": ["theme", "palette", "typography", "typeface", "easing", "animation", "transition*", "micro*", "hierarchy", "spacing", "colour", "color"],
+      "locked": {
+        "files": ["DESIGN.md", "design.md", "docs/DESIGN.md", "docs/design.md"],
+        "contains": "component inventory",
+        "triggers": ["variant*", "extend", "expand", "revise", "revision", "rebrand", "retheme", "new component", "new element", "new button", "new card", "new modal", "new form", "new input", "new nav*", "new section"]
+      }
+    },
     "resolve-conflicts": ["conflict", "merge", "rebase"],
     "responsive-check": ["responsive", "breakpoint", "mobile", "viewport", "screen"],
     "optimize-assets": ["asset", "image", "webp", "avif", "video", "font", "compress*", "heavy"],
