@@ -51,9 +51,14 @@ exports.matchSkills = matchSkills;
 exports.plan = plan;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
-const skill_scope_move_1 = require("./skill-scope.move");
-function loadTriggers(file = path.join(__dirname, 'skill-scope.triggers.json')) {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+// Installed, companions lose the skill prefix (move.js, triggers.json); in the library they keep it.
+function sibling(installed, library, load) {
+    const p = path.join(__dirname, fs.existsSync(path.join(__dirname, installed)) ? installed : library);
+    return load(p);
+}
+const { doArchive, doUnarchive, readManifest } = sibling('move.js', 'skill-scope.move.js', (p) => require(p));
+function loadTriggers(file) {
+    return JSON.parse(fs.readFileSync(file ?? sibling('triggers.json', 'skill-scope.triggers.json', (p) => p), 'utf8'));
 }
 // 'word' is a whole word (plural s/es allowed); 'word*' is any word starting with it.
 function triggerRegex(t) {
@@ -141,7 +146,7 @@ function main() {
             console.error('assumed --root ' + root);
     }
     try {
-        const manifest = (0, skill_scope_move_1.readManifest)(root);
+        const manifest = readManifest(root);
         if (!manifest.tool)
             throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
         const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
@@ -149,9 +154,9 @@ function main() {
             p.archive = [];
         if (args.cmd === 'apply' && !args.dryRun) {
             if (p.archive.length)
-                (0, skill_scope_move_1.doArchive)({ root, skills: p.archive });
+                doArchive({ root, skills: p.archive });
             if (p.restore.length)
-                (0, skill_scope_move_1.doUnarchive)({ root, skills: p.restore });
+                doUnarchive({ root, skills: p.restore });
         }
         if (args.quiet && !p.restore.length)
             return;
@@ -159,7 +164,7 @@ function main() {
             console.log(JSON.stringify({ dryRun: args.dryRun, ...p }));
         else
             console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length +
-                (p.restore.length ? ', restored ' + p.restore.join(', ') : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
+                (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
     }
     catch (e) {
         console.error('error: ' + e.message);

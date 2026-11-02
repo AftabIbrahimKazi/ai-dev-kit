@@ -66,18 +66,18 @@ Costs roughly 25 input tokens per user message, mostly served from cache after t
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/skill-scope.auto.js apply --quiet || true" }] }
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/auto.js apply --quiet || true" }] }
     ]
   }
 }
 ```
-`UserPromptSubmit` hook — restores an archived skill when the message names one of its trigger words (`skill-scope.triggers.json`). It only adds, never archives, and prints one line only when it restored something. The `/next` command is the explicit version of the same step:
+`UserPromptSubmit` hook — restores an archived skill when the message names one of its trigger words (`skill-scope/triggers.json`). It only adds, never archives, and prints one line only when it restored something. The `/next` command is the explicit version of the same step:
 <!-- hook:core -->
 ```json
 {
   "hooks": {
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/skill-scope.auto.js apply --add-only --quiet \"$(node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).prompt||'')}catch(e){}})\")\" || true" }] }
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/auto.js apply --add-only --quiet \"$(node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).prompt||'')}catch(e){}})\")\" || true" }] }
     ]
   }
 }
