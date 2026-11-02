@@ -5,6 +5,7 @@
     "code-audit": ["audit", "cleanup", "refactor", "dead", "debt", "lint"],
     "security-audit": ["security", "vulnerab*", "owasp", "secret", "xss", "csrf", "injection"],
     "ui-design": ["design", "ui", "ux", "theme", "mockup", "redesign", "landing", "layout"],
+    "ux-theory": ["theme", "palette", "typography", "typeface", "easing", "animation", "transition*", "micro*", "hierarchy", "spacing", "colour", "color"],
     "resolve-conflicts": ["conflict", "merge", "rebase"],
     "responsive-check": ["responsive", "breakpoint", "mobile", "viewport", "screen"],
     "optimize-assets": ["asset", "image", "webp", "avif", "video", "font", "compress*", "heavy"],

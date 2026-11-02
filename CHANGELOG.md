@@ -3,6 +3,7 @@
 ## 2026-11-02
 
 ### Added
+- `ux-theory` skill: colour, type, composition (layout, hierarchy, proximity, alignment, balance, white space), motion (transitions, easing, micro-interactions) and fx (sfx, vfx) in field terms, one topic file each, read on demand. Archivable: it matters while a theme is built or extended, not after. Existing tokens always win over it.
 - Automatic skill archiving. `skill-scope.auto.js` archives every per-session-archivable skill and restores one when the stated task names its trigger word (`skill-scope.triggers.json`, single source). Two `hook:core` hooks in `hooks-enforcement` run it at session start (archive all) and per prompt (restore only, silent unless it restored something); `/next <task>` is the explicit version and works in any tool. Archive and manifest code moved into the shared `skill-scope.move` companion so a project without `install-kit` still has it. Replaces the passive "only if the user volunteers the next task" rule in `handover`.
 
 ## 2026-11-01
