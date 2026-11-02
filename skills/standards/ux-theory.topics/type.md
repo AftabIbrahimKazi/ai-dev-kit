@@ -8,7 +8,7 @@ Typography is the system; a typeface is the family; a font is one weight, style 
 - **Measure:** 45–75ch, 66 ideal. Cap with `max-width` in `ch`.
 - **Leading:** body 1.4–1.6; headings 1.1–1.25; tighter as size grows.
 - **Tracking:** display sizes −0.01 to −0.03em; ALL-CAPS and small labels +0.05 to +0.1em; body untouched.
-- **Rag and breaks:** `text-wrap: balance` on headings, `pretty` on body. No widows or orphans in headings.
+- **Rag and breaks:** `text-wrap: balance` on headings, `pretty` on body (both are progressive enhancement; `pretty` is not in Firefox). No widows or orphans in headings.
 - **Numerals:** `tabular-nums` in tables, prices and counters; lining figures in UI.
 - **x-height** decides perceived size: compare faces at equal x-height before pairing.
 - **Loading:** variable font where available, subset, `font-display: swap`, a metric-matched fallback to avoid layout shift.

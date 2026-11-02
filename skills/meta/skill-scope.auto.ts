@@ -14,7 +14,14 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { doArchive, doUnarchive, readManifest } from './skill-scope.move';
+import type * as MoveModule from './skill-scope.move';
+
+// Installed, companions lose the skill prefix (move.js, triggers.json); in the library they keep it.
+function sibling<T>(installed: string, library: string, load: (p: string) => T): T {
+  const p = path.join(__dirname, fs.existsSync(path.join(__dirname, installed)) ? installed : library);
+  return load(p);
+}
+const { doArchive, doUnarchive, readManifest } = sibling('move.js', 'skill-scope.move.js', (p) => require(p) as typeof MoveModule);
 
 // A skill maps to its trigger words, or to { triggers, locked }: when a project file in locked.files exists and
 // contains locked.contains, locked.triggers replace the normal ones (a finished theme restores its design
@@ -24,8 +31,8 @@ export type Entry = string[] | { triggers: string[]; locked?: Locked };
 export interface Triggers { skills: Record<string, Entry> }
 export interface Plan { archive: string[]; restore: string[]; keep: string[]; loaded: string[] }
 
-export function loadTriggers(file = path.join(__dirname, 'skill-scope.triggers.json')): Triggers {
-  return JSON.parse(fs.readFileSync(file, 'utf8')) as Triggers;
+export function loadTriggers(file?: string): Triggers {
+  return JSON.parse(fs.readFileSync(file ?? sibling('triggers.json', 'skill-scope.triggers.json', (p) => p), 'utf8')) as Triggers;
 }
 
 // 'word' is a whole word (plural s/es allowed); 'word*' is any word starting with it.
@@ -115,7 +122,7 @@ function main(): void {
     if (args.quiet && !p.restore.length) return;
     if (args.json) console.log(JSON.stringify({ dryRun: args.dryRun, ...p }));
     else console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length +
-      (p.restore.length ? ', restored ' + p.restore.join(', ') : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
+      (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
   } catch (e) {
     console.error('error: ' + (e as Error).message);
     process.exitCode = 1;

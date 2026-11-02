@@ -6,7 +6,7 @@ Read only when needed: archiving skills at session end, agent-handover files, or
 
 Only touches `skill-scope`'s per-session-archivable set (listed in `skill-scope.triggers.json`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), apply it with the same engine the hooks and `/next` use:
 ```
-node <skill-root>/skill-scope/skill-scope.auto.js apply --root <target> <task words>
+node <skill-root>/skill-scope/auto.js apply --root <target> <task words>
 ```
 It archives every archivable skill the task does not name and restores the ones it does. For one named skill, `install-kit.cli.js archive --skills <name>` still works.
 (`<library>` is the `ai-dev-kit` clone — same one install-kit uses.) This moves each named skill from the skill root into `<tool-dir>/skills-archive/<name>/` (`.claude/` or `.opencode/`, matching the skill root) — move, not delete, so local `learnings.md` survives — and updates `.ai-dev-kit.json` so a later `unarchive` or `update` knows where things stand. Record it:
