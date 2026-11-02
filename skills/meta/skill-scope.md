@@ -55,7 +55,9 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
-### Per-session archivable (handover toggles from the stated next task)
+### Per-session archivable (automatic: session-start hook, prompt hook, `/next`)
+The set and each skill's trigger words live in `skill-scope.triggers.json` (single source; `tests/skill-scope.auto.test.js` fails if this list and the file disagree). `skill-scope.auto.js` archives them all at session start, restores one when a message contains its trigger word, and `/next <task>` does both by hand. The user's explicit word still wins: `--keep a,b` forces skills on.
+
 `perf-audit`, `code-audit`, `security-audit`, `ui-design`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
 
 **Manual-only skills** carry `disable-model-invocation: true`: `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`, `skill-ablation` and the previous-generation model protocols (`opus-4-8`, `sonnet-5`, `opus-5`, `fable-5`, `haiku-4-5`, `opus-as-fable`). They are absent from the model's skill list (about 50 tokens each saved per turn) and run only when the user types `/<name>`. Measured with `/context`.
@@ -82,7 +84,7 @@ Once requested and configured, treat as permanent-pinned — the user's own choi
 ## Mechanism split (who actually moves files, and where the override hook lives)
 
 - **install-kit**, at install or explicit re-detect: installs all universal Permanent-pinned skills unconditionally; scans for conditional-pinned signals and installs matches, citing the signal found; asks once for anything not file-observable. Before finalizing, asks the user for any explicit overrides ("also always pin X" / "never pin Y even though the scan matched") and records them.
-- **handover**, every session end: given the stated next task, archives per-session-archivable skills the task doesn't need to `<tool-dir>/skills-archive/` (`.claude/` or `.opencode/`, matching the skill root), records the archived list + paths in `handover.md`. If the user explicitly states an override for that session ("keep `perf-audit` pinned this time even though it's not a perf task"), handover honors it and notes the override was explicit, not inferred.
+- **skill-scope.auto**, automatic (Claude Code hooks) or typed (`/next <task>`, any tool): archives per-session-archivable skills the task doesn't name to `<tool-dir>/skills-archive/` and restores the ones it does. **handover** records the archived list + paths in `handover.md`. If the user explicitly states an override for that session ("keep `perf-audit` pinned this time even though it's not a perf task"), handover honors it and notes the override was explicit, not inferred.
 - **Opt-in addons** own their own setup — install-kit and handover never ask an addon's configuration questions on its behalf; they only route the request to that addon's own Setup section.
 
 Neither mechanism silently second-guesses the other, and neither silently second-guesses a user's explicit statement.

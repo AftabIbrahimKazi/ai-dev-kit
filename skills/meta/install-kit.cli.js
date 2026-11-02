@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.STANDARD_ROW_LABELS = exports.STACK_PRESETS = void 0;
+exports.STANDARD_ROW_LABELS = exports.STACK_PRESETS = exports.doUnarchive = exports.doArchive = exports.writeManifest = exports.readManifest = void 0;
 exports.listSkills = listSkills;
-exports.readManifest = readManifest;
-exports.writeManifest = writeManifest;
 exports.extractCoreHooks = extractCoreHooks;
 exports.mergeHooks = mergeHooks;
 exports.doMergeHooks = doMergeHooks;
@@ -20,8 +18,6 @@ exports.doUpdate = doUpdate;
 exports.parseRenameLedger = parseRenameLedger;
 exports.applyRenameMigrations = applyRenameMigrations;
 exports.doUninstall = doUninstall;
-exports.doArchive = doArchive;
-exports.doUnarchive = doUnarchive;
 exports.eligibleCatalogNames = eligibleCatalogNames;
 exports.detectStackSignals = detectStackSignals;
 exports.loadSkillPurposes = loadSkillPurposes;
@@ -62,8 +58,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 const readline = require("node:readline");
 const verifyModule = require("./install-kit.verify");
+const skill_scope_move_1 = require("./skill-scope.move");
+Object.defineProperty(exports, "readManifest", { enumerable: true, get: function () { return skill_scope_move_1.readManifest; } });
+Object.defineProperty(exports, "writeManifest", { enumerable: true, get: function () { return skill_scope_move_1.writeManifest; } });
+Object.defineProperty(exports, "doArchive", { enumerable: true, get: function () { return skill_scope_move_1.doArchive; } });
+Object.defineProperty(exports, "doUnarchive", { enumerable: true, get: function () { return skill_scope_move_1.doUnarchive; } });
 const { verify, ROOTS } = verifyModule;
-const MANIFEST_NAME = '.ai-dev-kit.json';
 const EXCLUDE_DIRS = new Set(['commands']);
 const EXCLUDE_NAMES = new Set(['README.md']);
 // Mirrors skill-scope.md's classification -- keep both in sync by hand; nothing here is derived
@@ -172,64 +172,6 @@ function companionStem(targetName) {
 }
 const ACTIVE_LEVEL_RE = /\*\*Active level:\s*([a-z]*)\*\*/;
 const CONTEXT_CODE_ROW_RE = /(\|\s*Context code\s*\|\s*)(.*?)(\s*\|)/;
-function readManifest(root) {
-    const p = path.join(root, MANIFEST_NAME);
-    if (!fs.existsSync(p))
-        return { version: 1, tool: null, standards: false, commentStyleLevel: null, contextCode: null, skills: {}, archived: {} };
-    const m = JSON.parse(fs.readFileSync(p, 'utf8'));
-    if (!m.archived)
-        m.archived = {};
-    return m;
-}
-function writeManifest(root, manifest) {
-    manifest.updatedAt = new Date().toISOString();
-    fs.writeFileSync(path.join(root, MANIFEST_NAME), JSON.stringify(manifest, null, 2) + '\n');
-}
-function skillRootHasJs(absSkillRoot) {
-    if (!fs.existsSync(absSkillRoot))
-        return false;
-    for (const name of fs.readdirSync(absSkillRoot)) {
-        const abs = path.join(absSkillRoot, name);
-        if (fs.statSync(abs).isDirectory()) {
-            for (const f of walkFiles(abs))
-                if (f.endsWith('.js'))
-                    return true;
-        }
-    }
-    return false;
-}
-function* walkFiles(dir) {
-    for (const name of fs.readdirSync(dir)) {
-        const abs = path.join(dir, name);
-        if (fs.statSync(abs).isDirectory())
-            yield* walkFiles(abs);
-        else
-            yield abs;
-    }
-}
-function ensureShield(absSkillRoot) {
-    const pkg = path.join(absSkillRoot, 'package.json');
-    if (fs.existsSync(pkg)) {
-        const body = fs.readFileSync(pkg, 'utf8');
-        if (/"type"\s*:\s*"commonjs"/.test(body))
-            return false;
-    }
-    fs.mkdirSync(absSkillRoot, { recursive: true });
-    fs.writeFileSync(pkg, '{\n  "type": "commonjs"\n}\n');
-    return true;
-}
-function removeShieldIfUnneeded(absSkillRoot) {
-    if (skillRootHasJs(absSkillRoot))
-        return false;
-    const pkg = path.join(absSkillRoot, 'package.json');
-    if (!fs.existsSync(pkg))
-        return false;
-    const body = fs.readFileSync(pkg, 'utf8');
-    if (!/"type"\s*:\s*"commonjs"/.test(body))
-        return false;
-    fs.rmSync(pkg);
-    return true;
-}
 // Pulls the `<!-- hook:core -->`-marked JSON blocks out of hooks-enforcement.md, so the merge can never
 // drift from what that file documents -- there is exactly one source of truth for the sample hooks.
 function extractCoreHooks(libraryRoot) {
@@ -391,7 +333,7 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
     const srcDir = path.join(libraryRoot, 'coding-standards');
     const destDir = path.join(root, 'coding-standards');
     if (fs.existsSync(destDir) && !opts.force) {
-        for (const f of walkFiles(srcDir)) {
+        for (const f of (0, skill_scope_move_1.walkFiles)(srcDir)) {
             const rel = path.relative(srcDir, f);
             if (rel === 'CLAUDE.example.md')
                 continue;
@@ -403,7 +345,7 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
         }
     }
     else {
-        for (const f of walkFiles(srcDir)) {
+        for (const f of (0, skill_scope_move_1.walkFiles)(srcDir)) {
             const rel = path.relative(srcDir, f);
             if (rel === 'CLAUDE.example.md')
                 continue;
@@ -437,7 +379,7 @@ function doInstall(args) {
         throw new Error(`--tool must be one of ${Object.keys(ROOTS).join('|')}`);
     const catalog = listSkills(args.library);
     const absSkillRoot = path.join(args.root, tool.skills);
-    const manifest = readManifest(args.root);
+    const manifest = (0, skill_scope_move_1.readManifest)(args.root);
     manifest.tool = args.tool;
     manifest.skillRoot = tool.skills;
     manifest.protocolFile = tool.protocol;
@@ -450,7 +392,7 @@ function doInstall(args) {
         if (!r.error)
             manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions };
     }
-    if (ensureShield(absSkillRoot))
+    if ((0, skill_scope_move_1.ensureShield)(absSkillRoot))
         results.push({ name: '(shield)', changed: true });
     let standardsResult = null;
     if (args.standards) {
@@ -469,14 +411,14 @@ function doInstall(args) {
         manifest.commentStyleLevel = args.commentStyleLevel;
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
-    writeManifest(args.root, manifest);
+    (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: args.tool });
     return { skills: results, standards: standardsResult, verify: verifyResult };
 }
 function doUpdate(args) {
-    const manifest = readManifest(args.root);
+    const manifest = (0, skill_scope_move_1.readManifest)(args.root);
     if (!manifest.tool)
-        throw new Error('no install manifest found at ' + path.join(args.root, MANIFEST_NAME) + ' -- run install first');
+        throw new Error('no install manifest found at ' + path.join(args.root, skill_scope_move_1.MANIFEST_NAME) + ' -- run install first');
     const tool = ROOTS[(args.tool || manifest.tool)];
     if (!tool)
         throw new Error(`--tool must be one of ${Object.keys(ROOTS).join('|')}`);
@@ -497,7 +439,7 @@ function doUpdate(args) {
         if (!r.error)
             manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions };
     }
-    ensureShield(absSkillRoot);
+    (0, skill_scope_move_1.ensureShield)(absSkillRoot);
     const migrations = applyRenameMigrations(args.library, args.root, manifest, args.applyMigrations);
     if (manifest.standards && args.contextCode) {
         installStandards(args.library, args.root, manifest.protocolFile, { contextCode: args.contextCode });
@@ -507,7 +449,7 @@ function doUpdate(args) {
     }
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
-    writeManifest(args.root, manifest);
+    (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
     return { skills: results, migrations, verify: verifyResult };
 }
@@ -560,7 +502,7 @@ function applyRenameMigrations(libraryRoot, root, manifest, apply) {
     return pending;
 }
 function doUninstall(args) {
-    const manifest = readManifest(args.root);
+    const manifest = (0, skill_scope_move_1.readManifest)(args.root);
     if (!manifest.tool)
         return { removed: [], kept: [], note: 'no install manifest found -- nothing tracked to remove' };
     const absSkillRoot = path.join(args.root, manifest.skillRoot);
@@ -578,7 +520,7 @@ function doUninstall(args) {
         delete manifest.skills[name];
         removed.push(`${manifest.skillRoot}/${name}`);
     }
-    if (removeShieldIfUnneeded(absSkillRoot))
+    if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
     if (args.removeStandards && manifest.standards) {
         const dir = path.join(args.root, 'coding-standards');
@@ -591,70 +533,8 @@ function doUninstall(args) {
     else if (manifest.standards) {
         kept.push('coding-standards/ left in place (pass --remove-standards to remove it)');
     }
-    writeManifest(args.root, manifest);
+    (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     return { removed, kept };
-}
-// Moves a skill out of the active skill root into <tool-dir>/skills-archive/, keeping it on disk but
-// invisible to the tool -- the mechanical half of handover's per-session archive decision.
-function doArchive(args) {
-    const manifest = readManifest(args.root);
-    if (!manifest.tool)
-        throw new Error('no install manifest found at ' + path.join(args.root, MANIFEST_NAME) + ' -- run install first');
-    const absSkillRoot = path.join(args.root, manifest.skillRoot);
-    const archiveRoot = path.join(args.root, path.dirname(manifest.skillRoot), 'skills-archive');
-    const names = args.all ? Object.keys(manifest.skills) : (args.skills || []);
-    const archived = [];
-    const kept = [];
-    for (const name of names) {
-        if (!manifest.skills[name]) {
-            kept.push(`${name}: not tracked as installed, left alone`);
-            continue;
-        }
-        const src = path.join(absSkillRoot, name);
-        const dest = path.join(archiveRoot, name);
-        if (fs.existsSync(src)) {
-            fs.mkdirSync(path.dirname(dest), { recursive: true });
-            fs.rmSync(dest, { recursive: true, force: true });
-            fs.renameSync(src, dest);
-        }
-        manifest.archived[name] = manifest.skills[name];
-        delete manifest.skills[name];
-        archived.push(name);
-    }
-    if (removeShieldIfUnneeded(absSkillRoot))
-        archived.push('(shield removed, no longer needed)');
-    writeManifest(args.root, manifest);
-    return { archived, kept };
-}
-// Reverses doArchive: moves a skill back from skills-archive/ into the active skill root.
-function doUnarchive(args) {
-    const manifest = readManifest(args.root);
-    if (!manifest.tool)
-        throw new Error('no install manifest found at ' + path.join(args.root, MANIFEST_NAME) + ' -- run install first');
-    const absSkillRoot = path.join(args.root, manifest.skillRoot);
-    const archiveRoot = path.join(args.root, path.dirname(manifest.skillRoot), 'skills-archive');
-    const names = args.all ? Object.keys(manifest.archived) : (args.skills || []);
-    const restored = [];
-    const kept = [];
-    for (const name of names) {
-        if (!manifest.archived[name]) {
-            kept.push(`${name}: not archived, left alone`);
-            continue;
-        }
-        const src = path.join(archiveRoot, name);
-        const dest = path.join(absSkillRoot, name);
-        if (fs.existsSync(src)) {
-            fs.mkdirSync(path.dirname(dest), { recursive: true });
-            fs.rmSync(dest, { recursive: true, force: true });
-            fs.renameSync(src, dest);
-        }
-        manifest.skills[name] = manifest.archived[name];
-        delete manifest.archived[name];
-        restored.push(name);
-    }
-    ensureShield(absSkillRoot);
-    writeManifest(args.root, manifest);
-    return { restored, kept };
 }
 function isInteractive() {
     return !!process.stdout.isTTY && !!process.stdin.isTTY;
@@ -1066,7 +946,7 @@ async function fillInteractive(cmd, args) {
             }
         }
         if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
-            const manifest = readManifest(args.root);
+            const manifest = (0, skill_scope_move_1.readManifest)(args.root);
             const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
             const names = Object.keys(pool);
             if (!names.length) {
@@ -1150,9 +1030,9 @@ async function main() {
         else if (cmd === 'update')
             res = doUpdate(args);
         else if (cmd === 'archive')
-            res = doArchive(args);
+            res = (0, skill_scope_move_1.doArchive)(args);
         else if (cmd === 'unarchive')
-            res = doUnarchive(args);
+            res = (0, skill_scope_move_1.doUnarchive)(args);
         else if (cmd === 'uninstall')
             res = doUninstall(args);
         else if (cmd === 'merge-hooks')

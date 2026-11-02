@@ -1,0 +1,21 @@
+{
+  "_note": "Single source for the per-session archivable set. A skill listed here is archived by default and restored when the stated task contains one of its triggers. 'word' matches the whole word (plural s/es allowed); 'word*' matches any word starting with it.",
+  "skills": {
+    "perf-audit": ["perf*", "slow", "lighthouse", "bundle", "speed", "vitals", "latency"],
+    "code-audit": ["audit", "cleanup", "refactor", "dead", "debt", "lint"],
+    "security-audit": ["security", "vulnerab*", "owasp", "secret", "xss", "csrf", "injection"],
+    "ui-design": ["design", "ui", "ux", "theme", "mockup", "redesign", "landing", "layout"],
+    "resolve-conflicts": ["conflict", "merge", "rebase"],
+    "responsive-check": ["responsive", "breakpoint", "mobile", "viewport", "screen"],
+    "optimize-assets": ["asset", "image", "webp", "avif", "video", "font", "compress*", "heavy"],
+    "version-bump": ["version", "bump", "release", "changelog"],
+    "role-session": ["role", "lane", "multi-role", "roles"],
+    "e2e-scaffold": ["e2e", "end-to-end", "playwright", "cypress"],
+    "memory-gardener": ["memory", "stale", "gardener"],
+    "skill-ablation": ["ablation", "ablate"],
+    "skill-writer": ["skill"],
+    "mod-writer": ["mod", "hook"],
+    "command-writer": ["command", "slash"],
+    "cli-writer": ["cli", "installer", "script"]
+  }
+}
