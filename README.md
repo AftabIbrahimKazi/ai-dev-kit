@@ -639,6 +639,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `responsive-check/probes.js` and `measure.js` | Plans viewports from your breakpoints, then measures layout problems in a browser (Playwright) | `/responsive-check` |
 | `optimize-assets/convert.js` | Finds heavy assets, converts (webp, avif, jpg, mp4, woff2, and more), compresses and pre-compresses them; originals are never touched | `/optimize-assets` |
 | `version-bump/bump.js` | Bumps a `package.json` version and inserts the matching `CHANGELOG.md` entry, scoped to the whole project, one group, or one package | `/version-bump` |
+| `handover/size.js` | Reports a `handover.md` over 120 lines or with stacked session sections, and a `learnings.md` over 30 bullets; silent when within limits | `/wrap-up`, and a Claude Code session-start hook |
 | `skill-scope/auto.js` | Archives the per-session-archivable skills and restores the ones a task names (trigger words in `triggers.json`; a finished theme locks `ux-theory` to expansion phrases) | `/next`, and two Claude Code hooks |
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
 | `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
