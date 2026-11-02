@@ -145,7 +145,12 @@ function finish(text, opts) {
 function quoteArg(a, win = process.platform === 'win32') {
     if (/^[\w@%+=:,./\\-]+$/.test(a))
         return a;
-    return win ? `"${a.replace(/"/g, '\\"')}"` : `'${a.replace(/'/g, "'\\''")}'`;
+    if (win) {
+        // Windows quoting: escape quotes and preserve backslashes before quotes / at end.
+        const escaped = a.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/g, '$1$1');
+        return `"${escaped}"`;
+    }
+    return `'${a.replace(/'/g, "'\\''")}'`;
 }
 function main() {
     const a = process.argv.slice(2);
