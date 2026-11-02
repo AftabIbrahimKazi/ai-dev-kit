@@ -2,6 +2,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STANDARD_ROW_LABELS = exports.STACK_PRESETS = exports.ARCHIVABLE_SKILLS = exports.doUnarchive = exports.doArchive = exports.writeManifest = exports.readManifest = void 0;
+exports.listCommands = listCommands;
+exports.syncCommands = syncCommands;
+exports.pruneCommands = pruneCommands;
 exports.listSkills = listSkills;
 exports.extractCoreHooks = extractCoreHooks;
 exports.mergeHooks = mergeHooks;
@@ -32,14 +35,14 @@ exports.orderedCategories = orderedCategories;
 // session. See skills/meta/install-kit.md (install/update/uninstall) and the `handover` skill (archive).
 //
 //   node install-kit.cli.js list      --library <path> [--json]
-//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex
+//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex [--no-commands]
 //                                      --skills a,b,c[:companion+companion] [--standards]
 //                                      [--script-standard js|ts|js-and-ts] [--active-standards a,b|all|none]
 //                                      [--comment-style-level none|terse|descriptive] [--context-code X7|none]
 //                                      [--force] [--json]
-//   node install-kit.cli.js update    --library <path> --root <target> [--skills a,b | --all]
+//   node install-kit.cli.js update    --library <path> --root <target> [--skills a,b | --all] [--no-commands]
 //                                      [--context-code X7|none] [--apply-migrations a,b|all] [--json]
-//   node install-kit.cli.js uninstall --root <target> [--skills a,b | --all] [--remove-standards] [--remove-hooks] [--json]
+//   node install-kit.cli.js uninstall [--library <path>] --root <target> [--skills a,b | --all] [--remove-standards] [--remove-hooks] [--json]
 //   node install-kit.cli.js archive   --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js unarchive --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js merge-hooks --library <path> --root <target> [--json]
@@ -57,6 +60,7 @@ exports.orderedCategories = orderedCategories;
 // No network. Reads the manifest at <target>/.ai-dev-kit.json to know what the kit itself installed
 // (and, for archive/unarchive, what it moved aside), so no command ever touches a folder it didn't create.
 const fs = require("node:fs");
+const crypto = require("node:crypto");
 const path = require("node:path");
 const readline = require("node:readline");
 const verifyModule = require("./install-kit.verify");
@@ -78,6 +82,129 @@ const UNIVERSAL_SKILLS = [
 ];
 // Read from skill-scope.triggers.json (the single source) so a new archivable skill needs no edit here.
 exports.ARCHIVABLE_SKILLS = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, 'skill-scope.triggers.json'), 'utf8')).skills);
+// ---- Slash commands: copied from skills/commands/*.md, tracked in the manifest, refreshed by update, removed by uninstall.
+// A command needs one skill. It is read from the template: `auto.js run <skill>` first (an archivable skill's command),
+// else the first `{{skill-root}}/<skill>/` path. Templates with no script name theirs here.
+const COMMAND_NEEDS_FALLBACK = { eta: 'plan-first', kit: null, format: null, pickup: 'handover' };
+function listCommands(libraryRoot) {
+    const dir = path.join(libraryRoot, 'skills', 'commands');
+    if (!fs.existsSync(dir))
+        return [];
+    return fs.readdirSync(dir).filter((n) => n.endsWith('.md')).map((n) => {
+        const body = fs.readFileSync(path.join(dir, n), 'utf8');
+        const name = n.slice(0, -3);
+        const run = /auto\.js run ([a-z0-9-]+)/.exec(body);
+        const path1 = /\{\{skill-root\}\}\/([a-z0-9-]+)\//.exec(body);
+        const needs = run ? run[1] : path1 ? path1[1] : (name in COMMAND_NEEDS_FALLBACK ? COMMAND_NEEDS_FALLBACK[name] : undefined);
+        if (needs === undefined)
+            throw new Error(`command "${name}" names no skill and has no entry in COMMAND_NEEDS_FALLBACK`);
+        return { name, needs, body };
+    });
+}
+function commandsDirOf(manifest) {
+    if (manifest.tool === 'codex' || !manifest.skillRoot)
+        return null; // Codex has no command folder
+    return path.join(path.dirname(manifest.skillRoot), 'commands');
+}
+function renderCommand(body, manifest) {
+    return body.replace(/\{\{skill-root\}\}/g, manifest.skillRoot.split(path.sep).join('/'));
+}
+const sha = (text) => crypto.createHash('sha1').update(text).digest('hex');
+// A command whose skill is an opt-in addon (narrate, personality, project-context) is installed by that addon's own setup.
+function eligibleCommand(c, manifest, catalog) {
+    if (c.needs === null)
+        return true;
+    if (!manifest.skills[c.needs] && !manifest.archived[c.needs])
+        return false;
+    const entry = catalog[c.needs];
+    return !!entry && !isOptInOnly(entry, c.needs);
+}
+function syncCommands(root, manifest, library, opts) {
+    const result = { added: [], updated: [], removed: [], kept: [] };
+    const dirRel = commandsDirOf(manifest);
+    if (!dirRel)
+        return result;
+    manifest.commands = manifest.commands || {};
+    const catalog = listSkills(library);
+    for (const c of listCommands(library)) {
+        if (!eligibleCommand(c, manifest, catalog))
+            continue;
+        const rel = path.join(dirRel, c.name + '.md');
+        const abs = path.join(root, rel);
+        const text = renderCommand(c.body, manifest);
+        const tracked = manifest.commands[c.name];
+        const exists = fs.existsSync(abs);
+        if (!exists) {
+            fs.mkdirSync(path.dirname(abs), { recursive: true });
+            fs.writeFileSync(abs, text);
+            manifest.commands[c.name] = { file: rel.split(path.sep).join('/'), sha: sha(text) };
+            result.added.push(c.name);
+        }
+        else if (tracked) {
+            const current = fs.readFileSync(abs, 'utf8');
+            if (sha(current) === tracked.sha) {
+                if (current !== text) {
+                    fs.writeFileSync(abs, text);
+                    manifest.commands[c.name].sha = sha(text);
+                    result.updated.push(c.name);
+                }
+            }
+            else if (opts.force) {
+                fs.writeFileSync(abs, text);
+                manifest.commands[c.name].sha = sha(text);
+                result.updated.push(c.name);
+            }
+            else {
+                result.kept.push(`/${c.name}: edited since the kit wrote it, left alone (pass --force to overwrite)`);
+            }
+        }
+        else if (opts.force) {
+            fs.writeFileSync(abs, text);
+            manifest.commands[c.name] = { file: rel.split(path.sep).join('/'), sha: sha(text) };
+            result.updated.push(c.name);
+        }
+        else {
+            result.kept.push(`/${c.name}: a file of that name already exists and the kit did not write it, left alone`);
+        }
+    }
+    return result;
+}
+// Removes tracked commands that are unedited and whose skill is gone (or all of them with all=true).
+function pruneCommands(root, manifest, all, library) {
+    const removed = [], kept = [];
+    if (!manifest.commands)
+        return { removed, kept };
+    const needs = new Map();
+    if (library) {
+        try {
+            for (const c of listCommands(library))
+                needs.set(c.name, c.needs);
+        }
+        catch { /* fall through: treated as unknown */ }
+    }
+    for (const [name, rec] of Object.entries(manifest.commands)) {
+        const need = needs.get(name);
+        const skillGone = need !== undefined && need !== null && !manifest.skills[need] && !manifest.archived[need];
+        if (!all && !skillGone)
+            continue;
+        const abs = path.join(root, rec.file);
+        if (!fs.existsSync(abs)) {
+            delete manifest.commands[name];
+            continue;
+        }
+        if (sha(fs.readFileSync(abs, 'utf8')) === rec.sha) {
+            fs.rmSync(abs);
+            removed.push(rec.file);
+        }
+        else
+            kept.push(`${rec.file}: edited since the kit wrote it, left alone`);
+        delete manifest.commands[name];
+    }
+    const dir = commandsDirOf(manifest);
+    if (dir && fs.existsSync(path.join(root, dir)) && fs.readdirSync(path.join(root, dir)).length === 0)
+        fs.rmdirSync(path.join(root, dir));
+    return { removed, kept };
+}
 // Archived skills live under <tool-dir>/skills-archive/; install, update and uninstall must reach them there.
 function archiveRootOf(root, manifest) {
     return path.join(root, path.dirname(manifest.skillRoot), 'skills-archive');
@@ -476,9 +603,10 @@ function doInstall(args) {
         manifest.commentStyleLevel = args.commentStyleLevel;
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
+    const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: true });
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { skills: results, standards: standardsResult, verify: verifyResult };
+    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult };
 }
 function doUpdate(args) {
     const manifest = (0, skill_scope_move_1.readManifest)(args.root);
@@ -523,8 +651,10 @@ function doUpdate(args) {
     const core = manifest.tool === 'claude' ? coreHooksOrNull(args.library) : null;
     if (core && hasKitHooks(args.root, core))
         hooksAdded = mergeHooks(args.root, core).added;
+    const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: false });
+    (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
-    return { skills: results, migrations, verify: verifyResult, hooksAdded };
+    return { skills: results, migrations, verify: verifyResult, hooksAdded, commands: commandsResult };
 }
 function parseRenameLedger(libraryRoot) {
     const p = path.join(libraryRoot, 'migrations', 'RENAMES.md');
@@ -604,6 +734,14 @@ function doUninstall(args) {
         fs.rmdirSync(absArchiveRoot);
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
+    const cmd = pruneCommands(args.root, manifest, !!args.all, args.library || (() => { try {
+        return defaultLibraryGuess();
+    }
+    catch {
+        return undefined;
+    } })());
+    removed.push(...cmd.removed);
+    kept.push(...cmd.kept);
     const core = coreHooksOrNull(args.library);
     if (args.removeHooks && core) {
         const n = removeKitHooks(args.root, core);
@@ -1079,6 +1217,8 @@ function parseArgs(argv) {
             a.removeStandards = true;
         else if (k === '--remove-hooks')
             a.removeHooks = true;
+        else if (k === '--no-commands')
+            a.noCommands = true;
         else if (k === '--script-standard')
             a.scriptStandard = argv[++i];
         else if (k === '--active-standards') {

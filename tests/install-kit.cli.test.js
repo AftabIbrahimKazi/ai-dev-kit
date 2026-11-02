@@ -646,3 +646,101 @@ t('uninstall without --remove-hooks keeps the hooks and says so', () => {
   assert.ok(res.kept.some((k) => k.includes('--remove-hooks')));
   assert.ok(readSettingsFile(target).hooks.SessionStart);
 });
+
+// Slash commands: copied for installed skills, tracked with a hash, refreshed by update, removed by uninstall.
+function commandsLibrary() {
+  const lib = makeLibrary();
+  write(lib, 'skills/commands/next.md', '---\ndescription: next\n---\n!`node {{skill-root}}/skill-scope/auto.js apply $ARGUMENTS`\nv1\n');
+  write(lib, 'skills/commands/audit.md', '---\ndescription: audit\n---\n!`node {{skill-root}}/skill-scope/auto.js run code-audit audit.js $ARGUMENTS`\nv1\n');
+  write(lib, 'skills/commands/kit.md', '---\ndescription: kit\n---\nplain\n');
+  write(lib, 'skills/commands/narration.md', '---\ndescription: n\n---\n!`node {{skill-root}}/narrate/speak.js $ARGUMENTS`\n');
+  write(lib, 'skills/standards/code-audit.md', '---\nname: code-audit\n---\n# code-audit\n');
+  write(lib, 'skills/meta/skill-scope.md', '---\nname: skill-scope\n---\n# skill-scope\n');
+  write(lib, 'skills/addons/narrate.md', '---\nname: narrate\n---\n# narrate\n');
+  return lib;
+}
+const cmdFile = (root, name) => path.join(root, '.claude', 'commands', name + '.md');
+
+t('install copies commands whose skill is installed, renders {{skill-root}}, and skips addon commands', () => {
+  const lib = commandsLibrary(), target = tmp();
+  const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'narrate'] });
+  assert.deepStrictEqual(res.commands.added.sort(), ['kit', 'next']);
+  assert.ok(fs.readFileSync(cmdFile(target, 'next'), 'utf8').includes('node .claude/skills/skill-scope/auto.js apply'));
+  assert.ok(!fs.existsSync(cmdFile(target, 'audit')));
+  assert.ok(!fs.existsSync(cmdFile(target, 'narration')));
+  assert.deepStrictEqual(Object.keys(readManifest(target).commands).sort(), ['kit', 'next']);
+});
+
+t('a command for an archived skill is still installed (its own run call restores the skill)', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'code-audit'], noCommands: true });
+  doArchive({ root: target, skills: ['code-audit'] });
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.ok(res.commands.added.includes('audit'));
+});
+
+t('--no-commands installs no command files', () => {
+  const lib = commandsLibrary(), target = tmp();
+  const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'], noCommands: true });
+  assert.strictEqual(res.commands, undefined);
+  assert.ok(!fs.existsSync(path.join(target, '.claude', 'commands')));
+});
+
+t('install never overwrites a command file the kit did not write', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(target, '.claude/commands/next.md', 'my own next');
+  const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  assert.strictEqual(fs.readFileSync(cmdFile(target, 'next'), 'utf8'), 'my own next');
+  assert.ok(res.commands.kept.some((k) => k.startsWith('/next')));
+  assert.strictEqual(readManifest(target).commands.next, undefined);
+});
+
+t('update refreshes an unedited command, leaves an edited one, and adds a newly eligible one', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  write(lib, 'skills/commands/next.md', '---\ndescription: next\n---\n!`node {{skill-root}}/skill-scope/auto.js apply $ARGUMENTS`\nv2\n');
+  let res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.deepStrictEqual(res.commands.updated, ['next']);
+  assert.ok(fs.readFileSync(cmdFile(target, 'next'), 'utf8').includes('v2'));
+  fs.writeFileSync(cmdFile(target, 'kit'), 'edited by me');
+  write(lib, 'skills/commands/kit.md', '---\ndescription: kit\n---\nplain v2\n');
+  res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.strictEqual(fs.readFileSync(cmdFile(target, 'kit'), 'utf8'), 'edited by me');
+  assert.ok(res.commands.kept.some((k) => k.includes('/kit') && k.includes('edited')));
+});
+
+t('uninstall --all removes unedited tracked commands, keeps an edited one, and drops the empty folder', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  fs.writeFileSync(cmdFile(target, 'kit'), 'edited by me');
+  const res = doUninstall({ library: lib, root: target, all: true, skills: [] });
+  assert.ok(res.removed.some((r) => r.endsWith('commands/next.md')));
+  assert.ok(res.kept.some((k) => k.includes('kit.md') && k.includes('edited')));
+  assert.ok(!fs.existsSync(cmdFile(target, 'next')));
+  assert.strictEqual(fs.readFileSync(cmdFile(target, 'kit'), 'utf8'), 'edited by me');
+});
+
+t('uninstalling one skill removes only the commands that needed it', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'code-audit'] });
+  assert.ok(fs.existsSync(cmdFile(target, 'audit')));
+  doUninstall({ library: lib, root: target, skills: ['code-audit'] });
+  assert.ok(!fs.existsSync(cmdFile(target, 'audit')));
+  assert.ok(fs.existsSync(cmdFile(target, 'next')));
+});
+
+t('Codex gets no command folder', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'codex', skills: ['skill-scope'] });
+  assert.ok(!fs.existsSync(path.join(target, '.agents', 'commands')));
+});
+
+t('every real command resolves to a skill or has a fallback entry', () => {
+  const { listCommands } = require('../skills/meta/install-kit.cli.js');
+  const cmds = listCommands(path.join(__dirname, '..'));
+  assert.ok(cmds.length >= 18);
+  const names = cmds.map((c) => c.name);
+  for (const n of ['next', 'audit', 'version-bump', 'kit', 'eta', 'wrap-up']) assert.ok(names.includes(n), n);
+  assert.strictEqual(cmds.find((c) => c.name === 'audit').needs, 'code-audit');
+  assert.strictEqual(cmds.find((c) => c.name === 'kit').needs, null);
+});

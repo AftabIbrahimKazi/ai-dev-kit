@@ -120,3 +120,30 @@ t('a DESIGN.md without the inventory heading does not lock', () => {
   fs.writeFileSync(path.join(root, 'DESIGN.md'), '# Theme draft\n');
   assert.ok(matchSkills('pick a palette', triggers, root).includes('ux-theory'));
 });
+
+// run: restores an archived skill, then runs its script from the installed layout
+t('run restores an archived skill and runs its script with the remaining arguments', () => {
+  const { doInstall, doArchive } = require('../skills/meta/install-kit.cli.js');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'run space-'));
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'x', version: '1.0.0' }));
+  fs.writeFileSync(path.join(root, 'CHANGELOG.md'), '# Changelog\n');
+  doInstall({ library: path.join(__dirname, '..'), root, tool: 'claude', skills: ['skill-scope', 'version-bump'] });
+  doArchive({ root, skills: ['version-bump'] });
+  assert.ok(!fs.existsSync(path.join(root, '.claude', 'skills', 'version-bump')));
+  const r = spawnSync(process.execPath, [path.join(root, '.claude', 'skills', 'skill-scope', 'auto.js'), 'run', 'version-bump', 'bump.js', 'patch', '--dry-run', '--no-changelog'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr + r.stdout);
+  assert.match(r.stdout, /1\.0\.0 -> 1\.0\.1/);
+  assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'version-bump', 'bump.js')));
+});
+
+t('run with a missing script exits 1 with one error line; bad names exit 2', () => {
+  const { doInstall } = require('../skills/meta/install-kit.cli.js');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'run2-'));
+  doInstall({ library: path.join(__dirname, '..'), root, tool: 'claude', skills: ['skill-scope'] });
+  const auto = path.join(root, '.claude', 'skills', 'skill-scope', 'auto.js');
+  const missing = spawnSync(process.execPath, [auto, 'run', 'nothing', 'x.js'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(missing.status, 1);
+  assert.strictEqual(missing.stderr.trim().split('\n').length, 1);
+  assert.strictEqual(spawnSync(process.execPath, [auto, 'run', '../evil', 'x.js'], { cwd: root, encoding: 'utf8' }).status, 2);
+  assert.strictEqual(spawnSync(process.execPath, [auto, 'run', 'skill-scope', '../auto.js'], { cwd: root, encoding: 'utf8' }).status, 2);
+});

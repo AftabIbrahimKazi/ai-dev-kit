@@ -44,6 +44,7 @@ allowed-tools: Bash(node:*)
 
 ## Rules
 - **Script first.** The command prints a script's output; it does not ask the model to work the facts out. The script is a skill companion (`skills/<cat>/<skill>.<name>.js`, plain JS, no npm dependencies). If no script is needed, the template stays under 8 lines.
+- **A command for an archivable skill runs through `skill-scope`.** Write `node {{skill-root}}/skill-scope/auto.js run <skill> <script> $ARGUMENTS`, not `{{skill-root}}/<skill>/<script>`. Archived skills are the default, and the direct path fails until a hook restores the skill; `run` restores it first, in one node call that works in bash and PowerShell. The installer reads the needed skill from that call. A template with no script needs an entry in `COMMAND_NEEDS_FALLBACK` in `install-kit.cli.ts` (a test fails until it has one).
 - **Smallest permission.** `allowed-tools` names one scoped pattern (`Bash(node:*)`, `Bash(git status:*)`). Never `Bash(*)`. Never a write tool.
 - **No hidden writes.** A command that changes files must say so in its closing lines, support `--dry-run`, and never run `git commit`, `git tag`, `git push` or a delete unless the user asked in the same message.
 - **Cap the output.** Close with the shape of the reply and a number: "under 12 lines", "worst 15 files". An uncapped command spends tokens on every run.
