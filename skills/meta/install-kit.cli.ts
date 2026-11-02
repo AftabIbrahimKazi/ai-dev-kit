@@ -47,18 +47,23 @@ type Tool = verifyModule.Tool;
 const EXCLUDE_DIRS = new Set(['commands']);
 const EXCLUDE_NAMES = new Set(['README.md']);
 
-// Mirrors skill-scope.md's classification -- keep both in sync by hand; nothing here is derived
-// from that file automatically. Used only by the terminal interactive fallback (fillInteractive)
+// UNIVERSAL_SKILLS mirrors skill-scope.md's classification -- keep both in sync by hand. The archivable
+// list below is derived from skill-scope.triggers.json. Used only by the terminal interactive fallback (fillInteractive)
 // to build an Auto-detect default without dumping the full catalog as one typed multiselect.
 const UNIVERSAL_SKILLS = [
   'skill-scope', 'handover', 'coding-standards', 'comment-style', 'session-budget',
   'agent-usage', 'mode-kernel', 'pre-merge-gate', 'pre-commit', 'debug-protocol',
   'intent-capture', 'plan-first', 'interpretation-checkpoint',
 ];
-const ARCHIVABLE_SKILLS = [
-  'perf-audit', 'code-audit', 'security-audit', 'ui-design', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
-  'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer', 'command-writer', 'cli-writer',
-];
+// Read from skill-scope.triggers.json (the single source) so a new archivable skill needs no edit here.
+export const ARCHIVABLE_SKILLS: string[] = Object.keys(
+  (JSON.parse(fs.readFileSync(path.join(__dirname, 'skill-scope.triggers.json'), 'utf8')) as { skills: Record<string, unknown> }).skills,
+);
+
+// Archived skills live under <tool-dir>/skills-archive/; install, update and uninstall must reach them there.
+function archiveRootOf(root: string, manifest: Manifest): string {
+  return path.join(root, path.dirname(manifest.skillRoot!), 'skills-archive');
+}
 // Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --
 // excluded from both the Auto-detect default and the Everything preset; still reachable through
 // "Pick individually".
@@ -418,7 +423,13 @@ export function doInstall(args: CliArgs): DoInstallResult {
       commentStyleLevel: args.commentStyleLevel,
     });
     results.push(r);
-    if (!r.error) manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions! };
+    if (!r.error) {
+      manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions! };
+      if (manifest.archived[r.name]) {
+        fs.rmSync(path.join(archiveRootOf(args.root!, manifest), r.name), { recursive: true, force: true });
+        delete manifest.archived[r.name];
+      }
+    }
   }
 
   if (ensureShield(absSkillRoot)) results.push({ name: '(shield)', changed: true });
@@ -455,16 +466,19 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   const catalog = listSkills(args.library!);
   const absSkillRoot = path.join(args.root!, manifest.skillRoot!);
 
-  const names = args.all ? Object.keys(manifest.skills) : (args.skills || []);
+  const absArchiveRoot = archiveRootOf(args.root!, manifest);
+  const names = args.all ? [...Object.keys(manifest.skills), ...Object.keys(manifest.archived)] : (args.skills || []);
   const results: InstallOneResult[] = [];
   for (const token of names) {
     const { name } = parseSkillToken(token);
-    if (!manifest.skills[name]) { results.push({ name, error: 'not installed by this kit (not in manifest) -- skipped' }); continue; }
-    const r = installOneSkill(args.library!, absSkillRoot, catalog, token, {
+    const archived = !manifest.skills[name] && !!manifest.archived[name];
+    if (!manifest.skills[name] && !archived) { results.push({ name, error: 'not installed by this kit (not in manifest) -- skipped' }); continue; }
+    // An archived skill is refreshed where it sits; it stays archived.
+    const r = installOneSkill(args.library!, archived ? absArchiveRoot : absSkillRoot, catalog, token, {
       commentStyleLevel: args.commentStyleLevel || manifest.commentStyleLevel || undefined,
     });
     results.push(r);
-    if (!r.error) manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions! };
+    if (!r.error) (archived ? manifest.archived : manifest.skills)[r.name] = { dir: catalog[r.name].dir, companions: r.companions! };
   }
   ensureShield(absSkillRoot);
 
@@ -535,17 +549,26 @@ export function doUninstall(args: CliArgs): UninstallResult {
   const manifest = readManifest(args.root!);
   if (!manifest.tool) return { removed: [], kept: [], note: 'no install manifest found -- nothing tracked to remove' };
   const absSkillRoot = path.join(args.root!, manifest.skillRoot!);
-  const names = args.all ? Object.keys(manifest.skills) : (args.skills || []);
+  const absArchiveRoot = archiveRootOf(args.root!, manifest);
+  const names = args.all ? [...Object.keys(manifest.skills), ...Object.keys(manifest.archived)] : (args.skills || []);
 
   const removed: string[] = [];
   const kept: string[] = [];
   for (const name of names) {
-    if (!manifest.skills[name]) { kept.push(`${name}: not tracked in manifest, left alone`); continue; }
-    const dir = path.join(absSkillRoot, name);
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    delete manifest.skills[name];
-    removed.push(`${manifest.skillRoot}/${name}`);
+    if (manifest.skills[name]) {
+      const dir = path.join(absSkillRoot, name);
+      if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+      delete manifest.skills[name];
+      removed.push(`${manifest.skillRoot}/${name}`);
+    } else if (manifest.archived[name]) {
+      fs.rmSync(path.join(absArchiveRoot, name), { recursive: true, force: true });
+      delete manifest.archived[name];
+      removed.push(`${path.dirname(manifest.skillRoot!)}/skills-archive/${name}`);
+    } else {
+      kept.push(`${name}: not tracked in manifest, left alone`);
+    }
   }
+  if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0) fs.rmdirSync(absArchiveRoot);
   if (removeShieldIfUnneeded(absSkillRoot)) removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
 
   if (args.removeStandards && manifest.standards) {
