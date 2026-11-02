@@ -21,6 +21,8 @@ export interface Manifest {
   contextCode: string | null;
   skills: Record<string, SkillRecord>;
   archived: Record<string, SkillRecord>;
+  // Slash-command templates the kit copied: file (project-relative) and the sha1 of what it wrote, so an edit is detected.
+  commands?: Record<string, { file: string; sha: string }>;
   updatedAt?: string;
 }
 
