@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.STANDARD_ROW_LABELS = exports.STACK_PRESETS = exports.doUnarchive = exports.doArchive = exports.writeManifest = exports.readManifest = void 0;
+exports.STANDARD_ROW_LABELS = exports.STACK_PRESETS = exports.ARCHIVABLE_SKILLS = exports.doUnarchive = exports.doArchive = exports.writeManifest = exports.readManifest = void 0;
 exports.listSkills = listSkills;
 exports.extractCoreHooks = extractCoreHooks;
 exports.mergeHooks = mergeHooks;
@@ -66,18 +66,20 @@ Object.defineProperty(exports, "doUnarchive", { enumerable: true, get: function 
 const { verify, ROOTS } = verifyModule;
 const EXCLUDE_DIRS = new Set(['commands']);
 const EXCLUDE_NAMES = new Set(['README.md']);
-// Mirrors skill-scope.md's classification -- keep both in sync by hand; nothing here is derived
-// from that file automatically. Used only by the terminal interactive fallback (fillInteractive)
+// UNIVERSAL_SKILLS mirrors skill-scope.md's classification -- keep both in sync by hand. The archivable
+// list below is derived from skill-scope.triggers.json. Used only by the terminal interactive fallback (fillInteractive)
 // to build an Auto-detect default without dumping the full catalog as one typed multiselect.
 const UNIVERSAL_SKILLS = [
     'skill-scope', 'handover', 'coding-standards', 'comment-style', 'session-budget',
     'agent-usage', 'mode-kernel', 'pre-merge-gate', 'pre-commit', 'debug-protocol',
     'intent-capture', 'plan-first', 'interpretation-checkpoint',
 ];
-const ARCHIVABLE_SKILLS = [
-    'perf-audit', 'code-audit', 'security-audit', 'ui-design', 'resolve-conflicts', 'responsive-check', 'optimize-assets',
-    'role-session', 'e2e-scaffold', 'memory-gardener', 'skill-ablation', 'skill-writer', 'mod-writer', 'command-writer', 'cli-writer',
-];
+// Read from skill-scope.triggers.json (the single source) so a new archivable skill needs no edit here.
+exports.ARCHIVABLE_SKILLS = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, 'skill-scope.triggers.json'), 'utf8')).skills);
+// Archived skills live under <tool-dir>/skills-archive/; install, update and uninstall must reach them there.
+function archiveRootOf(root, manifest) {
+    return path.join(root, path.dirname(manifest.skillRoot), 'skills-archive');
+}
 // Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --
 // excluded from both the Auto-detect default and the Everything preset; still reachable through
 // "Pick individually".
@@ -389,8 +391,13 @@ function doInstall(args) {
             commentStyleLevel: args.commentStyleLevel,
         });
         results.push(r);
-        if (!r.error)
+        if (!r.error) {
             manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions };
+            if (manifest.archived[r.name]) {
+                fs.rmSync(path.join(archiveRootOf(args.root, manifest), r.name), { recursive: true, force: true });
+                delete manifest.archived[r.name];
+            }
+        }
     }
     if ((0, skill_scope_move_1.ensureShield)(absSkillRoot))
         results.push({ name: '(shield)', changed: true });
@@ -424,20 +431,23 @@ function doUpdate(args) {
         throw new Error(`--tool must be one of ${Object.keys(ROOTS).join('|')}`);
     const catalog = listSkills(args.library);
     const absSkillRoot = path.join(args.root, manifest.skillRoot);
-    const names = args.all ? Object.keys(manifest.skills) : (args.skills || []);
+    const absArchiveRoot = archiveRootOf(args.root, manifest);
+    const names = args.all ? [...Object.keys(manifest.skills), ...Object.keys(manifest.archived)] : (args.skills || []);
     const results = [];
     for (const token of names) {
         const { name } = parseSkillToken(token);
-        if (!manifest.skills[name]) {
+        const archived = !manifest.skills[name] && !!manifest.archived[name];
+        if (!manifest.skills[name] && !archived) {
             results.push({ name, error: 'not installed by this kit (not in manifest) -- skipped' });
             continue;
         }
-        const r = installOneSkill(args.library, absSkillRoot, catalog, token, {
+        // An archived skill is refreshed where it sits; it stays archived.
+        const r = installOneSkill(args.library, archived ? absArchiveRoot : absSkillRoot, catalog, token, {
             commentStyleLevel: args.commentStyleLevel || manifest.commentStyleLevel || undefined,
         });
         results.push(r);
         if (!r.error)
-            manifest.skills[r.name] = { dir: catalog[r.name].dir, companions: r.companions };
+            (archived ? manifest.archived : manifest.skills)[r.name] = { dir: catalog[r.name].dir, companions: r.companions };
     }
     (0, skill_scope_move_1.ensureShield)(absSkillRoot);
     const migrations = applyRenameMigrations(args.library, args.root, manifest, args.applyMigrations);
@@ -506,20 +516,29 @@ function doUninstall(args) {
     if (!manifest.tool)
         return { removed: [], kept: [], note: 'no install manifest found -- nothing tracked to remove' };
     const absSkillRoot = path.join(args.root, manifest.skillRoot);
-    const names = args.all ? Object.keys(manifest.skills) : (args.skills || []);
+    const absArchiveRoot = archiveRootOf(args.root, manifest);
+    const names = args.all ? [...Object.keys(manifest.skills), ...Object.keys(manifest.archived)] : (args.skills || []);
     const removed = [];
     const kept = [];
     for (const name of names) {
-        if (!manifest.skills[name]) {
-            kept.push(`${name}: not tracked in manifest, left alone`);
-            continue;
+        if (manifest.skills[name]) {
+            const dir = path.join(absSkillRoot, name);
+            if (fs.existsSync(dir))
+                fs.rmSync(dir, { recursive: true, force: true });
+            delete manifest.skills[name];
+            removed.push(`${manifest.skillRoot}/${name}`);
         }
-        const dir = path.join(absSkillRoot, name);
-        if (fs.existsSync(dir))
-            fs.rmSync(dir, { recursive: true, force: true });
-        delete manifest.skills[name];
-        removed.push(`${manifest.skillRoot}/${name}`);
+        else if (manifest.archived[name]) {
+            fs.rmSync(path.join(absArchiveRoot, name), { recursive: true, force: true });
+            delete manifest.archived[name];
+            removed.push(`${path.dirname(manifest.skillRoot)}/skills-archive/${name}`);
+        }
+        else {
+            kept.push(`${name}: not tracked in manifest, left alone`);
+        }
     }
+    if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0)
+        fs.rmdirSync(absArchiveRoot);
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
     if (args.removeStandards && manifest.standards) {
@@ -870,7 +889,7 @@ async function fillInteractive(cmd, args) {
             if (!args.skills.length) {
                 const catalog = listSkills(args.library);
                 const purposes = loadSkillPurposes(args.library);
-                const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
+                const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...exports.ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
                 const detected = detectStackSignals(args.root, args.tool).filter((d) => catalog[d.name]);
                 const autoStats = detected.length
                     ? `${standard.length} standard skills + ${detected.length} matched to this project`

@@ -551,3 +551,45 @@ t('uninstall, archive and unarchive without --skills or --all fail with exit 2 i
 });
 
 process.on('exit', () => { if (process.exitCode) console.log('\ninstall-kit.cli.test: FAILED'); else console.log('\ninstall-kit.cli.test: all passed'); });
+
+// Archived skills must still be reachable: hooks archive them every session, so update and uninstall cannot skip them.
+function archivedProject() {
+  const lib = makeLibrary();
+  const target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover', 'role-session'] });
+  doArchive({ root: target, skills: ['role-session'] });
+  return { lib, target };
+}
+
+t('update --all refreshes an archived skill in place and keeps it archived', () => {
+  const { lib, target } = archivedProject();
+  write(lib, 'skills/workflow/role-session.md', '---\nname: role-session\n---\n# role-session v2\n');
+  doUpdate({ library: lib, root: target, all: true, skills: [] });
+  const body = fs.readFileSync(path.join(target, '.claude', 'skills-archive', 'role-session', 'SKILL.md'), 'utf8');
+  assert.ok(body.includes('v2'));
+  assert.ok(!fs.existsSync(path.join(target, '.claude', 'skills', 'role-session')));
+  assert.ok(readManifest(target).archived['role-session']);
+});
+
+t('uninstall --all removes an archived skill and the empty archive folder', () => {
+  const { target } = archivedProject();
+  const res = doUninstall({ root: target, all: true, skills: [] });
+  assert.ok(res.removed.some((r) => r.endsWith('skills-archive/role-session')));
+  assert.ok(!fs.existsSync(path.join(target, '.claude', 'skills-archive')));
+  assert.deepStrictEqual(readManifest(target).archived, {});
+});
+
+t('installing a skill that is archived makes it active and drops the archive copy', () => {
+  const { lib, target } = archivedProject();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['role-session'] });
+  assert.ok(fs.existsSync(path.join(target, '.claude', 'skills', 'role-session', 'SKILL.md')));
+  assert.ok(!fs.existsSync(path.join(target, '.claude', 'skills-archive', 'role-session')));
+  assert.deepStrictEqual(readManifest(target).archived, {});
+});
+
+t('ARCHIVABLE_SKILLS comes from skill-scope.triggers.json and includes ux-theory', () => {
+  const { ARCHIVABLE_SKILLS } = require('../skills/meta/install-kit.cli.js');
+  const keys = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'skills', 'meta', 'skill-scope.triggers.json'), 'utf8')).skills);
+  assert.deepStrictEqual([...ARCHIVABLE_SKILLS].sort(), keys.sort());
+  assert.ok(ARCHIVABLE_SKILLS.includes('ux-theory'));
+});
