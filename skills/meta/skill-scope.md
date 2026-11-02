@@ -58,7 +58,7 @@ Re-scan trigger: only if the project's actual stack changes — never per-task o
 ### Per-session archivable (automatic: session-start hook, prompt hook, `/next`)
 The set and each skill's trigger words live in `skill-scope.triggers.json` (single source; `tests/skill-scope.auto.test.js` fails if this list and the file disagree). `skill-scope.auto.js` archives them all at session start, restores one when a message contains its trigger word, and `/next <task>` does both by hand. The user's explicit word still wins: `--keep a,b` forces skills on.
 
-`perf-audit`, `code-audit`, `security-audit`, `ui-design`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
+`perf-audit`, `code-audit`, `security-audit`, `ui-design`, `ux-theory`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`
 
 **Manual-only skills** carry `disable-model-invocation: true`: `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`, `skill-ablation` and the previous-generation model protocols (`opus-4-8`, `sonnet-5`, `opus-5`, `fable-5`, `haiku-4-5`, `opus-as-fable`). They are absent from the model's skill list (about 50 tokens each saved per turn) and run only when the user types `/<name>`. Measured with `/context`.
 
