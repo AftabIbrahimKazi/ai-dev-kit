@@ -124,6 +124,18 @@ test('hook: an ignored path in a Bash command is denied once, the identical comm
   expect(((await $.tool.call({ tool: 'Bash', command: 'ls src' })) as any).deny).toBeUndefined()
 })
 
+test('hook: Monitor is guarded like Bash, and a websocket watch with no command is left alone', async ($, on) => {
+  on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: 'C:/proj' }))
+  on('fs.exists', () => ({ value: true }))
+  on('fs.read', () => ({ value: 'vendor/\n' }))
+  on('tool.call', () => ({ result: {} }))
+  await $.session.start({ cwd: 'C:/proj', surface: 'terminal', isInteractive: true })
+  const first: any = await $.tool.call({ tool: 'Monitor', description: 'watch', timeout_ms: 1000, command: 'tail -f vendor/x.log' })
+  expect(first.deny).toContain('aiignore-guard')
+  expect(((await $.tool.call({ tool: 'Monitor', description: 'watch', timeout_ms: 1000, ws: { url: 'wss://example.test' } })) as any).deny).toBeUndefined()
+})
+
 test('hook: parallel first calls all see the list, even when reading .aiignore is slow', async ($, on) => {
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: 'C:/proj' }))

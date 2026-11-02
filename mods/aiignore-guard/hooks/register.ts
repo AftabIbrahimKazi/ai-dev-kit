@@ -149,7 +149,9 @@ export const register: Register = (on) => {
   }).catch(($, e, next) => next(e))
 
   // A shell command that names a path the .aiignore or role layer excludes.
-  on('tool.call', { tool: ['Bash', 'PowerShell'] }, async ($, e, next) => {
+  // Monitor runs a shell command too (its `command` is optional: a websocket watch has none).
+  on('tool.call', { tool: ['Bash', 'PowerShell', 'Monitor'] }, async ($, e, next) => {
+    if (!e.command) return next(e)
     const L = await layers($)
     const hit = commandHit(e.command, (await $.session.cwd()) as string, L)
     if (!hit) return next(e)
