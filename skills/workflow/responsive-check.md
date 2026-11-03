@@ -34,10 +34,10 @@ Rules:
 `--detect` alone prints the breakpoints, the query style counts, overlaps, uncovered standard zones, off-standard edges and unresolved queries (SCSS variables, mixins). It measures nothing. Show the report, then ask which ladder to use: the standard six, the detected set, or both. Mostly min-only or max-only projects get a mode suggestion with the RULE 17 warning. `--detect --run` accepts the suggestion without asking. `--built` reads compiled CSS, where variables are already resolved.
 
 ## Step 3 — Measure
-Run `node <skill-root>/responsive-check/measure.js --url <url> --widths <viewport values from the plan> [--shots dir]`. It needs Playwright in the project; if it is missing, offer the `e2e-scaffold` skill and stop. Whole-pixel viewports mean 767.98 is measured at 767. Findings per width: overflow-x, tap targets under 44 px (inline links exempt), clipped text.
+Run `node <skill-root>/responsive-check/measure.js --url <url> --widths <viewport values from the plan> --out <dir>`. It needs Playwright in the project; if it is missing, offer the `e2e-scaffold` skill and stop. Whole-pixel viewports mean 767.98 is measured at 767. Findings per width: overflow-x, tap targets under 44 px (inline links exempt), clipped text, secrets printed in the page, `NaN`/`undefined`/`null` shown as values, text below WCAG contrast (not judged over images or gradients). Page level: console and page errors, failed requests, 4xx/5xx. With `--out` it prints one `VERDICT pass|escalate|retry` line plus up to 5 reasons and saves the full result and screenshots under `<dir>`. Exit 0, 1, 3.
 
 ## Step 4 — Report
-Group findings that share one cause across widths into a single finding: "starts at 768, persists to 992". Table: check, result, finding. No other summary.
+Read the `VERDICT` line first. `pass`: report it in one line and stop; do not open the evidence. `retry`: the page did not load; run Step 3 once more, then report it as a failure. `escalate`: open `evidence.json` and the screenshots for the widths named in the reasons. Group findings that share one cause across widths into a single finding: "starts at 768, persists to 992". Table: check, result, finding. No other summary.
 
 ## Step 5 — Fix (only after the user approves)
 1. Propose each fix before editing. Do not apply any fix unasked.
