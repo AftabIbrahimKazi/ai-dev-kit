@@ -124,3 +124,51 @@ t('measure: a missing Playwright gives an install hint', () => {
   const { loadChromium } = require(MEASURE);
   assert.throws(() => loadChromium(os.tmpdir(), ['no-such-playwright-package']), /e2e-scaffold skill/);
 });
+
+// ---- measure.js pure checks (no browser): content scans, contrast, verdict ----
+const M = require(MEASURE);
+const row = (o = {}) => ({ width: 320, ok: true, overflowX: false, offenders: [], taps: [], clipped: [], secrets: [], badValues: [], lowContrast: [], ...o });
+const report = (o = {}) => ({ url: 'http://x', load: { failed: null, status: 200, pageErrors: [], consoleErrors: [], failedRequests: [] }, rows: [row()], ...o });
+t('scanText finds each secret shape and never prints a whole key', () => {
+  const key = 'sk_live_' + 'A1b2C3d4E5f6G7h8';
+  for (const text of [`debug: ${key}`, 'id AK' + 'IA' + 'A'.repeat(16), 'tok gh' + 'p_' + 'a'.repeat(30), 'x xo' + 'xb-' + '1'.repeat(10) + '-abcdef', '-----BEGIN RSA PRI' + 'VATE KEY-----', 'DB postgres://app:hunter2@db.internal/x', 'config password=hunter22']) { // built from parts so the pre-commit secret scan does not flag this file
+    assert.strictEqual(M.scanText(text).secrets.length, 1, text);
+  }
+  assert.ok(!M.scanText(`debug: ${key}`).secrets[0].includes(key));
+});
+t('scanText flags NaN, undefined, null as values but not words that contain them', () => {
+  const bad = M.scanText('Total: NaN items: undefined user: null price $NaN [object Object] Infinity');
+  assert.strictEqual(bad.badValues.length, 5);
+  const clean = M.scanText('Nancy has a nullable field, a null-safe call, version 2.null.3? no. Password: required. Enter your password. Password ********');
+  assert.deepStrictEqual(clean, { secrets: [], badValues: [] });
+});
+t('contrast: known pairs, alpha layers and the unreadable white-on-white banner', () => {
+  assert.strictEqual(M.contrast('rgb(255, 255, 255)', ['rgb(255, 255, 255)']), 1);
+  assert.strictEqual(M.contrast('rgb(0, 0, 0)', ['rgb(255, 255, 255)']), 21);
+  assert.strictEqual(M.contrast('rgb(0, 0, 0)', ['rgba(0, 0, 0, 0)']), 21);
+  assert.ok(M.contrast('rgb(119, 119, 119)', ['rgba(255, 255, 255, 0.5)', 'rgb(255, 255, 255)']) < 4.5);
+  assert.strictEqual(M.contrast('hsl(0 0% 0%)', ['rgb(255, 255, 255)']), null);
+  assert.strictEqual(M.parseColor('rgb(10 20 30 / 50%)')[3], 0.5);
+});
+t('lowContrast: 4.5 for body text, 3 for large, images and gradients are never flagged', () => {
+  const el = (o) => ({ name: 'p', color: 'rgb(119, 119, 119)', layers: ['rgb(255, 255, 255)'], size: 16, weight: 400, ...o });
+  assert.strictEqual(M.lowContrast([el({})]).length, 1);
+  assert.strictEqual(M.lowContrast([el({ size: 24 })]).length, 0);
+  assert.strictEqual(M.lowContrast([el({ layers: null, color: 'rgb(255, 255, 255)' })]).length, 0);
+  assert.match(M.lowContrast([el({ color: 'rgb(255, 255, 255)', name: 'p.banner' })])[0], /^p\.banner 1:1$/);
+});
+t('classify: clean is pass, findings and load errors escalate, a failed load is a retry', () => {
+  assert.strictEqual(M.classify(report()).verdict, 'pass');
+  assert.strictEqual(M.classify(report({ rows: [row({ ok: false, badValues: ['NaN: "total NaN"'] })] })).verdict, 'escalate');
+  assert.strictEqual(M.classify(report({ rows: [row({ ok: false, lowContrast: ['p.banner 1:1'] })] })).verdict, 'escalate');
+  const withErr = report(); withErr.load.consoleErrors.push('boom');
+  assert.strictEqual(M.classify(withErr).verdict, 'escalate');
+  const notFound = report(); notFound.load.status = 404;
+  assert.match(M.classify(notFound).reasons[0], /404/);
+  const timeout = report({ rows: [] }); timeout.load.failed = 'navigation failed: Timeout 30000ms exceeded';
+  assert.deepStrictEqual(M.classify(timeout), { verdict: 'retry', reasons: ['navigation failed: Timeout 30000ms exceeded'] });
+});
+t('--out sets the evidence dir and defaults the screenshots under it', () => {
+  const o = M.parseArgs(['--url', 'http://x', '--widths', '320', '--out', path.join(os.tmpdir(), 'ev')]);
+  assert.strictEqual(o.shots, path.join(path.resolve(os.tmpdir(), 'ev'), 'shots'));
+});
