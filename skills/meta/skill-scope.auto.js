@@ -131,6 +131,8 @@ function parseArgs(argv) {
         else
             a.task = (a.task + ' ' + f).trim();
     }
+    // /next passes "tsk-note" or "tsk-start" first; the mode word is for the command, never a trigger word.
+    a.task = a.task.replace(/^(?:tsk-note|tsk-start)\b\s*/i, '');
     return a;
 }
 // Installed layout: <project>/<tool-dir>/skills/skill-scope/auto.js, so two levels up is the skill root's parent.

@@ -100,3 +100,10 @@ t('check() returns problems as data', () => {
   write(d, 'handover.md', lines(125));
   assert.deepStrictEqual(check(d).map((p) => [p.kind, p.found]), [['lines', 125]]);
 });
+
+t('a "## Next task" section is not a session section and adds no finding', () => {
+  const d = proj();
+  write(d, 'handover.md', '# H\n\n## Current state\nok\n\n## Next task\ntsk-note: fix the footer\n\n## Last session\ndone\n');
+  assert.strictEqual(countSessionSections(fs.readFileSync(path.join(d, 'handover.md'), 'utf8')), 1);
+  assert.strictEqual(run(d, 'check').stdout, '');
+});

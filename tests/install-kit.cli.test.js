@@ -709,6 +709,23 @@ t('update refreshes an unedited command, leaves an edited one, and adds a newly 
   assert.ok(res.commands.kept.some((k) => k.includes('/kit') && k.includes('edited')));
 });
 
+t('update removes an unedited command the kit no longer ships and untracks an edited one', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(lib, 'skills/commands/old.md', '---\ndescription: old\n---\n!`node {{skill-root}}/skill-scope/auto.js status`\nold\n');
+  write(lib, 'skills/commands/gone.md', '---\ndescription: gone\n---\n!`node {{skill-root}}/skill-scope/auto.js status`\ngone\n');
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  assert.ok(fs.existsSync(cmdFile(target, 'old')) && fs.existsSync(cmdFile(target, 'gone')));
+  fs.writeFileSync(cmdFile(target, 'gone'), 'edited by me');
+  fs.rmSync(path.join(lib, 'skills', 'commands', 'old.md'));
+  fs.rmSync(path.join(lib, 'skills', 'commands', 'gone.md'));
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.ok(res.commands.removed.some((r) => r.endsWith('commands/old.md')));
+  assert.ok(!fs.existsSync(cmdFile(target, 'old')));
+  assert.strictEqual(fs.readFileSync(cmdFile(target, 'gone'), 'utf8'), 'edited by me');
+  assert.ok(res.commands.kept.some((k) => k.includes('/gone') && k.includes('no longer shipped')));
+  assert.deepStrictEqual(Object.keys(readManifest(target).commands).sort(), ['kit', 'next']);
+});
+
 t('uninstall --all removes unedited tracked commands, keeps an edited one, and drops the empty folder', () => {
   const lib = commandsLibrary(), target = tmp();
   doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
@@ -743,4 +760,59 @@ t('every real command resolves to a skill or has a fallback entry', () => {
   for (const n of ['next', 'audit', 'version-bump', 'kit', 'eta', 'wrap-up']) assert.ok(names.includes(n), n);
   assert.strictEqual(cmds.find((c) => c.name === 'audit').needs, 'code-audit');
   assert.strictEqual(cmds.find((c) => c.name === 'kit').needs, null);
+});
+
+// ---- What's new: CHANGELOG sections newer than the project's lastSeen ----
+const CL = (...sections) => '# Changelog\n\n' + sections.join('\n');
+const SEC_A = '## 2026-11-03\n\n### Added\n- First thing added. More detail that should not appear.\n- Second thing.\n\n### Fixed\n- A bug was fixed.\n';
+const SEC_B = '## 2026-11-02\n\n### Changed\n- Something changed.\n';
+const SEC_C = '## 2026-10-27\n\n### Added\n- Old feature.\n';
+t('parseChangelog gives date, section and the first sentence of each bullet', () => {
+  const { parseChangelog } = require('../skills/meta/install-kit.cli.js');
+  const e = parseChangelog(CL(SEC_A, SEC_B));
+  assert.deepStrictEqual(e.map((x) => [x.date, x.kind, x.headline]), [
+    ['2026-11-03', 'Added', 'First thing added.'], ['2026-11-03', 'Added', 'Second thing.'],
+    ['2026-11-03', 'Fixed', 'A bug was fixed.'], ['2026-11-02', 'Changed', 'Something changed.'],
+  ]);
+});
+t('install records lastSeen; an immediate update reports nothing new; a newer section is reported once', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(lib, 'CHANGELOG.md', CL(SEC_B, SEC_C));
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  assert.strictEqual(readManifest(target).lastSeen, '2026-11-02');
+  let res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.deepStrictEqual(res.whatsNew.entries, []);
+  assert.strictEqual(res.whatsNew.baseline, false);
+  write(lib, 'CHANGELOG.md', CL(SEC_A, SEC_B, SEC_C));
+  res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.strictEqual(res.whatsNew.since, '2026-11-02');
+  assert.strictEqual(res.whatsNew.latest, '2026-11-03');
+  assert.strictEqual(res.whatsNew.entries.length, 3);
+  assert.strictEqual(readManifest(target).lastSeen, '2026-11-03');
+  assert.deepStrictEqual(doUpdate({ library: lib, root: target, all: true, skills: [] }).whatsNew.entries, []);
+});
+t('a project with no lastSeen gets the newest two dated sections and a baseline flag', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(lib, 'CHANGELOG.md', CL(SEC_A, SEC_B, SEC_C));
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  const m = readManifest(target); delete m.lastSeen; require('../skills/meta/install-kit.cli.js').writeManifest(target, m);
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.strictEqual(res.whatsNew.baseline, true);
+  assert.deepStrictEqual([...new Set(res.whatsNew.entries.map((x) => x.date))], ['2026-11-03', '2026-11-02']);
+});
+t('a library with no CHANGELOG.md reports no whatsNew and still updates', () => {
+  const lib = commandsLibrary(), target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.strictEqual(res.whatsNew, undefined);
+});
+t('more than 12 new entries are capped with a count of the rest', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(lib, 'CHANGELOG.md', CL(SEC_C));
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope'] });
+  const many = '## 2026-11-05\n\n### Added\n' + Array.from({ length: 15 }, (_, i) => '- Item ' + i + '.').join('\n') + '\n';
+  write(lib, 'CHANGELOG.md', CL(many, SEC_C));
+  const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
+  assert.strictEqual(res.whatsNew.entries.length, 12);
+  assert.strictEqual(res.whatsNew.more, 3);
 });

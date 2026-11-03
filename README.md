@@ -239,7 +239,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Edits are checked | The `edit-check` mod runs syntax, lint and standards checks after each edit and shows only the problems | `edit-check` mod |
 | Dangerous actions are stopped | The `guard` mod denies edits to secret files, lockfiles and `.git`, and destructive commands such as force push or `reset --hard` | `guard` mod |
 | Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
-| Token use is recorded | The `budget-ledger` mod writes one row per turn; `/token-report` reads it | `budget-ledger` mod |
+| Token use is recorded | The `budget-ledger` mod writes one row per turn; `/budget` reads it | `budget-ledger` mod |
 | Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `prefilter-rank` (ranked read order) | those mods |
 | Only the skills a task needs are loaded | A session-start hook archives the per-session set; a prompt hook restores a skill when your message names its trigger word and tells the model which `SKILL.md` to read. Measured on the full kit: about 630 fewer tokens on every turn. `/next <task>` does it by hand. | `skill-scope` (pinned), Claude Code hooks |
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
@@ -252,7 +252,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | What | How |
 |---|---|
 | Install the kit into a project | say `read skills/README.md and install` |
-| Slash commands | type them: `/audit`, `/commit-check`, `/pickup`, `/wrap-up`, `/next <task>`, `/narration`, `/persona` and more ([full list](#slash-commands)) |
+| Slash commands | type them: `/audit`, `/commit-check`, `/pickup`, `/wrap-up`, `/next tsk-note <task>`, `/narration`, `/persona` and more ([full list](#slash-commands)) |
 | A skill on purpose | type `/<skill-name>` (for example `/debug-protocol`) |
 | Optional MCP tools | say `set up MCP servers` |
 | Claude Code mods | say `set up mods` |
@@ -472,7 +472,6 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/quiet` | A test or build run prints a wall of output | `/quiet npm test`. Shortens the output, keeps every failure line, shows the exit code. |
 | `/pickup` | Starting a session | `/pickup`. Loads `handover.md` (current state, in-flight work, next step) so nothing has to be re-explained. Reads only; edits nothing. |
 | `/wrap-up` | Ending a session | `/wrap-up` or `/wrap-up next task is the pricing section`. Rewrites `handover.md` in place (no ever-growing log); the task you name goes first under Next steps. Does not commit. |
-| `/token-report` | The session feels expensive | `/token-report` or `/token-report --last 3`. Shows where the tokens went. Needs the ledger from the `budget-ledger` mod. |
 | `/eta` | A task is taking a while, or is backgrounded, and you want its time estimate without asking in prose | `/eta`. Restates the current task's (and checkpoint's) time estimate — a judgment call, not a measurement; `plan-first` states it unprompted past 5 min or for background/parallel work. |
 | `/kit` | You forget which command to use | `/kit` prints this table; `/kit my build keeps failing` names the best command. |
 | `/format` | You want answers as a table, bullets, one-liners or yes/no | `/format bullets`; `/format reset` returns to the default (a table where the data has structure). |
@@ -487,12 +486,11 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 |---|---|---|---|
 | `/audit` | Standards audit of the project | script options: a path, `--standard`, `--rule`, `--top N` | `code-audit` |
 | `/commit-check` | Mechanical pre-commit check of the staged change | `--message "…"`, `--all` | `pre-commit` |
-| `/token-report` | Token and cost report from the ledger | `--last N`, `--sid ID` | `session-budget` |
 | `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
 | `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
 | `/wrap-up` | Rewrites `handover.md` in place for the next session | optional: the next task | `handover` |
-| `/next` | Loads only the skills the next task needs and archives the rest (hooks do the same automatically) | the task, optional `--keep a,b`, `--dry-run` | `skill-scope` |
+| `/next` | Queues the next task (`tsk-note`: loads its skills, records it in `handover.md` under `## Next task`, then stops) or starts it (`tsk-start`: same, then begins). Hooks load skills automatically either way | `tsk-note` or `tsk-start`, then the task | `skill-scope` |
 | `/githooks` | Shows git hook status and offers to install them | none | `pre-commit` |
 | `/resolve-conflicts` | Resolves merge/rebase conflicts: mode `both` (default), `ours`, `theirs`; pace `all`, `auto` (default), `step`; role guardrails | `--role frontend|backend`, `--out leave|ours|theirs`, `--note "…"` | `resolve-conflicts` |
 | `/responsive-check` | Checks a page at range-based viewports (the six RULE 17 zones by default) and proposes range-based fixes | `--range a-b` (repeatable), `--min N`, `--max N`, `--width W`, `--ranges a-b,…`, `--detect`, `--max-probes N` | `responsive-check` |
@@ -530,7 +528,6 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 - **Free text vs options:** kit commands pass what you type to a script, so give them options, not sentences (`/audit focus on a11y` prints "unknown option"). Skills by name take plain sentences.
 - **`/quiet` vs the `output-compact` mod:** same compaction engine. The mod does it automatically for every Bash and PowerShell call in Claude Code; `/quiet` is the manual version for OpenCode, Codex, or a project without the mod.
 - **`prefilter-rank` mod:** automates `system1-prefilter`'s local-Laya narrowing after Grep/Glob (5-40 results) — adds a ranked read-order reminder, never removes a result. Loopback-only (`127.0.0.1`, checked in code, never the hosted-provider path), fails open if Laya isn't configured or reachable. If Laya is set up but not running, the first qualifying Grep/Glob starts it in the background (`laya-ctl.js start`, at most once per 5 minutes) and goes unranked; later ones are ranked. On CPU, Laya scores about 3 candidates a second (17 files in 5 to 6 s), so the ranking wait is up to 20 s; a GPU makes it near-instant. Needs the addon's local-Laya path already set up; `mod-setup` won't offer it before that.
-- **`/budget` vs `/token-report`:** the same report; the mod owns `/budget`, so the kit's command has a different name to avoid a clash.
 - **Always-on checks do not need a command:** secrets, bad commit messages, destructive commands and standards violations are caught by the mods (Claude Code) and, if installed through `/githooks`, by git hooks (every tool).
 
 ## Optional AI tools: free and local MCP servers for any coding agent
@@ -640,7 +637,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `pre-commit/install-hook.js` | Installs `check.js` as real `pre-commit` and `commit-msg` git hooks, so human commits and tools without mods are checked too (`install`, `uninstall`, `status`) | `/githooks` |
 | `pre-merge-gate/edit-check.js` | Per-file checks (syntax, lint, standards); also used by the `edit-check` mod | by the mod |
 | `session-budget/compact.js` | Shortens long command output without dropping a failure line | `/quiet` |
-| `session-budget/report.js` | Prints the token ledger: tokens, cost, cache, waste, per-turn time | `/token-report` |
+| `session-budget/report.js` | Prints the token ledger: tokens, cost, cache, waste, per-turn time | the mod's `/budget` |
 | `plan-first/delegate.js` | Runs a written plan on a cheaper Claude model in one headless call and prints a compact result | by the skill |
 | `resolve-conflicts/scope.js` | Lists the conflict set with a side legend and checks role scope | `/resolve-conflicts` |
 | `responsive-check/probes.js` and `measure.js` | Plans viewports from your breakpoints, then measures layout problems in a browser (Playwright) | `/responsive-check` |
@@ -710,7 +707,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /token-report, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, design-audit-offer, marker-guard, learnings-inject, aiignore-guard), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/

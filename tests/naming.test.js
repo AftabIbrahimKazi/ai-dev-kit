@@ -61,3 +61,24 @@ t('a skill has at most ' + MAX_MD_COMPANIONS + ' .md companions; more go in a fo
   }
   assert.deepStrictEqual(bad, []);
 });
+
+// ---- command templates: /next queues or starts by mode, and the handover commands carry the recorded task ----
+const CMD = (n) => fs.readFileSync(path.join(SKILLS, 'commands', n + '.md'), 'utf8').replace(/\r\n/g, '\n');
+t('/next has both modes and the note branch never starts work', () => {
+  const next = CMD('next');
+  assert.match(next, /tsk-note/);
+  assert.match(next, /tsk-start/);
+  const note = next.split('\n').find((l) => l.startsWith('- `tsk-note`'));
+  assert.ok(note, 'a tsk-note branch');
+  assert.ok(!/begin|then start|start the task/i.test(note.replace('start nothing', '')), note);
+  assert.match(note, /stop/);
+  assert.match(next, /## Next task/);
+  assert.match(next, /Arguments: \$ARGUMENTS/);
+});
+t('/wrap-up keeps and /pickup reports the "## Next task" section', () => {
+  assert.match(CMD('wrap-up'), /## Next task/);
+  assert.match(CMD('pickup'), /## Next task/);
+});
+t('the handover template has a Next task section', () => {
+  assert.match(fs.readFileSync(path.join(SKILLS, 'workflow', 'handover.md'), 'utf8'), /## Next task/);
+});

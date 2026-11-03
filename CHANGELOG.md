@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-03
+
+### Changed
+- `/next` is now two modes. `/next tsk-note <task>` archives or restores skills, records the task in `handover.md` under `## Next task`, and stops; `/next tsk-start <task>` does the same and then begins (declaring standards first, and planning when the task is vague or multi-file). Before, it recorded nothing and its last line started the task, so queuing work began editing. `/wrap-up` keeps `## Next task` until the task is done, `/pickup` reports it first without starting it, and the scope engine ignores the mode word.
+- `update` now removes an unedited command copy the kit no longer ships (an edited one is left alone and untracked). `/token-report` was removed on that basis: it printed the same report as the `budget-ledger` mod's `/budget`.
+
+### Added
+- `update` now returns a `whatsNew` block: the `CHANGELOG.md` entries newer than the date the project last saw, which `install` and `update` record as `lastSeen` in `.ai-dev-kit.json`. `install-kit` shows it as a footnote. A project with no recorded date gets the two newest sections and a baseline flag. The separate "what fits this project" pick list is not built yet.
+- `responsive-check` measure now judges the page itself and returns a verdict. New checks: secrets printed in the page text, `NaN`/`undefined`/`null` shown as values, text below WCAG contrast, console and page errors, failed requests and 4xx/5xx, and a navigation timeout (reported as `retry`). `--out DIR` saves the evidence and screenshots and prints one `VERDICT pass|escalate|retry` line, so a clean run costs the assistant one line. Chosen over a local model after a class-table bench: Laya let 2 of 17 must-escalate results through (the `NaN` and white-on-white cases) while a script catches both exactly.
+- `RULE AI-19` (reuse existing tokens before adding one, new tokens only when asked) and code-audit rule `css-15` (a token that duplicates another token in the same block).
+
 ## 2026-11-02
 
 ### Added

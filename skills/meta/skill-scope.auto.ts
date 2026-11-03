@@ -96,6 +96,8 @@ function parseArgs(argv: string[]): Args | null {
     else if (f.startsWith('--')) return null;
     else a.task = (a.task + ' ' + f).trim();
   }
+  // /next passes "tsk-note" or "tsk-start" first; the mode word is for the command, never a trigger word.
+  a.task = a.task.replace(/^(?:tsk-note|tsk-start)\b\s*/i, '');
   return a;
 }
 

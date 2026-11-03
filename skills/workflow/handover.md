@@ -34,6 +34,9 @@ Updated: <date> · Branch: <branch>
 ## Current state
 2–4 sentences: what works, what's mid-flight.
 
+## Next task
+Only when `/next` queued one: `<tsk-note|tsk-start>: <task>`. Written by `/next`; kept as-is until the task is done, then deleted.
+
 ## Last session
 What was done, in outcome terms (not a tool-call log).
 

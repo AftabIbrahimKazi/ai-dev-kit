@@ -147,3 +147,25 @@ t('run with a missing script exits 1 with one error line; bad names exit 2', () 
   assert.strictEqual(spawnSync(process.execPath, [auto, 'run', '../evil', 'x.js'], { cwd: root, encoding: 'utf8' }).status, 2);
   assert.strictEqual(spawnSync(process.execPath, [auto, 'run', 'skill-scope', '../auto.js'], { cwd: root, encoding: 'utf8' }).status, 2);
 });
+
+t('/next mode words never act as task words: tsk-note and tsk-start restore what the bare task restores', () => {
+  const base = makeProject(['perf-audit', 'responsive-check']);
+  run('apply', '--root', base);
+  run('apply', '--root', base, 'check', 'responsive', 'layout', 'on', 'mobile');
+  for (const mode of ['tsk-note', 'tsk-start', 'TSK-NOTE']) {
+    const root = makeProject(['perf-audit', 'responsive-check']);
+    run('apply', '--root', root);
+    assert.strictEqual(run('apply', '--root', root, mode, 'check', 'responsive', 'layout', 'on', 'mobile').status, 0);
+    assert.deepStrictEqual(active(root), active(base), mode);
+  }
+});
+t('a bare mode word is an empty task: everything archivable is archived', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  assert.strictEqual(run('apply', '--root', root, 'tsk-note').status, 0);
+  assert.deepStrictEqual(active(root), []);
+});
+t('no scope trigger contains the mode words note or start', () => {
+  for (const [skill, words] of Object.entries(triggers.skills)) {
+    for (const w of [].concat(words.words || words)) assert.ok(!/^(note|start)/i.test(String(w)), skill + ': ' + w);
+  }
+});
