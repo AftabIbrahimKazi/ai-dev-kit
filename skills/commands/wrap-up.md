@@ -19,4 +19,6 @@ If the size check lists a problem, fix it in this rewrite (demote or delete per 
 4. **Decisions & why:** only decisions a later session could accidentally reverse, one line each.
 5. **Known issues**, **Next steps** (in order), **Don't touch / gotchas.**
 
+Keep an existing `## Next task` section exactly as it is, unless this session completed that task: then delete it. It is the one line `/next` wrote for the next session, so never rewrite or merge it into Next steps.
+
 Delete anything shipped, fixed or no longer true. Keep the file under 40 lines. Do not commit unless asked. Anything the user added after "/wrap-up" is the next task: put it first under Next steps. $ARGUMENTS

@@ -134,7 +134,6 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 |---|---|---|
 | `/audit` | `code-audit` script | `code-audit` |
 | `/commit-check` | `pre-commit` check on the staged change | `pre-commit` |
-| `/token-report` | ledger report | `session-budget` |
 | `/quiet <cmd>` | a command with shortened output | `session-budget` |
 | `/stale` | stale-memory report | `memory-gardener` |
 | `/githooks` | git-hook status | `pre-commit` |

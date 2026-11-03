@@ -109,7 +109,20 @@ export function syncCommands(root: string, manifest: Manifest, library: string, 
   if (!dirRel) return result;
   manifest.commands = manifest.commands || {};
   const catalog = listSkills(library);
-  for (const c of listCommands(library)) {
+  const libraryCommands = listCommands(library);
+  // A command the kit no longer ships: remove the unedited copy it wrote; an edited one stays, untracked.
+  if (libraryCommands.length) {
+    const shipped = new Set(libraryCommands.map((c) => c.name));
+    for (const [name, rec] of Object.entries(manifest.commands)) {
+      if (shipped.has(name)) continue;
+      const gone = path.join(root, rec.file);
+      if (!fs.existsSync(gone)) { /* already removed by hand */ }
+      else if (sha(fs.readFileSync(gone, 'utf8')) === rec.sha) { fs.rmSync(gone); result.removed.push(rec.file); }
+      else result.kept.push(`/${name}: no longer shipped by the kit, edited since it was written, left alone`);
+      delete manifest.commands[name];
+    }
+  }
+  for (const c of libraryCommands) {
     if (!eligibleCommand(c, manifest, catalog)) continue;
     const rel = path.join(dirRel, c.name + '.md');
     const abs = path.join(root, rel);
@@ -597,13 +610,50 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
+  manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
   writeManifest(args.root!, manifest);
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
   return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
-export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; commands?: CommandsResult }
+export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; commands?: CommandsResult; whatsNew?: WhatsNew }
+
+// ---- What's new: CHANGELOG.md sections newer than the date this project last saw ----
+export interface NewsEntry { date: string; kind: string; headline: string }
+export interface WhatsNew { since: string | null; latest: string; baseline: boolean; entries: NewsEntry[]; more: number }
+const NEWS_CAP = 12;
+
+export function parseChangelog(text: string): NewsEntry[] {
+  const out: NewsEntry[] = [];
+  let date = '', kind = '';
+  for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
+    const d = /^##\s+(\d{4}-\d{2}-\d{2})\b/.exec(line);
+    if (d) { date = d[1]; kind = ''; continue; }
+    const k = /^###\s+(.+?)\s*$/.exec(line);
+    if (k) { kind = k[1]; continue; }
+    const b = /^-\s+(.+)$/.exec(line);
+    if (b && date) {
+      const first = b[1].split(/(?<=[.!?])\s/)[0];
+      out.push({ date, kind, headline: first.length > 160 ? first.slice(0, 157) + '...' : first });
+    }
+  }
+  return out;
+}
+
+// since = the project's lastSeen. With none (first update after tracking began) the newest two dated sections count as new.
+export function whatsNew(library: string, since: string | undefined): WhatsNew | undefined {
+  let text: string;
+  try { text = fs.readFileSync(path.join(library, 'CHANGELOG.md'), 'utf8'); } catch { return undefined; }
+  const all = parseChangelog(text);
+  if (!all.length) return undefined;
+  const dates = [...new Set(all.map((e) => e.date))].sort().reverse();
+  const picked = since ? all.filter((e) => e.date > since) : all.filter((e) => dates.slice(0, 2).includes(e.date));
+  return { since: since ?? null, latest: dates[0], baseline: !since, entries: picked.slice(0, NEWS_CAP), more: Math.max(0, picked.length - NEWS_CAP) };
+}
+function latestChangelogDate(library: string): string | undefined {
+  try { return parseChangelog(fs.readFileSync(path.join(library, 'CHANGELOG.md'), 'utf8')).map((e) => e.date).sort().pop(); } catch { return undefined; }
+}
 
 export function doUpdate(args: CliArgs): DoUpdateResult {
   const manifest = readManifest(args.root!);
@@ -638,6 +688,8 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   }
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
+  const news = whatsNew(args.library!, manifest.lastSeen);
+  if (news) manifest.lastSeen = news.latest;
   writeManifest(args.root!, manifest);
   // A newer kit can add hook blocks. Merge them only where the project already opted in to kit hooks.
   let hooksAdded: string[] = [];
@@ -646,7 +698,7 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: false });
   writeManifest(args.root!, manifest);
   const verifyResult = verify({ root: args.root!, tool: manifest.tool });
-  return { skills: results, migrations, verify: verifyResult, hooksAdded, commands: commandsResult };
+  return { skills: results, migrations, verify: verifyResult, hooksAdded, commands: commandsResult, whatsNew: news };
 }
 
 interface RenameRow { oldName: string; newName: string }

@@ -24,6 +24,8 @@ export interface Manifest {
   // Slash-command templates the kit copied: file (project-relative) and the sha1 of what it wrote, so an edit is detected.
   commands?: Record<string, { file: string; sha: string }>;
   updatedAt?: string;
+  // Date of the newest CHANGELOG.md section this project has been told about; `update` reports what is newer.
+  lastSeen?: string;
 }
 
 export function readManifest(root: string): Manifest {
