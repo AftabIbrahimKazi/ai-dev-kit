@@ -76,6 +76,23 @@ function standards(rel, text) {
             if (!TOKEN_FILE.test(path.basename(rel)) && /#[0-9a-f]{3,8}\b|\b(rgba?|hsla?|oklch)\s*\(/i.test(noUrl))
                 add(i + 1, 'css-10', 'hardcoded colour, use a token');
         });
+        if (TOKEN_FILE.test(path.basename(rel))) {
+            const seen = new Map();
+            for (const m of css.matchAll(/\}|(--[\w-]+)\s*:\s*([^;}]+)/g)) {
+                if (m[0] === '}') {
+                    seen.clear();
+                    continue;
+                }
+                const v = m[2].trim().replace(/\s+/g, ' ').toLowerCase();
+                if (!/^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|oklch|oklab)\()/.test(v))
+                    continue; // colours only: equal lengths are often different roles
+                const first = seen.get(v);
+                if (first && first !== m[1])
+                    add(lineOf(text, m.index), 'css-15', `${m[1]} duplicates ${first}, reuse it`);
+                else if (!first)
+                    seen.set(v, m[1]);
+            }
+        }
     }
     if (MARKUP_EXT.test(rel)) {
         for (const m of text.matchAll(/<img\b[^>]*>/gis)) {

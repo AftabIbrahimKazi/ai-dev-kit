@@ -229,6 +229,11 @@ t('vendor hint names only vendor-looking directories, never the project source',
   assert.doesNotMatch(cli(d).stdout, /hint:/);
 });
 
+t('css-15 flags a token that duplicates another in the same block, in token files only', () => {
+  const tok = lines(':root {', '  --color-accent: #A78BFA;', '  --btn-bg: #a78bfa;', '  --space-md: 16px;', '  --pad: 16px;', '  --alias: var(--color-accent);', '  --gap: 0;', '  --gap2: 0;', '}', '.dark { --surface: #a78bfa; }');
+  assert.deepStrictEqual(hits('tokens.css', tok), ['css-15@3']);
+  assert.deepStrictEqual(hits('card.css', tok), []);
+});
 // ---- edit-check parity: the engine's "edit" profile and edit-check's frozen fallback must agree ----
 t('edit-check fallback pack and the engine edit profile report the same findings', () => {
   const { standards } = require('../skills/workflow/pre-merge-gate.edit-check.js');

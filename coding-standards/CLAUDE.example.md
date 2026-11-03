@@ -76,6 +76,7 @@ If the token is ever missing from a response — or the Context code is missing 
 - Code comments follow the `comment-style` level (default none: only tool-required ones: `as`/suppression justifications, pragmas, license headers)
 - Response shape follows the data (RULE AI-18): table for 2+ items with 2+ attributes, one line for one fact, yes/no for yes/no; `/format` overrides
 - Where the tool renders links, file references are markdown links, not bare or inline-code paths (RULE AI-17)
+- Reuse an existing CSS variable/token before adding one; new tokens only when asked (RULE AI-19)
 - No invented rules — gaps in standards are flagged to the developer
 - **Decision preference (every mode):** weigh token efficiency and correct results first, with minimal Agent-tool use (see `agent-usage`, `mode-kernel`).
 - Full rules in `coding-standards/ai-standards.md`

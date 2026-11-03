@@ -53,6 +53,7 @@ export const RULES: Record<string, RuleDef> = Object.fromEntries([
   R('css-06', 'css', 'rule', 'transition must name its properties (no "all", no single transition variable)'),
   R('css-10', 'css', 'rule', 'hardcoded colour, use a token', true),
   R('css-14', 'css', 'rule', '!important is banned', true),
+  R('css-15', 'css', 'rule', 'colour token duplicates another colour token in the same block, reuse it', true),
   R('css-17', 'css', 'rule', 'min-width-only media query; use an isolated range (the 1400px top zone is exempt)'),
   R('css-style-block', 'css', 'info', '<style> block (allowed unless it holds JS-state CSS or the project forbids it)'),
   R('h-02', 'html', 'rule', 'inline style attribute', true),
@@ -178,6 +179,17 @@ function cssChecks(rel: string, text: string): Finding[] {
     const noUrl = l.replace(/url\([^)]*\)/gi, '').replace(/--[\w-]+\s*:[^;}]*/g, '');
     if (!tokenFile && /#[0-9a-f]{3,8}\b|\b(rgba?|hsla?|oklch)\s*\(/i.test(noUrl)) add(i + 1, 'css-10', 'hardcoded colour, use a token');
   });
+  if (tokenFile) {
+    const seen = new Map<string, string>();
+    for (const m of css.matchAll(/\}|(--[\w-]+)\s*:\s*([^;}]+)/g)) {
+      if (m[0] === '}') { seen.clear(); continue; }
+      const v = m[2].trim().replace(/\s+/g, ' ').toLowerCase();
+      if (!/^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|oklch|oklab)\()/.test(v)) continue; // colours only: equal lengths are often different roles
+      const first = seen.get(v);
+      if (first && first !== m[1]) add(L(m.index!), 'css-15', `${m[1]} duplicates ${first}, reuse it`);
+      else if (!first) seen.set(v, m[1]);
+    }
+  }
   const plain = css.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1/g, blank).replace(/url\([^)]*\)/gi, blank);
   if (!tokenFile) {
     for (const m of plain.matchAll(/(?<![\w-])line-height\s*:\s*([^;}]+)/gi)) {

@@ -9,7 +9,7 @@ For file-type specific rules see: [css-standards/](css-standards/)
 
 ## RULE 01 — Single source of truth for tokens
 
-All reusable values (colours, spacing, font sizes, durations, etc.) must be defined in one dedicated token file per project. No value that is used in more than one place may be hardcoded in a component or layout file.
+All reusable values (colours, spacing, font sizes, durations, etc.) must be defined in one dedicated token file per project. No value that is used in more than one place may be hardcoded in a component or layout file. Reuse an existing token that holds the same value or role before defining a new one; new tokens are added only when the developer asks.
 
 ```css
 /* Wrong */
@@ -124,7 +124,7 @@ The following hardcoded values are acceptable and do not require a variable:
 
 All other numeric values must use a token variable.
 
-**`width`, `height`, `min-width`, `min-height`, `max-width`, and `max-height` are never hardcoded — without exception.** All fixed size values for these properties must use a token from the fixed size scale (`--ex-size-xxxs` → `--ex-size-xxxl`). There is no "one-off" exception for size properties. If no scale step fits, add one to the token file.
+**`width`, `height`, `min-width`, `min-height`, `max-width`, and `max-height` are never hardcoded — without exception.** All fixed size values for these properties must use a token from the fixed size scale (`--ex-size-xxxs` → `--ex-size-xxxl`). There is no "one-off" exception for size properties. If no scale step fits, ask before adding one (RULE AI-19).
 
 ```css
 /* Wrong */
