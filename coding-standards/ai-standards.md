@@ -243,6 +243,12 @@ Where the tool renders links (IDE panels such as the VS Code extension), write e
 
 ---
 
+## RULE AI-19 — Reuse existing tokens
+
+Before adding a CSS variable or design token, search the project's token file(s) for the same value or purpose and use that one. Add a new token only when the developer explicitly asks for one. If nothing fits, say which values were checked and ask, rather than adding.
+
+---
+
 ## Code & Rules
 
 ---
