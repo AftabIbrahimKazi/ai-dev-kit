@@ -8,6 +8,7 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 |---|---|
 | Health check of the whole project | `/audit` (optional: `--standard css,html`, a path) |
 | About to commit | `/commit-check` (optional: `--message "feat: x"`) |
+| Keep files out of the Changes tree | `/untrack hide <paths>` (`show` to undo, `list` to see) |
 | Session feels expensive | the mod's `/budget` (Claude Code) |
 | A noisy test or build run | `/quiet npm test` |
 | Something fails, cause unknown | `/debug-protocol <what happened>` |

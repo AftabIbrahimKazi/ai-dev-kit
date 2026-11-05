@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-05
+
+### Added
+- `/untrack hide|show|list <paths>` (skill `untrack`, script `untrack/hide.js`): on command, hides files from `git status` and the VS Code Changes tree even when edited, and brings them back. Tracked files use `skip-worktree`, untracked ones a marked block in `.git/info/exclude`; local to the clone, never commits or edits `.gitignore`. Manual only.
+
 ## 2026-11-03
 
 ### Changed

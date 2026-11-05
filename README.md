@@ -466,6 +466,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | Command | Use it when | How to use it |
 |---|---|---|
 | `/commit-check` | You are about to commit | `/commit-check` or `/commit-check --message "feat: add nav"`. Reports secrets, secret files, stray files and message format; a BLOCK means do not commit. |
+| `/untrack` | You want files kept out of the Changes tree, locally | `/untrack hide .env.local cfg/ *.log` hides them even when edited; `/untrack show cfg/` brings them back; `/untrack list` shows what is hidden. Manual only, nothing is committed. |
 | `/audit` | You want a health check of the whole project | `/audit`, `/audit src/` or `/audit --standard css,html`. Prints counts per rule and the worst files. |
 | `/debug-protocol` | Something fails and the cause is unknown | `/debug-protocol the build fails with a weird error`. Forces reproduce first, one hypothesis, one change at a time. |
 | `/plan-first` | The task is big or touches many files | `/plan-first add dark mode and a language switcher`. Gives a short file list and plan before any edit. |
@@ -486,6 +487,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 |---|---|---|---|
 | `/audit` | Standards audit of the project | script options: a path, `--standard`, `--rule`, `--top N` | `code-audit` |
 | `/commit-check` | Mechanical pre-commit check of the staged change | `--message "…"`, `--all` | `pre-commit` |
+| `/untrack` | Hide files from the Changes tree locally, or show them again | `hide <paths>`, `show <paths>`, `list` | `untrack` |
 | `/quiet` | Runs a command with shortened output | the command, e.g. `npm run build` | `session-budget` |
 | `/stale` | Lists memory and handover bullets that name deleted files (report only) | none | `memory-gardener` |
 | `/pickup` | Loads `handover.md` as the project state; reads only | none | `handover` |
@@ -635,6 +637,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `code-audit/audit.js` | Counts violations of 47 script-checkable standards rules across a whole project and lists `file:line`; `--list` shows every rule | `/audit` |
 | `pre-commit/check.js` | Staged-diff checks: secrets, secret files, stray files, debug leftovers, message format, `project-context/` files | `/commit-check` |
 | `pre-commit/install-hook.js` | Installs `check.js` as real `pre-commit` and `commit-msg` git hooks, so human commits and tools without mods are checked too (`install`, `uninstall`, `status`) | `/githooks` |
+| `untrack/hide.js` | Local-only hide and show: `skip-worktree` for tracked files, a marked block in `.git/info/exclude` for untracked ones; manual, never commits | `/untrack` |
 | `pre-merge-gate/edit-check.js` | Per-file checks (syntax, lint, standards); also used by the `edit-check` mod | by the mod |
 | `session-budget/compact.js` | Shortens long command output without dropping a failure line | `/quiet` |
 | `session-budget/report.js` | Prints the token ledger: tokens, cost, cache, waste, per-turn time | the mod's `/budget` |
@@ -707,7 +710,7 @@ skills/
   meta/            ← skill-writer (quality bar), install-kit (installer), skill-scope (pin/archive/addon classification)
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
-  commands/        ← opt-in slash-command templates (/audit, /commit-check, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
+  commands/        ← opt-in slash-command templates (/audit, /commit-check, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /untrack, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, design-audit-offer, marker-guard, learnings-inject, aiignore-guard), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/

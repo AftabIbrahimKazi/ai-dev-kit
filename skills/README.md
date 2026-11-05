@@ -57,6 +57,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [interpretation-checkpoint](workflow/interpretation-checkpoint.md) | Files/Changes/Assumptions breakdown for correction on multi-file, multi-parameter tasks |
 | [session-budget](workflow/session-budget.md) | Token discipline — targeted reads, no restating, cheap-model delegation; `report.js` (ledger report) and `compact.js` (verbose-output shrinker) companions |
 | [pre-merge-gate](workflow/pre-merge-gate.md) | Self-check a diff against loaded standards before handoff or commit; `edit-check.js` companion runs the mechanical checks |
+| [untrack](workflow/untrack.md) | Manual, local-only hide/show of files in the Changes tree (`hide.js`); nothing committed |
 | [pre-commit](workflow/pre-commit.md) | Commit pass — stray files, debug leftovers, secrets, message format, version bump; `check.js` companion runs the mechanical checks; `install-hook.js` installs it as git hooks |
 | [resolve-conflicts](workflow/resolve-conflicts.md) | Resolve merge/rebase conflicts by mode (both, ours, theirs), pace (all, auto, step) and developer role; `scope.js` companion lists the conflict set and verifies role scope; [roles example](workflow/resolve-conflicts.roles.example.json) ships `frontend` and `backend` |
 | [responsive-check](workflow/responsive-check.md) | Range-based viewport check and fix (RULE 17 zones by default; `--range`, `--min`, `--max`, `--width`, `--detect`); `probes.js` plans viewports and detects breakpoints, `measure.js` measures in Playwright |
@@ -134,6 +135,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 |---|---|---|
 | `/audit` | `code-audit` script | `code-audit` |
 | `/commit-check` | `pre-commit` check on the staged change | `pre-commit` |
+| `/untrack hide|show|list <paths>` | hide files from the Changes tree locally, on command | `untrack` |
 | `/quiet <cmd>` | a command with shortened output | `session-budget` |
 | `/stale` | stale-memory report | `memory-gardener` |
 | `/githooks` | git-hook status | `pre-commit` |
