@@ -44,6 +44,7 @@ If the token is ever missing from a response — or the Context code is missing 
 | Accessibility standard | `coding-standards/accessibility-standards.md` |
 | QA standard | `coding-standards/qa/index.md` |
 | Design standard | `coding-standards/design-standards.md` (remove if not applicable). Leads only for new UI from scratch. If a design doc, Figma file or design system exists: after UI work, offer once "Want a UI/UX audit against the design standards?"; never audit or change the design unasked. |
+| UI standard | `coding-standards/ui-standards.md` (remove if the project has no UI). Element and pattern rules (button, form, table, states, header, sidebar, auth...). End a UI change with the self-check in `ui-standards/checklist.md`. Before editing a UI element, read it and only the one partial it routes to. |
 | AI standard | `coding-standards/ai-standards.md` |
 | Framework | `coding-standards/frameworks/[framework].md` (remove if not applicable) |
 | CSS Framework | `coding-standards/frameworks/[bootstrap OR other].md` (remove if not applicable) |

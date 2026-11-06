@@ -34,6 +34,17 @@ The `frameworks/` folder contains framework-specific additions or overrides. A f
 
 ---
 
+## Precedence (when two rules disagree)
+
+1. Accessibility and security rules. Never overridable, never waivable.
+2. `company/` standards, when the project has them.
+3. A project design source (`design.md`, Figma, tokens), for the look only.
+4. `frameworks/` files, where they say they override.
+5. `ui-standards/`, then the universal file-type standards.
+6. AI defaults never apply. A missing rule is a gap: write `STANDARDS GAP:` and ask.
+
+---
+
 ## QA Is an Umbrella, Not One File
 
 QA spans several unrelated concerns (definition of done, branch gates, logic
@@ -117,9 +128,10 @@ When editing a file, identify its role first, then load the correct partial from
 | [versioning-standards.md](versioning-standards.md) | Package and changelog versioning |
 | [seo-standards.md](seo-standards.md) | SEO — titles, meta, structure, schema |
 | [performance-standards.md](performance-standards.md) | Performance — assets, scripts, CSS, Core Web Vitals |
-| [accessibility-standards.md](accessibility-standards.md) | Accessibility — WCAG 2.1 AA, keyboard, ARIA, contrast |
+| [accessibility-standards.md](accessibility-standards.md) | Accessibility — WCAG 2.2 AA, keyboard, ARIA, contrast, targets, authentication |
 | [qa/index.md](qa/index.md) | QA umbrella — definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
 | [design-standards.md](design-standards.md) | What to make — Floor/Reflex/Finish rules against generated-looking UI (DES-01–15) |
+| [ui-standards.md](ui-standards.md) | Element and pattern rules, one compact partial each (button, fields, select, forms, table, states, feedback, header, sidebar, auth...) — read only the routed partial |
 | [ai-standards.md](ai-standards.md) | AI behaviour — hallucination detection, token efficiency |
 | [frameworks/astro.md](frameworks/astro.md) | Astro-specific additions and overrides |
 | [frameworks/bootstrap.md](frameworks/bootstrap.md) | Bootstrap conflicts, violations, and workarounds |
