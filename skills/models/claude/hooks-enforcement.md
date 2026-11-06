@@ -60,28 +60,7 @@ If the `standards-chain` mod is installed it gates the same first edit and makes
 ```
 Costs roughly 25 input tokens per user message, mostly served from cache after the first turn.
 
-`SessionStart` hook — archives every per-session-archivable skill, so a session starts lean and nobody has to remember to do it. Silent, and fails open (`|| true`):
-<!-- hook:core -->
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/auto.js apply --quiet || true" }] }
-    ]
-  }
-}
-```
-`UserPromptSubmit` hook — restores an archived skill when the message names one of its trigger words (`skill-scope/triggers.json`). It only adds, never archives, and prints one line only when it restored something. The `/next` command is the explicit version of the same step:
-<!-- hook:core -->
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "node .claude/skills/skill-scope/auto.js apply --add-only --quiet \"$(node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).prompt||'')}catch(e){}})\")\" || true" }] }
-    ]
-  }
-}
-```
+Archiving and restoring skills is deliberately not a hook: a session-start archive plus a per-prompt restore cost more in surprises and re-reads than they save. It happens only when the user runs `/archive`, `/unarchive` or `/next`.
 
 `SessionStart` hook — warns when `handover.md` is over 120 lines, has more than one session section, or a `learnings.md` is over 30 bullets. Prints nothing when all are within limits, so it costs no tokens until a limit is crossed, and fails open:
 <!-- hook:core -->
@@ -99,7 +78,7 @@ Costs roughly 25 input tokens per user message, mostly served from cache after t
 ```
 node <library>/skills/meta/install-kit.cli.js merge-hooks --library <library> --root <target>
 ```
-It reads the six `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
+It reads the four `<!-- hook:core -->`-marked blocks straight from this file (so it can never drift from what's documented here), adds each hook entry to `.claude/settings.json` under its event name only if an identical entry isn't already present, and leaves everything else in the file untouched. The pre-commit-gate pair below is deliberately not included — it's superseded by the `precommit-gate` mod and opt-in on its own, so it is never merged by this command.
 
 ## Pre-commit gate
 

@@ -172,7 +172,8 @@ function manualCmd(cmd: string, rest: string[]): void {
     const lines: string[] = [];
     if (pick('auto', 'restore').length) lines.push('restored by task words: ' + pick('auto', 'restore').join(', '));
     if (pick('manual', 'restore').length) lines.push('restored by you: ' + pick('manual', 'restore').join(', '));
-    if (pick('manual', 'archive').length) lines.push('archived by you: ' + pick('manual', 'archive').join(', '));
+    const am = pick('manual', 'archive');
+    if (am.length) lines.push('archived by you: ' + (am.length > 6 ? am.length + ' skills (listed below)' : am.join(', ')));
     const arch = Object.keys(manifest.archived);
     lines.push('archived now (' + arch.length + '): ' + (arch.join(', ') || 'none'));
     console.log(lines.join('\n'));
@@ -208,8 +209,9 @@ function main(): void {
     const p = plan(args.task, args.keep, loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
     if (args.addOnly) p.archive = [];
     if (args.cmd === 'apply' && !args.dryRun) {
-      if (p.archive.length) doArchive({ root, skills: p.archive, by: 'auto' });
-      if (p.restore.length) doUnarchive({ root, skills: p.restore, by: 'auto' });
+      const by = args.quiet || args.addOnly ? 'auto' : 'manual'; // /next types it; only a legacy hook passes --quiet
+      if (p.archive.length) doArchive({ root, skills: p.archive, by });
+      if (p.restore.length) doUnarchive({ root, skills: p.restore, by });
     }
     if (args.quiet && !p.restore.length) return;
     if (args.json) console.log(JSON.stringify({ dryRun: args.dryRun, ...p }));

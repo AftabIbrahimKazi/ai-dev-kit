@@ -215,7 +215,7 @@ Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flag
 | `--all` | Archive every currently-installed skill, or unarchive every currently-archived one. |
 | `--json` | Prints the result as JSON. |
 
-**`merge-hooks`** — merges the six core hook blocks documented in `hooks-enforcement.md` (the standards reminders and gate, the two `skill-scope` archiving hooks, and the `handover` size check) into `.claude/settings.json`, deduped, never touching anything else already in that file.
+**`merge-hooks`** — merges the four core hook blocks documented in `hooks-enforcement.md` (the standards reminders and gate, and the `handover` size check) into `.claude/settings.json`, deduped, never touching anything else already in that file.
 
 | Flag | What it does |
 |---|---|
@@ -241,7 +241,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
 | Token use is recorded | The `budget-ledger` mod writes one row per turn; `/budget` reads it | `budget-ledger` mod |
 | Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `prefilter-rank` (ranked read order) | those mods |
-| Only the skills a task needs are loaded | A session-start hook archives the per-session set; a prompt hook restores a skill when your message names its trigger word and tells the model which `SKILL.md` to read. Measured on the full kit: about 630 fewer tokens on every turn. `/next <task>` does it by hand. | `skill-scope` (pinned), Claude Code hooks |
+| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 630 tokens from every turn. | `skill-scope` (pinned), Claude Code hooks |
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
 | On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
