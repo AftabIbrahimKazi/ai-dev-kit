@@ -342,6 +342,9 @@ function extractCoreHooks(libraryRoot) {
         configs.push(JSON.parse(m[1]));
     return configs;
 }
+// Hooks an older kit installed and this one deliberately dropped. They are removed on merge so a project is not left running them.
+// Skill archiving is user-triggered only now (/next, /archive, /unarchive), so the session-start and per-prompt skill-scope hooks go.
+const RETIRED_HOOK_RE = /skill-scope\/auto\.js apply\b/;
 // Merges one or more { hooks: { <Event>: [entry, ...] } } configs into <root>/.claude/settings.json,
 // adding only entries not already present (by deep equality) and never touching anything else in the file.
 function mergeHooks(root, configs) {
@@ -351,6 +354,16 @@ function mergeHooks(root, configs) {
         settings = JSON.parse(fs.readFileSync(p, 'utf8'));
     settings.hooks = settings.hooks || {};
     const added = [];
+    const retired = [];
+    for (const [event, entries] of Object.entries(settings.hooks)) {
+        const keep = entries.filter((e) => !(e.hooks || []).some((h) => RETIRED_HOOK_RE.test(h.command || '')));
+        if (keep.length !== entries.length) {
+            retired.push(event);
+            settings.hooks[event] = keep;
+            if (!keep.length)
+                delete settings.hooks[event];
+        }
+    }
     for (const config of configs) {
         for (const [event, entries] of Object.entries(config.hooks || {})) {
             settings.hooks[event] = settings.hooks[event] || [];
@@ -365,7 +378,7 @@ function mergeHooks(root, configs) {
     }
     fs.mkdirSync(path.dirname(p), { recursive: true });
     fs.writeFileSync(p, JSON.stringify(settings, null, 2) + '\n');
-    return { added, path: path.join('.claude', 'settings.json') };
+    return { added, retired, path: path.join('.claude', 'settings.json') };
 }
 function doMergeHooks(args) {
     const configs = extractCoreHooks(args.library);
@@ -740,13 +753,17 @@ function doUpdate(args) {
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     // A newer kit can add hook blocks. Merge them only where the project already opted in to kit hooks.
     let hooksAdded = [];
+    let hooksRetired = [];
     const core = manifest.tool === 'claude' ? coreHooksOrNull(args.library) : null;
-    if (core && hasKitHooks(args.root, core))
-        hooksAdded = mergeHooks(args.root, core).added;
+    if (core && hasKitHooks(args.root, core)) {
+        const merged = mergeHooks(args.root, core);
+        hooksAdded = merged.added;
+        hooksRetired = merged.retired;
+    }
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: false });
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
-    return { skills: results, migrations, verify: verifyResult, hooksAdded, commands: commandsResult, whatsNew: news };
+    return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news };
 }
 function parseRenameLedger(libraryRoot) {
     const p = path.join(libraryRoot, 'migrations', 'RENAMES.md');
