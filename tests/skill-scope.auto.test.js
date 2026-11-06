@@ -169,3 +169,28 @@ t('no scope trigger contains the mode words note or start', () => {
     for (const w of [].concat(words.words || words)) assert.ok(!/^(note|start)/i.test(String(w)), skill + ': ' + w);
   }
 });
+t('drop archives only archivable skills; add restores; list and report show it', () => {
+  const root = makeProject(['perf-audit', 'responsive-check', 'handover']);
+  const d = run('drop', '--root', root, 'perf-audit', 'handover');
+  assert.ok(/archived perf-audit/.test(d.stdout) && /pinned, not moved: handover/.test(d.stdout), d.stdout);
+  assert.deepStrictEqual(active(root), ['handover', 'responsive-check']);
+  assert.ok(/archived \(1\): perf-audit/.test(run('list', '--root', root).stdout));
+  const a = run('add', '--root', root, 'perf-audit');
+  assert.ok(/restored perf-audit -- read .*perf-audit\/SKILL\.md now/.test(a.stdout), a.stdout);
+  assert.ok(/not installed: nope/.test(run('add', '--root', root, 'nope').stdout));
+});
+t('report lists manual moves since the last mark and --mark starts a new window', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  run('drop', '--root', root, 'perf-audit');
+  run('add', '--root', root, 'perf-audit');
+  const r1 = run('report', '--root', root, '--mark');
+  assert.ok(/restored by you: perf-audit/.test(r1.stdout) && /archived by you: perf-audit/.test(r1.stdout), r1.stdout);
+  const r2 = run('report', '--root', root);
+  assert.ok(!/by you/.test(r2.stdout) && /archived now \(0\): none/.test(r2.stdout), r2.stdout);
+});
+t('a task-word restore shows in the report as restored by task words', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  run('apply', '--root', root);
+  run('apply', '--root', root, '--add-only', '--quiet', 'why', 'is', 'it', 'slow');
+  assert.ok(/restored by task words: perf-audit/.test(run('report', '--root', root).stdout));
+});
