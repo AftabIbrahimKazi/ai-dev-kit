@@ -93,6 +93,9 @@ function checkSessionProtocol(root, protocolFile, findings) {
         return;
     }
     const body = fs.readFileSync(abs, 'utf8');
+    // A company-only install writes a small protocol file of its own (no standards template, so no [CX] rule).
+    if (!/\[CX/.test(body) && body.includes('ai-dev-kit:company-standards:start') && !fs.existsSync(path.join(root, 'coding-standards', 'index.md')))
+        return;
     if (!/\[CX/.test(body)) {
         add(findings, 'fail', 'session-protocol', `${protocolFile} exists but has no [CX] rule -- it isn't the standards template, or it was stripped`);
         return;
@@ -113,6 +116,11 @@ function checkStandards(root, findings) {
     const dir = path.join(root, 'coding-standards');
     if (!fs.existsSync(dir)) {
         add(findings, 'info', 'standards', 'no coding-standards/ folder (not installed, or deliberately skipped)');
+        return;
+    }
+    // A company-only install ("don't install the default standards") has coding-standards/company/ and nothing else.
+    if (fs.readdirSync(dir).every((e) => e === 'company')) {
+        add(findings, 'info', 'standards', 'company standards only: the kit defaults were deliberately not installed');
         return;
     }
     if (!fs.existsSync(path.join(dir, 'index.md')))
