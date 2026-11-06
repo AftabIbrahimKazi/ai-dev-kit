@@ -12,3 +12,4 @@ This needs the `project-context` add-on and no Figma connector. The user exports
 - If it says `project-context/design/` is missing, suggest `/ctx init`. If no argument was given, ask for the export folder.
 - To save it, run the same command with `--write`, then `node {{skill-root}}/project-context/scan.js changed design`. Add the draft's tables to `design/INDEX.md`, run `scan.js stamp design`, and map colors and type sizes to the project's token names if a token file exists.
 - Do not open PNG files unless a layout question needs them; open one at a time. Never paste raw SVG into the reply. Keep the content out of commits and published pages.
+Keep the reply under 20 lines.
