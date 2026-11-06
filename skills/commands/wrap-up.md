@@ -11,6 +11,10 @@ Size check (empty means within limits):
 
 !`node {{skill-root}}/handover/size.js check`
 
+Skills for the next task (the script moves nothing when no task was given after /wrap-up):
+
+!`node {{skill-root}}/skill-scope/auto.js wrap $ARGUMENTS`
+
 Skills moved since the last wrap-up (the script also starts the next window):
 
 !`node {{skill-root}}/skill-scope/auto.js report --mark`
