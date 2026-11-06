@@ -27,3 +27,4 @@ Detail in `ui-standards/export.ref.md`: excel, pdf and word. Read it only when t
 - **UI-EXP-05** An export expected to take over 10 s (guideline: PDF or Word over 1,000 rows, Excel or CSV over 10,000) runs as a background job: progress toast, then a bell notification with a download link that expires after 24 h.
 - **UI-EXP-08** Record every export in the audit log: user, type, format, filters, row count, time. Deliver through signed links that expire after 10 min; delete files from the app's storage after 24 h.
 - **UI-EXP-09** A native client requests the export from the backend and opens it with the system share or preview sheet. It never builds the file on the device.
+- **UI-EXP-10** Export files are delivered through signed links that expire after 10 min and are deleted from the app's own storage after 24 h. A background export's bell link expires after 24 h. Every export is audit-logged (user, type, format, filters, row count, time).

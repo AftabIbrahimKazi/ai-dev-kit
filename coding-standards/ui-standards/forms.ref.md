@@ -18,3 +18,4 @@ Read when: the task covers failures, security, access, wizard. The everyday rule
 
 - **UI-FRM-10** A wizard is for creation with 3 or more dependent steps; edits are one page. Use the stepper rules in `stepper.md`.
 - **UI-FRM-12** In a wizard, Back and Next sit in the action bar and Next validates the current step. A completed step can be revisited; an upcoming step cannot be skipped. Save progress per step. Under 768 px show "Step 2 of 4" and a progress bar.
+- **UI-FRM-13** Every state-changing form carries the CSRF token and uses POST, PUT, PATCH or DELETE, never GET. The server accepts only allow-listed fields.
