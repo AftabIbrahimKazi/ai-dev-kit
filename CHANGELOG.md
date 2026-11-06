@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-07
+
+### Added (skills, archiving and hints)
+- Mod `skill-hint`: on a typed prompt it matches keywords in code and attaches one line naming skills that may apply (once per skill per session, at most two). An archived skill is named with the `/unarchive` command to run. It never loads, archives or restores anything.
+- Commands `/archive` and `/unarchive` (no names lists what is archived), a move log in `.ai-dev-kit.json`, and `/wrap-up` and `/pickup` print what moved. `/wrap-up <next task>` applies the task's skills; with no task nothing moves.
+- Behavioural contract line: a task over 5 minutes opens with a time range.
+- Five UI rules from the rule-ID pass (`UI-LND-23`, `UI-CRD-24`, `UI-PGH-20`, `UI-FRM-13`, `UI-EXP-10`); the kit lint is clean (output caps on nine commands, depth moved to `install-kit.extras.md` and `hooks-enforcement.extras.md`).
+
+### Changed
+- Skill archiving is user-triggered only (`/next`, `/archive`, `/unarchive`): the session-start and per-prompt `skill-scope` hooks are gone from `hooks-enforcement.md`, and `merge-hooks` and `update` remove those two entries from a project's `.claude/settings.json`. Archiving the optional set saves about 630 tokens per turn, so run `/next` to get it.
+
 ## 2026-11-06
 
 ### Added

@@ -74,6 +74,11 @@
       "name": "aiignore-guard",
       "source": "./aiignore-guard",
       "description": "Keeps the AI out of files it should not read: the project's .aiignore, paths that belong to another role (conflict-roles.json: the active role's out list, or anything another role lists under in), the current task's scope (/focus, else the role's board row) and folders local Laya judges unrelated to the prompt. The first touch of such a path is denied with the snag protocol (rank names with prefilter, retry once); unscoped Grep and Glob results come back without ignored and out-of-role files. Does nothing without these files."
+    },
+    {
+      "name": "skill-hint",
+      "source": "./skill-hint",
+      "description": "Attaches one keyword-matched line naming skills that may apply to the prompt, once per skill per session; names /unarchive for an archived one. Hint only, never loads or moves a skill."
     }
   ]
 }

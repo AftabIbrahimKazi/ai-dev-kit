@@ -1,0 +1,4 @@
+{
+  "description": "skill-hint hooks module",
+  "modules": ["./register.ts"]
+}
