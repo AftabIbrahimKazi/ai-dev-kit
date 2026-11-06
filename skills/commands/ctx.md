@@ -12,3 +12,4 @@ Use the `project-context` skill if it is installed. By argument:
 - `analyze [folder]`: read only the NEW and MODIFIED files listed, update that folder's `INDEX.md`, then run `scan.js stamp <folder>`. If the report says nothing to analyze, say so.
 - `status` (default), `detect`, `add <folder> <file>`: show the result as a table. Flag a missing gitignore entry or tracked files first.
 Never print the content of a private doc outside the index, and never commit this folder.
+Keep the reply under 15 lines.
