@@ -1,6 +1,6 @@
 # Accessibility Standards
 
-These rules apply to every page, component, and interaction across all projects. Accessibility is not an optional add-on — it is a baseline requirement built in from the start. The target conformance level is **WCAG 2.1 AA**.
+These rules apply to every page, component, and interaction across all projects. Accessibility is not an optional add-on — it is a baseline requirement built in from the start. The target conformance level is **WCAG 2.2 AA**.
 
 ---
 
@@ -122,6 +122,8 @@ All text must meet the following contrast ratios against its background:
 | Large text (18pt+ / 14pt+ bold) | 3 : 1 |
 | UI components and icons | 3 : 1 |
 
+A script checks colour-token pairs in light and dark mode: set `contrastPairs` in `.claude/code-audit.json` (code-audit rule `a11y-09`).
+
 ---
 
 ## RULE A11Y-10 — Colour is never the sole means of conveying information
@@ -240,3 +242,48 @@ Validation errors must be communicated as text — not colour alone. Error messa
 <input type="email" id="email" aria-describedby="email-error" aria-invalid="true">
 <span id="email-error" role="alert">Please enter a valid email address.</span>
 ```
+
+---
+
+## WCAG 2.2 additions
+
+---
+
+## RULE A11Y-19 — Sticky UI never hides the focused element
+
+A sticky header, footer, cookie banner or chat widget must not fully cover an element that has keyboard focus. Reserve the space with scroll padding equal to the sticky height.
+
+```css
+/* Right — focus scrolls clear of a 64 px sticky header and a 56 px bottom bar */
+html { scroll-padding-top: 64px; scroll-padding-bottom: 56px; }
+```
+
+---
+
+## RULE A11Y-20 — Every drag has a single-pointer alternative
+
+Any action done by dragging (reorder, resize, slide, move) is also available with a click, tap or key press: arrow buttons, a "Move to" menu, or a text field. Dragging is never the only way.
+
+---
+
+## RULE A11Y-21 — Pointer targets are at least 24 by 24 CSS px
+
+An interactive target is at least 24x24 CSS px, or has 24 px of clear space around it. Inline text links and browser-default controls are exempt. On touch, use 44x44 where space allows.
+
+---
+
+## RULE A11Y-22 — Help sits in the same place on every page
+
+A help mechanism (help link, contact route, chat, FAQ link) that appears on several pages keeps the same position relative to the rest of the page and the same order among other elements.
+
+---
+
+## RULE A11Y-23 — Do not ask for the same information twice
+
+In one process, information the user already gave is prefilled or offered for selection. Exceptions: security re-confirmation, and when the earlier value is no longer valid.
+
+---
+
+## RULE A11Y-24 — Authentication needs no cognitive test
+
+A sign-in step must not depend on remembering a password, solving a puzzle or copying a code by hand without an alternative. Allow paste and password managers, accept one-time codes through autofill, and offer a non-puzzle option (passkey, email link, device prompt). An image-puzzle CAPTCHA is never the only check.

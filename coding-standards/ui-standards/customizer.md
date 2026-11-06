@@ -1,0 +1,14 @@
+# UI Standards — Theme Customizer Panel
+
+Read when: building the "Customize theme" panel or any UI where users pick mode, brand colour, menu, header or background. Rules for the theme itself: `theming.md`.
+
+- **UI-CUS-01** The panel opens from the account menu item "Customize theme…" (after the Theme radio group, before the divider and Sign out) and, below 768 px, from the "Customize theme" row of the account sheet. No separate palette icon in the header.
+- **UI-CUS-02** From 768 px it is a modal drawer from the end, 380 px wide, full height, with a scrim; below 768 px a bottom sheet. Title "Customize theme", a Close button at the end, a scrollable body and a fixed footer. Esc, Close and a scrim tap close it and return focus to the trigger.
+- **UI-CUS-03** Sections in order: Mode (System, Light, Dark); Primary colour (Brand plus Blue, Teal, Violet, Rose, with "B = brand colour from your organization's logo."); Menu (Default, Dark, Navy, Brand); Header (Default, Dark, Match menu); Background (Neutral, Cool, Warm, with "Background options follow the selected mode."); the readability status; the note "Saved to your account. Follows you on every device."
+- **UI-CUS-04** Each section is a `role="radiogroup"` labelled by its heading; each option a `role="radio"` with `aria-checked`, an accessible name ("Brand (from logo)") and a visible text label. Arrow keys move and select within a group; Tab moves between groups. The selected option shows a 2 px gap ring in primary plus a check mark (circles) or a 3 px ring (previews).
+- **UI-CUS-05** Colour swatches are 36 px circles in a hit area of at least 44 × 56 px including the label. Menu previews are 52 px high and header previews 44 px, in equal columns, drawn with the generated colours of that option (background, text lines, active pill, indicator bar) in the current mode.
+- **UI-CUS-06** A selection applies to the whole app at once and saves to the user's account within 1 s, with no Save button. If saving fails the choice stays for the session and the panel shows "Couldn't save your theme. It will apply on this device only."
+- **UI-CUS-07** Show the generator's result: "All N readability checks pass" and one line per automatic adjustment ("Brand #E8472A adjusted to #D33010 so button text and links stay readable."; "Logo switched to its single-color version on this menu color.").
+- **UI-CUS-08** The footer has one full-width secondary "Reset to default" that restores the tenant default primary, menu, header and background (not mode). No confirmation.
+- **UI-CUS-09** When the tenant turned off "Allow users to customize colors" the panel shows only Mode, then "Your organization manages the colors of this app.", and no Reset button.
+- **UI-CUS-10** Flutter and React Native offer the same sections, options, order and texts in a "Theme" screen reached from the account screen, applying instantly and saving through the same API.

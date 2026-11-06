@@ -23,8 +23,9 @@ A universal, portable coding standards system for use with Claude Code and any A
 | `versioning-standards.md` | Version format and changelog rules |
 | `seo-standards.md` | SEO — titles, meta, structure, schema |
 | `performance-standards.md` | Assets, scripts, CSS, Core Web Vitals |
-| `accessibility-standards.md` | WCAG 2.1 AA — keyboard, ARIA, contrast, forms |
+| `accessibility-standards.md` | WCAG 2.2 AA — keyboard, ARIA, contrast, forms, targets, authentication |
 | `qa/` | QA umbrella — `index.md` plus one file per concern (definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting) |
+| `ui-standards.md` | UI element and pattern rules, one compact partial per element in `ui-standards/` (about 350 to 1,650 tokens each, with on-demand `.ref.md` detail files; a UI edit reads at most two) |
 | `ai-standards.md` | AI behaviour — hallucination detection, token efficiency |
 | `frameworks/astro.md` | Astro-specific additions and overrides |
 | `frameworks/astro/` | Astro file-role partials |
