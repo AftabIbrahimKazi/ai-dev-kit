@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-11-06
+
+### Added
+- Company standards: a separate `coding-standards/company/` folder where a company drops its own rules (a design system, a style guide). `install-kit.cli.js company sync|status|remove` (and `install --company`) asks what happens to the kit's default standards: keep them, don't install them, or auto-detect which ones the company replaces (never the accessibility, QA, git or versioning defaults). The kit scans the docs, imports the company's own "build X, read Y" table as routes, and writes a routing `INDEX.md`, a `company-standards` skill and a marked block in the session-protocol file. `company remove` takes it all out and restores any removed default; the company's files are never deleted without `--purge`, and `--company-from` never overwrites a differing company file without `--force`. `company sync` and `company remove` take `--dry-run`; the command prints one usage line and exits 2 without `--root`.
+
+- UI element standards: `coding-standards/ui-standards.md` (a routing table) and 30 compact partials in `coding-standards/ui-standards/` (button, fields, select, date, forms, stepper, modal and drawer, menu and tooltip, tabs, card and badge, table, filters, upload, image, states, feedback, header, sidebar, page header, nav, charts, export, auth, theming, customizer, tokens, landing, mobile, pwa, checklist), about 350 to 1,650 tokens each (average about 1,000) with 11 `.ref.md` files holding the detail a generic edit rarely needs (read on demand, never required by the mod); a UI edit reads at most two. A full migration of the rule content of a company design system (header, sidebar with menu search and pinned pages, page header, breadcrumb and submenus, select and date pickers, stepper, image display, chunked upload, export documents, auth and account settings, charts, theme generator and customizer, token defaults, review checklist and self-check) re-expressed in kit wording and without company names, component names, or hard-coded prefixes. Mobile and PWA rules and a few web patterns (pagination, wizard, image viewer, focus after client-side routing) were rewritten in kit style from conventions seen in a company design system; no wording or company-specific decision was copied. They cover what the file-type standards do not: empty and error states, message wording, form validation, server-side pagination, upload and export security (magic-byte checks, formula-injection guard), sign-in. Rules are one line each, with numeric limits, and `(auto)` marks the ones a script can check. New `UI standard` row in the Active Standards table (`--active-standards ... ui`); company auto-detect drops it together with the design standard when a company brings its own design system.
+
+### Added (project signature)
+- Project signature, a core installer setting: the user chooses an alias at install (`install --signature <alias>`, an interactive prompt, or none), the kit never picks one. One stored alias goes in exactly three places: `abc-` classes and ids, `data-abc-` data attributes (RULE 11), `Abc` shared components. It fills the project table's "Selector signature" row (restored by `signature remove` and `uninstall --all`), and joins the Company Standards block and index when those are used. New command `signature set|remove|show` with `--dry-run`.
+- `code-audit` rule `css-11` (review level, only when a signature is set) flags a class, id or data attribute the project defines without the alias. Custom code only: `node_modules`, `vendor`, third-party, minified and generated files are skipped, the names that package.json dependencies bring (Bootstrap, Bulma, Swiper, Font Awesome and others) are exempt, and `signatureIgnore` and `signatureExempt` in `.claude/code-audit.json` add more. The rule text tells the AI never to rename or prefix package, framework or library names.
+- WCAG 2.2: `accessibility-standards.md` now targets WCAG 2.2 AA with RULE A11Y-19 to 24 (focus not obscured, drag alternatives, 24 px targets, consistent help, no redundant entry, authentication without a cognitive test).
+- `ui-standards/theming.md` (dark mode and theme toggle, 11 rules) and `ui-standards/landing.md` (10 rules); `fields.md` gained select, async, multi-select, date-range, counter and tri-state rules.
+
+### Added (open items from the company-standards comparison)
+- `coding-standards/index.md` has a Precedence list (about 90 tokens): accessibility and security first and never waivable, then company standards, a design source for the look only, framework overrides, ui-standards and the file-type standards, and AI defaults never.
+- New mod `gap-log` (observer, adds no model-visible text): every `STANDARDS GAP: <what is not covered>` line in an answer is appended to `.claude/standards-gaps.jsonl`. `RULE AI-12` now uses that exact phrase.
+
+- Colour contrast (A11Y-09) as a code check: `contrastPairs` in `.claude/code-audit.json` (pairs of colour tokens with a minimum, or `"auto"` for text tokens against surface and background tokens). It follows `var()` chains and checks light and dark mode. Hex, `rgb()`, `hsl()` and `oklch()` are understood; alpha, `color-mix()` and `light-dark()` are reported as not checked (`a11y-09-skip`). A failing pair is `a11y-09`, a hard per-edit rule that cannot be waived.
+
+### Added (signature enforcement, round 2)
+- Component detection reads export lists, aliases (`export { X as Y }` checks the public name), `export default X`, wrapped exports (`export default connect(a)(X)`), `module.exports`, arrow components and classes. A Pascal-case function in a component folder counts as a component (the kit's naming rule makes functions camelCase).
+- The signature check learns from installed packages: class names defined in the CSS of every dependency in node_modules (capped at 60 packages and 2 MB, cached until package.json changes) are exempt, not only the ones in a built-in table. `code-audit --suggest-exempt` groups flagged names by first word and prints the `signatureExempt` line to paste for libraries that are not installed (CDN).
+- The interactive installer is testable: `AI_DEV_KIT_INTERACTIVE=1` forces the prompts on piped input (answers one per line; a closed input means Enter). Walking it showed and fixed three things: a second "install the default standards?" question after the company question already answered it, unreadable piped transcripts, and a bad alias that failed after files were written (it is now re-asked, and `--signature` is validated before anything is written).
+
+### Added (signature enforcement)
+- `signatureMode: "strict"` in `.claude/code-audit.json` turns the signature checks into hard rules (per edit, and a commit block on added lines only). Default stays review level.
+- Shared component names are checked (`css-11-component`): exported components, `.vue`/`.svelte` files and Dart widgets in components, ui or shared folders should start with the capitalised alias. Pages, views, screens, tests and stories are skipped; `signatureComponentDirs` changes where to look.
+- `bannedImports` (rule `ban-01`, hard): a project or company lists libraries it forbids (names, sub-paths, globs, optional message) and an import of one fails the edit check and blocks a strict commit. Nothing is banned by default.
+- `projectConfig` in the audit engine: one merged config (code-audit.json, the install manifest, package.json) used by the audit, `edit-check` and the commit check.
+
+### Added (enforcement)
+- `code-audit`: `--changed` (only lines changed since HEAD); a `DEVIATION: <rule id> <reason>` comment that waives a rule on its line and the next, counted in the report, with accessibility and security rules unwaivable and a reasonless, unknown or stale waiver reported; 10 `ui-*` rules that check the UI standards a script can verify (`standard` filter `ui`, `dev`), on only where `ui-standards.md` is installed.
+- Strict mode (`.claude/edit-check.json`): `"strict": true` makes the `edit-check` hook report findings as hard rules and makes the pre-commit check block a commit that adds one on a changed line; `"scope": "changed"` limits the per-edit check to changed lines. Off by default.
+- UI rule tags are now `(check: <rule id>)` where a script checks the rule and `(browser)` where only a browser test can; the old `(auto)` tag is gone.
+
+### Changed
+- The `standards-chain` mod now reads `ui-standards.md` plus at most two partials chosen by keywords in the file path (`button.css`, `DataTable.tsx`, `login.html`), only for UI-like files and only when the files are installed; `{"ui":false}` in `.claude/standards-chain.json` turns it off. It also covers `.vue` and `.svelte`.
+- The `standards-chain` mod requires `company/INDEX.md` to be read before code and UI edits when it exists, covers more UI file types (`.php`, `.vue`, `.svelte`, `.dart` and others) for company standards only, and no longer demands a default standards file that is not on disk.
+- `uninstall --remove-standards` keeps `coding-standards/company/`.
+
 ## 2026-11-05
 
 ### Added
