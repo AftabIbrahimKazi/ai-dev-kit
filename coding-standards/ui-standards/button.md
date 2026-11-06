@@ -3,7 +3,7 @@
 Read when: adding a button, icon button, link-style action or row action.
 
 - **UI-BTN-01** One primary button per view or dialog. Other actions use secondary or ghost.
-- **UI-BTN-02** Label is verb + object in sentence case, at most 3 words, one line: "Save changes", "Delete invoice", "New laptop". Never "OK", "Submit", "Click here" or all caps. (check: ui-btn-02)
+- **UI-BTN-02** Label is verb + object in sentence case, at most 3 words, one line: "Save changes", "Delete invoice", "New laptop". Never all caps. (check: ui-btn-02)
 - **UI-BTN-03** An action is a `<button type="button|submit">`. A navigation is an `<a href>`. Never a `<div>` or `<span>` with a click handler. (check: a11y-05)
 - **UI-BTN-04** Target is at least 24x24 CSS px; on touch (`pointer: coarse`) at least 44x44. (browser)
 - **UI-BTN-05** Loading keeps the button width, changes the label to the progressive form ("Saving…"), shows a spinner, sets `aria-busy="true"`, and ignores a second click.

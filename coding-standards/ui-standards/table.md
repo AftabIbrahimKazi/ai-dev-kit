@@ -16,7 +16,7 @@ Detail in `ui-standards/table.ref.md`: inline edit and totals, quality. Read it 
 
 ## Rows and actions
 
-- **UI-TBL-05** The identifier cell is a real link to the record; the whole row may also open it, except a click on a checkbox, menu, editable cell or link. Row hover uses the row-hover token. There is no "View" button.
+- **UI-TBL-05** The identifier cell is a real link to the record; the whole row may also open it, except a click on a checkbox, menu, editable cell or link. Row hover uses the row-hover token.
 - **UI-TBL-16** Each row ends with `xs` (28 px) ghost icon buttons: at most 2 inline (✎ "Edit <identifier>", with tooltips), then an always-visible ⋯ button named "Actions for <identifier>". Never text, filled or outlined buttons, and never hover-only actions. Menu order: View details, Edit, other actions, divider, destructive actions in the danger colour. A destructive action asks confirmation.
 - **UI-TBL-08** The header checkbox selects the page. When the whole page is selected and more records exist, the selection bar offers "Select all N <entity>" as a separate explicit action. Selection persists across pages and clears when filters or search change.
 - **UI-TBL-17** While rows are selected, a selection bar replaces the filter toolbar in the same place: "Clear selection" ✕, "N selected" (polite live region), "Select all N" when applicable, up to 3 bulk buttons, and ⋯ for more. A bulk destructive action lives in ⋯ and confirms with the count ("Delete 12 laptops?"). A bulk job over 10 s runs in the background with a progress notification. The server reports per-record failures ("10 updated, 2 failed — no access to LT-0051, LT-0057").
