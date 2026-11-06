@@ -74,3 +74,11 @@ test('a failing process call fails open', async ($, on) => {
   expect(r.text).toBe('edited')
   expect(r.context).toBeUndefined()
 })
+
+test('a STRICT first line turns the reminder into a hard-rule instruction', async ($, on) => {
+  world(on, { exit: 1, out: 'STRICT: fix every finding below before going on; each is a hard rule.\nsrc/a.css:3  css-14  !important is banned' })
+  const r = await edit($)
+  expect(r.context.join('\n')).toContain('hard-rule violations')
+  expect(r.context.join('\n')).toContain('do not report the task done')
+  expect(r.context.join('\n')).toContain('css-14')
+})

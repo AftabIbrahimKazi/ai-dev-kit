@@ -29,7 +29,11 @@ export const register: Register = (on) => {
       const out = r.stdout.trim()
       if (r.exitCode !== 1 || !out) return ran
       const prior = 'context' in ran && ran.context ? ran.context : []
-      return { ...ran, context: [...prior, `edit-check found problems in ${e.file_path}. Fix them, or say why they are acceptable:\n${out}`] } as typeof ran
+      // Strict projects (edit-check.json "strict": true) print a STRICT first line: the findings are hard rules, not hints.
+      const head = out.startsWith('STRICT')
+        ? `edit-check found hard-rule violations in ${e.file_path}. Fix them before any other step; do not report the task done with them open:\n${out}`
+        : `edit-check found problems in ${e.file_path}. Fix them, or say why they are acceptable:\n${out}`
+      return { ...ran, context: [...prior, head] } as typeof ran
     } catch {
       return ran // a checker problem must never turn a good edit into an error
     }

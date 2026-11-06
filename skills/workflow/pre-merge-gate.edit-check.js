@@ -221,8 +221,19 @@ function checkFile(file, cwd, cfg) {
             out.push(...tsc(rel, cwd));
     }
     const std = cfg.standards || 'auto';
-    if (std === 'on' || (std === 'auto' && fs.existsSync(path.join(cwd, 'coding-standards'))))
-        out.push(...(engine() ? engine().checkText(rel, text, cfg, 'edit') : standards(rel, text)));
+    if (std === 'on' || (std === 'auto' && fs.existsSync(path.join(cwd, 'coding-standards')))) {
+        const eng = engine();
+        // The engine's project config adds the stored signature, the names the dependencies bring, banned imports and strict mode.
+        const pc = eng && eng.projectConfig ? eng.projectConfig(cwd, {}) : {};
+        const withUi = { ...pc, ...cfg, ui: cfg.ui ?? pc.ui ?? fs.existsSync(path.join(cwd, 'coding-standards', 'ui-standards.md')) };
+        let found = eng ? eng.checkText(rel, text, withUi, 'edit') : standards(rel, text);
+        if (cfg.scope === 'changed' && eng && eng.changedLines) {
+            const lines = eng.changedLines(cwd, rel);
+            if (lines)
+                found = found.filter((x) => lines.has(x.line));
+        }
+        out.push(...found);
+    }
     return out;
 }
 function main() {
@@ -243,7 +254,8 @@ function main() {
     if (json)
         console.log(JSON.stringify(findings, null, 2));
     else if (findings.length) {
-        const lines = findings.slice(0, MAX_LINES).map((f) => `${f.file}:${f.line}  ${f.rule}  ${f.msg}`);
+        const lines = cfg.strict ? ['STRICT: fix every finding below before going on; each is a hard rule. A deliberate exception needs a DEVIATION: <rule-id> reason comment (accessibility and security rules cannot be waived).'] : [];
+        lines.push(...findings.slice(0, MAX_LINES).map((f) => `${f.file}:${f.line}  ${f.rule}  ${f.msg}`));
         if (findings.length > MAX_LINES)
             lines.push(`(+${findings.length - MAX_LINES} more)`);
         console.log(lines.join('\n'));
