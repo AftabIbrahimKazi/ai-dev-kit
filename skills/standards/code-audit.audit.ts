@@ -3,13 +3,18 @@
 // Counts, not prose: the model reads a few dozen lines instead of opening files to look for violations.
 //
 //   node audit.js [path...] [--standard css,html,js,ts,a11y,seo,perf,git,version] [--rule ID] [--top N] [--limit N]
-//                 [--context] [--baseline] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
+//                 [--changed] [--suggest-exempt] [--context] [--baseline] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
 //
 // Findings are "rule" (a violation) or "review" (a heuristic candidate that needs judgement) or "info" (a count).
 // Exit 0 normally; with a saved baseline (.claude/code-audit.baseline.json) exit 1 only when a count rose.
 // Ignore list (optional): <cwd>/.aiignore, gitignore-style, merged with the "ignore" globs below.
 // Config (optional): <cwd>/.claude/code-audit.json
-//   { "ignore": ["glob"...], "skipRules": ["id"...], "styleBlocks": "count|forbid", "commits": 200 }
+//   { "ignore": ["glob"...], "skipRules": ["id"...], "styleBlocks": "count|forbid", "commits": 200, "ui": true|false, "signatureIgnore": ["glob"...], "signatureExempt": ["prefix"...],
+//     "contrastPairs": [{"fg": "--color-text", "bg": "--color-surface", "min": 4.5}] or "auto",
+//     "signatureMode": "review|strict", "signatureComponentDirs": ["components"...], "bannedImports": ["jquery", {"pattern": "@mui/*", "message": "use the shared component"}] }
+// --suggest-exempt groups the css-11 findings by first word so a library's prefix can be listed once in signatureExempt.
+// --changed reports only lines changed since HEAD. A "DEVIATION: <rule-id> reason" comment waives that rule on its line and the
+// next (never an accessibility or security rule). UI rules (ui-*) run only where coding-standards/ui-standards.md exists, or with "ui": true.
 // Also used by the edit-check engine (profile "edit": the small set of rules it has always run per edit).
 import fs = require('node:fs');
 import path = require('node:path');
@@ -52,6 +57,8 @@ export const RULES: Record<string, RuleDef> = Object.fromEntries([
   R('css-05', 'css', 'rule', 'line-height must be a --leading-* token'),
   R('css-06', 'css', 'rule', 'transition must name its properties (no "all", no single transition variable)'),
   R('css-10', 'css', 'rule', 'hardcoded colour, use a token', true),
+  R('css-11', 'css', 'review', 'class, id or data attribute does not start with the project signature (RULE 11); runs only when a signature is set'),
+  R('css-11-component', 'css', 'review', 'shared component name does not start with the project signature (RULE 11); runs only when a signature is set'),
   R('css-14', 'css', 'rule', '!important is banned', true),
   R('css-15', 'css', 'rule', 'colour token duplicates another colour token in the same block, reuse it', true),
   R('css-17', 'css', 'rule', 'min-width-only media query; use an isolated range (the 1400px top zone is exempt)'),
@@ -96,8 +103,42 @@ export const RULES: Record<string, RuleDef> = Object.fromEntries([
   R('v-05', 'version', 'review', 'package.json version differs from the latest git tag (fine if a bump is pending)'),
   R('v-08', 'version', 'rule', 'no CHANGELOG.md entry for the package.json version'),
   R('v-09', 'version', 'rule', 'pre-release suffix must be alpha.N, beta.N or rc.N'),
+  // UI element rules (coding-standards/ui-standards/*): run only in a project that has ui-standards installed.
+  R('ui-btn-02', 'ui', 'rule', 'button label is OK, Submit or Click here; name the action', true),
+  R('ui-btn-07', 'ui', 'review', 'icon-only button has no accessible name'),
+  R('ui-fbk-04', 'ui', 'rule', 'vague message ("Something went wrong", "Are you sure?"); say what happened and what to do next', true),
+  R('ui-fld-01', 'ui', 'review', 'input with a placeholder and no label, aria-label or id to attach one'),
+  R('ui-fld-03', 'ui', 'review', 'type="number" input; use a text input with inputmode="decimal"'),
+  R('ui-sel-12', 'ui', 'review', 'native <select> or Select2 for an option list; use the searchable select'),
+  R('ui-dte-03', 'ui', 'review', 'native date, datetime-local or time input; use the date picker'),
+  R('ui-aut-03', 'ui', 'review', 'password input without an autocomplete token (current-password or new-password)', true),
+  R('ui-aut-16', 'ui', 'review', 'one-time code split into single-character boxes; use one field with autocomplete="one-time-code"'),
+  R('ui-fld-10', 'ui', 'review', 'confirm-password field; use a show/hide toggle instead', true),
+  R('ui-lnd-02', 'ui', 'review', 'video or audio autoplays without muted', true),
+  R('ui-hdr-14', 'ui', 'review', 'full page with <main> and no skip link to it'),
+  R('ui-tbl-11', 'ui', 'review', 'pagination without aria-current="page", a rows-per-page choice or the "1–25 of N" range'),
+  R('ui-fld-22', 'ui', 'review', 'password field with no show/hide control', true),
+  R('ui-btn-08', 'ui', 'review', 'delete, remove or revoke button in a confirmation dialog without the danger style (review only: the style may sit in a separate CSS file)'),
+  R('ui-mnu-02', 'ui', 'rule', 'role="menu" inside <nav>; navigation is a list of links', true),
+  R('ui-mod-01', 'ui', 'review', 'role="dialog" without aria-modal'),
+  R('ui-tbl-01', 'ui', 'rule', '<table> has no <th>', true),
+  R('ui-aut-09', 'ui', 'rule', 'cookie set with httpOnly or secure false', true),
+  R('ui-pwa-01', 'ui', 'rule', 'web app manifest lacks a required field or icon'),
+  // A "DEVIATION: <rule-id> reason" comment waives that rule on its own line and the next. Accessibility and security rules cannot be waived.
+  // A project (or its company) can ban libraries in .claude/code-audit.json "bannedImports"; an import of one is a hard rule.
+  R('ban-01', 'ban', 'rule', 'import of a library this project banned (bannedImports in .claude/code-audit.json)', true),
+  // A11Y-09 as a code check: a colour pair in the token file below its minimum contrast, in light or dark mode (contrastPairs in .claude/code-audit.json).
+  R('a11y-09', 'a11y', 'rule', 'colour pair in the token file is below its minimum contrast ratio (contrastPairs in .claude/code-audit.json)', true),
+  R('a11y-09-skip', 'a11y', 'info', 'colour pair not checked: a token uses a colour form the checker cannot resolve (alpha, color-mix, light-dark)'),
+  R('dev-count', 'dev', 'info', 'DEVIATION comment that waived a finding (counted so deviations stay visible)'),
+  R('dev-stale', 'dev', 'review', 'DEVIATION comment that matched no finding; remove it'),
+  R('dev-invalid', 'dev', 'rule', 'DEVIATION names an unknown or unwaivable rule, or gives no reason', true),
 ]);
-const NOT_CHECKED = 'Not machine-checked, judge by reading: css 01-03, 07-09, 11-13, 15-16, 18-22 · h-01, h-06, h-07, h-09 · ts/js function size, state, async errors, import order · a11y 01-02, 04, 07-18 · seo 04-05, 08-12 · perf 01, 03-05, 07-15 · g-01..04, g-09..12 · v-01..04, v-06, v-07.';
+// Never waivable: every accessibility rule and the security rules. A waiver comment for them is ignored and flagged.
+export const waivable = (id: string): boolean => !!RULES[id] && RULES[id].std !== 'a11y' && id !== 'ui-aut-09';
+const PER_FILE_STD = new Set(['css', 'html', 'a11y', 'seo', 'perf', 'js', 'ts', 'ui', 'dev', 'ban']);
+const MANIFEST_FILE = /(^|\/)manifest\.(webmanifest|json)$/i;
+const NOT_CHECKED = 'Not machine-checked, judge by reading: css 01-03, 07-09, 12-13, 15-16, 18-22 · h-01, h-06, h-07, h-09 · ts/js function size, state, async errors, import order · a11y 01-02, 04, 07-08, 10-24 (09 only for pairs in contrastPairs) · seo 04-05, 08-12 · perf 01, 03-05, 07-15 · g-01..04, g-09..12 · v-01..04, v-06, v-07.';
 
 // ---- text helpers ----
 // Blank comments (and string contents unless keepStrings) while keeping every newline.
@@ -316,19 +357,446 @@ function scriptChecks(rel: string, text: string): Finding[] {
   return out;
 }
 
-export interface CheckTextConfig { skipRules?: string[]; styleBlocks?: string }
+// ---- UI element rules (ui-standards): static checks only; anything needing a browser is not here ----
+function manifestChecks(rel: string, text: string): Finding[] {
+  let j: any;
+  try { j = JSON.parse(text); } catch { return []; } // invalid JSON is edit-check's syntax finding
+  if (!j || typeof j !== 'object' || 'manifest_version' in j) return []; // a browser-extension manifest is not a web app manifest
+  if (!['start_url', 'icons', 'display', 'short_name'].some((k) => k in j)) return []; // some other manifest.json
+  const miss: string[] = [];
+  for (const k of ['name', 'short_name', 'id', 'start_url', 'scope', 'theme_color', 'background_color']) if (!j[k]) miss.push(k);
+  if (typeof j.short_name === 'string' && j.short_name.length > 12) miss.push('short_name over 12 characters');
+  if (j.display !== 'standalone') miss.push('display "standalone"');
+  const icons: any[] = Array.isArray(j.icons) ? j.icons : [];
+  for (const size of ['192x192', '512x512']) if (!icons.some((i) => String(i && i.sizes || '').split(/\s+/).includes(size))) miss.push(`${size} icon`);
+  if (!icons.some((i) => /\bmaskable\b/.test(String(i && i.purpose || '')))) miss.push('maskable icon');
+  return miss.length ? [{ file: rel, line: 1, rule: 'ui-pwa-01', msg: 'manifest lacks: ' + miss.join(', ') }] : [];
+}
+
+function uiChecks(rel: string, text: string): Finding[] {
+  if (MANIFEST_FILE.test(rel)) return manifestChecks(rel, text);
+  const script = SCRIPT_EXT.test(rel);
+  if (!script && !MARKUP_EXT.test(rel)) return [];
+  const out: Finding[] = [];
+  const t = script ? stripCode(text, true) : blankHtmlComments(text);
+  const L = lineFn(text);
+  const add = (idx: number, rule: string, msg: string): void => { out.push({ file: rel, line: L(idx), rule, msg }); };
+  for (const m of t.matchAll(/<button\b[^>]*>\s*(OK|Submit|Click here)\s*<\/button>/gi)) add(m.index!, 'ui-btn-02', `button labelled "${m[1]}"`);
+  for (const m of t.matchAll(/Something went wrong|Are you sure\?/gi)) add(m.index!, 'ui-fbk-04', `"${m[0]}"`);
+  for (const m of t.matchAll(/<nav\b[\s\S]*?<\/nav>/gi)) {
+    const r = /\brole\s*=\s*["']menu["']/i.exec(m[0]);
+    if (r) add(m.index! + r.index, 'ui-mnu-02', 'role="menu" inside <nav>');
+  }
+  for (const m of t.matchAll(/<table\b[\s\S]*?<\/table>/g)) if (!/<th[\s>]/.test(m[0])) add(m.index!, 'ui-tbl-01', '<table> has no <th>');
+  for (const m of t.matchAll(/<button\b([^>]*)>\s*<(svg|i|img)\b([^>]*)>(?:[\s\S]{0,400}?<\/\2>)?\s*<\/button>/gi)) {
+    if (!/\b(aria-label|aria-labelledby|title)\s*=/i.test(m[1]) && !/\b(aria-label|aria-labelledby|title)\s*=|\balt\s*=\s*["'][^"']+["']/i.test(m[3])) add(m.index!, 'ui-btn-07', 'icon-only button has no accessible name');
+  }
+  for (const m of t.matchAll(/<input\b[^>]*>/gi)) {
+    const tag = m[0];
+    const type = /\btype\s*=\s*["']?([\w-]+)/i.exec(tag);
+    if (type && /^(hidden|submit|button|reset|image|checkbox|radio)$/i.test(type[1])) continue;
+    if (/\bplaceholder\s*=/i.test(tag) && !/\b(aria-label|aria-labelledby|id)\s*=/i.test(tag)) add(m.index!, 'ui-fld-01', 'input has a placeholder and nothing to attach a label to');
+    if (type && type[1].toLowerCase() === 'number') add(m.index!, 'ui-fld-03', 'type="number" input');
+    if (type && /^(date|datetime-local|time|month|week)$/i.test(type[1])) add(m.index!, 'ui-dte-03', `type="${type[1]}" input`);
+    if (type && type[1].toLowerCase() === 'password' && !/\bautocomplete\s*=/i.test(tag)) add(m.index!, 'ui-aut-03', 'password input without autocomplete');
+    if (/\b(confirm[-_ ]?password|password[-_ ]?confirm(ation)?|repeat[-_ ]?password|retype[-_ ]?password)\b/i.test(tag)) add(m.index!, 'ui-fld-10', 'confirm-password field');
+  }
+  const boxes = [...t.matchAll(/<input\b[^>]*\bmaxlength\s*=\s*["']?1["']?[^>]*>/gi)];
+  if (boxes.length >= 4) add(boxes[0].index!, 'ui-aut-16', `${boxes.length} single-character inputs`);
+  for (const m of t.matchAll(/<(video|audio)\b[^>]*\bautoplay\b[^>]*>/gi)) if (!/\bmuted\b/i.test(m[0])) add(m.index!, 'ui-lnd-02', `<${m[1]}> autoplays without muted`);
+  if (!script && /\.html?$/i.test(rel) && /<body\b/i.test(t) && /<main\b/i.test(t) && !/href\s*=\s*["']#(main|content|main-content)["']/i.test(t)) add(t.search(/<main\b/i), 'ui-hdr-14', 'page has <main> and no skip link');
+  if (/\btype\s*=\s*["']password["']/i.test(t) && !/\b(show|hide|reveal|toggle)\b/i.test(t)) add(t.search(/type\s*=\s*["']password["']/i), 'ui-fld-22', 'password field with no show/hide control');
+  const pager = /<nav\b[^>]*(pagination|aria-label\s*=\s*["']pagination["'])[^>]*>|class\s*=\s*["'][^"']*\bpagination\b/i.exec(t);
+  if (pager) {
+    // Only when the page numbers are in this file; a pager that scripts fill in later is checked where they build it.
+    if (/<(a|button|li)\b[^>]*>\s*\d+\s*<\//i.test(t) && !/aria-current\s*=\s*["']page["']/i.test(t)) add(pager.index, 'ui-tbl-11', 'pagination without aria-current="page"');
+    if (!/rows\s*per\s*page|per\s*page/i.test(t) || !/\d+\s*[–-]\s*\d+\s+of\s+[\d,]+/i.test(t)) add(pager.index, 'ui-tbl-11', 'pagination without rows-per-page or the "1–25 of N" range');
+  }
+  for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>|<[a-z][\w-]*\b[^>]*\brole\s*=\s*["']alertdialog["'][^>]*>[\s\S]{0,1500}/gi)) {
+    for (const b of d[0].matchAll(/<button\b([^>]*)>\s*(Delete|Remove|Revoke|Archive)\b[^<]*<\/button>/gi)) {
+      if (!/danger|destructive|critical|negative|btn-red/i.test(b[1])) add(d.index! + b.index!, 'ui-btn-08', `"${b[2]}" button in a dialog without the danger style`);
+    }
+  }
+  for (const m of t.matchAll(/<select\b[^>]*>/gi)) add(m.index!, 'ui-sel-12', 'native <select>');
+  const s2 = t.search(/\bselect2\b/i);
+  if (s2 >= 0) add(s2, 'ui-sel-12', 'Select2');
+  for (const m of t.matchAll(/<[a-z][\w-]*\b[^>]*\brole\s*=\s*["']dialog["'][^>]*>/gi)) if (!/\baria-modal\b/i.test(m[0])) add(m.index!, 'ui-mod-01', 'role="dialog" without aria-modal');
+  if (script) {
+    for (const m of t.matchAll(/\b(httpOnly|secure)\s*:\s*false\b/g)) {
+      // Same statement only: look back to the previous call or statement end, so a later `secure: false` (mail, tls) is not blamed on an earlier cookie call.
+      const before = t.slice(Math.max(0, m.index! - 200), m.index!);
+      const seg = before.slice(Math.max(before.lastIndexOf('})'), before.lastIndexOf(');'), before.lastIndexOf(';')) + 1);
+      if (/cookie/i.test(seg + t.slice(m.index!, m.index! + 60))) add(m.index!, 'ui-aut-09', `cookie option ${m[1]}: false`);
+    }
+  }
+  return out;
+}
+
+// A deviation comment (the word, a colon, one or more rule ids, then a reason) in any comment style waives that rule on its own line and the next.
+// Unknown, unwaivable or reasonless deviations are ignored and reported, so a waiver can never silently hide a hard rule.
+function applyDeviations(rel: string, text: string, found: Finding[]): Finding[] {
+  let f = found;
+  const extra: Finding[] = [];
+  const L = lineFn(text);
+  for (const m of text.matchAll(/DEVIATION:[ \t]*([a-z0-9][a-z0-9-]*(?:[ \t]*,[ \t]*[a-z0-9][a-z0-9-]*)*)[ \t]*[—–:-]*[ \t]*([^\n]*)/gi)) {
+    const line = L(m.index!);
+    const reason = m[2].replace(/(\*\/|-->|%\})\s*$/, '').trim();
+    for (const id of m[1].split(',').map((s) => s.trim().toLowerCase())) {
+      if (!RULES[id]) { extra.push({ file: rel, line, rule: 'dev-invalid', msg: `DEVIATION names unknown rule ${id}` }); continue; }
+      if (!waivable(id)) { extra.push({ file: rel, line, rule: 'dev-invalid', msg: `${id} cannot be waived (accessibility and security rules)` }); continue; }
+      if (!/[a-z]{3}/i.test(reason)) { extra.push({ file: rel, line, rule: 'dev-invalid', msg: `DEVIATION for ${id} gives no reason` }); continue; }
+      const hit = f.filter((x) => x.rule === id && (x.line === line || x.line === line + 1));
+      if (hit.length) { f = f.filter((x) => !hit.includes(x)); extra.push({ file: rel, line, rule: 'dev-count', msg: `waived ${id}: ${reason}` }); }
+      else extra.push({ file: rel, line, rule: 'dev-stale', msg: `DEVIATION for ${id} matches no finding` });
+    }
+  }
+  return [...f, ...extra];
+}
+
+// Lines of `rel` that differ from HEAD, or null when the whole file counts (untracked, no repo, no commits).
+export function changedLines(cwd: string, rel: string): Set<number> | null {
+  if (run('git', ['ls-files', '--error-unmatch', '--', rel], cwd).status !== 0) return null;
+  const r = run('git', ['diff', '-U0', 'HEAD', '--', rel], cwd);
+  if (r.status !== 0) return null;
+  const set = new Set<number>();
+  for (const l of (r.stdout || '').split('\n')) {
+    const h = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(l);
+    if (h) for (let i = 0; i < (h[2] === undefined ? 1 : Number(h[2])); i++) set.add(Number(h[1]) + i);
+  }
+  return set;
+}
+
+// Keeps only the findings on lines changed since HEAD, for rules that belong to a single file. Repo-level rules pass through.
+export function onlyChanged(cwd: string, found: Finding[]): Finding[] {
+  const cache = new Map<string, Set<number> | null>();
+  return found.filter((x) => {
+    const r = RULES[x.rule];
+    if (!r || !PER_FILE_STD.has(r.std)) return true;
+    if (!cache.has(x.file)) cache.set(x.file, changedLines(cwd, x.file));
+    const lines = cache.get(x.file)!;
+    return lines === null || lines.has(x.line);
+  });
+}
+
+// RULE 11 with the signature the user chose at install (for example "abc"): classes and ids the PROJECT defines start with `abc-`, data
+// attributes with `data-abc-`. It covers custom code only. Never checked: package and library code (node_modules, vendor, third-party,
+// minified, generated), the class and data-attribute names a package brings (Bootstrap's btn, Swiper's data-swiper, ...), anything in
+// "signatureIgnore" (files) or "signatureExempt" (name prefixes) in .claude/code-audit.json. Review-level: a project may restyle a package class.
+const PACKAGE_PATH = /(^|\/)(node_modules|bower_components|vendor|vendors|third[-_]?party|external|public\/vendor|assets\/vendor|static\/vendor)\//i;
+const PACKAGE_FILE = /\.min\.(css|js)$|-min\.(css|js)$/i;
+// Name prefixes a dependency brings, keyed by its package name. Found from package.json, so a project with Bootstrap is not blamed for .btn.
+const PACKAGE_NAMES: Record<string, string[]> = {
+  bootstrap: ['btn', 'navbar', 'nav', 'card', 'col', 'row', 'container', 'modal', 'form', 'alert', 'badge', 'dropdown', 'collapse', 'fade', 'show', 'active', 'disabled', 'table', 'list-group', 'breadcrumb', 'pagination', 'progress', 'toast', 'carousel', 'accordion', 'offcanvas', 'spinner', 'tooltip', 'popover', 'input-group', 'd', 'p', 'm', 'text', 'bg', 'border', 'rounded', 'shadow', 'w', 'h', 'flex', 'justify', 'align', 'gap', 'g', 'order', 'float', 'position', 'overflow', 'visually', 'ratio', 'sticky', 'fixed'],
+  bulma: ['button', 'column', 'columns', 'box', 'navbar', 'hero', 'section', 'title', 'subtitle', 'is', 'has', 'modal', 'menu', 'tabs', 'panel', 'level', 'media', 'message', 'notification'],
+  'foundation-sites': ['button', 'grid', 'cell', 'callout', 'reveal', 'top-bar', 'menu', 'tabs', 'accordion'],
+  '@fortawesome/fontawesome-free': ['fa', 'fas', 'far', 'fab', 'fa-solid', 'fa-regular', 'fa-brands'],
+  swiper: ['swiper'], aos: ['aos'], 'slick-carousel': ['slick'], 'animate.css': ['animate__', 'animate'], select2: ['select2'], flatpickr: ['flatpickr'],
+  'tippy.js': ['tippy'], leaflet: ['leaflet'], prismjs: ['token', 'language'],
+};
+const FRAMEWORK_DATA = /^(bs-|aria-|testid$|test-|cy-|turbo|astro|react|next|radix-|headlessui|wp-|v-|ng-|svelte|toggle$|target$|dismiss$|lazy$|src$|aos|swiper|slick|lightbox|fancybox|tippy|popper)/;
+const nameExempt = (name: string, exempt: string[]): boolean => exempt.some((x) => name === x || name.startsWith(x.endsWith('-') || x.endsWith('_') ? x : x + '-'));
+// Exempt prefixes from the project's package.json dependencies.
+// Class names defined in the CSS that the installed dependencies ship (node_modules/<dep>/**/*.css, three folders deep). Any dependency, not
+// only the ones in the table. Capped (60 packages, 400 KB each, 2 MB in all) and cached in .claude/code-audit.pkg.json until package.json changes.
+const PKG_CACHE = path.join('.claude', 'code-audit.pkg.json');
+function packageClasses(cwd: string, deps: string[]): string[] {
+  const nm = path.join(cwd, 'node_modules');
+  if (!fs.existsSync(nm)) return [];
+  let key = '';
+  try { const st = fs.statSync(path.join(cwd, 'package.json')); key = `${st.mtimeMs}:${deps.join(',')}`; } catch { return []; }
+  try { const c = JSON.parse(fs.readFileSync(path.join(cwd, PKG_CACHE), 'utf8')); if (c.key === key) return c.classes; } catch { /* no cache yet */ }
+  const names = new Set<string>();
+  let total = 0;
+  const cssIn = (d: string, depth: number, acc: string[]): void => {
+    if (depth > 3) return;
+    let ents: fs.Dirent[] = [];
+    try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+      const a = path.join(d, e.name);
+      if (e.isDirectory()) cssIn(a, depth + 1, acc);
+      else if (/\.css$/i.test(e.name)) acc.push(a);
+    }
+  };
+  for (const dep of deps.slice(0, 60)) {
+    const files: string[] = [];
+    cssIn(path.join(nm, ...dep.split('/')), 0, files);
+    let used = 0;
+    for (const f of files) {
+      let size = 0;
+      try { size = fs.statSync(f).size; } catch { continue; }
+      if (used + size > 400 * 1024 || total + size > 2 * 1024 * 1024) continue;
+      used += size; total += size;
+      let css = '';
+      try { css = fs.readFileSync(f, 'utf8'); } catch { continue; }
+      for (const m of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) if (!/^\d/.test(m[1])) names.add(m[1]);
+    }
+  }
+  const classes = [...names].sort();
+  try { fs.mkdirSync(path.join(cwd, '.claude'), { recursive: true }); fs.writeFileSync(path.join(cwd, PKG_CACHE), JSON.stringify({ key, classes })); } catch { /* a read-only project just recomputes */ }
+  return classes;
+}
+function packageExempt(cwd: string): string[] {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf8'));
+    const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    return [...Object.keys(PACKAGE_NAMES).filter((k) => k in deps).flatMap((k) => PACKAGE_NAMES[k]), ...packageClasses(cwd, Object.keys(deps))];
+  } catch { return []; }
+}
+function signatureChecks(rel: string, text: string, alias: string, cfg: CheckTextConfig): Finding[] {
+  if (PACKAGE_PATH.test(rel) || PACKAGE_FILE.test(rel) || GENERATED_NAME.test(path.basename(rel)) || GENERATED.test(text.slice(0, 600))) return [];
+  if ((cfg.signatureIgnore || []).some((g) => globRe(g).test(rel))) return [];
+  const exempt = cfg.signatureExempt || [];
+  const out: Finding[] = [];
+  const L = lineFn(text);
+  const add = (idx: number, msg: string): void => { out.push({ file: rel, line: L(idx), rule: 'css-11', msg }); };
+  if (CSS_EXT.test(rel)) {
+    const css = text.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1/g, blank);
+    for (const p of css.matchAll(/([^{}]+)\{/g)) {
+      const prelude = p[1];
+      if (/^\s*@/.test(prelude)) continue;
+      const seen = new Set<string>();
+      for (const m of prelude.matchAll(/([.#])([A-Za-z_][\w-]*)/g)) {
+        if (m[2].startsWith(alias + '-') || seen.has(m[0]) || nameExempt(m[2], exempt)) continue;
+        seen.add(m[0]);
+        add(p.index! + m.index!, `${m[1] === '.' ? 'class' : 'id'} ${m[0]} does not start with ${alias}-`);
+      }
+    }
+  }
+  if (MARKUP_EXT.test(rel) || SCRIPT_EXT.test(rel)) {
+    const t = SCRIPT_EXT.test(rel) ? stripCode(text, true) : blankHtmlComments(text);
+    for (const m of t.matchAll(/\bdata-([a-z][\w-]*)/g)) {
+      if (m[1].startsWith(alias + '-') || FRAMEWORK_DATA.test(m[1]) || nameExempt(m[1], exempt)) continue;
+      add(m.index!, `data attribute data-${m[1]} does not start with data-${alias}-`);
+    }
+  }
+  return out;
+}
+// The alias the company set (company sync --company-signature), read from the install manifest.
+function manifestSignature(cwd: string): string | undefined {
+  try { return JSON.parse(fs.readFileSync(path.join(cwd, '.ai-dev-kit.json'), 'utf8')).signature?.alias; } catch { return undefined; }
+}
+
+// Shared component names (RULE 11, third place): the project's own shared components, found in components/, ui/ or shared/ folders, start with the
+// capitalised signature (Abc + Button). Pages, views, screens, tests and stories are not shared components. Review-level, like css-11.
+const COMPONENT_DIRS = ['components', 'component', 'ui', 'shared'];
+function componentChecks(rel: string, text: string, alias: string, cfg: CheckTextConfig): Finding[] {
+  if (PACKAGE_PATH.test(rel) || PACKAGE_FILE.test(rel) || GENERATED_NAME.test(path.basename(rel)) || GENERATED.test(text.slice(0, 600))) return [];
+  if ((cfg.signatureIgnore || []).some((g) => globRe(g).test(rel))) return [];
+  if (/(^|\/)(pages?|views?|screens?|routes?|stories|__tests__|tests?)\//.test(rel) || /\.(test|spec|stories)\./.test(rel)) return [];
+  const dirs = cfg.signatureComponentDirs && cfg.signatureComponentDirs.length ? cfg.signatureComponentDirs : COMPONENT_DIRS;
+  if (!dirs.some((d) => new RegExp('(^|/)' + d.replace(/[.+^${}()|[\]\\]/g, '\\$&') + '/').test(rel))) return [];
+  const cap = alias[0].toUpperCase() + alias.slice(1);
+  const exempt = (cfg.signatureExempt || []).filter((x) => /^[A-Z]/.test(x));
+  const ok = (name: string): boolean => (name.startsWith(cap) && (name.length === cap.length || /[A-Z0-9]/.test(name[cap.length]))) || exempt.some((x) => name.startsWith(x));
+  const out: Finding[] = [];
+  const L = lineFn(text);
+  const add = (idx: number, name: string): void => { out.push({ file: rel, line: L(idx), rule: 'css-11-component', msg: `component ${name} does not start with ${cap}` }); };
+  const ext = path.extname(rel).toLowerCase();
+  if (ext === '.vue' || ext === '.svelte') {
+    const b = path.basename(rel, ext);
+    if (/^[A-Z]/.test(b) && !ok(b)) add(0, b);
+    return out;
+  }
+  if (ext === '.dart') {
+    for (const m of text.matchAll(/\bclass\s+([A-Z]\w*)\s+extends\s+(?:StatelessWidget|StatefulWidget|HookWidget|ConsumerWidget|ConsumerStatefulWidget)\b/g)) if (!ok(m[1])) add(m.index!, m[1]);
+    return out;
+  }
+  if (/\.(jsx|tsx)$/i.test(rel)) {
+    const code = stripCode(text);
+    // Components the file declares: a Pascal-case function, class, or const = arrow/memo/forwardRef.
+    const declared = new Map<string, number>();
+    for (const m of code.matchAll(/\b(?:function\s+([A-Z]\w*)\s*\(|class\s+([A-Z]\w*)\b|const\s+([A-Z]\w*)\b[^=;]*=\s*(?:async\s*)?(?:\([^)]*\)\s*(?::[^=]+)?=>|[A-Za-z_$][\w$]*\s*=>|(?:React\.)?(?:memo|forwardRef)\s*\())/g)) {
+      const name = m[1] || m[2] || m[3];
+      declared.set(name, m.index!); // functions are camelCase under the kit's naming rule, so a Pascal-case function, arrow or class here is a component
+    }
+    // What the file exports: export function/class/const X; export { X, Y as Z }; export default X; and any component named inside
+    // an expression that is exported by default or assigned to module.exports (export default connect(a)(X), memo(X), withRouter(X)).
+    // public name -> [local name, position]. The public name is what other files import, so that is the one that needs the prefix.
+    const exported = new Map<string, [string, number]>();
+    for (const m of code.matchAll(/\bexport\s+(?:default\s+)?(?:async\s+)?(?:function|class|const)\s+([A-Z]\w*)/g)) exported.set(m[1], [m[1], m.index!]);
+    for (const m of code.matchAll(/\bexport\s*\{([^}]*)\}/g)) {
+      for (const part of m[1].split(',')) {
+        const mm = /^\s*([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?\s*$/.exec(part);
+        if (!mm) continue;
+        const pub = !mm[2] || mm[2] === 'default' ? mm[1] : mm[2];
+        if (/^[A-Z]/.test(pub)) exported.set(pub, [mm[1], m.index!]);
+      }
+    }
+    for (const m of code.matchAll(/\b(?:export\s+default|module\.exports\s*=)\s*([^;\n]+)/g)) {
+      for (const id of m[1].matchAll(/\b([A-Z]\w*)\b/g)) if (declared.has(id[1])) exported.set(id[1], [id[1], m.index!]);
+    }
+    for (const [pub, [local, at]] of exported) if (declared.has(local) && !ok(pub)) add(at, pub);
+  }
+  return out;
+}
+
+// Banned imports, the strict-company model: a company that forbids libraries lists them (a name, a name/ or a glob like @mui/*) and an import is a hard rule.
+function bannedChecks(rel: string, text: string, banned: (string | { pattern: string; message?: string })[]): Finding[] {
+  if (!banned.length || PACKAGE_PATH.test(rel) || PACKAGE_FILE.test(rel) || GENERATED_NAME.test(path.basename(rel))) return [];
+  const t = SCRIPT_EXT.test(rel) ? stripCode(text, true) : CSS_EXT.test(rel) ? text.replace(/\/\*[\s\S]*?\*\//g, blank) : MARKUP_EXT.test(rel) ? blankHtmlComments(text) : '';
+  if (!t) return [];
+  const L = lineFn(text);
+  const list = banned.map((b) => (typeof b === 'string' ? { pattern: b, message: undefined as string | undefined } : { pattern: b.pattern, message: b.message }));
+  const out: Finding[] = [];
+  for (const m of t.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*|@import\s+(?:url\(\s*)?)["']([^"']+)["']/g)) {
+    for (const b of list) {
+      const re = new RegExp('^' + b.pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+      if (re.test(m[1]) || m[1].startsWith(b.pattern.replace(/\*+$/, '').replace(/\/$/, '') + '/')) out.push({ file: rel, line: L(m.index!), rule: 'ban-01', msg: `import of banned library "${m[1]}"${b.message ? ': ' + b.message : ''}` });
+    }
+  }
+  return out;
+}
+
+// ---- contrast (A11Y-09) ----
+type RGB = [number, number, number];
+const NAMED: Record<string, RGB> = { white: [255, 255, 255], black: [0, 0, 0] };
+const clamp01 = (n: number): number => Math.min(1, Math.max(0, n));
+function oklchToRgb(l: number, c: number, hDeg: number): RGB {
+  const h = (hDeg * Math.PI) / 180;
+  const a = c * Math.cos(h), b = c * Math.sin(h);
+  const l_ = l + 0.3963377774 * a + 0.2158037573 * b, m_ = l - 0.1055613458 * a - 0.0638541728 * b, s_ = l - 0.0894841775 * a - 1.291485548 * b;
+  const L = l_ ** 3, M = m_ ** 3, S = s_ ** 3;
+  const lin = [4.0767416621 * L - 3.3077115913 * M + 0.2309699292 * S, -1.2684380046 * L + 2.6097574011 * M - 0.3413193965 * S, -0.0041960863 * L - 0.7034186147 * M + 1.707614701 * S];
+  return lin.map((v) => 255 * clamp01(v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)) as RGB;
+}
+function hslToRgb(h: number, sat: number, l: number): RGB {
+  const k = (n: number): number => (n + h / 30) % 12;
+  const a = sat * Math.min(l, 1 - l);
+  return [0, 8, 4].map((n) => 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))) as RGB;
+}
+// An opaque colour as [r, g, b], or null for anything it cannot resolve (alpha below 1, color-mix(), light-dark(), unknown names).
+export function parseColour(v: string): RGB | null {
+  const t = v.trim().toLowerCase();
+  if (NAMED[t]) return NAMED[t];
+  const hex = /^#([0-9a-f]{3,8})$/.exec(t);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3 || h.length === 4) h = h.split('').map((c) => c + c).join('');
+    if (h.length === 8 && h.slice(6) !== 'ff') return null;
+    if (h.length !== 6 && h.length !== 8) return null;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as RGB;
+  }
+  const fn = /^(rgba?|hsla?|oklch)\(\s*([^)]+)\)$/.exec(t);
+  if (!fn) return null;
+  const parts = fn[2].replace(/\s*\/\s*/, ' / ').split(/[\s,]+/).filter(Boolean);
+  const slash = parts.indexOf('/');
+  const alphaTok = slash >= 0 ? parts[slash + 1] : fn[1].endsWith('a') && parts.length === 4 ? parts[3] : undefined;
+  const nums = (slash >= 0 ? parts.slice(0, slash) : parts.slice(0, 3)).map((x) => parseFloat(x));
+  if (alphaTok !== undefined) { const a = alphaTok.endsWith('%') ? parseFloat(alphaTok) / 100 : parseFloat(alphaTok); if (!(a >= 1)) return null; }
+  if (nums.length < 3 || nums.some((n) => Number.isNaN(n))) return null;
+  if (fn[1].startsWith('rgb')) return [0, 1, 2].map((i) => Math.round(parts[i].endsWith('%') ? (nums[i] * 255) / 100 : nums[i])) as RGB;
+  if (fn[1].startsWith('hsl')) return hslToRgb(((nums[0] % 360) + 360) % 360, clamp01(nums[1] / 100), clamp01(nums[2] / 100)).map(Math.round) as RGB;
+  return oklchToRgb(parts[0].endsWith('%') ? nums[0] / 100 : nums[0], nums[1], nums[2]).map(Math.round) as RGB;
+}
+const luminance = ([r, g, b]: RGB): number => {
+  const f = (c: number): number => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+export function contrastRatio(a: RGB, b: RGB): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+export type ContrastPair = { fg: string; bg: string; min?: number };
+// Custom-property declarations by mode. Dark is anything under prefers-color-scheme: dark or a selector that says dark; light is the rest.
+function tokenModes(text: string): { light: Map<string, { v: string; line: number }>; dark: Map<string, { v: string; line: number }> } {
+  const css = text.replace(/\/\*[\s\S]*?\*\//g, blank);
+  const L = lineFn(text);
+  const out = { light: new Map<string, { v: string; line: number }>(), dark: new Map<string, { v: string; line: number }>() };
+  const walk = (from: number, to: number, dark: boolean): void => {
+    let i = from;
+    while (i < to) {
+      const open = css.indexOf('{', i);
+      if (open < 0 || open >= to) return;
+      const close = matchBrace(css, open) - 1;
+      const prelude = css.slice(i, open);
+      const inner = (): void => {
+        if (/^\s*@(media|supports|layer|container)/.test(prelude)) walk(open + 1, close, dark || /prefers-color-scheme\s*:\s*dark/.test(prelude));
+        else if (!/^\s*@/.test(prelude)) {
+          const isDark = dark || /dark/i.test(prelude);
+          for (const m of css.slice(open + 1, close).matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) (isDark ? out.dark : out.light).set(m[1], { v: m[2].trim(), line: L(open + 1 + m.index!) });
+        }
+      };
+      inner();
+      i = close + 1;
+    }
+  };
+  walk(0, css.length, false);
+  return out;
+}
+const resolveVar = (v: string, vars: Map<string, { v: string; line: number }>, depth = 0): string | null => {
+  const m = /^var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)$/.exec(v.trim());
+  if (!m) return v.trim();
+  if (depth > 8) return null;
+  const hit = vars.get(m[1]);
+  if (hit) return resolveVar(hit.v, vars, depth + 1);
+  return m[2] ? resolveVar(m[2], vars, depth + 1) : null;
+};
+const AUTO_FG = /(^|-)text(-|$)/, AUTO_BG = /(^|-)(bg|background|surface)(-|$)/, AUTO_SKIP = /inverse|on-|disabled|placeholder|overlay|scrim/;
+export function contrastChecks(rel: string, text: string, pairs: ContrastPair[] | 'auto'): Finding[] {
+  if (!/--[\w-]+\s*:/.test(text)) return [];
+  const modes = tokenModes(text);
+  if (!modes.light.size && !modes.dark.size) return [];
+  const names = new Set([...modes.light.keys(), ...modes.dark.keys()]);
+  const list: ContrastPair[] = pairs === 'auto'
+    ? [...names].filter((n) => AUTO_FG.test(n) && !AUTO_SKIP.test(n)).flatMap((fg) => [...names].filter((n) => AUTO_BG.test(n) && !AUTO_SKIP.test(n) && n !== fg).map((bg) => ({ fg, bg })))
+    : pairs;
+  const out: Finding[] = [];
+  const skipped = new Set<string>();
+  for (const pair of list) {
+    if (!names.has(pair.fg) || !names.has(pair.bg)) continue; // the pair belongs to another file
+    const min = pair.min ?? 4.5;
+    for (const mode of ['light', 'dark'] as const) {
+      if (mode === 'dark' && !modes.dark.size) continue;
+      const vars = mode === 'light' ? modes.light : new Map([...modes.light, ...modes.dark]);
+      const fgDecl = vars.get(pair.fg), bgDecl = vars.get(pair.bg);
+      if (!fgDecl || !bgDecl) continue;
+      const fv = resolveVar(fgDecl.v, vars), bv = resolveVar(bgDecl.v, vars);
+      const f = fv && parseColour(fv), b = bv && parseColour(bv);
+      if (!f || !b) { const k = pair.fg + pair.bg; if (!skipped.has(k)) { skipped.add(k); out.push({ file: rel, line: fgDecl.line, rule: 'a11y-09-skip', msg: `${pair.fg} on ${pair.bg} not checked: cannot resolve ${!f ? fgDecl.v : bgDecl.v}` }); } continue; }
+      const ratio = contrastRatio(f, b);
+      if (ratio + 1e-9 < min) out.push({ file: rel, line: fgDecl.line, rule: 'a11y-09', msg: `${pair.fg} on ${pair.bg} is ${ratio.toFixed(2)}:1 in ${mode} mode, needs ${min}:1` });
+    }
+  }
+  return out;
+}
+
+export interface CheckTextConfig {
+  contrastPairs?: ContrastPair[] | 'auto';       // A11Y-09: pairs of colour tokens to check, or "auto" (text tokens against surface and background tokens)
+  skipRules?: string[]; styleBlocks?: string; ui?: boolean;
+  signature?: string; signatureIgnore?: string[]; signatureExempt?: string[];
+  signatureMode?: 'review' | 'strict';           // strict: css-11 and css-11-component are hard rules (per edit, and at commit on added lines)
+  signatureComponentDirs?: string[];              // where shared components live (default components, ui, shared)
+  bannedImports?: (string | { pattern: string; message?: string })[];
+}
+
+// One project config for the audit, edit-check and the commit check: .claude/code-audit.json, the signature from the install manifest,
+// the names the project's package.json dependencies bring, and whether ui-standards is installed.
+export function projectConfig(cwd: string, base: CheckTextConfig = {}): CheckTextConfig {
+  let file: CheckTextConfig = {};
+  try { file = JSON.parse(fs.readFileSync(path.join(cwd, '.claude', 'code-audit.json'), 'utf8')); } catch { /* none */ }
+  const c: CheckTextConfig = { ...file, ...base };
+  const signature = c.signature ?? manifestSignature(cwd);
+  return { ...c, signature, ui: c.ui ?? fs.existsSync(path.join(cwd, 'coding-standards', 'ui-standards.md')), signatureExempt: signature ? [...(c.signatureExempt || []), ...packageExempt(cwd)] : [] };
+}
 
 // Findings for one file's text. profile "edit" keeps the small set edit-check has always run per edit.
 export function checkText(rel: string, text: string, cfg: CheckTextConfig = {}, profile = 'audit'): Finding[] {
   let f: Finding[] = [];
+  if (cfg.ui) f.push(...uiChecks(rel, text));
+  if (cfg.signature) f.push(...signatureChecks(rel, text, cfg.signature, cfg), ...componentChecks(rel, text, cfg.signature, cfg));
+  if (cfg.bannedImports && cfg.bannedImports.length) f.push(...bannedChecks(rel, text, cfg.bannedImports));
+  if (cfg.contrastPairs && CSS_EXT.test(rel)) f.push(...contrastChecks(rel, text, cfg.contrastPairs));
   if (CSS_EXT.test(rel)) f.push(...cssChecks(rel, text));
   if (MARKUP_EXT.test(rel)) {
     f.push(...markupChecks(rel, text));
     if (PAGE_EXT.test(rel)) f.push(...pageChecks(rel, text));
   }
   if (SCRIPT_EXT.test(rel)) f.push(...scriptChecks(rel, text));
+  f = applyDeviations(rel, text, f);
   if (profile === 'edit') {
-    f = f.filter((x) => (RULES[x.rule] && RULES[x.rule].edit) || (x.rule === 'css-style-block' && cfg.styleBlocks === 'forbid'));
+    f = f.filter((x) => (RULES[x.rule] && RULES[x.rule].edit) || (x.rule === 'css-style-block' && cfg.styleBlocks === 'forbid') || ((x.rule === 'css-11' || x.rule === 'css-11-component') && cfg.signatureMode === 'strict'));
     f = f.map((x) => (x.rule === 'css-style-block' ? { ...x, msg: '<style> block is forbidden by this project' } : x));
   }
   const skip = new Set(cfg.skipRules || []);
@@ -440,7 +908,7 @@ function listFiles(cwd: string): string[] {
 export interface AuditOpt {
   rule?: string | null; top?: number; sections?: number; limit?: number; baseline?: boolean; context?: boolean;
   noGit?: boolean; ignore?: string[]; paths?: string[]; standard?: string[] | null; includeGenerated?: boolean;
-  showSkipped?: boolean; commits?: number; noFail?: boolean;
+  showSkipped?: boolean; commits?: number; noFail?: boolean; changed?: boolean;
 }
 export interface AuditResult { scanned: number; generated: number; aiIgnored: number; skipped: string[]; findings: Finding[] }
 
@@ -454,8 +922,10 @@ export function audit(cwd: string, cfg: AuditConfig = {}, opt: AuditOpt = {}): A
   let aiIgnored = 0;
   const ignores = [...(cfg.ignore || []), ...(opt.ignore || [])].map(globRe);
   const stds = opt.standard ? new Set(opt.standard) : null;
+  const pc = projectConfig(cwd, cfg);
+  const useUi = !!pc.ui; // UI rules run only where ui-standards is installed
   for (const rel of listFiles(cwd)) {
-    if (!CSS_EXT.test(rel) && !MARKUP_EXT.test(rel) && !SCRIPT_EXT.test(rel)) continue;
+    if (!CSS_EXT.test(rel) && !MARKUP_EXT.test(rel) && !SCRIPT_EXT.test(rel) && !(useUi && MANIFEST_FILE.test(rel))) continue;
     if (only.length && !only.some((p) => rel === p || rel.startsWith(p + '/'))) continue;
     if (SKIP_DIRS.test(rel) || ignores.some((re) => re.test(rel))) continue;
     if (aiIgnores.some((re) => re.test(rel))) { aiIgnored++; continue; }
@@ -464,7 +934,7 @@ export function audit(cwd: string, cfg: AuditConfig = {}, opt: AuditOpt = {}): A
     try { const abs = path.join(cwd, rel); if (fs.statSync(abs).size > 2 * 1024 * 1024) { markSkipped(rel); continue; } text = fs.readFileSync(abs, 'utf8'); } catch { continue; }
     if (!opt.includeGenerated && (GENERATED.test(text.slice(0, 600)) || text.length / text.split('\n').length > 250)) { markSkipped(rel); continue; } // generated header, or bundled into very long lines
     scanned++;
-    findings.push(...checkText(rel, text, cfg, 'audit'));
+    findings.push(...checkText(rel, text, { ...cfg, ...pc }, 'audit'));
   }
   let inGit = false;
   if (!opt.noGit && !only.length) {
@@ -473,7 +943,8 @@ export function audit(cwd: string, cfg: AuditConfig = {}, opt: AuditOpt = {}): A
     findings.push(...gitChecks(cwd, cfg, state), ...versionChecks(cwd, inGit));
   }
   const skip = new Set(cfg.skipRules || []);
-  const kept = findings.filter((f) => !skip.has(f.rule) && (!stds || stds.has(RULES[f.rule].std)));
+  let kept = findings.filter((f) => !skip.has(f.rule) && (!stds || stds.has(RULES[f.rule].std)));
+  if (opt.changed) kept = onlyChanged(cwd, kept); // only code touched since HEAD: no unrequested clean-up of old files
   return { scanned, generated, aiIgnored, skipped, findings: kept };
 }
 
@@ -557,6 +1028,26 @@ function report(res: AuditResult, base: Baseline | null, opt: Required<Pick<Audi
   return out.join('\n');
 }
 
+// The signature check flagged names that look like they come from a library? Group them by first word so the user can list the prefix once.
+export function suggestExempt(found: Finding[]): string {
+  const names = new Map<string, Set<string>>();
+  for (const f of found) {
+    if (f.rule !== 'css-11') continue;
+    const m = /^(?:class|id) [.#](\S+)|^data attribute data-(\S+)/.exec(f.msg);
+    const n = m && (m[1] || m[2]);
+    if (!n) continue;
+    const head = n.split(/[-_]/)[0] || n;
+    if (!names.has(head)) names.set(head, new Set());
+    names.get(head)!.add(n);
+  }
+  if (!names.size) return 'css-11: nothing flagged, nothing to exempt (or no signature is set; see "signature show").';
+  const rows = [...names.entries()].sort((a, b) => b[1].size - a[1].size);
+  return ['css-11 flagged names that do not start with the signature. If a group comes from a package or framework, add its prefix to "signatureExempt" in .claude/code-audit.json:',
+    ...rows.slice(0, 15).map(([h, set]) => `  ${h}  (${set.size} name${set.size === 1 ? '' : 's'}, e.g. ${[...set].slice(0, 3).join(', ')})`),
+    `suggested: "signatureExempt": ${JSON.stringify(rows.slice(0, 15).map(([h]) => h))}`,
+    'Names of your own that you want to keep unprefixed need a DEVIATION comment instead.'].join('\n');
+}
+
 export function listRules(): string {
   const rows = Object.values(RULES).map((r) => `${r.id.padEnd(16)} ${r.std.padEnd(8)} ${r.kind.padEnd(7)} ${r.edit ? 'edit ' : '     '} ${r.what}`);
   return ['rule             standard kind    per-edit what', ...rows, '', NOT_CHECKED].join('\n');
@@ -565,7 +1056,7 @@ export function listRules(): string {
 function main(): void {
   const a = process.argv.slice(2);
   let cwd = process.cwd();
-  let json = false, list = false;
+  let json = false, list = false, suggest = false;
   const opt: Required<Pick<AuditOpt, 'top' | 'sections' | 'limit'>> & AuditOpt = {
     rule: null, top: 5, sections: 6, limit: 200, baseline: false, context: false, noGit: false, ignore: [], paths: [], standard: null,
   };
@@ -577,6 +1068,8 @@ function main(): void {
     else if (v === '--baseline') opt.baseline = true;
     else if (v === '--context') opt.context = true;
     else if (v === '--no-git') opt.noGit = true;
+    else if (v === '--changed') opt.changed = true;
+    else if (v === '--suggest-exempt') suggest = true;
     else if (v === '--include-generated') opt.includeGenerated = true;
     else if (v === '--skipped') opt.showSkipped = true;
     else if (v === '--rule') opt.rule = a[++i];
@@ -596,7 +1089,9 @@ function main(): void {
   try { cfg = JSON.parse(fs.readFileSync(path.join(cwd, '.claude', 'code-audit.json'), 'utf8')); } catch { /* defaults */ }
   if (opt.commits) cfg.commits = opt.commits;
   if (opt.rule && !RULES[opt.rule]) { console.log(`unknown rule ${opt.rule}; run --list`); process.exitCode = 2; return; }
+  if (suggest) { opt.rule = 'css-11'; }
   const res = audit(cwd, cfg, opt);
+  if (suggest) { console.log(suggestExempt(res.findings)); return; }
   let base: Baseline | null = null;
   try { base = JSON.parse(fs.readFileSync(path.join(cwd, BASELINE), 'utf8')); } catch { /* no baseline yet */ }
   const t = tally(res.findings);

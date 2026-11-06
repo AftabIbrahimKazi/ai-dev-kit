@@ -66,6 +66,33 @@ export function addedLines(diffText: string): AddedLine[] {
   return rows;
 }
 
+interface StrictEngine { checkText(rel: string, text: string, cfg: object, profile: string): { file: string; line: number; rule: string; msg: string }[]; projectConfig?(cwd: string, base?: object): object }
+function strictEngine(): StrictEngine | null {
+  for (const p of [path.join(__dirname, '..', 'code-audit', 'audit.js'), path.join(__dirname, '..', 'standards', 'code-audit.audit.js'), path.join(__dirname, 'code-audit.audit.js')]) {
+    try { if (fs.existsSync(p)) return require(p); } catch { /* a broken engine means no strict check, never a wrong block */ }
+  }
+  return null;
+}
+export function strictFindings(cwd: string, diff: string): Finding[] {
+  let cfg: { strict?: boolean; ui?: boolean } = {};
+  try { cfg = JSON.parse(fs.readFileSync(path.join(cwd, '.claude', 'edit-check.json'), 'utf8')); } catch { return []; }
+  if (!cfg.strict) return [];
+  const eng = strictEngine();
+  if (!eng) return [];
+  const ui = cfg.ui ?? fs.existsSync(path.join(cwd, 'coding-standards', 'ui-standards.md'));
+  const added = new Map<string, Set<number>>();
+  for (const r of addedLines(diff)) { if (!added.has(r.file)) added.set(r.file, new Set()); added.get(r.file)!.add(r.line); }
+  const out: Finding[] = [];
+  for (const [file, lines] of added) {
+    let text: string;
+    try { text = fs.readFileSync(path.join(cwd, file), 'utf8'); } catch { continue; }
+    for (const f of eng.checkText(file, text, { ...(eng.projectConfig ? eng.projectConfig(cwd, {}) : {}), ui }, 'edit')) {
+      if (lines.has(f.line)) out.push({ sev: 'BLOCK', kind: 'standard', file, line: f.line, msg: `${f.rule} ${f.msg}` });
+    }
+  }
+  return out;
+}
+
 // handover/locks.d/ is role-session lane state (gitignored, claimed by mkdir). This check runs inside a hook,
 // so git is told to leave it out: its content is never read. Handover notes are scanned like any file.
 const LANE = 'handover/locks.d';
@@ -145,6 +172,10 @@ export function check(opts: CheckOpts): CheckResult {
       for (const [name, re] of DEBUG) if (re.test(r.text)) findings.push({ sev: 'WARN', kind: 'debug', file: r.file, line: r.line, msg: name });
     }
   }
+
+  // Strict projects (.claude/edit-check.json "strict": true): a hard-rule finding on a line this change adds blocks the commit.
+  // The rules are the code-audit engine's per-edit set (plus the ui-* ones where ui-standards is installed). Old code never blocks.
+  if (mode !== 'push') findings.push(...strictFindings(cwd, diff));
 
   if (mode === 'staged') {
     const lane = git(['diff', '--cached', '--name-only', '--', `:(top)${LANE}`], cwd).out.split('\n').filter(Boolean); // names only
