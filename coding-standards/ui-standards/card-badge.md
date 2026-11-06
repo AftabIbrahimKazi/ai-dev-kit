@@ -33,3 +33,4 @@ Read when: adding a card, KPI tile, status badge, tag, count or avatar.
 - **UI-CRD-21** The avatar's accessible name is the person's name (`role="img"` and `aria-label`, or `alt`). When the name is shown beside it, the avatar is `aria-hidden`. A presence dot (10 px, 2 px surface ring) may show and is described in the name ("Rahul Mehta, online").
 - **UI-CRD-22** An avatar group overlaps by 8 px with a 2 px surface ring, shows at most `max` avatars then "+N", is followed or described by a label ("7 people assigned"), and each avatar shows its name in a tooltip.
 - **UI-CRD-23** Serve photos through signed, expiring URLs, only to users allowed to see the person.
+- **UI-CRD-24** A status chip is never clickable: changing a status is an action (menu item or select). A table inside a card has no card padding so rows reach the card edges; the card header holds the title and actions.
