@@ -164,6 +164,7 @@ function runSkillScript(argv) {
 //   list                     what is active, archived (with trigger words) and how to bring one back
 //   add <names...>           restore archived skills now (the model then reads each SKILL.md)
 //   drop <names...>          archive skills now (archivable set only, so a pinned skill is never moved)
+//   wrap <next task words>   what /wrap-up runs: applies the task if one was given, otherwise moves nothing
 //   report [--mark]          moves since the last wrap-up; --mark starts the next window (run by /wrap-up)
 function manualCmd(cmd, rest) {
     const ri = rest.indexOf('--root');
@@ -175,6 +176,20 @@ function manualCmd(cmd, rest) {
             throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
         const trig = loadTriggers().skills;
         const set = Object.keys(trig);
+        if (cmd === 'wrap') {
+            // /wrap-up with a next task: archive what it does not need, restore what it does. No task, no move.
+            if (!names.length) {
+                console.log('no next task given: no skills moved');
+                return;
+            }
+            const p = plan(names.join(' '), [], loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
+            if (p.archive.length)
+                doArchive({ root, skills: p.archive, by: 'manual' });
+            if (p.restore.length)
+                doUnarchive({ root, skills: p.restore, by: 'manual' });
+            console.log('next task: archived ' + p.archive.length + (p.restore.length ? ', restored ' + p.restore.join(', ') : '') + (p.loaded.length ? '; active for it: ' + p.loaded.join(', ') : ''));
+            return;
+        }
         if (cmd === 'list' || ((cmd === 'add' || cmd === 'drop') && !names.length)) {
             const arch = Object.keys(manifest.archived);
             const act = set.filter((n) => manifest.skills[n]);
@@ -231,7 +246,7 @@ function manualCmd(cmd, rest) {
     }
 }
 function main() {
-    if (['list', 'add', 'drop', 'report'].includes(process.argv[2])) {
+    if (['list', 'add', 'drop', 'report', 'wrap'].includes(process.argv[2])) {
         manualCmd(process.argv[2], process.argv.slice(3));
         return;
     }

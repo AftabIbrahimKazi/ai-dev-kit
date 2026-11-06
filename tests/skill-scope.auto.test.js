@@ -194,3 +194,11 @@ t('a task-word restore shows in the report as restored by task words', () => {
   run('apply', '--root', root, '--add-only', '--quiet', 'why', 'is', 'it', 'slow');
   assert.ok(/restored by task words: perf-audit/.test(run('report', '--root', root).stdout));
 });
+t('wrap with no task moves nothing; with a task it applies it and reports', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  assert.ok(/no next task given/.test(run('wrap', '--root', root).stdout));
+  assert.deepStrictEqual(active(root), ['perf-audit', 'responsive-check']);
+  const r = run('wrap', '--root', root, 'speed', 'up', 'the', 'page');
+  assert.ok(/archived 1/.test(r.stdout) && /active for it: perf-audit/.test(r.stdout), r.stdout);
+  assert.deepStrictEqual(active(root), ['perf-audit']);
+});
