@@ -513,7 +513,7 @@ t('STANDARD_ROW_LABELS excludes Script standard and the two Framework rows (reso
   assert.ok(!labels.includes('Script standard'));
   assert.ok(!labels.includes('Framework'));
   assert.ok(!labels.includes('CSS Framework'));
-  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 10);
+  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 11);
 });
 
 t('installStandards against the real CLAUDE.example.md resolves the script standard and prunes inactive rows', () => {

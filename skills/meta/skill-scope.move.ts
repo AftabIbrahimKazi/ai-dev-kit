@@ -26,6 +26,10 @@ export interface Manifest {
   updatedAt?: string;
   // Date of the newest CHANGELOG.md section this project has been told about; `update` reports what is newer.
   lastSeen?: string;
+  // Company standards (coding-standards/company/): see install-kit.company.ts. Present only while the feature is installed.
+  company?: { mode: "keep" | "drop" | "auto"; dropped: string[]; restore: string[]; rows: Record<string, string>; skill: string | null; files: number; generatedAt: string };
+  // Project signature chosen at install (2 to 6 letters): the watermark in selectors, data attributes and component names. See install-kit.signature.ts.
+  signature?: { alias: string; row?: string };
 }
 
 export function readManifest(root: string): Manifest {
