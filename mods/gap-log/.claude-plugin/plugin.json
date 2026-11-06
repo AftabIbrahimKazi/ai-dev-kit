@@ -1,0 +1,8 @@
+{
+  "name": "gap-log",
+  "version": "0.1.0",
+  "description": "Observer. When a main-loop answer contains \"STANDARDS GAP: <what is not covered>\" (the phrase the standards tell the AI to use when a rule is missing instead of inventing one), it appends one row to .claude/standards-gaps.jsonl (time, session, gap) so the holes in the standards pile up where the maintainer can read them. Adds no text to the answer or the context, never blocks, fails open. Stops writing when the log passes 1 MB. Reads no env.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}
