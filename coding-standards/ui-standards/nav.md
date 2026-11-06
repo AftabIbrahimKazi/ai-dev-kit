@@ -36,7 +36,7 @@ Detail in `ui-standards/nav.ref.md`: rail flyout, horizontal dropdowns (header n
 
 ## Groups and submenus
 
-- **UI-NAV-30** A group is a `<button aria-expanded aria-controls>` followed by a `<ul>` of links. Never `role="menu"`, `menubar` or `menuitem` inside `<nav>`.
+- **UI-NAV-30** A group is a `<button aria-expanded aria-controls>` followed by a `<ul>` of links.
 - **UI-NAV-31** A group parent only expands or collapses. A section landing page is the group's first child, labelled "Overview".
 - **UI-NAV-32** Parent row: 20 px icon, label, 16 px end chevron (down collapsed, rotated 180° expanded, 150 ms, instant under reduced motion). Child rows: no icon, label aligned with the parent's label. Rows 40 px, 44 px coarse.
 - **UI-NAV-33** On load the group holding the current route is expanded; other groups restore the user's last state, stored per device. Several groups may be open. Toggling moves no focus and navigates nowhere.

@@ -22,12 +22,12 @@ Read when: adding a toast, alert, banner, flash message, confirm dialog, undo, n
 ## Confirm or Undo
 
 - **UI-FBK-05** A reversible action (archive, remove from list, change status, unassign, move) runs at once and shows a toast with Undo for at least 10 s. No confirmation. Apply it in a reversible form on the server (soft state) so Undo restores order and relations; after the toast closes the change stands, and where possible it can still be reversed from the record's activity or the archive.
-- **UI-FBK-06** An irreversible action (permanent delete, send an email or invoice, revoke access, payment) asks confirmation in an `alertdialog`: the title is a question naming the action and the object ("Delete laptop LT-0044?"), the body states the consequence ("…can't be undone."), "Cancel" has initial focus, and a solid danger button repeats the verb ("Delete laptop"). Esc cancels. Never "Are you sure?", "OK" or "Yes/No".
+- **UI-FBK-06** An irreversible action (permanent delete, send an email or invoice, revoke access, payment) asks confirmation in an `alertdialog`: the title is a question naming the action and the object ("Delete laptop LT-0044?"), the body states the consequence ("…can't be undone."), "Cancel" has initial focus, and a solid danger button repeats the verb ("Delete laptop"). Esc cancels.
 - **UI-FBK-12** A permanent bulk delete of more than 25 records, and the deletion of a tenant, site, account or any container of data, requires typing the record code or the count ("Type 40 to confirm"). The danger button stays `aria-disabled` until the text matches.
 
 ## Wording and notifications
 
-- **UI-FBK-04** A message is in sentence case, names the object ("LT-0044 assigned to Rahul Mehta"), uses past tense for completed actions, and states what happened, why and what to do next. A server error adds a support code. Never "Something went wrong", "Error", "Are you sure?", "successfully", exclamation marks, "Oops" or jokes. (check: ui-fbk-04)
+- **UI-FBK-04** A message is in sentence case, names the object ("LT-0044 assigned to Rahul Mehta"), uses past tense for completed actions, and states what happened, why and what to do next. A server error adds a support code. Never "Error", "Oops" or jokes. (check: ui-fbk-04)
 - **UI-FBK-13** The bell is for events that happen while the user is elsewhere: background job results, assignments and mentions by others, approvals. Never for the immediate feedback of the user's own action. Each notification links to its object and has read and unread state, and goes only to users permitted to see the object.
 - **UI-FBK-14** Toasts, banners, flash messages and notifications never carry Confidential or Restricted values, tokens or full personal data. They reference records by identifier.
 - **UI-FBK-15** Colours come from tokens: status colours, inverted toast colours, danger solid and on-danger for destructive buttons.
