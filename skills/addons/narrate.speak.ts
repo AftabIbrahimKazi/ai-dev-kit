@@ -9,6 +9,10 @@
 //   --mute | --unmute | --stop | --status | --play (= --replay)   (a reply is spoken once on its own; --play is how you hear it in manual mode, or again)
 //   --voice male|female   --volume 0-100   --speed 0.5-2   --pitch -12..12 (semitones)   --maxSeconds 30-1800   each saved in the config
 //   --pause / --resume   hold the speech where it is / carry on from there (--stop cuts it and clears the queue)
+//   --alertCommand "<cmd {wav}>"|off   alerts through your own engine (text on stdin, wav at {wav}); the Piper alert voice if it fails or takes over 150 s
+//   --alertPrerender   record the lead-in lines and common questions through the custom engine ahead of time; --alertCache status|clear
+//   (every rendered alert piece is cached, so only a question not heard before is ever rendered; the cache is ~/.claude/narrate-cache)
+//   --alertEngine piper|custom   all-Piper, or alerts through the saved --alertCommand engine (replies stay on Piper either way)
 //   --alerts on|off   --alertVoice male|female   --alertIdle 0-600   spoken alert in a second voice when a reply ends on a question
 //   and you are away from the keyboard for alertIdle seconds (0 = always); --alert "text" speaks a sample. Config keys: alerts,
 //   alertGender (default: the other voice), alertIdle (30), alertPhrases (["Your input is needed. {q}", ...]), voices.alert (own .onnx)
@@ -110,7 +114,7 @@ export function clean(md: string, max = 6000): string {
 interface NarrateConfigFile {
   mode?: string; engine?: string; gender?: string; volume?: number | string; speed?: number | string; pitch?: number | string;
   maxSeconds?: number | string; max?: number | string; voices?: Record<string, string>; piper?: { exe?: string; args?: string[] };
-  command?: string; voice?: string; alerts?: boolean | string; alertGender?: string; alertIdle?: number | string; alertPhrases?: string[];
+  command?: string; voice?: string; alerts?: boolean | string; alertCommand?: string; alertEngine?: string; alertGender?: string; alertIdle?: number | string; alertPhrases?: string[];
   [key: string]: unknown;
 }
 
@@ -130,12 +134,22 @@ export function trailingQuestion(md: string): string {
 
 // the alert line: a phrase (config `alertPhrases`, or the built-ins) with {q} replaced by the question; the choice
 // is by the question's own text, so the same question always gets the same phrase
-export function alertText(question: string, phrases: string[] = ALERT_PHRASES): string {
+export function alertText(question: string, phrases: string[] = ALERT_PHRASES): string { return alertParts(question, phrases).join(' '); }
+
+// The same alert as separate pieces (lead-in, question, any tail). With a custom engine each piece is rendered and cached on
+// its own, so the fixed lead-ins and any repeated question are never rendered twice.
+export function alertParts(question: string, phrases: string[] = ALERT_PHRASES): string[] {
   const list = phrases.filter((p) => typeof p === 'string' && p.trim());
   const pool = list.length ? list : ALERT_PHRASES;
   let h = 0; for (const c of question) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return pool[h % pool.length].replace(/\{q\}/g, question).replace(/\s+/g, ' ').trim();
+  const t = pool[h % pool.length];
+  const parts = t.includes('{q}') ? [t.split('{q}')[0], question, t.split('{q}').slice(1).join(question)] : [t, question];
+  return parts.map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean);
 }
+
+// questions that come up all the time; `--alertPrerender` records them ahead of time so those alerts cost no render at all
+export const COMMON_QUESTIONS = ['Should I continue?', 'Should I go ahead?', 'Do you want me to proceed?', 'Should I commit this?', 'Should I push it?',
+  'Should I run the tests?', 'Should I apply the fix?', 'Which option do you prefer?', 'Is that okay?', 'Shall I start?', 'Should I keep going?', 'Do you want me to stop here?'];
 
 // seconds since the last keyboard or mouse input; Infinity where it cannot be read (then the alert is always spoken)
 export function idleSeconds(): number {
@@ -155,7 +169,7 @@ const clamp = (n: number, [lo, hi]: [number, number]): number => Math.min(hi, Ma
 export interface Settings {
   mode: 'auto' | 'manual'; engine: string; gender: Gender; volume: number; speed: number; pitch: number;
   max: number; model: string; piper: { exe?: string; args?: string[] }; command?: string; voice?: string;
-  alerts: boolean; alertGender: Gender; alertIdle: number; alertModel: string; alertPhrases: string[];
+  alerts: boolean; alertCommand?: string; alertCommandSaved?: string; alertGender: Gender; alertIdle: number; alertModel: string; alertPhrases: string[];
 }
 
 // effective settings with defaults and limits applied
@@ -163,9 +177,10 @@ export function settings(cfg: NarrateConfigFile = config()): Settings {
   const num = (k: string, d: number): number => (Number.isFinite(Number(cfg[k])) && cfg[k] !== '' && cfg[k] != null ? clamp(Number(cfg[k]), LIMITS[k]) : d);
   const gender: Gender = cfg.gender === 'male' ? 'male' : 'female';
   // the alert voice is the other slot unless chosen, so it sounds like a different speaker; `voices.alert` is a file of its own
+  const saved = typeof cfg.alertCommand === 'string' && cfg.alertCommand.trim() ? cfg.alertCommand.trim() : undefined; // the command stays saved while Piper is chosen
   const alertGender: Gender = cfg.alertGender === 'male' || cfg.alertGender === 'female' ? cfg.alertGender : gender === 'female' ? 'male' : 'female';
   return {
-    alerts: cfg.alerts === true || cfg.alerts === 'on' || cfg.alerts === 'true', alertGender, alertIdle: num('alertIdle', 30),
+    alerts: cfg.alerts === true || cfg.alerts === 'on' || cfg.alerts === 'true', alertCommand: cfg.alertEngine === 'piper' ? undefined : saved, alertCommandSaved: saved, alertGender, alertIdle: num('alertIdle', 30),
     alertModel: (cfg.voices && (cfg.voices.alert || cfg.voices[alertGender])) || defaultVoice(alertGender), alertPhrases: Array.isArray(cfg.alertPhrases) ? cfg.alertPhrases : [],
     mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
     max: Number(cfg.max) > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 1110) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || defaultVoice(gender),
@@ -310,8 +325,9 @@ export function chunks(text: string, size = 350): string[] {
   return out;
 }
 
-// one piece to a wav file with the wav engines (piper, command); resolves true when the file was written
-function synth(text: string, s: Settings, wav: string): Promise<boolean> {
+// one piece to a wav file with the wav engines (piper, command); resolves true when the file was written.
+// timeoutMs ends a command that hangs (a model that never loads): the whole process tree is killed and it resolves false.
+function synth(text: string, s: Settings, wav: string, timeoutMs = 0): Promise<boolean> {
   return new Promise((resolve) => {
     const o: childProcess.SpawnOptions = { stdio: ['pipe', 'ignore', 'ignore'], windowsHide: true };
     let child: childProcess.ChildProcess;
@@ -320,24 +336,99 @@ function synth(text: string, s: Settings, wav: string): Promise<boolean> {
       const args = [...(s.piper.args || []), '--model', s.model, '--length-scale', String(factor / s.speed), '--output_file', wav];
       child = spawn(s.piper.exe || 'piper', args, o);
     } else child = spawn(s.command!.replace(/\{wav\}/g, `"${wav}"`), { ...o, shell: true });
-    child.on('error', () => resolve(false));
-    child.on('close', (code) => resolve(code === 0));
+    let timer: NodeJS.Timeout | undefined;
+    if (timeoutMs > 0) timer = setTimeout(() => {
+      if (process.platform === 'win32' && child.pid) spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
+      else child.kill('SIGKILL');
+      resolve(false);
+    }, timeoutMs);
+    child.on('error', () => { if (timer) clearTimeout(timer); resolve(false); });
+    child.on('close', (code) => { if (timer) clearTimeout(timer); resolve(code === 0 && fs.existsSync(wav)); });
     child.stdin!.on('error', () => {});
     child.stdin!.end(text);
   });
 }
 
-async function speakWav(text: string, s: Settings): Promise<void> {
+// true when at least one piece was synthesized and played
+async function speakWav(text: string, s: Settings, timeoutMs = 0): Promise<boolean> {
   const parts = chunks(text);
   const file = (i: number): string => path.join(TMP, `narrate-${process.pid}-${i}.wav`);
-  let next = synth(parts[0], s, file(0));
+  let next = synth(parts[0], s, file(0), timeoutMs);
+  let played = false;
   for (let i = 0; i < parts.length; i++) {
     const ok = await next;
-    if (i + 1 < parts.length) next = synth(parts[i + 1], s, file(i + 1));
+    if (i + 1 < parts.length) next = synth(parts[i + 1], s, file(i + 1), timeoutMs);
     await whilePaused(); // a pause between pieces; inside a piece the player holds the clip itself
-    if (ok) shapeAndPlay(file(i), s);
+    if (ok) { shapeAndPlay(file(i), s); played = true; }
     rm(file(i));
   }
+  return played;
+}
+
+// An alert through the user's own command (`alertCommand`: text on stdin, wav at {wav}; e.g. a local cloned-voice engine).
+// A slow or failing command never loses the alert: it falls back to the alert's Piper voice.
+export const ALERT_COMMAND_TIMEOUT_MS = 150000;
+
+// Rendered alert pieces are kept as wav files, keyed by the engine command and the normalised text, so a lead-in or a question
+// that was spoken once is replayed from disk. The folder is the user's, outside any repo; `--alertCache clear` empties it.
+const CACHE = path.join(HOME, 'narrate-cache');
+const CACHE_MAX = 300;
+export const cacheKey = (command: string, piece: string): string =>
+  require('node:crypto').createHash('sha256').update(command + '\0' + piece.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 24);
+const cacheFile = (command: string, piece: string): string => path.join(CACHE, cacheKey(command, piece) + '.wav');
+function cacheFiles(): string[] { try { return fs.readdirSync(CACHE).filter((f) => f.endsWith('.wav')).map((f) => path.join(CACHE, f)); } catch { return []; } }
+function pruneCache(): void { // keep the newest CACHE_MAX
+  const files = cacheFiles().map((f) => ({ f, t: fs.statSync(f).mtimeMs })).sort((a, b) => b.t - a.t);
+  for (const x of files.slice(CACHE_MAX)) rm(x.f);
+}
+const commandSettings = (s: Settings): Settings => ({ ...s, engine: 'command', command: s.alertCommand, speed: 1, pitch: 0 });
+
+// The wav for one piece: from the cache, or rendered by the command and then cached. Returns the temp file to play, or '' on failure.
+async function pieceWav(piece: string, cs: Settings, tmp: string): Promise<string> {
+  const f = cacheFile(cs.command!, piece);
+  try { if (fs.existsSync(f)) { fs.copyFileSync(f, tmp); return tmp; } } catch { /* re-render */ }
+  if (!(await synth(piece, cs, tmp, ALERT_COMMAND_TIMEOUT_MS))) { rm(tmp); return ''; }
+  try { fs.mkdirSync(CACHE, { recursive: true }); fs.copyFileSync(tmp, f); pruneCache(); } catch { /* caching is best effort */ }
+  return tmp;
+}
+
+// An alert is its pieces (lead-in, question) one after the other. With a custom engine, a piece that cannot be rendered (engine
+// down, or over the time limit) and everything after it is spoken in the narration voice in Piper: never a different voice, never lost.
+async function speakAlertPieces(pieces: string[], s: Settings): Promise<void> {
+  const cs = commandSettings(s);
+  const tmp = path.join(TMP, `narrate-${process.pid}-alert.wav`);
+  let i = 0;
+  for (; i < pieces.length; i++) {
+    const wav = await pieceWav(pieces[i], cs, tmp);
+    if (!wav) break;
+    await whilePaused();
+    shapeAndPlay(wav, cs); rm(wav);
+  }
+  if (i < pieces.length) await speak(pieces.slice(i).join(' '), s);
+}
+
+async function speakAlert(text: string, s: Settings): Promise<void> {
+  const pieces = text.split('\n').map((p) => p.trim()).filter(Boolean);
+  if (s.alertCommand) return speakAlertPieces(pieces, s);
+  await speak(pieces.join(' '), { ...s, gender: s.alertGender, model: s.alertModel });
+}
+
+// Record the fixed pieces ahead of time (the lead-in lines and the common questions) so the first alerts need no render either.
+async function prerenderAlerts(): Promise<void> {
+  const s = settings();
+  if (!s.alertCommand) { console.log('no custom alert engine is active: set one with --alertCommand "<command with {wav}>" (and --alertEngine custom)'); return; }
+  const cs = commandSettings(s);
+  const pool = s.alertPhrases.length ? s.alertPhrases : ALERT_PHRASES;
+  const leadIns = new Set<string>();
+  for (const p of pool) for (const piece of p.split('{q}')) if (piece.trim()) leadIns.add(piece.replace(/\s+/g, ' ').trim());
+  const list = [...leadIns, ...COMMON_QUESTIONS];
+  const tmp = path.join(TMP, `narrate-${process.pid}-prerender.wav`);
+  let made = 0, had = 0, failed = 0;
+  for (const piece of list) {
+    if (fs.existsSync(cacheFile(cs.command!, piece))) { had++; continue; }
+    if (await pieceWav(piece, cs, tmp)) { made++; rm(tmp); console.log(`recorded (${made + had + failed}/${list.length}): ${piece}`); } else { failed++; console.log(`failed: ${piece}`); }
+  }
+  console.log(`alert cache: ${made} recorded, ${had} already there, ${failed} failed, ${cacheFiles().length} files in all`);
 }
 
 // runs inside the detached worker: speak one queued reply
@@ -385,7 +476,7 @@ async function drain(): Promise<void> {
       if (!isAlertFile(f)) { await speak(text, s); continue; }
       // an alert: only while alerts are on and unmuted, and (unless it is the spoken test) only when you are away from the keyboard
       if (!f.endsWith('.alertnow.txt') && (!s.alerts || isOff() || (s.alertIdle > 0 && idleSeconds() < s.alertIdle))) continue;
-      await speak(text, { ...s, gender: s.alertGender, model: s.alertModel });
+      await speakAlert(text, s);
     }
     rm(LOCK);
     if (!pending().length) return;
@@ -406,7 +497,8 @@ function readStdin(): string {
 
 function status(): string {
   const s = settings();
-  const alerts = s.alerts ? `alerts on (${s.alertGender} voice, when away ${s.alertIdle} s)` : 'alerts off';
+  const how = s.alertCommand ? 'custom engine, Piper fallback in the narration voice' : `${s.alertCommandSaved ? 'Piper (custom engine saved, off), ' : ''}${s.alertGender} voice`;
+  const alerts = s.alerts ? `alerts on (${how}, when away ${s.alertIdle} s)` : 'alerts off';
   return `${isOff() ? 'muted' : isPaused() ? 'paused' : 'on'} | mode ${s.mode} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters | ${alerts}`;
 }
 
@@ -429,9 +521,27 @@ function main(argv: string[]): void | Promise<void> {
     if (v !== 'male' && v !== 'female') { console.log('use --alertVoice male or --alertVoice female'); return; }
     setConfig('alertGender', v); console.log(status()); return;
   }
+  if (a === '--alertCommand') { // a local engine for alerts (text on stdin, wav at {wav}); 'off' goes back to the Piper alert voice
+    const cmd = argv.slice(1).join(' ').trim();
+    if (!cmd) { console.log('use --alertCommand "<command with {wav}>" or --alertCommand off'); return; }
+    if (cmd === 'off') { const c = config(); delete c.alertCommand; fs.mkdirSync(HOME, { recursive: true }); fs.writeFileSync(CONF, JSON.stringify(c, null, 2) + '\n'); console.log(status()); return; }
+    if (!cmd.includes('{wav}')) { console.log('the command must contain {wav}, where it writes the audio'); return; }
+    setConfig('alertCommand', cmd); console.log(status()); return;
+  }
+  if (a === '--alertPrerender') return prerenderAlerts();
+  if (a === '--alertCache') {
+    if (v === 'clear') { const n = cacheFiles().length; for (const f of cacheFiles()) rm(f); console.log(`cleared ${n} cached alert clips`); return; }
+    if (v === 'status' || v === undefined) { console.log(`${cacheFiles().length} cached alert clips in ${CACHE}`); return; }
+    console.log('use --alertCache status or --alertCache clear'); return;
+  }
+  if (a === '--alertEngine') { // piper = alerts in the Piper voice (everything on Piper); custom = the saved --alertCommand engine for alerts only
+    if (v !== 'piper' && v !== 'custom') { console.log('use --alertEngine piper or --alertEngine custom'); return; }
+    if (v === 'custom' && !settings().alertCommandSaved) { console.log('no custom engine saved yet: set one with --alertCommand "<command with {wav}>"'); return; }
+    setConfig('alertEngine', v); console.log(status()); return;
+  }
   if (a === '--alert') { // spoken test of the alert voice, with no away check
     const q = argv.slice(1).join(' ').trim() || 'Do you want me to continue?';
-    launch(alertText(clean(q, 200), settings().alertPhrases), true, 'alertnow'); return;
+    launch(alertParts(clean(q, 200), settings().alertPhrases).join('\n'), true, 'alertnow'); return;
   }
   if (a === '--voice') {
     if (v !== 'male' && v !== 'female') { console.log('use --voice male or --voice female'); return; }
@@ -480,7 +590,7 @@ function main(argv: string[]): void | Promise<void> {
     // manual mode keeps the reply silent, so a reply that ends on a question gets a short alert in the second voice
     // (the worker drops it if you are at the keyboard); in auto mode the reply itself is read and already ends on the question
     const q = trailingQuestion(entry.text);
-    if (q) launch(alertText(clean(q, 200), s.alertPhrases), false, 'alert');
+    if (q) launch(alertParts(clean(q, 200), s.alertPhrases).join('\n'), false, 'alert');
   }
 }
 

@@ -42,6 +42,11 @@ const have = (set) => (p) => set.includes(norm(p));
     // pause is its own button beside stop: Pause when playing, Resume when paused; alerts default off, voice is the other slot
     assert.strictEqual(idle.pause.label, 'Pause'); assert.strictEqual(idle.pause.command, 'narrateButtons.togglePause'); assert.strictEqual(idle.stop.command, 'narrateButtons.stop');
     assert.strictEqual(idle.alerts.description, 'off'); assert.strictEqual(idle.alertVoice.description, 'male');
+    assert.match(idle.alertEngine.description, /no custom engine set/);
+    const mixed = Object.fromEntries(buildTree({ conf: { alertCommand: 'x {wav}' }, muted: false, pending: false })[0].children.map((c) => [c.id, c]));
+    assert.match(mixed.alertEngine.description, /custom engine/);
+    const off = Object.fromEntries(buildTree({ conf: { alertCommand: 'x {wav}', alertEngine: 'piper' }, muted: false, pending: false })[0].children.map((c) => [c.id, c]));
+    assert.match(off.alertEngine.description, /Piper \(custom engine saved, off\)/);
     const held = Object.fromEntries(buildTree({ conf: { alerts: true, gender: 'male' }, muted: false, paused: true, pending: false })[0].children.map((c) => [c.id, c]));
     assert.strictEqual(held.pause.label, 'Resume'); assert.strictEqual(held.pause.highlight, true);
     assert.match(held.alerts.description, /on: female voice/); assert.strictEqual(held.alertVoice.description, 'female');

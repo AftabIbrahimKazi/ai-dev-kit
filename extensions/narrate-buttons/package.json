@@ -18,6 +18,7 @@
       { "command": "narrateButtons.togglePause", "title": "AI Dev Kit: Pause / resume narration" },
       { "command": "narrateButtons.toggleAlerts", "title": "AI Dev Kit: Spoken alerts on / off" },
       { "command": "narrateButtons.switchAlertVoice", "title": "AI Dev Kit: Switch alert voice" },
+      { "command": "narrateButtons.toggleAlertEngine", "title": "AI Dev Kit: Alerts on Piper / custom engine" },
       { "command": "narrateButtons.toggleMode", "title": "AI Dev Kit: Narration mode (play button / auto)" },
       { "command": "narrateButtons.switchVoice", "title": "AI Dev Kit: Switch voice (male / female)" },
       { "command": "narrateButtons.stepUp", "title": "Increase", "icon": "$(add)" },

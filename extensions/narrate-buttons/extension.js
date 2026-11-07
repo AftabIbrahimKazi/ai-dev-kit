@@ -94,6 +94,11 @@ function activate(context) {
   reg('narrateButtons.stop', speak('--stop'));
   reg('narrateButtons.togglePause', async () => { await exec('speak', [isPaused() ? '--resume' : '--pause']); refresh(); });
   reg('narrateButtons.toggleAlerts', async () => { const on = readConf().alerts === true; await exec('speak', ['--alerts', on ? 'off' : 'on']); if (!on) await exec('speak', ['--alert', 'Alerts are on.']); refresh(); });
+  reg('narrateButtons.toggleAlertEngine', async () => {
+    const c = readConf();
+    if (!c.alertCommand) { vscode.window.showInformationMessage('AI Dev Kit: no custom alert engine is set. Set one with: node speak.js --alertCommand "<command with {wav}>"'); return; }
+    await exec('speak', ['--alertEngine', c.alertEngine === 'piper' ? 'custom' : 'piper']); refresh();
+  });
   reg('narrateButtons.switchAlertVoice', async () => { await exec('speak', ['--alertVoice', alertVoiceOf(readConf()) === 'male' ? 'female' : 'male']); await exec('speak', ['--alert', 'This is the alert voice.']); refresh(); });
   reg('narrateButtons.toggleMute', async () => { await exec('speak', [isMuted() ? '--unmute' : '--mute']); refresh(); });
   reg('narrateButtons.toggleMode', async () => { const m = modeOf(readConf()) === 'auto' ? 'manual' : 'auto'; await exec('speak', ['--mode', m]); vscode.window.setStatusBarMessage(`Narration: ${m === 'auto' ? 'speaks every reply' : 'play button'}`, 3000); refresh(); });
