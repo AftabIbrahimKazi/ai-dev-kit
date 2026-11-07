@@ -11,6 +11,14 @@ description: Opt-in add-on. Use whenever the user asks for an architecture, stac
 1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
 2. **At end:** append one dated bullet only for a new, non-obvious lesson (a layout that broke, a detection miss, a label that never fit). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
+## First run (a person typing, no experience needed)
+1. Check Node is installed: type `node -v` and press Enter. A version number such as `v24.12.0` means yes. If you see "not recognised", install Node from nodejs.org.
+2. Open a terminal in your project folder. In VS Code, use Terminal, New Terminal.
+3. Type `/diagram detect` in Claude Code, or `node <skill-root>/diagram/cli.js detect` in a terminal, and press Enter. It prints what it found and the questions left open, and writes `diagram/stack.spec.json`.
+4. Type `/diagram build diagram/stack.spec.json`. It writes three files next to the spec and prints a snippet to paste into your README.
+5. Open the `.html` file in a browser to look at it.
+If you see "unknown flag" or "usage:", you mistyped a word; the line shows the four commands. If you see "already exists", add `--force` to replace the old file.
+
 ## The tool
 `node <skill-root>/diagram/cli.js <command>` (plain Node, no dependencies, no network except `icons`).
 
