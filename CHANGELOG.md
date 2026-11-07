@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-08
+
+### Added
+- `diagram` add-on and `/diagram` command: `diagram.cli.js` detects a project's stack or folder structure into a spec, lays it out, checks it (overlaps, arrows through text, accessible title and description) and renders light and dark SVG plus a self-contained HTML page with a README `<picture>` snippet. Brand logos are cached once with `icons`; builds make no network calls.
+- UI standards: `UI-SHR-11` (state attributes ship in the markup, JS changes values only), `UI-SHR-12` (library policy: self-hosted, no CDN), `UI-MOD-13` (off-canvas), `UI-CRD-14` (KPI counters), dropdown layer 550 inside overlays (`UI-TOK-17`), HTML rules `H-11` (library, CSS and script links in the head) and `H-12` (formatted source).
+
 ## 2026-11-07
 
 ### Added (skills, archiving and hints)

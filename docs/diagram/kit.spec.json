@@ -1,0 +1,136 @@
+{
+	"title": "ai-dev-kit at a glance",
+	"description": "The installer copies standards, skills and mods into a project; meta skills build the add-ons and commands.",
+	"mode": "curated",
+	"nodes": [
+		{
+			"id": "install",
+			"label": "install-kit",
+			"role": "installer CLI",
+			"glyph": "tool",
+			"group": "kit"
+		},
+		{
+			"id": "standards",
+			"label": "Coding standards",
+			"role": "rules + UI partials",
+			"glyph": "folder",
+			"group": "kit"
+		},
+		{
+			"id": "workflow",
+			"label": "Workflow skills",
+			"role": "plan, commit, debug",
+			"glyph": "ci",
+			"group": "skills"
+		},
+		{
+			"id": "meta",
+			"label": "Meta skills",
+			"role": "build the kit",
+			"glyph": "tool",
+			"group": "skills"
+		},
+		{
+			"id": "addons",
+			"label": "Add-ons",
+			"role": "opt-in capabilities",
+			"glyph": "storage",
+			"group": "skills"
+		},
+		{
+			"id": "commands",
+			"label": "Slash commands",
+			"role": "/audit /eta /diagram",
+			"glyph": "queue",
+			"group": "skills"
+		},
+		{
+			"id": "mods",
+			"label": "Mods",
+			"role": "event hooks",
+			"glyph": "monitor",
+			"group": "kit"
+		},
+		{
+			"id": "tests",
+			"label": "Tests",
+			"role": "node scripts",
+			"glyph": "ci",
+			"group": "kit"
+		},
+		{
+			"id": "project",
+			"label": "Your project",
+			"role": "app",
+			"glyph": "app"
+		}
+	],
+	"groups": [
+		{
+			"id": "kit",
+			"label": "ai-dev-kit repo"
+		},
+		{
+			"id": "skills",
+			"label": "skills/",
+			"parent": "kit"
+		}
+	],
+	"edges": [
+		{
+			"from": "install",
+			"to": "workflow",
+			"label": "copies",
+			"kind": "primary"
+		},
+		{
+			"from": "install",
+			"to": "standards",
+			"label": "copies",
+			"kind": "primary"
+		},
+		{
+			"from": "install",
+			"to": "mods",
+			"label": "copies",
+			"kind": "primary"
+		},
+		{
+			"from": "install",
+			"to": "project",
+			"label": "installs into",
+			"kind": "primary"
+		},
+		{
+			"from": "meta",
+			"to": "workflow",
+			"label": "writes",
+			"kind": "secondary"
+		},
+		{
+			"from": "meta",
+			"to": "addons",
+			"label": "builds",
+			"kind": "secondary"
+		},
+		{
+			"from": "meta",
+			"to": "commands",
+			"label": "builds",
+			"kind": "secondary"
+		},
+		{
+			"from": "mods",
+			"to": "standards",
+			"label": "chains",
+			"kind": "secondary"
+		},
+		{
+			"from": "tests",
+			"to": "install",
+			"label": "checks",
+			"kind": "deploy"
+		}
+	]
+}
