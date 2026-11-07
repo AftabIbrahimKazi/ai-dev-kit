@@ -98,6 +98,9 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [personality](addons/personality.md) | Six original personas (female and male at novice, mid and pro skill levels) that change how replies are worded; SessionStart hook, `/persona`, user-replaceable persona files; wording only, never facts |
 | [narrate](addons/narrate.md) | Stop hook that reads each reply aloud (Piper male/female voices, mute, volume, speed, pitch, replay, reading-time limit); no tokens, never touches Claude |
 | [diagram](addons/diagram.md) | Script-drawn stack and structure diagrams: `diagram.cli.js` detects a project into a spec, lays it out, checks it and renders light/dark SVG plus HTML for READMEs and sites; Claude only confirms roles and guessed links; `/diagram` |
+| [teardown](addons/teardown.md) | Interactive 3D simulators of any machine or model on Triforge: `teardown.cli.js` detects the project, its `.glb` models and the machine from a plain description, drafts a spec, scaffolds a gears, crank or custom starter under one machine-agnostic page (parts, isolate, cutaway, camera and tour from the real bounds), checks it, builds an offline page, renders review sheets and drives the live page like a visitor (`probe`) in headless Chrome; capped cutaways, glass mode, synced charts, callouts and a V8-capable crank starter; loads on its own for simulator, cutaway or exploded-view requests; opt-in; `/teardown` |
+| [teardown-film](addons/teardown-film.md) | Optional add-on to `teardown`: `teardown-film.cli.js` records a simulator's tour to an H.264 MP4 by stepping the page frame by frame in headless Chrome and encoding with ffmpeg; `--preview` for a quick look; mixes in the score if there is one; opt-in; `/teardown-film` |
+| [teardown-sound](addons/teardown-sound.md) | Optional add-on to `teardown`: `teardown-sound.cli.js` writes a simulator's score as a WAV from the tour's timeline (chord bed, a hum at the machine's gear-mesh or firing frequency, a tick per beat, a whoosh on the cut), reproducible and mastered to -14 LUFS with the peak at or below -2 dBFS; opt-in; `/teardown-sound` |
 | [project-context](addons/project-context.md) | Private, gitignored `project-context/` docs folder with an `INDEX.md` per sub-folder (setup by auto-detect, project type or custom list); `scan.js` companion tracks changes so only new files are re-read; guarded against commits |
 
 ## mcp/ — optional MCP servers, one manager
@@ -151,6 +154,9 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/persona` | choose the reply persona: gender and skill level, off, status | `personality` |
 | `/narration` | mute, voice, volume, speed, pitch for reply narration | `narrate` |
 | `/diagram` | detect, check and build stack or structure diagrams (light/dark SVG and HTML) | `diagram` |
+| `/teardown` | detect a machine from a description, scaffold, check, build and photograph a 3D simulator | `teardown` |
+| `/teardown-film` | record a simulator's tour to an MP4 (status, preview, full) | `teardown-film` |
+| `/teardown-sound` | write or measure a simulator's score as a WAV | `teardown-sound` |
 | `/figma` | exported Figma PNG/SVG files into `project-context/design/figma.md`, no MCP | `project-context` |
 | `/kit` | cheat sheet, no script | none |
 | `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |
