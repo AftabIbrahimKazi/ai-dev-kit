@@ -10,6 +10,7 @@ Read when: adding a card, KPI tile, status badge, tag, count or avatar.
 - **UI-CRD-09** Anatomy: an optional header (title 14 to 15 px weight 600 as a heading, optional description, optional ⋯ menu as a 28 px ghost icon button at the end), a body, and an optional footer after a 1 px divider with one secondary link or action. At most one primary-style button.
 - **UI-CRD-10** A clickable card is one `<a href>` covering the card, with a hover border and a visible focus ring, and no other links or buttons inside.
 - **UI-CRD-11** A KPI card shows a label (13 px weight 500, secondary), a value (26 px, tabular digits, locale format) and an optional one-line note (12 px, muted) such as "2 overdue". When clickable it links to the filtered list.
+- **UI-CRD-14** A dashboard KPI value counts up from 0 to its figure once, the first time the card enters the view (600 to 800 ms, ease-out, same locale format and tabular digits as the final value). The final value is already in the markup, so no script means the right number and no layout change; the value box reserves the width of the final value. Under `prefers-reduced-motion`, or on a refresh, show the final value at once. Only the text changes; no attribute or class is added.
 - **UI-CRD-12** A table inside a card has no padding so rows reach the card edges; the card header holds the title and actions.
 
 ## Badge, tag, count
