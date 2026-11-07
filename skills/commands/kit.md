@@ -28,6 +28,8 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
 | A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <export folder>` (opt-in add-on) |
 | A diagram of the stack or folder structure, for a README or site | `/diagram detect` (or `--structure`), then `/diagram build <spec>` (opt-in `diagram` add-on) |
+| A 3D simulator, cutaway or exploded view of a machine | `/teardown detect --about "<the machine>"`, then `init <name>`, `check <dir>`, `sheet <dir>` (opt-in `teardown` add-on, uses Triforge) |
+| A video or a score for a simulator | `/teardown-film film <dir> --preview`, `/teardown-sound sound <dir>` (opt-in add-ons on top of `teardown`) |
 | Read answers aloud, mute or tune the voice | `/narration mute|unmute|voice male|volume 80|speed 1.2|pitch 2` (opt-in `narrate` add-on) |
 | Change how answers are worded for your skill level | `/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on) |
 | Change how answers are shaped | `/format table|bullets|oneline|bool` (`/format reset` for the default) |

@@ -30,6 +30,7 @@ Facts below WILL drift as packages get updates. Before relying on any node name,
 ## Using Triforge in a project
 - **Pick the smallest package set** for the job — the one-job-per-package design means pulling compositor-core for one bloom pass is correct, pulling three packages "to be safe" is not.
 - Prefer Triforge over hand-rolling when a package covers the need (shader nodes over raw GLSL patching, keyframe over ad-hoc lerp code) — using it exercises and hardens the user's own library.
+- For an interactive 3D explainer of a machine, the opt-in `teardown` add-on scaffolds the page on these packages and logs gaps it meets here.
 - Wire packages together at the mesh level, matching the repo's `examples/` patterns.
 - Version pinning: consumers should pin versions; after a source fix + publish, bump consumers deliberately.
 
