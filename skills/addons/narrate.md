@@ -25,9 +25,27 @@ The same settings are reachable as `/narration <setting>` (commands), from the V
 | `speed 0.5-2` | pace; pitch is unaffected |
 | `pitch -12..12` | semitones up or down; pace is unaffected (piper only) |
 | `maxSeconds 30-1800` | longest reading, in seconds of speech (default 1110, which the 12000-character cap shortens to about 12 minutes at speed 1); `status` shows the character limit it gives at the current speed |
+| `pause` / `resume` | hold the speech where it is and continue from the same spot (a clip in progress is held in place on Windows; elsewhere the hold takes effect at the next sentence piece). `stop` below cuts speech and clears the queue instead |
+| `alerts on` / `alerts off` | spoken alerts in a second voice when a reply ends on a question (see "Spoken alerts"); off by default |
+| `alertVoice male` / `alertVoice female` | which voice speaks alerts (default: the other voice from your narration voice) |
+| `alertIdle 0-600` | seconds without keyboard or mouse before an alert is spoken (default 30; `0` = always) |
 | `stop`, `status` | cut off speech now; show the current settings |
 | `play` / `replay` | read the latest reply (the play button); a reply is otherwise spoken exactly once |
 | `mode manual` / `mode auto` | `manual` (default, like the play button on claude.ai): the hook only keeps the reply until you play it; `auto`: every reply is spoken as soon as it arrives |
+
+## Spoken alerts
+For long sessions you leave running: when Claude ends a reply on a question to you, a second voice says so, so you do not sit at a prompt that is waiting for you.
+
+1. Turn it on: `/narration alerts on` (or the "Spoken alerts" row in the VS Code tray). It says "Alerts are on." in the alert voice so you know which voice it is.
+2. Walk away from the keyboard. When Claude replies "…Should I commit this?", after the reply you hear, in the other voice: "Your input is needed. Should I commit this?"
+3. Come back and answer. If you were at the keyboard (input within the last 30 seconds) nothing is spoken: the alert is for when you are away.
+
+Details:
+- It uses the same Stop hook as narration, costs no tokens and never talks to Claude. The alert reads only the question, never the whole reply, and works in the default `manual` mode; muting narration also mutes alerts.
+- In `mode auto` the reply itself is read and already ends on the question, so no extra alert is spoken.
+- The idle check is real on Windows. Elsewhere it cannot be read, so an alert is always spoken.
+- Wording is its own persona, separate from the narration voice. Change it in `~/.claude/narrate.json`: `"alertPhrases": ["Boss, {q}", "Hey. {q}"]` (`{q}` is the question). `"voices": {"alert": "<file.onnx>"}` gives the alert a voice of its own.
+- Test the sound any time: `node speak.js --alert "Do you want me to continue?"`.
 
 `--say "text"` speaks a sample so you can tune a voice. Settings persist in `narrate.json`. The `sapi` fallback supports voice, speed and volume but not pitch.
 

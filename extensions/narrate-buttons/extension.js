@@ -3,7 +3,7 @@
 // nothing depends on key capture. Narration plays on a Play button by default (like claude.ai); "auto" speaks every reply.
 const vscode = require('vscode');
 const { spawn } = require('node:child_process');
-const { findScript, readConf, readLast, isMuted, nudged, modeOf, parsePersonas, buildTree, trayItems, LIMITS } = require('./lib');
+const { findScript, readConf, readLast, isMuted, isPaused, alertVoiceOf, nudged, modeOf, parsePersonas, buildTree, trayItems, LIMITS } = require('./lib');
 
 function activate(context) {
   const cfg = () => vscode.workspace.getConfiguration('narrateButtons');
@@ -24,7 +24,7 @@ function activate(context) {
 
   // --- state shown in the panel and the status bar ---
   let extra = { persona: '' };
-  const state = () => { const last = readLast(); return { conf: readConf(), muted: isMuted(), pending: !!last.pending, ...extra }; };
+  const state = () => { const last = readLast(); return { conf: readConf(), muted: isMuted(), paused: isPaused(), pending: !!last.pending, ...extra }; };
   const changed = new vscode.EventEmitter();
   async function refreshExtra() {
     const p = await exec('persona', ['--status']);
@@ -41,7 +41,7 @@ function activate(context) {
   function refresh() {
     const s = state();
     const pending = s.pending;
-    tray.text = pending ? '$(play) Reply ready' : s.muted ? '$(mute) Kit' : '$(unmute) Kit';
+    tray.text = s.paused ? '$(debug-pause) Paused' : pending ? '$(play) Reply ready' : s.muted ? '$(mute) Kit' : '$(unmute) Kit';
     tray.backgroundColor = pending ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined;
     tray.tooltip = pending ? 'AI Dev Kit: a new reply is waiting. Open the tray, then Play.' : 'AI Dev Kit controls';
     if (cfg().get('footer') === 'tray+play') { play.text = '$(play)'; play.tooltip = 'Narrate: play the latest reply'; play.backgroundColor = pending ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined; play.show(); } else play.hide();
@@ -92,6 +92,9 @@ function activate(context) {
   const speak = (...a) => async () => { await exec('speak', a); refresh(); };
   reg('narrateButtons.play', speak('--play'));
   reg('narrateButtons.stop', speak('--stop'));
+  reg('narrateButtons.togglePause', async () => { await exec('speak', [isPaused() ? '--resume' : '--pause']); refresh(); });
+  reg('narrateButtons.toggleAlerts', async () => { const on = readConf().alerts === true; await exec('speak', ['--alerts', on ? 'off' : 'on']); if (!on) await exec('speak', ['--alert', 'Alerts are on.']); refresh(); });
+  reg('narrateButtons.switchAlertVoice', async () => { await exec('speak', ['--alertVoice', alertVoiceOf(readConf()) === 'male' ? 'female' : 'male']); await exec('speak', ['--alert', 'This is the alert voice.']); refresh(); });
   reg('narrateButtons.toggleMute', async () => { await exec('speak', [isMuted() ? '--unmute' : '--mute']); refresh(); });
   reg('narrateButtons.toggleMode', async () => { const m = modeOf(readConf()) === 'auto' ? 'manual' : 'auto'; await exec('speak', ['--mode', m]); vscode.window.setStatusBarMessage(`Narration: ${m === 'auto' ? 'speaks every reply' : 'play button'}`, 3000); refresh(); });
   reg('narrateButtons.switchVoice', async () => { await exec('speak', ['--voice', readConf().gender === 'male' ? 'female' : 'male']); refresh(); });
