@@ -1,0 +1,17 @@
+# UI Standards — Select and Multi-select
+
+Read when: adding any dropdown that chooses from a list, single or multiple, local or remote.
+
+- **UI-SEL-01** Any field choosing from 2 or more options uses this select, whatever the current option count. Radios are for Yes/No only; switches for settings that apply at once.
+- **UI-SEL-02** The panel always opens with a focused search box ("Search <items>…") that filters as the user types, ignoring case and accents, matching label and description, and highlights matches (bold and underline). A remote list starts searching at 2 characters after 300 ms, shows "Searching…" with a spinner, and cancels superseded requests.
+- **UI-SEL-03** The closed field looks like an input: 36 px high (44 px coarse), 1 px field border, 6 px radius, the selected label (with avatar or icon if options have one) or a muted placeholder ("Select a person"), a clear ✕ when `clearable` and a value exists, and a chevron that rotates when open. The open state takes the primary border.
+- **UI-SEL-04** Option rows are 34 px (48 px coarse) with optional avatar or icon, label, muted secondary text, and a ✓ on the selected one. Pinned options ("Me (<name>)", recent) come first; groups have small-caps labels. A disabled option stays visible, dimmed, with the reason as a tooltip. The panel is at most 320 px high and scrolls; over 200 options it is virtualised.
+- **UI-SEL-05** No match shows "No <items> match “<query>”." A remote source below `minChars` shows "Type 2 or more characters to search". A failure shows "Couldn't load <items>. Try again." with a Retry action.
+- **UI-SEL-06** Multi-select shows chosen values as removable chips in the field (first `maxVisibleChips`, default 2, then "+N"), checkbox rows in the panel, a header "<N> selected" with "Select all" (current filtered list, offered only for 50 options or fewer) and "Clear", and keeps the panel open while choosing. State a maximum count when there is one. Each chip's remove button is named "Remove <value>".
+- **UI-SEL-07** Follow the ARIA combobox with listbox: Enter, Space and ↓ open; typing filters; ↑ and ↓ move the active option; Home and End jump; Enter selects (single closes, multiple toggles); Escape closes and returns focus to the trigger; Tab closes and moves on. The trigger has `role="combobox"`, `aria-expanded`, `aria-controls`; options have `aria-selected`; a multi listbox has `aria-multiselectable="true"`; the result count is announced politely. (browser)
+- **UI-SEL-08** Below 768 px the panel is a bottom sheet titled with the field label, with a 44 px search box, 48 px rows, and for multiple a sticky "Done · <N> selected" button.
+- **UI-SEL-09** Error, disabled (reason shown), read-only (plain text) and required states follow `forms.md`. A remote search shows a spinner in the field.
+- **UI-SEL-10** MAY: a field that allows new values shows a last row `Create “<query>”` for users with permission. Never for fixed lists such as statuses and roles.
+- **UI-SEL-11** Submit option IDs, validated on the server against what the user may choose. Remote sources return only permitted records and escape labels.
+- **UI-SEL-12** New and changed screens do not use Select2 or another third-party select kit, and no unstyled native `<select>` for option lists. Existing fields stay until their screen is touched.
+- **UI-SEL-13** Colours come from tokens: field border, primary on open, raised panel with overlay shadow, selected row, hover.

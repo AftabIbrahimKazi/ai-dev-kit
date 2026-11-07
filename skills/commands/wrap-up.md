@@ -11,6 +11,16 @@ Size check (empty means within limits):
 
 !`node {{skill-root}}/handover/size.js check`
 
+Skills for the next task (the script moves nothing when no task was given after /wrap-up):
+
+!`node {{skill-root}}/skill-scope/auto.js wrap $ARGUMENTS`
+
+Skills moved since the last wrap-up (the script also starts the next window):
+
+!`node {{skill-root}}/skill-scope/auto.js report --mark`
+
+Paste those lines into `handover.md` under `## Skills` (replace the old section), so `/pickup` can show them. Pinned skills are always active and are not listed.
+
 If the size check lists a problem, fix it in this rewrite (demote or delete per the `handover` skill, keep one `## Last session` block). Update `handover.md` in the project root in place, replacing stale content instead of appending a log (create it if missing; if a `handover/` folder exists, follow the `role-session` skill and write the per-role file instead). Keep these sections, under 120 lines in total:
 
 1. `Updated: <date> · Branch: <branch>`

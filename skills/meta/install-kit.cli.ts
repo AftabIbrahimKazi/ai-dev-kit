@@ -17,6 +17,11 @@
 //   node install-kit.cli.js archive   --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js unarchive --root <target> [--skills a,b | --all] [--json]
 //   node install-kit.cli.js merge-hooks --library <path> --root <target> [--json]
+//   node install-kit.cli.js company <sync|remove|status> --root <target> [--library <path>] [--company-from <folder>]
+//                                      [--company-defaults keep|drop|auto] [--force] [--dry-run] [--purge]   (install also takes the company flags)
+//   node install-kit.cli.js signature <set <alias>|remove|show> --root <target> [--dry-run]   (install takes --signature <alias|none>)
+//
+// Testing the prompts: AI_DEV_KIT_INTERACTIVE=1 forces them on piped input (one answer per line; a closed input means Enter).
 //
 // Interactive mode: run any command with a required flag left out on a real terminal (stdin and
 // stdout both a TTY) and the CLI prompts for exactly the missing pieces -- a plain numbered menu
@@ -35,6 +40,8 @@ import crypto = require('node:crypto');
 import path = require('node:path');
 import readline = require('node:readline');
 import verifyModule = require('./install-kit.verify');
+import company = require('./install-kit.company');
+import sig = require('./install-kit.signature');
 import {
   MANIFEST_NAME, readManifest, writeManifest, ensureShield, removeShieldIfUnneeded, walkFiles, doArchive, doUnarchive,
   type Manifest,
@@ -304,7 +311,11 @@ export function extractCoreHooks(libraryRoot: string): HookConfig[] {
   return configs;
 }
 
-export interface MergeHooksResult { added: string[]; path: string }
+export interface MergeHooksResult { added: string[]; retired: string[]; path: string }
+
+// Hooks an older kit installed and this one deliberately dropped. They are removed on merge so a project is not left running them.
+// Skill archiving is user-triggered only now (/next, /archive, /unarchive), so the session-start and per-prompt skill-scope hooks go.
+const RETIRED_HOOK_RE = /skill-scope\/auto\.js apply\b/;
 
 // Merges one or more { hooks: { <Event>: [entry, ...] } } configs into <root>/.claude/settings.json,
 // adding only entries not already present (by deep equality) and never touching anything else in the file.
@@ -314,6 +325,11 @@ export function mergeHooks(root: string, configs: HookConfig[]): MergeHooksResul
   if (fs.existsSync(p)) settings = JSON.parse(fs.readFileSync(p, 'utf8'));
   settings.hooks = settings.hooks || {};
   const added: string[] = [];
+  const retired: string[] = [];
+  for (const [event, entries] of Object.entries(settings.hooks)) {
+    const keep = entries.filter((e) => !(e.hooks || []).some((h) => RETIRED_HOOK_RE.test(h.command || '')));
+    if (keep.length !== entries.length) { retired.push(event); settings.hooks[event] = keep; if (!keep.length) delete settings.hooks[event]; }
+  }
   for (const config of configs) {
     for (const [event, entries] of Object.entries(config.hooks || {})) {
       settings.hooks[event] = settings.hooks[event] || [];
@@ -325,7 +341,7 @@ export function mergeHooks(root: string, configs: HookConfig[]): MergeHooksResul
   }
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, JSON.stringify(settings, null, 2) + '\n');
-  return { added, path: path.join('.claude', 'settings.json') };
+  return { added, retired, path: path.join('.claude', 'settings.json') };
 }
 
 export function doMergeHooks(args: CliArgs): MergeHooksResult {
@@ -466,6 +482,7 @@ export const STANDARD_ROW_LABELS: Record<string, string> = {
   qa: 'QA standard',
   ai: 'AI standard',
   design: 'Design standard',
+  ui: 'UI standard',
 };
 
 const ACTIVE_STANDARDS_SECTION_RE = /## Active Standards[\s\S]*?(?=\n## |\s*$)/;
@@ -504,7 +521,7 @@ export function applyActiveStandards(body: string, opts: ActiveStandardsOpts): s
   return out;
 }
 
-interface StandardsOpts { contextCode?: string; force?: boolean; installedNames?: Set<string>; activeStandards?: ActiveStandardsOpts }
+interface StandardsOpts { contextCode?: string; force?: boolean; installedNames?: Set<string>; activeStandards?: ActiveStandardsOpts; omit?: string[] }
 export interface StandardsResult { copied: string[]; protocolCreated: boolean; refused: boolean }
 
 export function installStandards(libraryRoot: string, root: string, protocolFile: string, opts: StandardsOpts): StandardsResult {
@@ -514,14 +531,14 @@ export function installStandards(libraryRoot: string, root: string, protocolFile
   if (fs.existsSync(destDir) && !opts.force) {
     for (const f of walkFiles(srcDir)) {
       const rel = path.relative(srcDir, f);
-      if (rel === 'CLAUDE.example.md') continue;
+      if (rel === 'CLAUDE.example.md' || company.isOmitted(rel, opts.omit)) continue;
       const dest = path.join(destDir, rel);
       if (filesDiffer(f, dest)) { copyRecursive(f, dest); result.copied.push(rel); }
     }
   } else {
     for (const f of walkFiles(srcDir)) {
       const rel = path.relative(srcDir, f);
-      if (rel === 'CLAUDE.example.md') continue;
+      if (rel === 'CLAUDE.example.md' || company.isOmitted(rel, opts.omit)) continue;
       copyRecursive(f, path.join(destDir, rel));
       result.copied.push(rel);
     }
@@ -560,13 +577,23 @@ export interface CliArgs {
   commentStyleLevel?: string;
   contextCode?: string;
   applyMigrations?: 'all' | string[];
+  // Company standards: --company turns it on for install; --company-from copies a folder in; --company-defaults picks what happens to the kit defaults.
+  company?: boolean;
+  companyFrom?: string;
+  companyDefaults?: company.DefaultsMode;
+  signature?: string; // project signature: an alias of 2 to 6 letters, or "none"
+  signatureAction?: string;
+  companyAction?: string;
+  purgeCompany?: boolean;
+  dryRun?: boolean; // company sync and remove only: report, write nothing
   force?: boolean;
   json?: boolean;
 }
 
-export interface DoInstallResult { skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult }
+export interface DoInstallResult { skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult }
 
 export function doInstall(args: CliArgs): DoInstallResult {
+  if (args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature)) sig.normalizeAlias(args.signature); // a bad alias stops here, before anything is written
   const tool = ROOTS[args.tool as Tool];
   if (!tool) throw new Error(`--tool must be one of ${Object.keys(ROOTS).join('|')}`);
   const catalog = listSkills(args.library!);
@@ -593,6 +620,8 @@ export function doInstall(args: CliArgs): DoInstallResult {
 
   if (ensureShield(absSkillRoot)) results.push({ name: '(shield)', changed: true });
 
+  // "Don't install default standards": the kit defaults are skipped entirely; the company folder is all there is.
+  if (args.company && args.companyDefaults === 'drop') args.standards = false;
   let standardsResult: StandardsResult | null = null;
   if (args.standards) {
     const activeStandards = (args.scriptStandard || args.activeStandardsKeys)
@@ -603,6 +632,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
       force: args.force,
       installedNames: new Set(Object.keys(manifest.skills)),
       activeStandards,
+      omit: company.companyOmit(manifest.company as company.CompanyRecord | undefined),
     });
     manifest.standards = true;
   }
@@ -612,12 +642,16 @@ export function doInstall(args: CliArgs): DoInstallResult {
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
   manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
   writeManifest(args.root!, manifest);
+  const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root!, args.signature) : undefined;
+  const companyResult = args.company
+    ? company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults })
+    : undefined;
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult };
+  return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
-export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; commands?: CommandsResult; whatsNew?: WhatsNew }
+export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; hooksRetired: string[]; commands?: CommandsResult; whatsNew?: WhatsNew }
 
 // ---- What's new: CHANGELOG.md sections newer than the date this project last saw ----
 export interface NewsEntry { date: string; kind: string; headline: string }
@@ -681,11 +715,13 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
 
   const migrations = applyRenameMigrations(args.library!, args.root!, manifest, args.applyMigrations);
 
+  const omit = company.companyOmit(manifest.company as company.CompanyRecord | undefined);
   if (manifest.standards && args.contextCode) {
-    installStandards(args.library!, args.root!, manifest.protocolFile!, { contextCode: args.contextCode });
+    installStandards(args.library!, args.root!, manifest.protocolFile!, { contextCode: args.contextCode, omit });
   } else if (manifest.standards) {
-    installStandards(args.library!, args.root!, manifest.protocolFile!, {});
+    installStandards(args.library!, args.root!, manifest.protocolFile!, { omit });
   }
+  company.refreshCompany(args.root!, manifest);
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
   const news = whatsNew(args.library!, manifest.lastSeen);
@@ -693,12 +729,13 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   writeManifest(args.root!, manifest);
   // A newer kit can add hook blocks. Merge them only where the project already opted in to kit hooks.
   let hooksAdded: string[] = [];
+  let hooksRetired: string[] = [];
   const core = manifest.tool === 'claude' ? coreHooksOrNull(args.library) : null;
-  if (core && hasKitHooks(args.root!, core)) hooksAdded = mergeHooks(args.root!, core).added;
+  if (core && hasKitHooks(args.root!, core)) { const merged = mergeHooks(args.root!, core); hooksAdded = merged.added; hooksRetired = merged.retired; }
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: false });
   writeManifest(args.root!, manifest);
   const verifyResult = verify({ root: args.root!, tool: manifest.tool });
-  return { skills: results, migrations, verify: verifyResult, hooksAdded, commands: commandsResult, whatsNew: news };
+  return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news };
 }
 
 interface RenameRow { oldName: string; newName: string }
@@ -789,9 +826,11 @@ export function doUninstall(args: CliArgs): UninstallResult {
   }
 
   if (args.removeStandards && manifest.standards) {
+    // company/ holds the user's own files: never swept up with the kit's defaults.
     const dir = path.join(args.root!, 'coding-standards');
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    removed.push('coding-standards/');
+    if (fs.existsSync(dir)) for (const e of fs.readdirSync(dir)) if (e !== company.COMPANY_DIR) fs.rmSync(path.join(dir, e), { recursive: true, force: true });
+    if (fs.existsSync(dir) && !fs.readdirSync(dir).length) fs.rmdirSync(dir);
+    removed.push('coding-standards/ (the kit defaults)');
     manifest.standards = false;
     kept.push(`${manifest.protocolFile} left in place -- it may carry project-specific edits; remove it by hand if no longer wanted`);
   } else if (manifest.standards) {
@@ -799,11 +838,24 @@ export function doUninstall(args: CliArgs): UninstallResult {
   }
 
   writeManifest(args.root!, manifest);
+  if (manifest.company && (args.all || args.removeStandards || args.purgeCompany)) {
+    const c = company.doCompanyRemove({ root: args.root, library: args.library || (() => { try { return defaultLibraryGuess(); } catch { return undefined; } })(), purge: args.purgeCompany, noRestore: !!args.removeStandards });
+    removed.push(...c.removed);
+    kept.push(...c.kept);
+  } else if (manifest.company) {
+    kept.push('company standards left in place (run `company remove` to take them out)');
+  }
+  if (args.all && readManifest(args.root!).signature) {
+    const r = sig.setSignature(args.root!, 'none');
+    removed.push(...r.notes);
+  }
   return { removed, kept };
 }
 
+// Prompts run on a real terminal (stdin and stdout both a TTY). AI_DEV_KIT_INTERACTIVE=1 forces them on piped input so the whole
+// flow can be tested by feeding answers; the answers still come one line per question, and a closed input means "press Enter".
 function isInteractive(): boolean {
-  return !!process.stdout.isTTY && !!process.stdin.isTTY;
+  return process.env.AI_DEV_KIT_INTERACTIVE === '1' || (!!process.stdout.isTTY && !!process.stdin.isTTY);
 }
 
 function defaultLibraryGuess(): string {
@@ -1011,10 +1063,20 @@ async function resolveRoot(): Promise<string> {
 // One shared readline interface for the whole run, opened on first use and closed once
 // fillInteractive is done with it -- never left open, or the process would hang on exit.
 let rl: readline.Interface | null = null;
-function closeRl(): void { if (rl) { rl.close(); rl = null; } }
+// Lines that arrive before a question is asked (piped input) wait here instead of being dropped.
+const queuedLines: string[] = [];
+let waiting: ((line: string) => void) | null = null;
+let inputEnded = false;
+function closeRl(): void { if (rl) { rl.close(); rl = null; } queuedLines.length = 0; waiting = null; inputEnded = false; }
 function ask(question: string): Promise<string> {
-  if (!rl) rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => rl!.question(question, resolve));
+  if (!rl) {
+    rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    rl.on('line', (l) => { if (waiting) { const w = waiting; waiting = null; if (!process.stdin.isTTY) process.stdout.write(l + '\n'); w(l); } else queuedLines.push(l); });
+    rl.on('close', () => { inputEnded = true; if (waiting) { const w = waiting; waiting = null; w(''); } }); // input ended: take the default
+  }
+  if (queuedLines.length) { const l = queuedLines.shift()!; process.stdout.write(question + l + '\n'); return Promise.resolve(l); }
+  if (inputEnded) { process.stdout.write(question + '\n'); return Promise.resolve(''); } // nothing more to read: Enter, the default
+  return new Promise((resolve) => { waiting = resolve; rl!.setPrompt(question); rl!.prompt(); });
 }
 
 async function askText(message: string, initial: string): Promise<string> {
@@ -1119,15 +1181,65 @@ async function pickSkillsByCategory(catalog: Catalog, purposes: Record<string, s
 // Fills in only the flags actually missing, on a real terminal -- never overrides a flag the
 // caller already passed, and never fires for a --json or non-TTY (scripted/agent) call. See the
 // "Interactive mode" note at the top of the file.
+// Company standards questions: whether to add the folder, where its files come from, and what happens to the kit defaults.
+async function askCompany(args: CliArgs, ask: boolean): Promise<void> {
+  if (args.company === undefined && ask) {
+    args.company = await askYesNo("Does this project follow your own company's standards (a design system, style guide, standards docs)? Yes adds a separate coding-standards/company/ folder for them", false);
+  }
+  if (!args.company && !(args.companyAction === 'sync' || (!ask && args.root))) return;
+  args.company = true;
+  const m = readManifest(args.root!);
+  const dir = company.companyDir(args.root!);
+  if (!args.companyFrom && !(fs.existsSync(dir) && company.scanCompany(dir).docs.length)) {
+    const p = (await askText('Folder to copy your company standards from (blank: you will drop files into coding-standards/company/ yourself)', '')).trim();
+    if (p) args.companyFrom = p;
+  }
+  if (!args.companyDefaults && !m.company) {
+    console.log(dim('Auto-detect is a guess from file names, titles and headings; it never removes the accessibility, QA, git or versioning defaults, and "company remove" puts back anything it removed.'));
+    args.companyDefaults = await askSelect("What about the default coding standards (the kit's own)?", [
+      { title: `Install the default standards too ${dim('-- company rules win where they conflict')}`, value: 'keep' },
+      { title: `Don't install the default standards ${dim('-- your company rules are the only standards')}`, value: 'drop' },
+      { title: `Auto-detect ${dim('-- reads your files, drops only the defaults your company clearly replaces')}`, value: 'auto' },
+    ], 0) as company.DefaultsMode;
+  }
+}
+
+// The project signature is the user's own choice: an alias that watermarks code written to the standards, or none.
+async function askSignature(args: CliArgs): Promise<void> {
+  if (args.signature !== undefined) return;
+  let hint = '';
+  const dir = company.companyDir(args.root!);
+  const src = args.companyFrom ? path.resolve(args.companyFrom) : dir;
+  const h = fs.existsSync(src) ? company.detectSignature(company.scanCompany(src).docs, src) : null;
+  if (h) hint = ` Your company docs use "${h.alias}"; you can use it or pick another.`;
+  console.log(dim('A signature is a short alias that watermarks the code you write to the standards: abc- classes and ids, data-abc- data attributes, Abc shared components. It applies to your own code only, never to packages or libraries.' + hint));
+  for (;;) {
+    const v = (await askText('Project signature (2 to 6 letters, or press Enter for none)', '')).trim();
+    if (v === '') { args.signature = 'none'; return; }
+    try { sig.normalizeAlias(v); args.signature = v; return; } catch (e) { console.log(yellow((e as Error).message)); }
+  }
+}
+
+function printCompany(r: company.CompanyResult): void {
+  console.error(bold(`Company standards: ${r.files} files (~${r.tokens} tokens), ${r.routes} routes imported, defaults: ${r.mode}`));
+  if (r.findings) {
+    for (const f of r.findings) console.error(`  ${f.drop ? yellow('drop') : green('keep')}  ${f.label.padEnd(24)} ${dim(f.reason)}`);
+    for (const line of r.disclaimer || []) console.error(dim('  ' + line));
+  }
+  for (const n of r.notes) console.error(yellow('  note: ' + n));
+}
+
 async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
   if (args.json || !isInteractive()) return;
   try {
-    if (['list', 'install', 'update', 'merge-hooks'].includes(cmd) && !args.library) {
+    if (['list', 'install', 'update', 'merge-hooks', 'company'].includes(cmd) && !args.library) {
       args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
     }
-    if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks'].includes(cmd) && !args.root) {
+    if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks', 'company', 'signature'].includes(cmd) && !args.root) {
       args.root = await resolveRoot();
     }
+
+    if (cmd === 'company' && (args.companyAction || 'sync') === 'sync') await askCompany(args, false);
 
     if (cmd === 'install') {
       if (!args.tool) {
@@ -1183,8 +1295,12 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
           }
         }
       }
+      await askCompany(args, true);
+      await askSignature(args);
+      if (args.company && args.companyDefaults === 'drop') args.standards = false;
+      else if (args.company && args.companyDefaults && args.standards === undefined) args.standards = true; // keep or auto: the defaults were chosen in the company question
       if (args.standards === undefined) {
-        args.standards = await askYesNo('Install the coding-standards system too?', false);
+        args.standards = await askYesNo(args.company ? 'Install the default coding-standards too (company rules win where they conflict)?' : 'Install the coding-standards system too?', false);
       }
       if (args.standards) {
         if (!args.scriptStandard) {
@@ -1256,6 +1372,16 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];
     else if (k === '--context-code') a.contextCode = argv[++i];
     else if (k === '--apply-migrations') { const v = argv[++i]; a.applyMigrations = v === 'all' ? 'all' : v.split(',').filter(Boolean); }
+    else if (k === '--company') a.company = true;
+    else if (k === '--company-from') { a.companyFrom = argv[++i]; a.company = true; }
+    else if (k === '--company-defaults') {
+      const v = argv[++i];
+      if (v !== 'keep' && v !== 'drop' && v !== 'auto') { console.error(red('error: --company-defaults must be keep, drop or auto')); process.exit(2); }
+      a.companyDefaults = v as company.DefaultsMode; a.company = true;
+    }
+    else if (k === '--signature') a.signature = argv[++i];
+    else if (k === '--purge-company' || k === '--purge') a.purgeCompany = true;
+    else if (k === '--dry-run') a.dryRun = true;
     else if (k === '--force') a.force = true;
     else if (k === '--json') a.json = true;
     // An unknown flag used to be dropped silently, so a mistyped or unsupported one (--dry-run) ran the real install.
@@ -1267,6 +1393,8 @@ function parseArgs(argv: string[]): CliArgs {
 async function main(): Promise<void> {
   const cmd = process.argv[2];
   const args = parseArgs(process.argv);
+  if (cmd === 'company' && process.argv[3] && !process.argv[3].startsWith('-')) args.companyAction = process.argv[3];
+  if (cmd === 'signature') { args.signatureAction = process.argv[3]; if (process.argv[4] && !process.argv[4].startsWith('-')) args.signature = process.argv[4]; }
   let res: unknown;
   try {
     await fillInteractive(cmd, args);
@@ -1275,14 +1403,34 @@ async function main(): Promise<void> {
       process.exit(2);
       return;
     }
-    if (cmd === 'list') res = listSkills(args.library!);
+    // A dry run that quietly became a real run is the worst failure here: only `company` implements --dry-run, so refuse it elsewhere.
+    if (args.dryRun && cmd !== 'company' && cmd !== 'signature') { console.error(red('error: --dry-run is supported by the company and signature commands only')); process.exit(2); return; }
+    if (cmd === 'company' && !args.root) { console.error(red('usage: install-kit.cli.js company <sync|remove|status> --root <target> [--company-from <folder>] [--company-defaults keep|drop|auto] [--force] [--dry-run] [--purge]')); process.exit(2); return; }
+    if (cmd === 'signature') {
+      const action = args.signatureAction;
+      if (!args.root || !['set', 'remove', 'show'].includes(action || '') || (action === 'set' && !args.signature)) { console.error(red('usage: install-kit.cli.js signature <set <alias>|remove|show> --root <target> [--dry-run]')); process.exit(2); return; }
+      if (action === 'show') res = sig.showSignature(args.root);
+      else {
+        res = sig.setSignature(args.root, action === 'remove' ? 'none' : args.signature!, args.dryRun);
+        if (!args.dryRun) { const m = readManifest(args.root); if (m.company) { company.refreshCompany(args.root, m); writeManifest(args.root, m); } }
+      }
+    }
+    else if (cmd === 'company') {
+      const action = args.companyAction || 'sync';
+      if (action === 'sync') res = company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults, dryRun: args.dryRun, force: args.force });
+      else if (action === 'remove') res = company.doCompanyRemove({ library: args.library || (() => { try { return defaultLibraryGuess(); } catch { return undefined; } })(), root: args.root, purge: args.purgeCompany, dryRun: args.dryRun });
+      else if (action === 'status') res = company.companyStatus(args.root!);
+      else { console.error(red('usage: install-kit.cli.js company <sync|remove|status> --root <target> [--company-from <folder>] [--company-defaults keep|drop|auto] [--purge]')); process.exit(2); return; }
+      if (isInteractive() && !args.json && action === 'sync') printCompany(res as company.CompanyResult);
+    }
+    else if (cmd === 'list') res = listSkills(args.library!);
     else if (cmd === 'install') res = doInstall(args);
     else if (cmd === 'update') res = doUpdate(args);
     else if (cmd === 'archive') res = doArchive(args);
     else if (cmd === 'unarchive') res = doUnarchive(args);
     else if (cmd === 'uninstall') res = doUninstall(args);
     else if (cmd === 'merge-hooks') res = doMergeHooks(args);
-    else { console.error(red('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks> [options]')); process.exit(2); return; }
+    else { console.error(red('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks|company|signature> [options]')); process.exit(2); return; }
   } catch (e) {
     console.error(red('error: ' + (e as Error).message));
     process.exit(1);

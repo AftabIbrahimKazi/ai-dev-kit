@@ -26,7 +26,9 @@ const norm = (p: string): string => p.split(path.sep).join('/');
 const run = (cmd: string, args: string[], cwd: string, timeout = 25000) => spawnSync(cmd, args, { cwd, encoding: 'utf8', timeout, maxBuffer: 32 * 1024 * 1024 });
 const which = (bin: string): boolean => { const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { encoding: 'utf8' }); return r.status === 0; };
 
-export interface EditCheckConfig { standards?: 'auto' | 'on' | 'off'; tsc?: boolean; eslint?: boolean; stylelint?: boolean; ignore?: string[]; styleBlocks?: string }
+// scope "changed": standards findings only on lines changed since HEAD (no clean-up of old code). strict: the hook tells the model
+// every finding must be fixed before going on, and the pre-commit check blocks a commit that adds one. ui: force the ui-* rules on or off.
+export interface EditCheckConfig { standards?: 'auto' | 'on' | 'off'; tsc?: boolean; eslint?: boolean; stylelint?: boolean; ignore?: string[]; styleBlocks?: string; ui?: boolean; scope?: 'file' | 'changed'; strict?: boolean }
 
 export function loadConfig(cwd: string): EditCheckConfig {
   try { return JSON.parse(fs.readFileSync(path.join(cwd, '.claude', 'edit-check.json'), 'utf8')); } catch { return {}; }
@@ -40,7 +42,7 @@ const blank = (m: string): string => m.replace(/[^\n]/g, ' '); // keep newlines 
 
 export interface Finding { file: string; line: number; rule: string; msg: string }
 
-interface AuditEngine { checkText(rel: string, text: string, cfg: EditCheckConfig, profile: string): Finding[] }
+interface AuditEngine { checkText(rel: string, text: string, cfg: EditCheckConfig, profile: string): Finding[]; changedLines?(cwd: string, rel: string): Set<number> | null; projectConfig?(cwd: string, base?: object): object }
 
 // The code-audit engine: installed as a sibling skill folder, or beside this file in the kit repo.
 let auditEngine: AuditEngine | null | undefined;
@@ -179,7 +181,18 @@ export function checkFile(file: string, cwd: string, cfg: EditCheckConfig): Find
     if (cfg.tsc === true) out.push(...tsc(rel, cwd));
   }
   const std = cfg.standards || 'auto';
-  if (std === 'on' || (std === 'auto' && fs.existsSync(path.join(cwd, 'coding-standards')))) out.push(...(engine() ? engine()!.checkText(rel, text, cfg, 'edit') : standards(rel, text)));
+  if (std === 'on' || (std === 'auto' && fs.existsSync(path.join(cwd, 'coding-standards')))) {
+    const eng = engine();
+    // The engine's project config adds the stored signature, the names the dependencies bring, banned imports and strict mode.
+    const pc = eng && eng.projectConfig ? eng.projectConfig(cwd, {}) : {};
+    const withUi = { ...pc, ...cfg, ui: cfg.ui ?? (pc as { ui?: boolean }).ui ?? fs.existsSync(path.join(cwd, 'coding-standards', 'ui-standards.md')) };
+    let found = eng ? eng.checkText(rel, text, withUi, 'edit') : standards(rel, text);
+    if (cfg.scope === 'changed' && eng && eng.changedLines) {
+      const lines = eng.changedLines(cwd, rel);
+      if (lines) found = found.filter((x) => lines.has(x.line));
+    }
+    out.push(...found);
+  }
   return out;
 }
 
@@ -197,7 +210,8 @@ function main(): void {
   const findings = files.flatMap((f) => checkFile(f, cwd, cfg));
   if (json) console.log(JSON.stringify(findings, null, 2));
   else if (findings.length) {
-    const lines = findings.slice(0, MAX_LINES).map((f) => `${f.file}:${f.line}  ${f.rule}  ${f.msg}`);
+    const lines = cfg.strict ? ['STRICT: fix every finding below before going on; each is a hard rule. A deliberate exception needs a DEVIATION: <rule-id> reason comment (accessibility and security rules cannot be waived).'] : [];
+    lines.push(...findings.slice(0, MAX_LINES).map((f) => `${f.file}:${f.line}  ${f.rule}  ${f.msg}`));
     if (findings.length > MAX_LINES) lines.push(`(+${findings.length - MAX_LINES} more)`);
     console.log(lines.join('\n'));
   }

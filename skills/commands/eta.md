@@ -8,3 +8,4 @@ Report, in a few lines, no more:
 3. Whether the overall estimate has changed since it was first given, and why, if so.
 
 This is a judgment call, not a measurement — say so if asked to justify it. Do not re-derive the estimate from scratch each time; restate and adjust the one already given unless something concrete changed it.
+Answer in at most 4 lines.

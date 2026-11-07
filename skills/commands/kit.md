@@ -21,6 +21,7 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Check or install git hooks | `/githooks` |
 | Merge or rebase stopped with conflicts | `/resolve-conflicts` (optional: `ours`, `theirs`, `step`, `--role backend`) |
 | Does this page work at every screen size | `/responsive-check` (optional: `--range 600-900`, `--width 375`, `--detect`) |
+| A skill seems missing, or one is not needed | `/unarchive <name>`, `/archive <name>` (no name lists what is archived) |
 | Queue the next task and load only its skills, without starting | `/next tsk-note <task>` |
 | Same, and start it now | `/next tsk-start <task>` |
 | Bump a package version and its changelog entry | `/version-bump <major|feature|patch|alpha|beta|rc|release>` (optional: a scope path, `--dry-run`) |

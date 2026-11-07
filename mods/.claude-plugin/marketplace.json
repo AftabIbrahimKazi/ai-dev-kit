@@ -66,9 +66,19 @@
       "description": "Enforces AI-01 for the user. The [CX] marker shows the AI has not forgotten the project context. When a main-loop reply does not start with the marker the project's CLAUDE.md or AGENTS.md defines (with its Context code), shows one warning line beneath it. Never writes the marker itself, never discards or blocks. After a real compaction it also shows one notice that the standards may have left the context. Does nothing without a protocol file that defines the marker."
     },
     {
+      "name": "gap-log",
+      "source": "./gap-log",
+      "description": "Observer. When a main-loop answer contains \"STANDARDS GAP: <what is not covered>\" (the phrase the standards tell the AI to use instead of inventing a rule), appends one row to .claude/standards-gaps.jsonl (time, session, gap) so the holes in the standards pile up where the maintainer can read them. Adds no text to the answer or the context, never blocks, fails open, stops at 1 MB."
+    },
+    {
       "name": "aiignore-guard",
       "source": "./aiignore-guard",
       "description": "Keeps the AI out of files it should not read: the project's .aiignore, paths that belong to another role (conflict-roles.json: the active role's out list, or anything another role lists under in), the current task's scope (/focus, else the role's board row) and folders local Laya judges unrelated to the prompt. The first touch of such a path is denied with the snag protocol (rank names with prefilter, retry once); unscoped Grep and Glob results come back without ignored and out-of-role files. Does nothing without these files."
+    },
+    {
+      "name": "skill-hint",
+      "source": "./skill-hint",
+      "description": "Attaches one keyword-matched line naming skills that may apply to the prompt, once per skill per session; names /unarchive for an archived one. Hint only, never loads or moves a skill."
     }
   ]
 }

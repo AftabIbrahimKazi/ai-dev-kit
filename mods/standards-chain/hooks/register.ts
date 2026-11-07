@@ -26,7 +26,10 @@ async function load($: any): Promise<Project> {
       } catch { /* an unreadable protocol file just means no declaration */ }
     }
   }
-  project = { cwd, cfg, declared, active: cfg.mode !== 'off' && (await $.fs.exists(`${dir}/index.md`)) }
+  // install-kit's company-standards option adds <dir>/company/INDEX.md; a company-only install has no index.md at all.
+  cfg.company = await $.fs.exists(`${dir}/company/INDEX.md`)
+  const active = cfg.mode !== 'off' && ((await $.fs.exists(`${dir}/index.md`)) || cfg.company)
+  project = { cwd, cfg, declared, active }
   return project
 }
 
@@ -70,6 +73,12 @@ export const register: Register = (on) => {
       const rel = relTo(pr.cwd, e.file_path)
       const chain = rel ? chainFor(rel, pr.cfg, pr.declared) : null
       if (!rel || !chain) return next(e)
+      // A default standard the company replaced (or never installed) is gone from disk: do not demand it.
+      const dir = norm(pr.cfg.dir ?? 'coding-standards')
+      const present: string[] = []
+      for (const f of chain.files) if (await $.fs.exists(`${dir}/${f}`)) present.push(f)
+      chain.files = present
+      if (!chain.files.length) return next(e)
       const who = 'agentId' in e && e.agentId ? String(e.agentId) : 'main'
       const todo = missing(chain.files, reads.get(who) ?? [], pr.cfg)
       if (todo.length) return { deny: denyMessage(rel, chain, todo, pr.cfg) }

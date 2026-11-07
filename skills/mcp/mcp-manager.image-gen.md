@@ -1,6 +1,6 @@
 ---
 name: image-gen
-description: Image generation for websites and apps, plus enhance_image (ImageMagick colour grading/levels/sharpen for existing photos, no AI) and ai_edit_image (small AI edits, as an extra) — Gemini "Nano Banana", then Cloudflare FLUX.1 [schnell], switching before limits are hit, then a labelled placeholder. CLI + stdio MCP tool; tells the user about every switch and pause.
+description: Image generation for sites and apps, plus enhance_image (ImageMagick colour grading and sharpen, no AI) and ai_edit_image (small AI edits). Tries Gemini "Nano Banana", then Cloudflare FLUX.1 schnell, then a labelled placeholder. CLI and stdio MCP tool; reports every switch and pause.
 trigger: generate_image — hero/feature/illustration/icon/mockup images needed for a site or app, or any request to "make/create an image"
 replaces: a text/CSS/SVG placeholder, or ask the user to supply the image
 transport: stdio

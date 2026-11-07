@@ -267,7 +267,7 @@ If a situation is not covered by the loaded standards, the AI must flag it expli
 // Wrong — inventing a rule
 "Based on the standards, I'll use a double underscore prefix here..."
 
-// Right
+// Right — the exact phrase "STANDARDS GAP:" starts the line, so a script (the gap-log mod) can find and count it
 [CX]
-This case is not covered by the current standards. Do you want to add a rule for it?
+STANDARDS GAP: no rule covers drag-to-reorder on touch screens. Do you want to add a rule for it?
 ```
