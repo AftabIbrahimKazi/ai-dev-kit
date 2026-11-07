@@ -126,3 +126,21 @@ t('CLI: a missing logo falls back to a glyph, a cached logo is embedded', () => 
 	assert.strictEqual(cli(d, 'build', 's.spec.json').status, 0);
 	assert.match(fs.readFileSync(path.join(d, 's.light.svg'), 'utf8'), /data:image\/svg\+xml;base64,/);
 });
+
+t('CLI: an unknown flag exits 2 with the usage line', () => {
+	const r = cli(proj(), 'detect', '--bogus');
+	assert.strictEqual(r.status, 2); assert.match(r.stderr, /unknown flag --bogus/); assert.match(r.stderr, /usage:/);
+});
+
+t('CLI: build will not replace a file it did not write unless --force; warnings go to stderr', () => {
+	const d = proj();
+	fs.writeFileSync(path.join(d, 's.spec.json'), JSON.stringify(spec({ edges: spec().edges.map((e) => ({ ...e, guess: true })) })));
+	fs.writeFileSync(path.join(d, 's.html'), '<p>mine</p>');
+	const r = cli(d, 'build', 's.spec.json');
+	assert.strictEqual(r.status, 1); assert.match(r.stderr, /not written by this tool/);
+	assert.strictEqual(fs.readFileSync(path.join(d, 's.html'), 'utf8'), '<p>mine</p>');
+	const f = cli(d, 'build', 's.spec.json', '--force');
+	assert.strictEqual(f.status, 0);
+	assert.match(f.stderr, /warning: .*guess/); assert.ok(!/warning/.test(f.stdout));
+	assert.strictEqual(cli(d, 'build', 's.spec.json').status, 0, 'a second build over its own output is allowed');
+});
