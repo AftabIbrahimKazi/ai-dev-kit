@@ -26,6 +26,8 @@ const readJson = (file) => { try { return JSON.parse(fs.readFileSync(file, 'utf8
 const readConf = (file = path.join(CLAUDE, 'narrate.json')) => readJson(file);
 const readLast = (file = path.join(CLAUDE, 'narrate-last.json')) => readJson(file);
 const isMuted = (dir = CLAUDE) => fs.existsSync(path.join(dir, 'narrate.off'));
+// pause is a file in the temp folder (narrate.pause), so a stale one never survives a reboot
+const isPaused = (dir = process.env.NARRATE_TMP || os.tmpdir()) => fs.existsSync(path.join(dir, 'narrate.pause'));
 
 // The value after pressing a +/- control, clamped and rounded to two places like speak.js.
 function nudged(key, conf, dir) {
@@ -33,6 +35,8 @@ function nudged(key, conf, dir) {
   const cur = conf[key] !== undefined && conf[key] !== '' && Number.isFinite(Number(conf[key])) ? Number(conf[key]) : def;
   return Math.round(Math.min(hi, Math.max(lo, cur + dir * step)) * 100) / 100;
 }
+// the alert voice is the other slot unless chosen (same rule as speak.js)
+const alertVoiceOf = (conf) => (conf.alertGender === 'male' || conf.alertGender === 'female' ? conf.alertGender : conf.gender === 'male' ? 'female' : 'male');
 const modeOf = (conf) => (conf.mode === 'auto' ? 'auto' : 'manual'); // manual = a play button, like claude.ai
 
 // Persona choices from `inject.js --list` output ("female novice: Name" lines) for a quick pick.
@@ -46,10 +50,13 @@ function buildTree(s) {
   const num = (k) => (conf[k] !== undefined ? conf[k] : LIMITS[k][2]);
   const narration = [
     { id: 'play', label: s.pending ? 'Play latest reply' : 'Play last reply', description: s.pending ? 'new reply waiting' : '', icon: 'play', command: 'narrateButtons.play', highlight: !!s.pending },
-    { id: 'stop', label: 'Stop speaking', icon: 'debug-stop', command: 'narrateButtons.stop' },
+    { id: 'pause', label: s.paused ? 'Resume' : 'Pause', description: s.paused ? 'paused: continues where it stopped' : '', icon: s.paused ? 'debug-continue' : 'debug-pause', command: 'narrateButtons.togglePause', highlight: !!s.paused },
+    { id: 'stop', label: 'Stop speaking', description: 'cuts speech and clears the queue', icon: 'debug-stop', command: 'narrateButtons.stop' },
     { id: 'mode', label: 'When to speak', description: modeOf(conf) === 'auto' ? 'auto: every reply' : 'play button (like claude.ai)', icon: 'broadcast', command: 'narrateButtons.toggleMode' },
     { id: 'mute', label: 'Narration', description: s.muted ? 'muted' : 'on', icon: s.muted ? 'mute' : 'unmute', command: 'narrateButtons.toggleMute' },
     { id: 'voice', label: 'Voice', description: conf.gender === 'male' ? 'male' : 'female', icon: 'account', command: 'narrateButtons.switchVoice' },
+    { id: 'alerts', label: 'Spoken alerts', description: conf.alerts === true ? `on: ${alertVoiceOf(conf)} voice, when you are away` : 'off', icon: conf.alerts === true ? 'bell' : 'bell-slash', command: 'narrateButtons.toggleAlerts' },
+    { id: 'alertVoice', label: 'Alert voice', description: alertVoiceOf(conf), icon: 'megaphone', command: 'narrateButtons.switchAlertVoice' },
     ...Object.keys(LIMITS).map((k) => ({ id: k, key: k, label: LABELS[k], description: String(num(k)), icon: 'settings', contextValue: 'stepper' })),
   ];
   return [
@@ -71,4 +78,4 @@ function trayItems(state) {
   return out;
 }
 
-module.exports = { trayItems, findScript, findSpeak, readConf, readLast, isMuted, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };
+module.exports = { trayItems, findScript, findSpeak, readConf, readLast, isMuted, isPaused, alertVoiceOf, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };

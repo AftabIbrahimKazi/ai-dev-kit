@@ -290,3 +290,67 @@ t('--mode auto speaks each reply by itself; bad modes are refused; the mode is s
   cli(env, '--mode', 'manual');
   assert.ok(cli(env, '--status').includes('mode manual'));
 });
+
+// --- spoken alerts and pause ---
+const { trailingQuestion, alertText, ALERT_PHRASES } = require('../skills/addons/narrate.speak.js');
+const queued = (tmp) => { try { return fs.readdirSync(path.join(tmp, 'narrate-queue')); } catch { return []; } };
+t('trailingQuestion finds the question a reply ends on, and nothing otherwise', () => {
+  assert.strictEqual(trailingQuestion('Done.\n\nWant me to start with Laya, or the voice first?'), 'Want me to start with Laya, or the voice first?');
+  assert.strictEqual(trailingQuestion('All set. Should I push it?'), 'Should I push it?');
+  assert.strictEqual(trailingQuestion('**Which one?**'), 'Which one?');
+  assert.strictEqual(trailingQuestion('Pushed. Nothing else to do.'), '');
+  assert.strictEqual(trailingQuestion('Result below.\n```js\nx ? y : z?\n```'), '');
+  assert.strictEqual(trailingQuestion('Why does it fail? It does not.'), '');
+});
+t('alertText fills {q}, is stable per question, and honours custom phrases', () => {
+  const a = alertText('Which one?');
+  assert.strictEqual(a, alertText('Which one?'));
+  assert.ok(a.includes('Which one?') && !a.includes('{q}'));
+  assert.ok(ALERT_PHRASES.every((p) => p.includes('{q}')));
+  assert.strictEqual(alertText('Ready?', ['Boss, {q}']), 'Boss, Ready?');
+  assert.ok(alertText('Ready?', ['', 5]).includes('Ready?')); // unusable phrases fall back to the built-ins
+});
+t('alerts are off by default; the alert voice is the other slot unless chosen', () => {
+  assert.strictEqual(settings({}).alerts, false);
+  assert.strictEqual(settings({ gender: 'female' }).alertGender, 'male');
+  assert.strictEqual(settings({ gender: 'male' }).alertGender, 'female');
+  assert.strictEqual(settings({ gender: 'female', alertGender: 'female' }).alertGender, 'female');
+  assert.strictEqual(settings({ alerts: true, alertIdle: 9999 }).alertIdle, 600);
+  assert.strictEqual(settings({ voices: { alert: 'x.onnx' } }).alertModel, 'x.onnx');
+});
+t('--alerts, --alertVoice and --alertIdle are saved and shown in the status', () => {
+  const { home, env } = homeEnv();
+  assert.ok(cli(env, '--status').includes('alerts off'));
+  assert.ok(cli(env, '--alerts', 'on').includes('alerts on (male voice, when away 30 s)'));
+  assert.ok(cli(env, '--alertVoice', 'female').includes('female voice'));
+  assert.ok(cli(env, '--alertIdle', '5').includes('when away 5 s'));
+  assert.ok(cli(env, '--alerts', 'maybe').startsWith('use --alerts'));
+  assert.ok(cli(env, '--alertVoice', 'robot').startsWith('use --alertVoice'));
+  const conf = JSON.parse(fs.readFileSync(path.join(home, '.claude', 'narrate.json'), 'utf8'));
+  assert.strictEqual(conf.alerts, true); assert.strictEqual(conf.alertGender, 'female'); assert.strictEqual(conf.alertIdle, 5);
+  cli(env, '--alerts', 'off'); assert.ok(cli(env, '--status').includes('alerts off'));
+});
+t('--pause and --resume toggle the hold; --stop ends a pause', () => {
+  const { tmp, env } = quiet();
+  assert.strictEqual(cli(env, '--pause'), 'paused');
+  assert.ok(fs.existsSync(path.join(tmp, 'narrate.pause')));
+  assert.ok(cli(env, '--status').startsWith('paused'));
+  assert.strictEqual(cli(env, '--resume'), 'resumed');
+  assert.ok(!fs.existsSync(path.join(tmp, 'narrate.pause')));
+  cli(env, '--pause'); cli(env, '--stop');
+  assert.ok(!fs.existsSync(path.join(tmp, 'narrate.pause')));
+});
+t('a reply ending on a question queues an alert (manual mode, alerts on); no question or alerts off queues nothing', () => {
+  const { home, tmp, env } = quiet();
+  const tr = path.join(home, 'tr.jsonl');
+  fs.writeFileSync(tr, entry('u1', 'Done.\n\nShould I commit this?')); hookRun(env, tr);
+  assert.strictEqual(queued(tmp).length, 0); // alerts off
+  cli(env, '--alerts', 'on'); cli(env, '--pause'); // paused: the worker holds, so the queue can be read
+  fs.appendFileSync(tr, entry('u2', 'Finished. Nothing more.')); hookRun(env, tr);
+  assert.strictEqual(queued(tmp).length, 0); // no question
+  fs.appendFileSync(tr, entry('u3', 'Done.\n\nShould I commit this?')); hookRun(env, tr);
+  const q = queued(tmp);
+  assert.strictEqual(q.length, 1); assert.ok(q[0].endsWith('.alert.txt'));
+  assert.ok(fs.readFileSync(path.join(tmp, 'narrate-queue', q[0]), 'utf8').includes('Should I commit this?'));
+  cli(env, '--stop');
+});

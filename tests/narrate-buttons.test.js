@@ -37,7 +37,14 @@ const have = (set) => (p) => set.includes(norm(p));
     assert.strictEqual(n.play.highlight, true); assert.strictEqual(n.play.command, 'narrateButtons.play');
     assert.match(n.mode.description, /auto/); assert.strictEqual(n.mute.description, 'muted'); assert.strictEqual(n.voice.description, 'male');
     assert.strictEqual(n.volume.description, '80'); assert.strictEqual(n.volume.contextValue, 'stepper'); assert.strictEqual(n.speed.description, '1');
-    assert.match(buildTree({ conf: {}, muted: false, pending: false })[0].children[2].description, /play button/);
+    const idle = Object.fromEntries(buildTree({ conf: {}, muted: false, pending: false })[0].children.map((c) => [c.id, c]));
+    assert.match(idle.mode.description, /play button/);
+    // pause is its own button beside stop: Pause when playing, Resume when paused; alerts default off, voice is the other slot
+    assert.strictEqual(idle.pause.label, 'Pause'); assert.strictEqual(idle.pause.command, 'narrateButtons.togglePause'); assert.strictEqual(idle.stop.command, 'narrateButtons.stop');
+    assert.strictEqual(idle.alerts.description, 'off'); assert.strictEqual(idle.alertVoice.description, 'male');
+    const held = Object.fromEntries(buildTree({ conf: { alerts: true, gender: 'male' }, muted: false, paused: true, pending: false })[0].children.map((c) => [c.id, c]));
+    assert.strictEqual(held.pause.label, 'Resume'); assert.strictEqual(held.pause.highlight, true);
+    assert.match(held.alerts.description, /on: female voice/); assert.strictEqual(held.alertVoice.description, 'female');
   });
   await t('trayItems: grouped rows under separators; settings rows keep the tray open, actions close it; steppers have no command', () => {
     const rows = trayItems({ conf: { volume: 70 }, muted: false, pending: true, persona: 'Sam' });

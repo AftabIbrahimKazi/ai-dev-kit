@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.lastReply = exports.defaultVoice = void 0;
+exports.ALERT_PHRASES = exports.lastReply = exports.defaultVoice = void 0;
 exports.lastReplyEntry = lastReplyEntry;
 exports.clean = clean;
+exports.trailingQuestion = trailingQuestion;
+exports.alertText = alertText;
+exports.idleSeconds = idleSeconds;
 exports.settings = settings;
 exports.shape = shape;
 exports.wavSeconds = wavSeconds;
@@ -19,6 +22,10 @@ exports.chunks = chunks;
 //   --mode manual|auto   manual (default, like the play button on claude.ai): the hook only keeps the reply; auto: speaks it
 //   --mute | --unmute | --stop | --status | --play (= --replay)   (a reply is spoken once on its own; --play is how you hear it in manual mode, or again)
 //   --voice male|female   --volume 0-100   --speed 0.5-2   --pitch -12..12 (semitones)   --maxSeconds 30-1800   each saved in the config
+//   --pause / --resume   hold the speech where it is / carry on from there (--stop cuts it and clears the queue)
+//   --alerts on|off   --alertVoice male|female   --alertIdle 0-600   spoken alert in a second voice when a reply ends on a question
+//   and you are away from the keyboard for alertIdle seconds (0 = always); --alert "text" speaks a sample. Config keys: alerts,
+//   alertGender (default: the other voice), alertIdle (30), alertPhrases (["Your input is needed. {q}", ...]), voices.alert (own .onnx)
 // Config (optional) ~/.claude/narrate.json: {"engine":"sapi|piper|command", "gender":"female", "volume":100, "speed":1,
 //   "pitch":0, "maxSeconds":300 (longest reading; becomes a character limit at the current speed), "max":0 (fixed character limit instead), "voices":{"female":"<.onnx>","male":"<.onnx>"}, "piper":{"exe":"piper","args":[]},
 //   "voice":"Microsoft Zira Desktop" (sapi), "command":"my-tts --out {wav}"}. "command" gets the text on stdin and must
@@ -37,6 +44,8 @@ const TMP = process.env.NARRATE_TMP || os.tmpdir();
 const STATE = path.join(HOME, 'narrate-last.json');
 const LOCK = path.join(TMP, 'narrate.lock');
 const QUEUE = path.join(TMP, 'narrate-queue');
+// while this file exists the worker holds: the clip playing is paused in place and nothing new starts; removing it continues
+const PAUSE = path.join(TMP, 'narrate.pause');
 const MAX_PENDING = 3;
 const VOICE_FILES = { female: 'en_GB-jenny_dioco-medium.onnx', male: 'en_GB-northern_english_male-medium.onnx' };
 const VOICE_FALLBACKS = { female: ['en_US-ljspeech-medium.onnx'], male: ['en_US-joe-medium.onnx'] };
@@ -46,7 +55,7 @@ const defaultVoice = (gender) => {
     return path.join(dir, have || VOICE_FILES[gender]);
 };
 exports.defaultVoice = defaultVoice;
-const LIMITS = { volume: [0, 100], speed: [0.5, 2], pitch: [-12, 12], maxSeconds: [30, 1800] };
+const LIMITS = { volume: [0, 100], speed: [0.5, 2], pitch: [-12, 12], maxSeconds: [30, 1800], alertIdle: [0, 600] };
 // both voices speak 16-19 characters a second at speed 1; the time limit becomes a character limit at the current speed
 const CHARS_PER_SECOND = 16;
 const MAX_CHARS = 12000;
@@ -119,6 +128,39 @@ function clean(md, max = 6000) {
     const notes = [truncated && 'The rest is on screen.', /```|^\s*\|.*\|\s*$/m.test(md) && 'Code and tables are on screen.'].filter(Boolean);
     return [s, ...notes].join(' ').trim();
 }
+// Spoken alerts: when a reply ends on a question to the user, a short line in a second voice says so, so a long
+// session can be left running. Wording is the alert persona's; it never reads Claude's reply (that is the narration).
+exports.ALERT_PHRASES = ['Your input is needed. {q}', 'Claude is waiting on you. {q}', 'Over to you. {q}'];
+// The question a reply ends on, or '' when it does not end on one: the last prose line (code and tables dropped)
+// must end with a question mark, and the last sentence of it is the question.
+function trailingQuestion(md) {
+    const prose = md.replace(/```[\s\S]*?```/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l && !/^\|.*\|$/.test(l));
+    const last = (prose[prose.length - 1] || '').replace(/(\*\*|__|~~|\*|`)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/^\s*([-+>]|\d+\.)\s+/, '');
+    if (!/\?["')\]]*$/.test(last))
+        return '';
+    const sentence = last.split(/(?<=[.!?])\s+/).pop() || last;
+    return sentence.length > 200 ? sentence.slice(-200).replace(/^\S*\s/, '') : sentence;
+}
+// the alert line: a phrase (config `alertPhrases`, or the built-ins) with {q} replaced by the question; the choice
+// is by the question's own text, so the same question always gets the same phrase
+function alertText(question, phrases = exports.ALERT_PHRASES) {
+    const list = phrases.filter((p) => typeof p === 'string' && p.trim());
+    const pool = list.length ? list : exports.ALERT_PHRASES;
+    let h = 0;
+    for (const c of question)
+        h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return pool[h % pool.length].replace(/\{q\}/g, question).replace(/\s+/g, ' ').trim();
+}
+// seconds since the last keyboard or mouse input; Infinity where it cannot be read (then the alert is always spoken)
+function idleSeconds() {
+    if (process.platform !== 'win32')
+        return Infinity;
+    const ps = "Add-Type -Namespace N -Name I -MemberDefinition '[StructLayout(LayoutKind.Sequential)] public struct L { public uint s; public uint t; } [DllImport(\"user32.dll\")] public static extern bool GetLastInputInfo(ref L p);'; " +
+        '$l = New-Object N.I+L; $l.s = [Runtime.InteropServices.Marshal]::SizeOf($l); [void][N.I]::GetLastInputInfo([ref]$l); [Math]::Floor(([Environment]::TickCount - $l.t) / 1000)';
+    const r = spawnSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8', windowsHide: true, timeout: 8000 });
+    const n = Number(String(r.stdout || '').trim());
+    return r.status === 0 && Number.isFinite(n) && n >= 0 ? n : Infinity;
+}
 function config() {
     try {
         return JSON.parse(fs.readFileSync(CONF, 'utf8'));
@@ -132,7 +174,11 @@ const clamp = (n, [lo, hi]) => Math.min(hi, Math.max(lo, n));
 function settings(cfg = config()) {
     const num = (k, d) => (Number.isFinite(Number(cfg[k])) && cfg[k] !== '' && cfg[k] != null ? clamp(Number(cfg[k]), LIMITS[k]) : d);
     const gender = cfg.gender === 'male' ? 'male' : 'female';
+    // the alert voice is the other slot unless chosen, so it sounds like a different speaker; `voices.alert` is a file of its own
+    const alertGender = cfg.alertGender === 'male' || cfg.alertGender === 'female' ? cfg.alertGender : gender === 'female' ? 'male' : 'female';
     return {
+        alerts: cfg.alerts === true || cfg.alerts === 'on' || cfg.alerts === 'true', alertGender, alertIdle: num('alertIdle', 30),
+        alertModel: (cfg.voices && (cfg.voices.alert || cfg.voices[alertGender])) || (0, exports.defaultVoice)(alertGender), alertPhrases: Array.isArray(cfg.alertPhrases) ? cfg.alertPhrases : [],
         mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
         max: Number(cfg.max) > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 1110) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || (0, exports.defaultVoice)(gender),
         piper: cfg.piper || {}, command: cfg.command, voice: cfg.voice,
@@ -191,15 +237,21 @@ const rm = (f) => { try {
 catch {
     return false;
 } };
-// replies wait their turn so parallel sessions never cut each other off; only the newest few are kept
-function enqueue(text) {
+const isAlertFile = (f) => /\.alert(now)?\.txt$/.test(f);
+function enqueue(text, kind = '') {
     fs.mkdirSync(QUEUE, { recursive: true });
-    fs.writeFileSync(path.join(QUEUE, `${Date.now()}-${process.pid}.txt`), text);
+    fs.writeFileSync(path.join(QUEUE, `${Date.now()}-${process.pid}${kind ? '.' + kind : ''}.txt`), text);
     for (const f of pending().slice(0, -MAX_PENDING))
         rm(path.join(QUEUE, f));
 }
-// stop what is playing and drop everything waiting (mute, stop, and a spoken test)
+const isPaused = () => fs.existsSync(PAUSE);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// the worker holds here while paused (a stop or resume removes the file)
+async function whilePaused() { while (isPaused())
+    await sleep(150); }
+// stop what is playing and drop everything waiting (mute, stop, and a spoken test); a stop also ends a pause
 function stopAll() {
+    rm(PAUSE);
     for (const f of pending())
         rm(path.join(QUEUE, f));
     let pid;
@@ -231,10 +283,15 @@ function stopAll() {
 const WIN_PLAY = 'Add-Type -AssemblyName presentationCore; $p = New-Object System.Windows.Media.MediaPlayer; ' +
     '$p.Open([Uri]$env:NARRATE_WAV); $t = 0; while (-not $p.NaturalDuration.HasTimeSpan -and $t -lt 100) { Start-Sleep -Milliseconds 50; $t++ }; ' +
     'if (-not $p.NaturalDuration.HasTimeSpan) { exit 2 }; $p.Play(); ' +
-    'Start-Sleep -Milliseconds ([int]$p.NaturalDuration.TimeSpan.TotalMilliseconds + 400); $p.Close()';
+    // poll the position so a pause holds the clip where it is and resume carries on from there; the counter stops a clip that never advances
+    '$d = $p.NaturalDuration.TimeSpan.TotalMilliseconds; $n = 0; ' +
+    'while ($p.Position.TotalMilliseconds -lt ($d - 40) -and $n -lt ($d / 50 * 3 + 200)) { ' +
+    'if (Test-Path -LiteralPath $env:NARRATE_PAUSE) { $p.Pause(); while (Test-Path -LiteralPath $env:NARRATE_PAUSE) { Start-Sleep -Milliseconds 100 }; $p.Play() }; ' +
+    'Start-Sleep -Milliseconds 50; $n++ }; ' +
+    'Start-Sleep -Milliseconds 400; $p.Close()';
 function playWav(wav) {
     if (process.platform === 'win32') {
-        const o = { env: { ...process.env, NARRATE_WAV: wav }, stdio: 'ignore', windowsHide: true };
+        const o = { env: { ...process.env, NARRATE_WAV: wav, NARRATE_PAUSE: PAUSE }, stdio: 'ignore', windowsHide: true };
         if (spawnSync('powershell', ['-NoProfile', '-Command', WIN_PLAY], o).status !== 0) {
             spawnSync('powershell', ['-NoProfile', '-Command', '(New-Object Media.SoundPlayer $env:NARRATE_WAV).PlaySync()'], o);
         }
@@ -328,6 +385,7 @@ async function speakWav(text, s) {
         const ok = await next;
         if (i + 1 < parts.length)
             next = synth(parts[i + 1], s, file(i + 1));
+        await whilePaused(); // a pause between pieces; inside a piece the player holds the clip itself
         if (ok)
             shapeAndPlay(file(i), s);
         rm(file(i));
@@ -379,6 +437,7 @@ function acquire() {
 async function drain() {
     while (acquire()) {
         for (let f; (f = pending()[0]);) {
+            await whilePaused();
             const file = path.join(QUEUE, f);
             let text = '';
             try {
@@ -387,8 +446,17 @@ async function drain() {
             catch { /* unreadable */ }
             if (!rm(file))
                 break;
-            if (text)
-                await speak(text, settings());
+            if (!text)
+                continue;
+            const s = settings();
+            if (!isAlertFile(f)) {
+                await speak(text, s);
+                continue;
+            }
+            // an alert: only while alerts are on and unmuted, and (unless it is the spoken test) only when you are away from the keyboard
+            if (!f.endsWith('.alertnow.txt') && (!s.alerts || isOff() || (s.alertIdle > 0 && idleSeconds() < s.alertIdle)))
+                continue;
+            await speak(text, { ...s, gender: s.alertGender, model: s.alertModel });
         }
         rm(LOCK);
         if (!pending().length)
@@ -397,10 +465,10 @@ async function drain() {
 }
 // queue the text and start a detached worker so the hook returns at once. A spoken test or settings feedback
 // (interrupt) cuts in front; a reply waits for what is already playing.
-function launch(text, interrupt) {
+function launch(text, interrupt, kind = '') {
     if (interrupt)
         stopAll();
-    enqueue(text);
+    enqueue(text, kind);
     spawn(process.execPath, [__filename, '--worker'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
 function readStdin() {
@@ -413,7 +481,8 @@ function readStdin() {
 }
 function status() {
     const s = settings();
-    return `${isOff() ? 'muted' : 'on'} | mode ${s.mode} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters`;
+    const alerts = s.alerts ? `alerts on (${s.alertGender} voice, when away ${s.alertIdle} s)` : 'alerts off';
+    return `${isOff() ? 'muted' : isPaused() ? 'paused' : 'on'} | mode ${s.mode} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters | ${alerts}`;
 }
 function main(argv) {
     const [a, v] = argv;
@@ -436,8 +505,43 @@ function main(argv) {
         stopAll();
         return;
     }
+    // pause holds the speech where it is and resume carries on from there; stop (above) cuts it and clears the queue
+    if (a === '--pause') {
+        fs.mkdirSync(TMP, { recursive: true });
+        fs.writeFileSync(PAUSE, '');
+        console.log('paused');
+        return;
+    }
+    if (a === '--resume' || a === '--continue') {
+        rm(PAUSE);
+        console.log('resumed');
+        return;
+    }
     if (a === '--status') {
         console.log(status());
+        return;
+    }
+    if (a === '--alerts') {
+        if (v !== 'on' && v !== 'off') {
+            console.log('use --alerts on or --alerts off');
+            return;
+        }
+        setConfig('alerts', v === 'on');
+        console.log(status());
+        return;
+    }
+    if (a === '--alertVoice') {
+        if (v !== 'male' && v !== 'female') {
+            console.log('use --alertVoice male or --alertVoice female');
+            return;
+        }
+        setConfig('alertGender', v);
+        console.log(status());
+        return;
+    }
+    if (a === '--alert') { // spoken test of the alert voice, with no away check
+        const q = argv.slice(1).join(' ').trim() || 'Do you want me to continue?';
+        launch(alertText(clean(q, 200), settings().alertPhrases), true, 'alertnow');
         return;
     }
     if (a === '--voice') {
@@ -512,11 +616,19 @@ function main(argv) {
     st.seen[hook.transcript_path] = entry.id;
     st.text = text;
     // manual (the default, like the play button on claude.ai): keep the reply for --play; auto: speak it now
-    const speakNow = settings().mode === 'auto' && !isOff();
+    const s = settings();
+    const speakNow = s.mode === 'auto' && !isOff();
     st.pending = !!text && !speakNow;
     writeState(st);
     if (text && speakNow)
         launch(text, false);
+    else if (s.alerts && !isOff()) {
+        // manual mode keeps the reply silent, so a reply that ends on a question gets a short alert in the second voice
+        // (the worker drops it if you are at the keyboard); in auto mode the reply itself is read and already ends on the question
+        const q = trailingQuestion(entry.text);
+        if (q)
+            launch(alertText(clean(q, 200), s.alertPhrases), false, 'alert');
+    }
 }
 if (require.main === module) {
     try {
