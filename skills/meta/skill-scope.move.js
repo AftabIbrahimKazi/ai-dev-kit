@@ -48,6 +48,12 @@ exports.doUnarchive = doUnarchive;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 exports.MANIFEST_NAME = '.ai-dev-kit.json';
+function logScope(manifest, a, n, by) {
+    const names = n.filter((x) => !x.startsWith('('));
+    if (!names.length)
+        return;
+    manifest.scopeLog = [...(manifest.scopeLog ?? []), { t: new Date().toISOString(), a, n: names, by: by ?? 'auto' }].slice(-60);
+}
 function readManifest(root) {
     const p = path.join(root, exports.MANIFEST_NAME);
     if (!fs.existsSync(p))
@@ -135,6 +141,7 @@ function doArchive(args) {
     }
     if (removeShieldIfUnneeded(absSkillRoot))
         archived.push('(shield removed, no longer needed)');
+    logScope(manifest, 'archive', archived, args.by);
     writeManifest(args.root, manifest);
     return { archived, kept };
 }
@@ -165,6 +172,7 @@ function doUnarchive(args) {
         restored.push(name);
     }
     ensureShield(absSkillRoot);
+    logScope(manifest, 'restore', restored, args.by);
     writeManifest(args.root, manifest);
     return { restored, kept };
 }

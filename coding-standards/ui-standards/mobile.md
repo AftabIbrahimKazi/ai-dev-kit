@@ -1,0 +1,22 @@
+# UI Standards — Mobile Apps
+
+Read when: building a native or hybrid screen (Flutter, React Native, Swift, Kotlin) or an installed-app layout. PWA specifics: `pwa.md`.
+
+- **UI-MOB-16** Flutter, React Native and the PWA of one product share tokens, components, icons, wording, screen structure and flows. Only these follow the platform: main navigation (iOS tinted bottom tab bar; Android navigation bar with a pill behind the active icon), screen title (iOS 34 pt large title that collapses on scroll with search below; Android 64 dp top app bar with a 22 sp title, search and overflow icons), back, share and photo and file pickers (system sheets), the permission dialog (after our explanation), biometrics (Face ID or Touch ID; BiometricPrompt), haptics (light impact; click). Dates, selects, dialogs and toasts are our components.
+- **UI-MOB-03** Bottom navigation (native apps and installed PWAs) has 3 to 5 destinations, each with an icon and a visible label, the last being "More" when there are more sections. The active one is marked with `aria-current` or the selected state. Count badges follow `card-badge.md`. A phone browser (not installed) keeps the navigation drawer.
+- **UI-MOB-17** Sub-screens show a compact bar with a back control, a title and at most 2 icon actions.
+- **UI-MOB-05** Back returns to the previous screen with its scroll position and filters kept; with unsaved changes it triggers the discard guard in `forms.md`. iOS shows a chevron with the previous title and supports edge swipe-back; Android shows an up arrow and handles the system back gesture and button.
+- **UI-MOB-01** A touch target is at least 44 × 44 pt on iOS and 48 × 48 dp on Android. (browser)
+- **UI-MOB-04** The primary action of a detail or form screen sits in a sticky bottom action bar (48 px buttons, full width or primary plus ⋯). A destructive action is never next to it at the bottom edge.
+- **UI-MOB-02** Content and controls stay inside the safe areas (notch, status bar, home indicator, gesture bar). Bars extend their background behind them.
+- **UI-MOB-06** A swipe action on a row is optional (at most 2 per side, destructive ones confirmed or undoable) and every one also exists on the row's ⋯ button. Long-press is never the only route to an action. Pull-to-refresh is paired with a refresh control or an "Updated <time>" label.
+- **UI-MOB-07** Virtualise a list of more than 50 rows. Use cached, right-sized images. Cold start under 2 s on a mid-range Android device; scrolling and transitions hold 60 fps (no frame over 16 ms).
+- **UI-MOB-08** Support system text size up to 200% without clipping or overlap: rows grow, labels wrap, bottom-bar labels may shrink to 2 lines. No fixed height clips text.
+- **UI-MOB-09** Every control has a label, role and state for TalkBack and VoiceOver. An icon-only button names its object ("Actions for LT-0042"). Focus order follows the visual order. Announcements use polite live regions.
+- **UI-MOB-10** Request a permission (notifications, camera, location, biometrics) only when the user starts the related action, or after a sheet that explains the benefit ("Get notified about your laptops" · Turn on notifications / Not now). Never on first launch. If denied, explain how to enable it in Settings.
+- **UI-MOB-11** Push (FCM, APNs) links to the related screen, contains no sensitive value, and respects per-user preferences. Where push is unavailable (PWA in a browser, iOS PWA not installed) use the in-app bell and email.
+- **UI-MOB-12** Offer biometric unlock ("Unlock with Face ID / fingerprint next time?") only after a full sign-in. It unlocks a token held in the platform keystore. The password stays available. Require a full sign-in again after 30 days or a password change.
+- **UI-MOB-13** A screen with restricted data blocks screenshots (Android `FLAG_SECURE`) and blurs the iOS app-switcher snapshot.
+- **UI-MOB-14** Below the server's minimum version show a blocking "Update required" screen (reason, "your data is safe", store button, current and minimum version). An optional update is a dismissible banner.
+- **UI-MOB-15** Offline follows `states.md`: keep input, queue safe changes in encrypted storage with a "Pending sync · N" list, disable server-only actions with "Needs a connection", sync on reconnect with a confirmation toast.
+- **UI-MOB-18** Native apps request exports from the backend and open them with the system sheet; they do not build files on the device (`export.md`). Native apps never use drawer navigation as the main navigation or dropdown navigation.

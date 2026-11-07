@@ -20,12 +20,21 @@ It does not replace review. It replaces the searching. Rules a script cannot che
 | Need | Command |
 |---|---|
 | Overview | `audit.js` |
-| One standard | `audit.js --standard css,html` (also `js ts a11y seo perf git version`) |
+| One standard | `audit.js --standard css,html` (also `js ts a11y seo perf git version ui dev`) |
+| Only what you changed | `audit.js --changed`: findings on lines changed since HEAD, so old debt is not touched unasked |
 | Part of the tree | `audit.js src/components` |
 | Every hit of one rule | `audit.js --rule css-14` (`--context` adds the source line, `--limit N` raises the 200 cap) |
 | Leave out third-party code | `audit.js --ignore 'vendor/**'`, a line in `.aiignore` (gitignore-style, e.g. `vendor/`), or `ignore` in `.claude/code-audit.json` |
 | See what is and is not checked | `audit.js --list` |
 | Track progress | `audit.js --baseline` once, then plain `audit.js`; exit code 1 only if a count rose |
+
+## Waivers, UI rules and strict mode
+- **`DEVIATION: <rule id> <reason>`** in a comment waives that rule on its own line and the next. It is counted (`dev-count`), a waiver that matches nothing is `dev-stale`, and one with no reason, an unknown rule or an accessibility or security rule is ignored and reported as `dev-invalid`.
+- **UI rules (`ui-*`)** check the `coding-standards/ui-standards/` rules that a script can verify (button labels, vague messages, `role="menu"` in `<nav>`, tables without `<th>`, cookie flags, the PWA manifest, native select and date inputs, password autocomplete, split one-time-code boxes, confirm-password fields, autoplay without muted, a page with no skip link). They run only where `coding-standards/ui-standards.md` exists, or with `"ui": true` in `.claude/code-audit.json`.
+- **Strict mode:** `{"strict": true}` in `.claude/edit-check.json` makes the edit hook say findings are hard rules, and the pre-commit check blocks a commit that adds one. Old code never blocks. `{"scope": "changed"}` there limits the per-edit check to changed lines.
+
+## Colour contrast (A11Y-09)
+Set pairs in `.claude/code-audit.json`: `{"contrastPairs": [{"fg": "--color-text", "bg": "--color-surface", "min": 4.5}]}`, or `"contrastPairs": "auto"` to check every text token against every surface and background token (tokens named inverse, on-, disabled, placeholder, overlay or scrim are skipped). The check reads the token file, follows `var()` chains, and tests light mode and dark mode (`prefers-color-scheme: dark`, or a selector containing "dark"). Hex, `rgb()`, `hsl()` and `oklch()` are understood; a token with alpha, `color-mix()` or `light-dark()` is reported as `a11y-09-skip` (info), never silently passed. A failing pair is `a11y-09`, a hard per-edit rule that cannot be waived. Use 3 for large text and interface parts.
 
 ## Cleanup workflow
 1. Run the overview. If it prints a `hint:` line for a vendor-looking folder, confirm with the user that it is third-party, then rerun with `--ignore`.

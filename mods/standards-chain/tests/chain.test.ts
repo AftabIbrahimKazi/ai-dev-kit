@@ -57,7 +57,7 @@ test('relTo: inside, relative, outside', () => {
 })
 
 // ---- the hooks, with the host stubbed ----
-function host(on: any, files: Record<string, string> = { 'coding-standards/index.md': '# idx' }) {
+function host(on: any, files: Record<string, string> = { 'coding-standards/index.md': '# idx', 'coding-standards/css-standards.md': '#', 'coding-standards/css-standards/component-files.md': '#' }) {
   const has = (p: string) => Object.keys(files).some((k) => p.split(BACK).join('/').endsWith(k))
   on('session.start', () => ({ cwd: '/work' }))
   on('session.cwd', () => ({ value: '/work' }))
@@ -131,4 +131,128 @@ test('a broken config file still gates', async ($, on) => {
   host(on, { 'coding-standards/index.md': '#', '.claude/standards-chain.json': '{ not json' })
   await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
   expect((await $.tool.call({ tool: 'Edit', file_path: '/work/src/a.css', old_string: 'a', new_string: 'b' })).deny).toContain('standards-chain')
+})
+
+// ---- company standards (coding-standards/company/INDEX.md, written by install-kit) ----
+test('company: the index joins the chain, and other UI file types owe it too', () => {
+  expect(chainFor('src/a.css', { company: true })!.files).toEqual(['index.md', 'css-standards.md', 'company/INDEX.md'])
+  expect(chainFor('app/views/home.blade.php', { company: true })!.files).toEqual(['company/INDEX.md'])
+  expect(chainFor('lib/a.dart', { company: true })!.files).toEqual(['ui-standards.md', 'ui-standards/mobile.md', 'company/INDEX.md'])
+  expect(chainFor('app/views/home.blade.php', {})).toBeNull() // without a company index nothing changes
+})
+
+test('company: a default the company replaced is not demanded, the index is', async ($, on) => {
+  host(on, { 'coding-standards/index.md': '#', 'coding-standards/company/INDEX.md': '#' }) // css-standards.md is gone from disk
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  const d = await $.tool.call({ tool: 'Edit', file_path: '/work/src/a.css', old_string: 'a', new_string: 'b' })
+  expect(d.deny).toContain('coding-standards/company/INDEX.md')
+  expect(d.deny).not.toContain('css-standards.md')
+})
+
+test('company-only install (no index.md at all) still gates on the company index', async ($, on) => {
+  host(on, { 'coding-standards/company/INDEX.md': '#' })
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  const d = await $.tool.call({ tool: 'Edit', file_path: '/work/src/a.css', old_string: 'a', new_string: 'b' })
+  expect(d.deny).toContain('coding-standards/company/INDEX.md')
+  expect(d.deny).not.toContain('Role not clear')
+  await $.tool.call({ tool: 'Read', file_path: '/work/coding-standards/company/INDEX.md' })
+  expect((await $.tool.call({ tool: 'Edit', file_path: '/work/src/a.css', old_string: 'a', new_string: 'b' })).deny).toBeUndefined()
+})
+
+// ---- ui-standards: element partials routed by path keyword ----
+test('ui: the path names the element, the chain adds the routing file and that partial', () => {
+  const f = (p: string) => chainFor(p)!.files
+  expect(f('src/components/Button/button.css')).toEqual(['index.md', 'css-standards.md', 'css-standards/component-files.md', 'ui-standards.md', 'ui-standards/button.md'])
+  expect(f('src/components/DataTable.tsx')).toContain('ui-standards/table.md')
+  expect(f('src/views/login.html')).toContain('ui-standards/auth.md')
+  expect(f('src/styles/modal.scss')).toContain('ui-standards/modal-drawer.md')
+  expect(f('src/pages/UserForm.vue')).toContain('ui-standards/forms.md')
+})
+
+test('ui: at most two partials, none for a path that names no element, none for non-UI files', () => {
+  expect(chainFor('src/components/filter-table-toolbar.tsx')!.files.filter((x) => x.startsWith('ui-standards/')).length).toBe(2)
+  expect(chainFor('src/styles/misc.css')!.files).toEqual(['index.md', 'css-standards.md'])
+  expect(chainFor('src/lib/auth.ts')!.files.some((x) => x.startsWith('ui-standards'))).toBe(false) // a service, not a UI file
+  expect(chainFor('src/components/button.css', { ui: false })!.files.some((x) => x.startsWith('ui-standards'))).toBe(false)
+})
+
+test('ui: a project without ui-standards on disk is never asked for it', async ($, on) => {
+  host(on) // default fixture has no ui-standards files
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  for (const f of ['index.md', 'css-standards.md', 'css-standards/component-files.md']) await $.tool.call({ tool: 'Read', file_path: '/work/coding-standards/' + f })
+  expect((await $.tool.call({ tool: 'Edit', file_path: '/work/src/components/button.css', old_string: 'a', new_string: 'b' })).deny).toBeUndefined()
+})
+
+test('ui: with ui-standards on disk the partial is required, then passes once read', async ($, on) => {
+  host(on, { 'coding-standards/index.md': '#', 'coding-standards/css-standards.md': '#', 'coding-standards/css-standards/component-files.md': '#', 'coding-standards/ui-standards.md': '#', 'coding-standards/ui-standards/button.md': '#' })
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  for (const f of ['index.md', 'css-standards.md', 'css-standards/component-files.md']) await $.tool.call({ tool: 'Read', file_path: '/work/coding-standards/' + f })
+  const d = await $.tool.call({ tool: 'Edit', file_path: '/work/src/components/button.css', old_string: 'a', new_string: 'b' })
+  expect(d.deny).toContain('coding-standards/ui-standards/button.md')
+  for (const f of ['ui-standards.md', 'ui-standards/button.md']) await $.tool.call({ tool: 'Read', file_path: '/work/coding-standards/' + f })
+  expect((await $.tool.call({ tool: 'Edit', file_path: '/work/src/components/button.css', old_string: 'a', new_string: 'b' })).deny).toBeUndefined()
+})
+
+test('ui: pwa and mobile partials route by file kind, and a plain json file is not gated', () => {
+  expect(chainFor('public/manifest.webmanifest')!.files).toEqual(['ui-standards.md', 'ui-standards/pwa.md'])
+  expect(chainFor('public/sw.js')!.files).toContain('ui-standards/pwa.md')
+  expect(chainFor('lib/screens/login_screen.dart')!.files).toEqual(['ui-standards.md', 'ui-standards/mobile.md', 'ui-standards/auth.md'])
+  expect(chainFor('ios/App/ProfileView.swift')!.files).toContain('ui-standards/mobile.md')
+  expect(chainFor('package.json')).toBeNull()
+  expect(chainFor('config/data.json')).toBeNull()
+  expect(chainFor('public/manifest.json', { ui: false })).toBeNull()
+})
+
+test('ui: a React Native or hybrid file reaches the mobile partial by a path keyword', () => {
+  expect(chainFor('src/mobile/components/BottomNav.tsx')!.files).toContain('ui-standards/mobile.md')
+  expect(chainFor('src/native/Profile.tsx')!.files).toContain('ui-standards/mobile.md')
+  expect(chainFor('src/components/Profile.tsx')!.files.some((x) => x.endsWith('mobile.md'))).toBe(false)
+})
+
+test('a failing host call while checking the chain never blocks the edit (fails open)', async ($, on) => {
+  on('session.start', () => ({ cwd: '/work' }))
+  on('session.cwd', () => ({ value: '/work' }))
+  on('fs.exists', () => ({ deny: 'filesystem unavailable' }))
+  on('tool.call', () => ({ result: 'ran', text: 'ok' }))
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  const r = await $.tool.call({ tool: 'Edit', file_path: '/work/src/components/button.css', old_string: 'a', new_string: 'b' })
+  expect(r.deny).toBeUndefined()
+})
+
+test('ui: shell, form-control and flow partials route by path keyword', () => {
+  const f = (p: string) => chainFor(p)!.files
+  expect(f('src/components/Sidebar.tsx')).toContain('ui-standards/sidebar.md')
+  expect(f('src/components/AppHeader.tsx')).toContain('ui-standards/header.md')
+  expect(f('src/layouts/PageHeader.vue')).toContain('ui-standards/page-header.md')
+  expect(f('src/components/Breadcrumb.tsx')).toContain('ui-standards/nav.md')
+  expect(f('src/components/PinnedPages.tsx')).toContain('ui-standards/sidebar.ref.md')
+  expect(f('src/components/Flyout.tsx')).toContain('ui-standards/nav.ref.md')
+  expect(f('src/components/Stepper.tsx')).toContain('ui-standards/stepper.md')
+  expect(f('src/components/MultiSelect.tsx')).toContain('ui-standards/select.md')
+  expect(f('src/components/DatePicker.tsx')).toContain('ui-standards/date.md')
+  expect(f('src/components/TextInput.tsx')).toContain('ui-standards/fields.md')
+  expect(f('src/components/Image.tsx')).toContain('ui-standards/image.md')
+  expect(f('src/components/FileUpload.tsx')).toContain('ui-standards/upload.md')
+  expect(f('src/components/ThemeCustomizer.tsx')).toContain('ui-standards/customizer.md')
+  expect(f('src/styles/tokens.css').some((x) => x.startsWith('ui-standards'))).toBe(false) // token files keep the css role only
+})
+
+test('ui: sign-in pages also read the field rules; plural page names are list pages', () => {
+  const ui = (p: string) => chainFor(p)!.files.filter((x) => x.startsWith('ui-standards/')).map((x) => x.slice(13))
+  expect(ui('src/pages/signin.html')).toEqual(['auth.md', 'fields.md'])
+  expect(ui('src/pages/invoices.html')).toEqual(['table.md'])
+  expect(ui('src/views/purchase-orders.html')).toEqual(['table.md'])
+  expect(ui('src/pages/settings.html')).toEqual([])
+  expect(ui('src/pages/status.html')).toEqual([])
+  expect(ui('src/pages/address.html')).toEqual([])
+  expect(ui('src/lib/invoices.html')).toEqual([]) // not a page folder
+  expect(ui('src/pages/login-form.html')).toEqual(['auth.md', 'forms.md']) // a form already reads forms, so no fields added
+})
+
+test('ui: theming and landing partials route by path keyword', () => {
+  expect(chainFor('src/styles/dark-mode.css')!.files).toContain('ui-standards/theming.md')
+  expect(chainFor('src/components/ThemeToggle.tsx')!.files).toContain('ui-standards/theming.md')
+  expect(chainFor('src/pages/landing/Hero.tsx')!.files).toContain('ui-standards/landing.md')
+  expect(chainFor('src/pages/pricing.html')!.files).toContain('ui-standards/landing.md')
+  expect(chainFor('src/components/Card.tsx')!.files.some((x) => x.endsWith('theming.md') || x.endsWith('landing.md'))).toBe(false)
 })

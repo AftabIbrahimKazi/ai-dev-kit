@@ -16,3 +16,5 @@ __pycache__/
 .claude/settings.local.json
 kit-feedback.md
 .kit-feedback-deny
+
+/site

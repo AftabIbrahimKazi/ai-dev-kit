@@ -187,6 +187,8 @@ const canvas = document.querySelector('#canvas') as HTMLCanvasElement; // guaran
 
 When controlling element state via data attributes, only update the attribute's value. Never add or remove the attribute itself. Never add or remove classes or IDs to reflect state.
 
+The same holds for ARIA state (`aria-expanded`, `aria-selected`, `aria-busy`): it ships in the markup from first render and JS sets only its value (`"true"`/`"false"`). Script never injects a state attribute, class or ID into a UI element at runtime; an attribute that appears after load changes the element's size or style and causes layout shift.
+
 ```js
 // Wrong — adding or removing the attribute
 element.setAttribute('data-open', '');

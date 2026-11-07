@@ -1,0 +1,8 @@
+{
+  "name": "skill-hint",
+  "version": "0.1.0",
+  "description": "On each typed prompt, matches keywords in code (no model call) and attaches one line naming skills that may apply, once per skill per session. An archived skill is named with the /unarchive command to run. Hint only: it never loads, archives or restores a skill. Reads .ai-dev-kit.json and the project's skill-scope triggers; no env, no network.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

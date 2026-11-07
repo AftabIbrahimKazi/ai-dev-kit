@@ -513,7 +513,7 @@ t('STANDARD_ROW_LABELS excludes Script standard and the two Framework rows (reso
   assert.ok(!labels.includes('Script standard'));
   assert.ok(!labels.includes('Framework'));
   assert.ok(!labels.includes('CSS Framework'));
-  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 10);
+  assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 11);
 });
 
 t('installStandards against the real CLAUDE.example.md resolves the script standard and prunes inactive rows', () => {
@@ -815,4 +815,21 @@ t('more than 12 new entries are capped with a count of the rest', () => {
   const res = doUpdate({ library: lib, root: target, all: true, skills: [] });
   assert.strictEqual(res.whatsNew.entries.length, 12);
   assert.strictEqual(res.whatsNew.more, 3);
+});
+t('mergeHooks retires the old skill-scope hooks and leaves every other hook alone', () => {
+  const target = tmp();
+  const p = path.join(target, '.claude', 'settings.json');
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const mine = { hooks: [{ type: 'command', command: 'echo mine' }] };
+  fs.writeFileSync(p, JSON.stringify({ model: 'x', hooks: {
+    SessionStart: [{ hooks: [{ type: 'command', command: 'node .claude/skills/skill-scope/auto.js apply --quiet || true' }] }, mine],
+    UserPromptSubmit: [{ hooks: [{ type: 'command', command: 'node .claude/skills/skill-scope/auto.js apply --add-only --quiet "x" || true' }] }],
+  } }));
+  const res = mergeHooks(target, []);
+  assert.deepStrictEqual(res.retired.sort(), ['SessionStart', 'UserPromptSubmit']);
+  const after = JSON.parse(fs.readFileSync(p, 'utf8'));
+  assert.deepStrictEqual(after.hooks.SessionStart, [mine]);
+  assert.strictEqual(after.hooks.UserPromptSubmit, undefined);
+  assert.strictEqual(after.model, 'x');
+  assert.deepStrictEqual(mergeHooks(target, []).retired, []);
 });

@@ -36,7 +36,7 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 - [Slash commands](#slash-commands) — every command you type, and when to reach for it
 - [Optional AI tools: free and local MCP servers](#optional-ai-tools-free-and-local-mcp-servers-for-any-coding-agent) — UI prototyping, image reading/generation, local file prefiltering
 - [Voice, narration and personas](#voice-narration-and-personas) — opt-in text-to-speech for replies, and reply personas
-- [Claude Code mods (all ten)](#claude-code-mods-all-ten) — the plug-ins that enforce rules in code instead of relying on a skill loading
+- [Claude Code mods (all fourteen)](#claude-code-mods-all-fourteen) — the plug-ins that enforce rules in code instead of relying on a skill loading
 - [Scripts and git hooks](#scripts-and-git-hooks) — what every script does, and setting up git hooks for human commits
 - [Maintaining the kit](#maintaining-the-kit) — keeping this repo and its installs in sync over time
 - [Where things live, and how to turn things off](#where-things-live-and-how-to-turn-things-off) — every file the kit writes, and how to remove each one
@@ -203,7 +203,7 @@ Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flag
 | `--all` | Remove every skill the manifest tracks. |
 | `--library <path>` | Optional. Where to read the kit's hook blocks and command templates from; defaults to the clone the script runs from. |
 | `--remove-hooks` | Also removes the kit's hook entries from `.claude/settings.json`: only entries identical to the kit's, every other hook and setting stays. Without it the hooks stay and uninstall says so. |
-| `--remove-standards` | Also deletes `coding-standards/`. The session-protocol file (`CLAUDE.md`/`AGENTS.md`) is **never** deleted by any flag — it may carry your own edits; remove it yourself if you want it gone too. |
+| `--remove-standards` | Also deletes the kit's `coding-standards/` files (never `coding-standards/company/`, which holds your own docs; `--purge-company` removes those). The session-protocol file (`CLAUDE.md`/`AGENTS.md`) is **never** deleted by any flag — it may carry your own edits; remove it yourself if you want it gone too. |
 | `--json` | Prints the result as JSON. |
 
 **`archive`** / **`unarchive`** — move a skill between the active skill root and `<tool-dir>/skills-archive/` (still on disk, just invisible to the tool) and back. You rarely run it by hand: `skill-scope` archives the per-session set at session start, restores a skill when a message names its trigger word, and `/next <task>` does both on demand.
@@ -215,7 +215,7 @@ Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flag
 | `--all` | Archive every currently-installed skill, or unarchive every currently-archived one. |
 | `--json` | Prints the result as JSON. |
 
-**`merge-hooks`** — merges the six core hook blocks documented in `hooks-enforcement.md` (the standards reminders and gate, the two `skill-scope` archiving hooks, and the `handover` size check) into `.claude/settings.json`, deduped, never touching anything else already in that file.
+**`merge-hooks`** — merges the four core hook blocks documented in `hooks-enforcement.md` (the standards reminders and gate, and the `handover` size check) into `.claude/settings.json`, deduped, never touching anything else already in that file.
 
 | Flag | What it does |
 |---|---|
@@ -240,8 +240,8 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Dangerous actions are stopped | The `guard` mod denies edits to secret files, lockfiles and `.git`, and destructive commands such as force push or `reset --hard` | `guard` mod |
 | Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
 | Token use is recorded | The `budget-ledger` mod writes one row per turn; `/budget` reads it | `budget-ledger` mod |
-| Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `prefilter-rank` (ranked read order) | those mods |
-| Only the skills a task needs are loaded | A session-start hook archives the per-session set; a prompt hook restores a skill when your message names its trigger word and tells the model which `SKILL.md` to read. Measured on the full kit: about 630 fewer tokens on every turn. `/next <task>` does it by hand. | `skill-scope` (pinned), Claude Code hooks |
+| Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `skill-hint` (a skill that may apply), `prefilter-rank` (ranked read order) | those mods |
+| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 630 tokens from every turn. | `skill-scope` (pinned), Claude Code hooks |
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
 | On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
@@ -294,8 +294,9 @@ Full map: [coding-standards/index.md](coding-standards/index.md)
 | Cross-cutting | Covers |
 |---|---|
 | `git-standards.md`, `versioning-standards.md` | Commit/branch/PR conventions, package versioning |
-| `seo-standards.md`, `accessibility-standards.md`, `performance-standards.md` | SEO structure/schema; WCAG 2.1 AA; load/runtime performance budgets |
+| `seo-standards.md`, `accessibility-standards.md`, `performance-standards.md` | SEO structure/schema; WCAG 2.2 AA; load/runtime performance budgets |
 | `qa/` (umbrella folder, not one file) | Definition of done, branch gates, logic/error checks, security, E2E testing, bug reporting |
+| `ui-standards.md` | Element and pattern rules, 30 compact partials (plus 11 on-demand `.ref.md` detail files) in `ui-standards/` (button, fields, select, date, forms, stepper, table, filters, states, feedback, header, sidebar, page header, nav, upload, image, export, auth, charts, theming, customizer, tokens, landing, mobile, PWA, checklist and more). The `standards-chain` mod reads only the partial the file path names. |
 | `ai-standards.md` | The AI behavioral contract — hallucination detection, `[CX]` context-integrity signal, read-efficiency rules — for every session regardless of tool |
 | `tooling/` | Lint configs that mechanically enforce whichever rules above are machine-checkable |
 
@@ -608,7 +609,7 @@ The install offers eight choices: the six personas, `none`, or `custom` (your ow
 
 Licences and credits for Piper and the voices: [CREDITS.md](CREDITS.md).
 
-## Claude Code mods (all ten)
+## Claude Code mods (all fourteen)
 
 Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in code, so unlike skills they fire every time. Each one fails open (if it breaks, your work continues), none depends on another, and nothing in the kit needs them. Install them by saying `set up mods`; [`mod-setup`](skills/meta/mod-setup.md) reviews what each one touches first. Claude Code only.
 
@@ -621,8 +622,10 @@ Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in c
 | `standards-chain` | Denies the first edit of a file until its coding-standards chain has been read, and again after a compaction | blocks | a `coding-standards/` folder |
 | `debug-nudge` | One reminder at the first failed test or build, and one at the second failed fix, to stop editing and apply `debug-protocol`; also reads failure text hidden by pipes | reminds | the `debug-protocol` skill |
 | `design-audit-offer` | After the second UI file edit in a project with a design doc or Figma context, one line asking the model to offer a UI/UX audit; never audits unasked | reminds | `ui-design` and `design-standards.md` |
+| `gap-log` | Logs each `STANDARDS GAP: <what is not covered>` line an answer contains to `.claude/standards-gaps.jsonl` (time, session, gap), so the holes in the standards pile up for the maintainer. Adds no text to the answer or the context; fails open; stops at 1 MB. Add the file to `.gitignore` if you do not want it committed. | observer | none |
 | `marker-guard` | Enforces AI-01: when a reply lacks the `[CX]` marker (which shows the user the AI has not forgotten the project context), shows one warning line beneath it; never fakes the marker | reports | the session-protocol file (`CLAUDE.md`/`AGENTS.md`) |
 | `eta-nudge` | Reminds the agent to state a time estimate when a call is backgrounded, and every 10 minutes after the first 5 | reminds | the `plan-first` skill |
+| `skill-hint` | Matches keywords in your prompt (code, no model call) and attaches one line naming skills that may apply, once per skill per session; an archived skill is named with the `/unarchive` command to run | hints only, never moves a skill | the skills it names |
 | `learnings-inject` | Adds a skill's `learnings.md` to the Skill call result once per session, so the start-of-skill read needs no tool call | adds context | the skills' `learnings.md` step |
 | `output-compact` | Shortens long Bash and PowerShell output before the model reads it; every failure line survives | rewrites output | the `session-budget` skill |
 | `aiignore-guard` | Keeps the AI out of files it should not read: the project's `.aiignore`, paths that belong to another role (`conflict-roles.json`: the active role's `out` list, or anything another role lists under `in`), the current task's scope (`/focus`, else the role's board row) and folders local Laya is confident the prompt does not need. The first touch of such a path is denied with the way in (rank the names with `prefilter`, then retry once); unscoped Grep and Glob results come back without ignored and out-of-role files | blocks | `.aiignore`; optional `conflict-roles.json`, role-session board, local Laya |
@@ -667,11 +670,84 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 - Standards edits follow the repo's own principles ([index.md → Principles](coding-standards/index.md)): testable, declarative, wrong/right examples mandatory. Machine-checkable rule changes update [`coding-standards/tooling/`](coding-standards/tooling/) in the same commit.
 - `learnings.md` files are gitignored — they belong to the project that earned them. Lessons worth keeping forever get promoted into skill bodies (see `memory-gardener`).
 
+### Project signature: your own watermark
+
+A signature is a short alias you choose when you install, or choose not to have. It watermarks the code written to your standards, so anyone can see it follows them and a script can check it. The kit never picks one for you.
+
+**Walkthrough.** Pick 2 to 6 letters, for example `acme`. Install with it, or answer the prompt when the installer asks:
+
+```shell
+node skills/meta/install-kit.cli.js install --library . --root "C:\work\my-app" --tool claude --skills handover --standards --signature acme
+```
+
+Press Enter at the prompt (or pass `--signature none`) for no alias; nothing is then written or checked. Change it later with `signature set <alias>`, drop it with `signature remove`, see it with `signature show`. Add `--dry-run` to see what would change.
+
+What one alias does, in exactly three places: `acme-name` for classes and ids, `data-acme-name` for data attributes (`css-standards.md` RULE 11), `AcmeName` for shared UI components. It fills the project table's "Selector signature" row (the original row comes back when you remove it), and joins the Company Standards block and `INDEX.md` if you use company standards.
+
+**It covers your own code only.** The rule text tells the AI never to rename, prefix or restyle a class, attribute or component that comes from a package, framework or library (`btn`, `col-6`, `swiper-slide`, `data-bs-toggle`). The check (`code-audit` rule `css-11`, review level) skips `node_modules`, `vendor`, third-party, minified and generated files, the names that your `package.json` dependencies bring (Bootstrap, Bulma, Swiper, Font Awesome and others), and anything you list in `.claude/code-audit.json` under `signatureIgnore` (file globs) or `signatureExempt` (name prefixes).
+
+| Command or flag | What it does |
+|---|---|
+| `install --signature <alias or none>` | Sets the alias (or none) during install. The interactive installer asks. |
+| `signature set <alias>` | Sets or changes it on an installed project. |
+| `signature remove` | Removes it and restores the table row exactly. |
+| `signature show` | Prints the current alias or null. |
+| `--dry-run` | With `signature set` or `remove`: report, write nothing. |
+
+**Choosing how hard it is enforced.** By default the checks are advice (review level). A project, or a company that wants hard enforcement, can tighten them in `.claude/code-audit.json`:
+
+| Setting | Effect |
+|---|---|
+| `"signatureMode": "strict"` | The signature rules become hard rules: `edit-check` tells the AI to fix them, and the pre-commit check blocks a commit that adds one. Only lines you changed count, so old code never blocks. |
+| `"bannedImports": ["jquery", {"pattern": "@mui/*", "message": "use the shared component"}]` | An import of a banned library (a name, a sub-path or a glob) is a hard rule. A company that forbids libraries lists them here, which keeps framework names out of the rules altogether. Off unless you list some. |
+| learned exemptions | You rarely write `signatureExempt` by hand. The check already exempts the names your `package.json` dependencies bring, from a built-in table and from the CSS each installed package ships (`node_modules/<dep>/**/*.css`, capped, cached in `.claude/code-audit.pkg.json` until `package.json` changes). The gap is a library loaded from a CDN: run `node skills/standards/code-audit.audit.js --suggest-exempt` and it groups what was flagged by first word and prints the `signatureExempt` line to paste. |
+| `"signatureComponentDirs": ["components", "widgets"]` | Where shared components live. Default: `components`, `ui`, `shared`. Pages, views, screens, tests and stories are never treated as shared components. |
+
+Component names are checked too (rule `css-11-component`): an exported component, a `.vue` or `.svelte` file, or a Dart widget in those folders should start with the capitalised alias (`AcmeButton`). It sees `export function`, `export class`, `export const X = () =>`, `memo` and `forwardRef`, export lists (`export { X }`, `export { X as Y }` checks the public name `Y`), `export default X`, and wrapped exports such as `export default connect(a)(X)`. Under the kit's naming rule functions are camelCase, so a Pascal-case function in those folders is a component. It reads patterns, not a full syntax tree, so an exotic export (`export * from`, a component built by a factory) can still be missed. A deliberate exception is a `DEVIATION: css-11 <reason>` comment, as with any rule.
+
+`uninstall --all` restores the row too. If your company's docs already use a prefix, `company sync` prints it as a hint; the choice stays yours.
+
+### Company standards: your own rules, kept separate from the kit's
+
+If your company already has its own standards (a design system, a style guide, a standards repo of markdown docs), the kit gives them a place of their own instead of mixing them into the kit's files: `coding-standards/company/`. You drop the docs in; the kit never edits them.
+
+**Walkthrough.** From the `ai-dev-kit` folder, with your project at `C:\work\my-app` and your company docs in `C:\docs\company-rules`:
+
+```shell
+node skills/meta/install-kit.cli.js company sync --library . --root "C:\work\my-app" --company-from "C:\docs\company-rules"
+```
+
+The first time, it asks one question: what should happen to the kit's own default standards?
+
+1. **Install the default standards too.** Company rules win where they disagree; the defaults still apply where the company docs are silent. Nothing is removed.
+2. **Don't install the default standards.** Your company rules are the only standards. No default files are installed.
+3. **Auto-detect.** The kit reads your files' names, titles and headings and removes only the defaults your company clearly replaces (for example the kit's design standard, when you bring a full design system). Everything else stays. It prints what it decided and why.
+
+Then it builds four things, all small: `coding-standards/company/INDEX.md` (a routing table, so the AI reads only the file a task needs and not the whole folder), a `company-standards` skill, a marked block in `CLAUDE.md`/`AGENTS.md`, and a record in `.ai-dev-kit.json`. If your docs already contain a "when you build X, read Y" table, it is imported as the routes. The `standards-chain` mod then makes the AI read `INDEX.md` before it edits UI or code files.
+
+Add or change docs later? Run `company sync` again. Check where things stand with `company status`. To take it all out: `company remove` deletes the generated files and puts back any default it had removed, and leaves your docs alone. Add `--purge` to delete your docs too.
+
+**Read this before choosing auto-detect.** It is a guess from file names, titles and headings; it does not read your rule text. It removes a default only when your company has a file named for that subject plus at least one more related file. It never removes the accessibility, QA, git or versioning defaults. Partial overlap keeps the default (a design system that mentions CSS tokens does not replace the kit's CSS standard). A wrong guess is reversible: `company sync --company-defaults keep` puts everything back.
+
+| Flag | What it does |
+|---|---|
+| `company sync` | Scans `coding-standards/company/`, rebuilds `INDEX.md`, the skill and the `CLAUDE.md` block, and applies the defaults choice. Safe to repeat. |
+| `company status` | Shows the mode, how many files are indexed, and whether the folder changed since (`stale`). |
+| `company remove` | Removes everything the kit generated and restores removed defaults (give it `--library`). Your docs stay. |
+| `--company-from <folder>` | Copies that folder into `coding-standards/company/` (skips `.git` and `node_modules`). Also accepted by `install`. |
+| `--company-defaults keep\|drop\|auto` | The three choices above. Also accepted by `install` (`install --company` alone asks). |
+| `--dry-run` | With `company sync` or `company remove`: print what would change and write nothing. Refused by every other command. |
+| `--force` | With `--company-from`: overwrite company files that already exist and differ. Without it they are left alone and listed. |
+| `--purge` | With `company remove`: also deletes your docs in `coding-standards/company/`. |
+
+`update` regenerates `INDEX.md` and never re-installs a default that was removed. `uninstall --all` removes the generated parts; `--remove-standards` deletes the kit's defaults but never `coding-standards/company/`; `--purge-company` removes your docs too.
+
 ## Where things live, and how to turn things off
 
 | Thing | Where it lives | Scope | Turn it off |
 |---|---|---|---|
 | Skills and standards | `<project>/.claude/skills/`, `<project>/coding-standards/` | one project | delete the folder |
+| Company standards | `<project>/coding-standards/company/` (your docs), plus a generated `INDEX.md`, a `company-standards` skill and a marked block in `CLAUDE.md`/`AGENTS.md` | one project | `company remove` (add `--purge` to delete your docs too) |
 | Slash commands | `<project>/.claude/commands/` | one project | delete the file, or `uninstall` (removes the ones you have not edited) |
 | Automatic skill archiving and the size check | the `SessionStart` and `UserPromptSubmit` entries in `<project>/.claude/settings.json` | one project | `uninstall --remove-hooks`, or delete those entries; `/next --keep a,b` keeps named skills loaded |
 | Mods | installed by `mod-setup` into Claude Code | per user or per project | remove the plug-in with `/plugin` |
@@ -711,7 +787,7 @@ skills/
   addons/          ← opt-in, user-opted capabilities, never installed by default (system1-prefilter + local Laya, project-context, narrate, personality)
   mcp/             ← opt-in MCP servers: mcp-manager + one companion per server (stitch, local-vision, image-gen)
   commands/        ← opt-in slash-command templates (/audit, /commit-check, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /untrack, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
-mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, design-audit-offer, marker-guard, learnings-inject, aiignore-guard), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
+mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, eta-nudge, design-audit-offer, marker-guard, gap-log, learnings-inject, aiignore-guard, skill-hint), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
@@ -749,7 +825,7 @@ coding-standards/
 - **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
 - **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships thirteen opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank`, `eta-nudge` and `aiignore-guard`. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships fifteen opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank`, `eta-nudge`, `aiignore-guard`, `skill-hint` and others listed in the table above. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
 - **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
 - **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.

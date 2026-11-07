@@ -4,7 +4,7 @@ Read only when needed: archiving skills at session end, agent-handover files, or
 
 ## Skill scope for next session
 
-Only touches `skill-scope`'s per-session-archivable set (listed in `skill-scope.triggers.json`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), apply it with the same engine the hooks and `/next` use:
+Only touches `skill-scope`'s per-session-archivable set (listed in `skill-scope.triggers.json`) — never permanent-pinned skills, that's install-kit's territory. If the next task was volunteered (see above), apply it with the same engine `/next` uses:
 ```
 node <skill-root>/skill-scope/auto.js apply --root <target> <task words>
 ```

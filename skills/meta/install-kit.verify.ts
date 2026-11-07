@@ -78,6 +78,8 @@ function checkSessionProtocol(root: string, protocolFile: string, findings: Find
   const abs = path.join(root, protocolFile);
   if (!fs.existsSync(abs)) { add(findings, 'fail', 'session-protocol', `${protocolFile} is missing -- the detected tool will start every session with no contract`); return; }
   const body = fs.readFileSync(abs, 'utf8');
+  // A company-only install writes a small protocol file of its own (no standards template, so no [CX] rule).
+  if (!/\[CX/.test(body) && body.includes('ai-dev-kit:company-standards:start') && !fs.existsSync(path.join(root, 'coding-standards', 'index.md'))) return;
   if (!/\[CX/.test(body)) { add(findings, 'fail', 'session-protocol', `${protocolFile} exists but has no [CX] rule -- it isn't the standards template, or it was stripped`); return; }
   if (/\[2[–-]4 chars you choose/.test(body)) add(findings, 'fail', 'session-protocol', `${protocolFile}'s Context code row still has the unfilled placeholder -- RULE AI-01 was never actually set`);
 }
@@ -93,6 +95,8 @@ function checkCommentStyle(skillFolders: string[], findings: Finding[]): void {
 function checkStandards(root: string, findings: Finding[]): void {
   const dir = path.join(root, 'coding-standards');
   if (!fs.existsSync(dir)) { add(findings, 'info', 'standards', 'no coding-standards/ folder (not installed, or deliberately skipped)'); return; }
+  // A company-only install ("don't install the default standards") has coding-standards/company/ and nothing else.
+  if (fs.readdirSync(dir).every((e) => e === 'company')) { add(findings, 'info', 'standards', 'company standards only: the kit defaults were deliberately not installed'); return; }
   if (!fs.existsSync(path.join(dir, 'index.md'))) add(findings, 'fail', 'standards', 'coding-standards/ exists but index.md is missing -- an incomplete or corrupted copy');
 }
 

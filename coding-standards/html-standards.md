@@ -161,3 +161,15 @@ The following HTML tags are banned in all UI markup. They may only appear in ema
 ```
 
 The reason: these tags encode presentation in markup. All presentation belongs in CSS.
+
+---
+
+## RULE H-11 — Library, CSS and script links live in the head
+
+Every `<link>` to a stylesheet and every `<script src>` (library or project) is placed in the `<head>`, in the layout template only (see `html-standards/layout-templates.md`). Order: library CSS, then project CSS, then scripts. Scripts carry `defer` (or `type="module"`), so they do not block parsing (`performance-standards.md` PERF-06); none sit at the end of `<body>`. Library files are self-hosted and linked by local path, never from a CDN unless the developer asks.
+
+---
+
+## RULE H-12 — Source files are formatted
+
+Source files are properly formatted: consistent indentation per nesting level and one element per line. Only built or minified output may be unformatted; the source it is built from is not.

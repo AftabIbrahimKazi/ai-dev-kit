@@ -8,7 +8,10 @@ import * as path from 'node:path';
 
 export const MANIFEST_NAME = '.ai-dev-kit.json';
 
-export interface MoveArgs { root?: string; skills: string[]; all?: boolean }
+export interface MoveArgs { root?: string; skills: string[]; all?: boolean; by?: 'auto' | 'manual' }
+
+// One line per move, newest last, capped, so /wrap-up and /pickup can report what changed without asking the model.
+export interface ScopeEvent { t: string; a: 'archive' | 'restore'; n: string[]; by: 'auto' | 'manual' }
 
 export interface SkillRecord { dir: string; companions: string[] }
 export interface Manifest {
@@ -26,6 +29,19 @@ export interface Manifest {
   updatedAt?: string;
   // Date of the newest CHANGELOG.md section this project has been told about; `update` reports what is newer.
   lastSeen?: string;
+  // Company standards (coding-standards/company/): see install-kit.company.ts. Present only while the feature is installed.
+  company?: { mode: "keep" | "drop" | "auto"; dropped: string[]; restore: string[]; rows: Record<string, string>; skill: string | null; files: number; generatedAt: string };
+  // Project signature chosen at install (2 to 6 letters): the watermark in selectors, data attributes and component names. See install-kit.signature.ts.
+  signature?: { alias: string; row?: string };
+  scopeLog?: ScopeEvent[];
+  // Timestamp of the last `report --mark` (run by /wrap-up); the report lists events after it.
+  scopeMark?: string;
+}
+
+function logScope(manifest: Manifest, a: ScopeEvent['a'], n: string[], by: 'auto' | 'manual' | undefined): void {
+  const names = n.filter((x) => !x.startsWith('('));
+  if (!names.length) return;
+  manifest.scopeLog = [...(manifest.scopeLog ?? []), { t: new Date().toISOString(), a, n: names, by: by ?? 'auto' }].slice(-60);
 }
 
 export function readManifest(root: string): Manifest {
@@ -106,6 +122,7 @@ export function doArchive(args: MoveArgs): ArchiveResult {
   }
   if (removeShieldIfUnneeded(absSkillRoot)) archived.push('(shield removed, no longer needed)');
 
+  logScope(manifest, 'archive', archived, args.by);
   writeManifest(args.root!, manifest);
   return { archived, kept };
 }
@@ -133,6 +150,7 @@ export function doUnarchive(args: MoveArgs): UnarchiveResult {
   }
   ensureShield(absSkillRoot);
 
+  logScope(manifest, 'restore', restored, args.by);
   writeManifest(args.root!, manifest);
   return { restored, kept };
 }
