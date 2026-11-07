@@ -27,6 +27,7 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Bump a package version and its changelog entry | `/version-bump <major|feature|patch|alpha|beta|rc|release>` (optional: a scope path, `--dry-run`) |
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
 | A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <export folder>` (opt-in add-on) |
+| A diagram of the stack or folder structure, for a README or site | `/diagram detect` (or `--structure`), then `/diagram build <spec>` (opt-in `diagram` add-on) |
 | Read answers aloud, mute or tune the voice | `/narration mute|unmute|voice male|volume 80|speed 1.2|pitch 2` (opt-in `narrate` add-on) |
 | Change how answers are worded for your skill level | `/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on) |
 | Change how answers are shaped | `/format table|bullets|oneline|bool` (`/format reset` for the default) |

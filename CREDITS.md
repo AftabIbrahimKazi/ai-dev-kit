@@ -48,3 +48,9 @@ Shopify's AI toolkit skills are pulled live from Shopify's own repository at ins
 ## Corrections
 
 Missing or incorrect credit? Open an issue or a pull request against this file and it will be fixed promptly.
+
+## Ideas adapted
+
+| Project | Created by | Licence | What we took | Source |
+|---|---|---|---|---|
+| stack-diagram | caru-ini | MIT | The idea of a script-built architecture diagram with real brand logos, light and dark output and a self-contained HTML file. The layout engine, checks, detection and renderer in `diagram.cli.ts` are our own; no code or assets were copied. | [github.com/caru-ini/stack-diagram](https://github.com/caru-ini/stack-diagram) |
