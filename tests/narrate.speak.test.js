@@ -354,3 +354,68 @@ t('a reply ending on a question queues an alert (manual mode, alerts on); no que
   assert.ok(fs.readFileSync(path.join(tmp, 'narrate-queue', q[0]), 'utf8').includes('Should I commit this?'));
   cli(env, '--stop');
 });
+
+// --- alerts through your own engine ---
+t('alertCommand is read from the config and shown in the status; it must contain {wav}; off removes it', () => {
+  assert.strictEqual(settings({}).alertCommand, undefined);
+  assert.strictEqual(settings({ alertCommand: '  my-tts {wav}  ' }).alertCommand, 'my-tts {wav}');
+  assert.strictEqual(settings({ alertCommand: '   ' }).alertCommand, undefined);
+  const { home, env } = homeEnv();
+  cli(env, '--alerts', 'on');
+  assert.ok(cli(env, '--alertCommand', 'my-tts').includes('must contain {wav}'));
+  assert.ok(cli(env, '--alertCommand', 'my-tts', '{wav}').includes('custom engine'));
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(home, '.claude', 'narrate.json'), 'utf8')).alertCommand, 'my-tts {wav}');
+  assert.ok(!cli(env, '--alertCommand', 'off').includes('custom engine'));
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(home, '.claude', 'narrate.json'), 'utf8')).alertCommand, undefined);
+  assert.ok(cli(env, '--alertCommand').startsWith('use --alertCommand'));
+});
+t('--alertEngine switches between Piper and the saved custom engine without losing the command', () => {
+  const { home, env } = homeEnv();
+  cli(env, '--alerts', 'on');
+  assert.ok(cli(env, '--alertEngine', 'custom').startsWith('no custom engine saved'));
+  cli(env, '--alertCommand', 'my-tts', '{wav}');
+  assert.ok(cli(env, '--status').includes('custom engine'));
+  assert.ok(cli(env, '--alertEngine', 'piper').includes('Piper (custom engine saved, off)'));
+  const conf = () => JSON.parse(fs.readFileSync(path.join(home, '.claude', 'narrate.json'), 'utf8'));
+  assert.strictEqual(conf().alertCommand, 'my-tts {wav}'); assert.strictEqual(settings(conf()).alertCommand, undefined); assert.strictEqual(settings(conf()).alertCommandSaved, 'my-tts {wav}');
+  assert.ok(cli(env, '--alertEngine', 'custom').includes('custom engine, Piper fallback'));
+  assert.ok(cli(env, '--alertEngine', 'robot').startsWith('use --alertEngine'));
+});
+
+// --- alert pieces and the render cache ---
+const { alertParts, COMMON_QUESTIONS, cacheKey } = require('../skills/addons/narrate.speak.js');
+t('alertParts splits the line into lead-in and question; alertText joins them; a phrase with no {q} gets the question appended', () => {
+  assert.deepStrictEqual(alertParts('Which one?', ['Orders needed. {q}']), ['Orders needed.', 'Which one?']);
+  assert.deepStrictEqual(alertParts('Ready?', ['Hey {q} now.']), ['Hey', 'Ready?', 'now.']);
+  assert.deepStrictEqual(alertParts('Ready?', ['Over to you.']), ['Over to you.', 'Ready?']);
+  assert.strictEqual(alertText('Which one?', ['Orders needed. {q}']), 'Orders needed. Which one?');
+  assert.ok(COMMON_QUESTIONS.length >= 10 && COMMON_QUESTIONS.every((q) => q.endsWith('?')));
+});
+t('cacheKey ignores case and punctuation but not the engine command or the words', () => {
+  assert.strictEqual(cacheKey('cmd {wav}', 'Should I commit this?'), cacheKey('cmd {wav}', 'should i  COMMIT this'));
+  assert.notStrictEqual(cacheKey('cmd {wav}', 'Should I commit this?'), cacheKey('other {wav}', 'Should I commit this?'));
+  assert.notStrictEqual(cacheKey('cmd {wav}', 'Should I commit this?'), cacheKey('cmd {wav}', 'Should I push this?'));
+});
+t('--alertPrerender records the lead-ins and common questions once; a second run records nothing; --alertCache clear empties it', () => {
+  const { home, env } = homeEnv();
+  const fake = path.join(home, 'fake-tts.js'); const count = path.join(home, 'calls.txt');
+  fs.writeFileSync(fake, `const fs=require('fs');fs.appendFileSync(${JSON.stringify(count)},'x');` +
+    `const n=2400,b=Buffer.alloc(44+n*2);b.write('RIFF',0);b.writeUInt32LE(36+n*2,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);` +
+    `b.writeUInt32LE(24000,24);b.writeUInt32LE(48000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(n*2,40);fs.writeFileSync(process.argv[2],b);`);
+  cli(env, '--alertCommand', `node "${fake}" {wav}`);
+  const first = cli(env, '--alertPrerender');
+  const calls = fs.readFileSync(count, 'utf8').length;
+  assert.strictEqual(calls, COMMON_QUESTIONS.length + 3, first); // the three built-in lead-ins plus the common questions
+  assert.match(first, /0 failed/);
+  const second = cli(env, '--alertPrerender');
+  assert.strictEqual(fs.readFileSync(count, 'utf8').length, calls); // nothing rendered again
+  assert.match(second, /0 recorded/);
+  assert.match(cli(env, '--alertCache', 'status'), new RegExp(`${calls} cached alert clips`));
+  assert.match(cli(env, '--alertCache', 'clear'), new RegExp(`cleared ${calls}`));
+  assert.match(cli(env, '--alertCache', 'status'), /^0 cached/);
+  assert.ok(cli(env, '--alertCache', 'wipe').startsWith('use --alertCache'));
+});
+t('--alertPrerender refuses when no custom engine is active', () => {
+  const { env } = homeEnv();
+  assert.ok(cli(env, '--alertPrerender').startsWith('no custom alert engine'));
+});

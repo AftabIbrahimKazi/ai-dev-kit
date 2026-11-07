@@ -37,6 +37,8 @@ function nudged(key, conf, dir) {
 }
 // the alert voice is the other slot unless chosen (same rule as speak.js)
 const alertVoiceOf = (conf) => (conf.alertGender === 'male' || conf.alertGender === 'female' ? conf.alertGender : conf.gender === 'male' ? 'female' : 'male');
+// Piper for everything, or the saved custom engine (e.g. a local cloned voice) for alerts only; replies are Piper either way
+const alertEngineOf = (conf) => (!conf.alertCommand ? 'Piper (no custom engine set)' : conf.alertEngine === 'piper' ? 'Piper (custom engine saved, off)' : 'custom engine, Piper fallback');
 const modeOf = (conf) => (conf.mode === 'auto' ? 'auto' : 'manual'); // manual = a play button, like claude.ai
 
 // Persona choices from `inject.js --list` output ("female novice: Name" lines) for a quick pick.
@@ -57,6 +59,7 @@ function buildTree(s) {
     { id: 'voice', label: 'Voice', description: conf.gender === 'male' ? 'male' : 'female', icon: 'account', command: 'narrateButtons.switchVoice' },
     { id: 'alerts', label: 'Spoken alerts', description: conf.alerts === true ? `on: ${alertVoiceOf(conf)} voice, when you are away` : 'off', icon: conf.alerts === true ? 'bell' : 'bell-slash', command: 'narrateButtons.toggleAlerts' },
     { id: 'alertVoice', label: 'Alert voice', description: alertVoiceOf(conf), icon: 'megaphone', command: 'narrateButtons.switchAlertVoice' },
+    { id: 'alertEngine', label: 'Alert engine', description: alertEngineOf(conf), icon: 'server-process', command: 'narrateButtons.toggleAlertEngine' },
     ...Object.keys(LIMITS).map((k) => ({ id: k, key: k, label: LABELS[k], description: String(num(k)), icon: 'settings', contextValue: 'stepper' })),
   ];
   return [
@@ -78,4 +81,4 @@ function trayItems(state) {
   return out;
 }
 
-module.exports = { trayItems, findScript, findSpeak, readConf, readLast, isMuted, isPaused, alertVoiceOf, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };
+module.exports = { trayItems, findScript, findSpeak, readConf, readLast, isMuted, isPaused, alertVoiceOf, alertEngineOf, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };
