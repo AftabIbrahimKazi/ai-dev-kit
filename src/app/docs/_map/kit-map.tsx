@@ -2,6 +2,7 @@
 
 import { FileText, Folder, Link2, Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
+import ScrollRail from "@/app/scroll-rail";
 import { useEffect, useRef, useState } from "react";
 import { MAP_MODULES, docsHrefForNode, moduleOfGroup } from "@/content/map-modules";
 import { ICONS, MODULE_ICONS } from "@/stage/icon-registry";
@@ -22,6 +23,7 @@ interface HoverState {
 export default function KitMap(): React.JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<KitMapEngine | null>(null);
+  const cardScrollRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<HoverState | null>(null);
   const [selected, setSelected] = useState<MapNodeInfo | null>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -117,6 +119,7 @@ export default function KitMap(): React.JSX.Element {
       ) : null}
       {selected ? (
         <aside className="rk-map-card rk-glass rounded-[var(--radius-outer)]" aria-label="Selected file">
+          <div ref={cardScrollRef} className="rk-map-card-scroll">
           <header className="align-items-center col-gap-[var(--space-sm)] d-flex">
             <span className="rk-icon-badge">
               <SelectedIcon size={26} strokeWidth={2.25} aria-hidden="true" />
@@ -173,6 +176,8 @@ export default function KitMap(): React.JSX.Element {
               View file on GitHub
             </a>
           </div>
+          </div>
+          <ScrollRail targetRef={cardScrollRef} />
         </aside>
       ) : null}
     </section>

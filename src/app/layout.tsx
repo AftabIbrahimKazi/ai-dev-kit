@@ -7,6 +7,7 @@ import CursorFx from "./cursor-fx";
 import SoundFx from "./sound-fx";
 import SiteFooter from "./site-footer";
 import SiteHeader from "./site-header";
+import ScrollRail from "./scroll-rail";
 import StrataPackages from "./strata-packages";
 import "./variables.css";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteFooter />
         <StrataPackages />
         <CursorFx />
+        <ScrollRail />
         <SoundFx />
         <div aria-hidden="true" className="rk-vignette" />
         <div aria-hidden="true" className="rk-vignette-scroll" />

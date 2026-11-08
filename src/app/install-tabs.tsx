@@ -52,7 +52,7 @@ export default function InstallTabs({ tabs, aftercare }: InstallTabsProps) {
             data-state={activeId === tab.id ? "open" : "closed"}
             className="mt-[min(var(--space-md),2dvh)]"
           >
-            <div className="rk-glass align-items-center col-gap-[var(--space-md)_var(--space-md)] d-flex flex-wrap justify-content-between max-w-[var(--measure-text)] p-[min(var(--space-md),2dvh)_var(--space-md)] rounded-[var(--radius-outer)] row-gap-[var(--space-xs)]">
+            <div className="rk-glass align-items-center col-gap-[var(--space-md)] d-flex flex-wrap justify-content-between max-w-[var(--measure-text)] p-[min(var(--space-md),2dvh)_var(--space-md)] rounded-[var(--radius-outer)] row-gap-[var(--space-xs)]">
               <code className="fs-[max(var(--font-size-xs),min(var(--font-size-sm),2.6dvh))] min-w-0 text-[var(--color-text-body)]">
                 {tab.lines.map((line) => (
                   <span key={line} className="d-block overflow-auto text-nowrap">

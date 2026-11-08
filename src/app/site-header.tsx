@@ -19,7 +19,7 @@ export default function SiteHeader() {
           <Link href="/" className="navbar-brand fs-[var(--font-size-lg)] fw-[var(--font-weight-black)]">
             AI Dev Kit
           </Link>
-          <ul className="navbar-nav d-none d-lg-flex flex-row col-gap-[var(--space-md)_var(--space-md)] list-unstyled">
+          <ul className="navbar-nav d-none d-lg-flex flex-row col-gap-[var(--space-md)] list-unstyled">
             {HEADER_NAV_LINKS.map((link) => (
               <li key={link.label}>
                 <NavLink href={link.href} className="nav-link rk-nav-link fs-[var(--font-size-sm)]">

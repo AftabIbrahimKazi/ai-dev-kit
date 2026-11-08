@@ -36,8 +36,20 @@ import {
   NODE_GRADIENT_LIFT,
   NODE_GRADIENT_LIGHT,
   NODE_GRADIENT_SATURATION,
+  NODE_LIGHTNESS_MAX,
   NODE_ALPHA_GAIN,
   NODE_ALPHA_MIN,
+  NODE_LIGHT_DIRECTION,
+  NODE_RIM_DARKEN,
+  NODE_RIM_GLOW,
+  NODE_RIM_POWER,
+  NODE_SHADE_CEIL,
+  NODE_SHADE_CEIL_DARK,
+  NODE_SHADE_CURVE,
+  NODE_SHADE_FLOOR,
+  NODE_SHADE_FLOOR_DARK,
+  NODE_SPEC_GAIN,
+  NODE_SPEC_POWER,
   NODE_SCALE_GAIN,
   NODE_SCALE_MIN,
   SPHERE_HEIGHT_SEGMENTS,
@@ -50,19 +62,38 @@ attribute vec3 aColor;
 uniform float uLit[${MAX_NODES}];
 varying vec3 vColor;
 varying float vLit;
+varying vec3 vNormal;
+varying vec3 vView;
 void main() {
   float lit = min(uLit[int(aNode)], 1.0);
   vLit = lit;
   vColor = aColor;
   vec3 local = position * (${NODE_SCALE_MIN.toFixed(2)} + ${NODE_SCALE_GAIN.toFixed(2)} * lit);
-  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(local, 1.0);
+  vec4 viewPosition = modelViewMatrix * instanceMatrix * vec4(local, 1.0);
+  vNormal = normalize(normalMatrix * mat3(instanceMatrix) * normal);
+  vView = -viewPosition.xyz;
+  gl_Position = projectionMatrix * viewPosition;
 }`;
 
 const NODE_FRAGMENT = `
+uniform float uLight;
 varying vec3 vColor;
 varying float vLit;
+varying vec3 vNormal;
+varying vec3 vView;
 void main() {
-  gl_FragColor = linearToOutputTexel(vec4(vColor, ${NODE_ALPHA_MIN.toFixed(2)} + ${NODE_ALPHA_GAIN.toFixed(2)} * vLit));
+  vec3 n = normalize(vNormal);
+  vec3 v = normalize(vView);
+  vec3 l = normalize(vec3(${NODE_LIGHT_DIRECTION[0].toFixed(2)}, ${NODE_LIGHT_DIRECTION[1].toFixed(2)}, ${NODE_LIGHT_DIRECTION[2].toFixed(2)}));
+  float diffuse = pow(clamp(dot(n, l) * 0.5 + 0.5, 0.0, 1.0), ${NODE_SHADE_CURVE.toFixed(2)});
+  float floorShade = mix(${NODE_SHADE_FLOOR_DARK.toFixed(2)}, ${NODE_SHADE_FLOOR.toFixed(2)}, uLight);
+  float ceilShade = mix(${NODE_SHADE_CEIL_DARK.toFixed(2)}, ${NODE_SHADE_CEIL.toFixed(2)}, uLight);
+  vec3 body = vColor * mix(floorShade, ceilShade, diffuse);
+  float spec = pow(max(dot(n, normalize(l + v)), 0.0), ${NODE_SPEC_POWER.toFixed(1)}) * ${NODE_SPEC_GAIN.toFixed(2)};
+  float rim = pow(1.0 - max(dot(n, v), 0.0), ${NODE_RIM_POWER.toFixed(1)});
+  vec3 shaded = body + vec3(spec) + vColor * rim * ${NODE_RIM_GLOW.toFixed(2)} * (1.0 - uLight);
+  shaded = mix(shaded, shaded * ${NODE_RIM_DARKEN.toFixed(2)}, rim * uLight);
+  gl_FragColor = linearToOutputTexel(vec4(shaded, ${NODE_ALPHA_MIN.toFixed(2)} + ${NODE_ALPHA_GAIN.toFixed(2)} * vLit));
 }`;
 
 const HALO_VERTEX = `
@@ -127,6 +158,7 @@ export class NodeFieldScene {
   private readonly _lit: { value: Float32Array } = { value: new Float32Array(MAX_NODES) };
   private readonly _haloUniforms = { uLit: this._lit, uScale: { value: 1 }, uStrength: { value: HALO_STRENGTH_DARK as number } };
   private readonly _edgeUniforms = { uLit: this._lit, uBackground: { value: [0, 0, 0] }, uGain: { value: EDGE_GAIN_DARK as number }, uReach: { value: 0 } };
+  private readonly _bodyUniforms = { uLit: this._lit, uLight: { value: 0 as number } };
   private _palette: StagePalette | null = null;
   private _bodies: InstancedMesh | null = null;
   private _halos: Points | null = null;
@@ -160,6 +192,7 @@ export class NodeFieldScene {
       material.needsUpdate = true;
     });
     this._haloUniforms.uStrength.value = palette.isDark ? HALO_STRENGTH_DARK : HALO_STRENGTH_LIGHT;
+    this._bodyUniforms.uLight.value = palette.isDark ? 0 : 1;
     this._edgeUniforms.uGain.value = palette.isDark ? EDGE_GAIN_DARK : EDGE_GAIN_LIGHT;
     this._edgeUniforms.uBackground.value = [palette.background.r, palette.background.g, palette.background.b];
     this._paintColors(palette);
@@ -211,7 +244,7 @@ export class NodeFieldScene {
     this._geometries.push(geometry);
     const indexes = new Float32Array(this._nodes.length);
     this._bodyColors = new InstancedBufferAttribute(new Float32Array(this._nodes.length * AXIS_COUNT), AXIS_COUNT);
-    const material = this._makeMaterial(NODE_VERTEX, NODE_FRAGMENT, { uLit: this._lit });
+    const material = this._makeMaterial(NODE_VERTEX, NODE_FRAGMENT, this._bodyUniforms);
     this._bodies = new InstancedMesh(geometry, material, this._nodes.length);
     this._bodies.frustumCulled = false;
     const matrix = new Matrix4();
@@ -292,7 +325,7 @@ export class NodeFieldScene {
     base.getHSL(this._hsl);
     const swing = ramp - 0.5;
     const hue = (this._hsl.h + swing * NODE_GRADIENT_HUE * 2 + 1) % 1;
-    const lightness = Math.min(0.9, Math.max(0.14, this._hsl.l + NODE_GRADIENT_LIFT + swing * NODE_GRADIENT_LIGHT * 2));
+    const lightness = Math.min(NODE_LIGHTNESS_MAX, Math.max(0.14, this._hsl.l + NODE_GRADIENT_LIFT + swing * NODE_GRADIENT_LIGHT * 2));
     return this._tint.setHSL(hue, Math.min(1, this._hsl.s + NODE_GRADIENT_SATURATION), lightness);
   }
 

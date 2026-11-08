@@ -21,7 +21,7 @@ export default function Chapter({ id, kicker, title, line, icon: KickerIcon, ful
     <section
       id={id}
       aria-labelledby={titleId}
-      className={`rk-section rk-column ${height}d-flex flex-column justify-content-center row-gap-[var(--space-md)_var(--space-md)] p-[var(--space-xl)_0]`}
+      className={`rk-section rk-column ${height}d-flex flex-column justify-content-center row-gap-[var(--space-md)] p-[var(--space-xl)_0]`}
     >
       <header className="rk-reveal" data-reveal="idle">
         <p className="rk-eyebrow align-items-center col-gap-[var(--space-xs)] d-flex fs-[var(--font-size-xs)] fw-[var(--font-weight-bold)]">

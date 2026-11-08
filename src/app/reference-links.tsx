@@ -13,7 +13,7 @@ export default function ReferenceLinks({ links }: ReferenceLinksProps) {
         <li key={link.id} className={`${COMPACT_KEEP.includes(link.id) ? "" : "rk-compact-hide "}max-w-[var(--measure-text)]`}>
           <a
             href={link.href}
-            className="rk-glass rk-link align-items-center col-gap-[var(--space-md)_var(--space-md)] d-flex justify-content-between p-[min(var(--space-xs),1.2dvh)_var(--space-md)] rounded-[var(--radius-pill)]"
+            className="rk-glass rk-link align-items-center col-gap-[var(--space-md)] d-flex justify-content-between p-[min(var(--space-xs),1.2dvh)_var(--space-md)] rounded-[var(--radius-pill)]"
           >
             <span className="rk-snug fs-[max(var(--font-size-xs),min(var(--font-size-md),3dvh))] fw-[var(--font-weight-bold)]">{link.label}</span>
             <span className="rk-snug rk-short-hide fs-[max(var(--font-size-xs),min(var(--font-size-sm),2.6dvh))] text-[var(--color-text-muted)]">{link.note}</span>

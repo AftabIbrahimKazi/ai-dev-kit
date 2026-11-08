@@ -18,7 +18,7 @@ export default function ModGates({ attempts, intro, caveat }: ModGatesProps) {
         {attempts.map((attempt) => (
           <li
             key={attempt.id}
-            className={`${COMPACT_KEEP.includes(attempt.id) ? "" : "rk-compact-hide "}rk-glass align-items-center col-gap-[var(--space-md)_var(--space-md)] d-flex justify-content-between max-w-[var(--measure-text)] p-[min(var(--space-xs),1.2dvh)_var(--space-md)] rounded-[var(--radius-pill)]`}
+            className={`${COMPACT_KEEP.includes(attempt.id) ? "" : "rk-compact-hide "}rk-glass align-items-center col-gap-[var(--space-md)] d-flex justify-content-between max-w-[var(--measure-text)] p-[min(var(--space-xs),1.2dvh)_var(--space-md)] rounded-[var(--radius-pill)]`}
           >
             <code className="rk-snug fs-[max(var(--font-size-xs),min(var(--font-size-sm),2.8dvh))] min-w-0 text-[var(--color-text-body)]">
               {attempt.attempt}

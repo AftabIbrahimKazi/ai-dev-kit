@@ -28,17 +28,48 @@ h4 {
   outline-offset: var(--space-xxs);
 }
 
-* {
-  scrollbar-color: var(--color-border) var(--color-glass-lo);
-  scrollbar-width: thin;
+*::-webkit-scrollbar {
+  height: var(--size-scrollbar);
+  width: var(--size-scrollbar);
 }
 
-*:not(:root):hover {
-  scrollbar-color: var(--color-lamp) var(--color-glass-lo);
+*::-webkit-scrollbar-track {
+  background: var(--color-glass-lo);
+  border-radius: var(--radius-full);
 }
 
-:where(html, .rk-map-card, [class*="overflow-auto"]) {
-  transition: scrollbar-color var(--duration-default) ease;
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border: var(--border-width-default) solid var(--color-glass-lo);
+  border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to right, var(--color-lamp-hi), var(--color-lamp-lo));
+  border-color: var(--color-glass-shine);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--color-border) var(--color-glass-lo);
+    scrollbar-width: thin;
+  }
+
+  html {
+    scrollbar-width: none;
+  }
 }
 
 .rk-glass {
@@ -729,17 +760,72 @@ code {
 
 .rk-map-card {
   display: grid;
-  gap: var(--space-sm);
+  grid-template-rows: minmax(0, 1fr);
   inset-block-start: var(--space-xxl);
   inset-inline-end: calc(var(--size-touch) + var(--space-md) + var(--space-sm));
   max-height: calc(100% - var(--space-xxl) - var(--space-md));
-  overflow-y: auto;
-  padding: var(--space-md);
+  overflow: hidden;
   position: absolute;
   width: min(24rem, calc(100% - var(--space-lg)));
   z-index: 2;
 }
 
+.rk-map-card-scroll {
+  display: grid;
+  gap: var(--space-sm);
+  overflow-y: auto;
+  padding: var(--space-md);
+  scrollbar-width: none;
+}
+
+.rk-map-card-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.rk-scrollrail-ts {
+  inset-block: var(--space-xs);
+  inset-inline-end: var(--space-xxs);
+  position: fixed;
+  width: var(--space-sm);
+  z-index: 1100;
+}
+
+.rk-scrollrail-ts[data-rk-scope="element"] {
+  inset-block: var(--radius-outer);
+  inset-inline-end: var(--space-xs);
+  position: absolute;
+  z-index: 3;
+}
+
+.rk-scrollrail-ts[data-rk-state="hidden"] {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.rk-scrollthumb-ts {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  height: var(--rk-thumb-size, 0);
+  margin-inline-start: auto;
+  position: relative;
+  transform: translateY(var(--rk-thumb-offset, 0));
+  width: var(--space-xxs);
+}
+
+.rk-scrollthumb-ts::after {
+  background: linear-gradient(to right, var(--color-lamp-hi), var(--color-lamp-lo));
+  border-radius: inherit;
+  content: "";
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  transition: opacity var(--duration-default) ease;
+}
+
+.rk-scrollrail-ts:hover .rk-scrollthumb-ts::after,
+.rk-scrollrail-ts[data-rk-state="dragging"] .rk-scrollthumb-ts::after {
+  opacity: 1;
+}
 
 .rk-map-card-titles {
   display: grid;
@@ -1473,6 +1559,7 @@ code {
   .rk-hl-ts,
   .rk-nav-link,
   .rk-nav-link::after,
+  .rk-scrollthumb-ts::after,
   .rk-footer-link,
   .rk-footer-icon,
   .rk-more::details-content,
