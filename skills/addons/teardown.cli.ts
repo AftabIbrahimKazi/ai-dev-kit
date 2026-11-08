@@ -513,7 +513,7 @@ export async function probePage(dir: string, root: string, opts: { w: number; h:
     const st = () => ev('window.SIM.state()');
     const mouse = (type: string, x: number, y: number, extra: any = {}) => cdp.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1, ...extra });
     const click = async (sel: string) => {
-      const r = await ev(`(() => { const b = document.querySelector(${JSON.stringify(sel)}); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+      const r = await ev(`((s) => { const b = document.querySelector(s); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })(${JSON.stringify(sel)})`);
       if (!r) return false;
       await mouse('mouseMoved', r[0], r[1], { button: 'none' }); await mouse('mousePressed', r[0], r[1]); await mouse('mouseReleased', r[0], r[1]);
       return true;
