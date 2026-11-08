@@ -202,3 +202,39 @@ t('wrap with no task moves nothing; with a task it applies it and reports', () =
   assert.ok(/archived 1/.test(r.stdout) && /active for it: perf-audit/.test(r.stdout), r.stdout);
   assert.deepStrictEqual(active(root), ['perf-audit']);
 });
+t('/next --require-task: empty args, bad mode word and mode word alone move nothing', () => {
+  for (const args of [[], ['check', 'responsive', 'layout'], ['tsk-note'], ['tsk-start']]) {
+    const root = makeProject(['perf-audit', 'responsive-check']);
+    const r = run('apply', '--root', root, '--require-task', ...args);
+    assert.strictEqual(r.status, 0);
+    assert.ok(/no skills moved/.test(r.stdout), args.join(' ') + ': ' + r.stdout);
+    assert.deepStrictEqual(active(root), ['perf-audit', 'responsive-check'], args.join(' '));
+    assert.strictEqual(JSON.parse(fs.readFileSync(path.join(root, '.ai-dev-kit.json'), 'utf8')).scopeLog, undefined);
+  }
+});
+t('/next --require-task: tsk-note and tsk-start with a task still apply it', () => {
+  for (const mode of ['tsk-note', 'tsk-start']) {
+    const root = makeProject(['perf-audit', 'responsive-check']);
+    const r = run('apply', '--root', root, '--require-task', mode, 'check', 'responsive', 'layout', 'on', 'mobile');
+    assert.ok(/archived 1/.test(r.stdout), r.stdout);
+    assert.deepStrictEqual(active(root), ['responsive-check']);
+  }
+});
+t('/archive with no names archives every archivable skill; /unarchive with no names restores them all', () => {
+  const root = makeProject(['perf-audit', 'responsive-check', 'handover']);
+  const d = run('drop', '--root', root);
+  assert.ok(/archived perf-audit, responsive-check/.test(d.stdout), d.stdout);
+  assert.deepStrictEqual(active(root), ['handover']);
+  const a = run('add', '--root', root);
+  assert.ok(/restored perf-audit, responsive-check/.test(a.stdout), a.stdout);
+  assert.deepStrictEqual(active(root), ['handover', 'perf-audit', 'responsive-check']);
+});
+t('report names archived skills the queued next task needs, names only', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  run('apply', '--root', root);
+  fs.writeFileSync(path.join(root, 'handover.md'), '# H\n\n## Next task\ntsk-note: check responsive layout on mobile\n');
+  const r = run('report', '--root', root);
+  assert.ok(/next task needs archived: responsive-check -- run \/unarchive responsive-check/.test(r.stdout), r.stdout);
+  assert.ok(!/perf-audit --/.test(r.stdout));
+  assert.ok(!/next task needs/.test(run('report', '--root', root, '--mark').stdout));
+});

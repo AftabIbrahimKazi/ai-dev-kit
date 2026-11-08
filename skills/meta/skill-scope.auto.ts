@@ -77,10 +77,10 @@ export function plan(task: string, forced: string[], triggers: Triggers, install
   };
 }
 
-interface Args { cmd?: string; root?: string; task: string; keep: string[]; dryRun: boolean; json: boolean; addOnly: boolean; quiet: boolean }
+interface Args { cmd?: string; root?: string; task: string; keep: string[]; dryRun: boolean; json: boolean; addOnly: boolean; quiet: boolean; requireTask: boolean; modeOk: boolean }
 
 function parseArgs(argv: string[]): Args | null {
-  const a: Args = { task: '', keep: [], dryRun: false, json: false, addOnly: false, quiet: false };
+  const a: Args = { task: '', keep: [], dryRun: false, json: false, addOnly: false, quiet: false, requireTask: false, modeOk: false };
   const [cmd, ...rest] = argv;
   if (cmd !== 'apply' && cmd !== 'status') return null;
   a.cmd = cmd;
@@ -93,10 +93,12 @@ function parseArgs(argv: string[]): Args | null {
     else if (f === '--json') a.json = true;
     else if (f === '--add-only') a.addOnly = true;
     else if (f === '--quiet') a.quiet = true;
+    else if (f === '--require-task') a.requireTask = true;
     else if (f.startsWith('--')) return null;
     else a.task = (a.task + ' ' + f).trim();
   }
   // /next passes "tsk-note" or "tsk-start" first; the mode word is for the command, never a trigger word.
+  a.modeOk = /^(?:tsk-note|tsk-start)\b/i.test(a.task);
   a.task = a.task.replace(/^(?:tsk-note|tsk-start)\b\s*/i, '');
   return a;
 }
@@ -145,10 +147,10 @@ function manualCmd(cmd: string, rest: string[]): void {
       const p = plan(names.join(' '), [], loadTriggers(), Object.keys(manifest.skills), Object.keys(manifest.archived), root);
       if (p.archive.length) doArchive({ root, skills: p.archive, by: 'manual' });
       if (p.restore.length) doUnarchive({ root, skills: p.restore, by: 'manual' });
-      console.log('next task: archived ' + p.archive.length + (p.restore.length ? ', restored ' + p.restore.join(', ') : '') + (p.loaded.length ? '; active for it: ' + p.loaded.join(', ') : ''));
+      console.log('next task: archived ' + p.archive.length + (p.archive.length ? ' (' + p.archive.join(', ') + ')' : '') + (p.restore.length ? ', restored ' + p.restore.join(', ') : '') + (p.loaded.length ? '; active for it: ' + p.loaded.join(', ') : ''));
       return;
     }
-    if (cmd === 'list' || ((cmd === 'add' || cmd === 'drop') && !names.length)) {
+    if (cmd === 'list') {
       const arch = Object.keys(manifest.archived);
       const act = set.filter((n) => manifest.skills[n]);
       const words = (n: string): string => {
@@ -158,10 +160,12 @@ function manualCmd(cmd: string, rest: string[]): void {
       };
       console.log('active, archivable (' + act.length + '): ' + (act.join(', ') || 'none'));
       console.log('archived (' + arch.length + '): ' + (arch.map((n) => n + words(n)).join(', ') || 'none'));
-      console.log('bring one back with /unarchive <name>; the other skills are pinned and always active.');
+      console.log('bring one back with /unarchive <name>, or all with /unarchive; the other skills are pinned and always active.');
       return;
     }
-    if ((cmd === 'add' || cmd === 'drop') && names.length) {
+    if (cmd === 'add' || cmd === 'drop') {
+      // No names means all: /archive moves every archivable skill that is active, /unarchive restores every archived one.
+      if (!names.length) names.push(...(cmd === 'drop' ? set.filter((n) => manifest.skills[n]) : Object.keys(manifest.archived)));
       const unknown = names.filter((n) => !manifest.skills[n] && !manifest.archived[n]);
       if (unknown.length) console.log('not installed: ' + unknown.join(', '));
       if (cmd === 'add') {
@@ -186,6 +190,15 @@ function manualCmd(cmd: string, rest: string[]): void {
     if (am.length) lines.push('archived by you: ' + (am.length > 6 ? am.length + ' skills (listed below)' : am.join(', ')));
     const arch = Object.keys(manifest.archived);
     lines.push('archived now (' + arch.length + '): ' + (arch.join(', ') || 'none'));
+    if (!rest.includes('--mark')) {
+      // /pickup: name archived skills the queued next task would need, so the user can restore them. Names only, no descriptions.
+      try {
+        const m = fs.readFileSync(path.join(root, 'handover.md'), 'utf8').match(/^## Next task\s*\r?\n+([^\r\n]+)/m);
+        const task = m ? m[1].replace(/^(?:tsk-note|tsk-start)\s*:\s*/i, '') : '';
+        const need = task ? matchSkills(task, loadTriggers(), root).filter((n) => manifest.archived[n]) : [];
+        if (need.length) lines.push('next task needs archived: ' + need.join(', ') + ' -- run /unarchive ' + need.join(' '));
+      } catch { /* no handover file: nothing to match */ }
+    }
     console.log(lines.join('\n'));
     if (rest.includes('--mark')) { manifest.scopeMark = new Date().toISOString(); writeManifest(root, manifest); }
   } catch (e) {
@@ -201,6 +214,11 @@ function main(): void {
   if (!args) {
     console.error('usage: skill-scope.auto.js apply|status [--root <target>] [--keep a,b] [--add-only] [--quiet] [--dry-run] [--json] [task words...]');
     process.exitCode = 2;
+    return;
+  }
+  // /next passes --require-task: no valid mode word or no task text means nothing moves (nothing is "not needed" when no task was given).
+  if (args.requireTask && (!args.modeOk || !args.task.trim())) {
+    console.log(args.modeOk ? 'no task given: no skills moved' : 'first word must be tsk-note or tsk-start: no skills moved');
     return;
   }
   let root = args.root;
@@ -225,7 +243,7 @@ function main(): void {
     }
     if (args.quiet && !p.restore.length) return;
     if (args.json) console.log(JSON.stringify({ dryRun: args.dryRun, ...p }));
-    else console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length +
+    else console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length + (p.archive.length ? ' (' + p.archive.join(', ') + ')' : '') +
       (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
   } catch (e) {
     console.error('error: ' + (e as Error).message);
