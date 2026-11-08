@@ -297,7 +297,7 @@ function entryFile(pkg: Pkg, sub: string): string | null {
     const direct = key in ex ? ex[key] : ('.' in ex || !Object.keys(ex).some((k) => k.startsWith('.')) ? (sub ? undefined : ex) : undefined);
     const r = pickExport(direct);
     if (r) return path.join(pkg.dir, r);
-    for (const k of Object.keys(ex)) if (k.endsWith('/*') && key.startsWith(k.slice(0, -1))) { const t = pickExport(ex[k]); if (t) return path.join(pkg.dir, t.replace('*', key.slice(k.length - 1))); }
+    for (const k of Object.keys(ex)) if (k.endsWith('/*') && key.startsWith(k.slice(0, -1))) { const t = pickExport(ex[k]); if (t) return path.join(pkg.dir, t.replace(/\*/g, key.slice(k.length - 1))); }
     if (sub) return null;
   } else if (typeof ex === 'string' && !sub) return path.join(pkg.dir, ex);
   if (!sub) return path.join(pkg.dir, pkg.json.module || pkg.json.main || 'index.js');
