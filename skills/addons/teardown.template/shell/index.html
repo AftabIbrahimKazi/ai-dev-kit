@@ -9,19 +9,19 @@
   :root { --bg: #eef0f3; --ink: #1d2128; --mute: #5b6470; --panel: rgba(255, 255, 255, 0.78); --line: rgba(29, 33, 40, 0.14); --accent: #e8a33d; }
   @media (prefers-color-scheme: dark) { :root { --bg: #14171c; --ink: #e8ebef; --mute: #98a2b0; --panel: rgba(28, 32, 39, 0.78); --line: rgba(232, 235, 239, 0.16); } }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.4 var(--font, system-ui, sans-serif); overflow: hidden; }
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   #console { position: fixed; inset: 0; pointer-events: none; }
   #console > * { pointer-events: auto; } #console > #callout { pointer-events: none; }
   .side { position: absolute; left: 16px; top: 16px; width: min(320px, calc(100vw - 32px)); max-height: calc(100vh - 150px); overflow: auto; display: grid; gap: 10px; align-content: start; scrollbar-width: thin; }
   h1 { margin: 0; font-size: 1.25rem; }
   header p { margin: 4px 0 0; color: var(--mute); }
-  .panel { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); backdrop-filter: blur(10px); }
+  .panel { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius, 12px); background: var(--panel); backdrop-filter: blur(10px); }
   h2 { margin: 0 0 8px; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
   dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
   dt { color: var(--mute); } dd { margin: 0; font-variant-numeric: tabular-nums; }
   .btns { display: flex; flex-wrap: wrap; gap: 6px; }
-  button { font: inherit; color: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+  button { font: inherit; color: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-btn, 8px); background: transparent; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
   button:hover { background: var(--line); }
   button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
   .bar { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -32,7 +32,7 @@
   canvas[data-chart] { width: 100%; height: 40px; display: block; }
   #callout { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   #callout line { stroke: var(--accent); stroke-width: 1.5; } #callout rect { fill: var(--panel); stroke: var(--accent); }
-  #callout .t { fill: var(--ink); font: 600 14px system-ui, sans-serif; } #callout .s { fill: var(--mute); font: 12px system-ui, sans-serif; }
+  #callout .t { fill: var(--ink); font: 600 14px var(--font, system-ui, sans-serif); } #callout .s { fill: var(--mute); font: 12px var(--font, system-ui, sans-serif); }
   @media (max-height: 760px) { .panel { padding: 8px 10px; } dl { gap: 2px 10px; font-size: 13px; } header p { display: none; } }
   @media (max-width: 640px) { .side { left: 8px; top: 8px; max-height: 38vh; } .bar { left: 8px; right: 8px; bottom: 8px; } }
 </style>
