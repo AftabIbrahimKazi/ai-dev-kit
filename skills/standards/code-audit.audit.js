@@ -572,7 +572,7 @@ function applyDeviations(rel, text, found) {
     const L = lineFn(text);
     for (const m of text.matchAll(/DEVIATION:[ \t]*([a-z0-9][a-z0-9-]*(?:[ \t]*,[ \t]*[a-z0-9][a-z0-9-]*)*)[ \t]*[—–:-]*[ \t]*([^\n]*)/gi)) {
         const line = L(m.index);
-        const reason = m[2].replace(/(\*\/|-->|%\})\s*$/, '').trim();
+        const reason = m[2].replace(/(\*\/|--!?>|%\})\s*$/, '').trim();
         for (const id of m[1].split(',').map((s) => s.trim().toLowerCase())) {
             if (!exports.RULES[id]) {
                 extra.push({ file: rel, line, rule: 'dev-invalid', msg: `DEVIATION names unknown rule ${id}` });
