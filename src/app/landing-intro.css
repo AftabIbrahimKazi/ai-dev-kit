@@ -1,0 +1,108 @@
+/* ================================
+   TOP HALF — Rules
+   ================================ */
+
+.rk-intro {
+  align-items: flex-end;
+  animation: rk-intro-failsafe calc(var(--duration-slow) * 20) linear forwards;
+  display: none;
+  inset: 0;
+  justify-content: center;
+  opacity: 1;
+  padding: 0 var(--space-md) var(--space-xl) var(--space-md);
+  position: fixed;
+  transition: opacity var(--duration-slow) ease;
+  z-index: 3000;
+}
+
+:root[data-intro="play"] .rk-intro,
+:root[data-intro="lift"] .rk-intro {
+  display: flex;
+}
+
+:root[data-intro="play"] {
+  animation: rk-intro-unlock calc(var(--duration-slow) * 20) steps(1) forwards;
+  overflow: hidden;
+}
+
+:root[data-intro="play"] .rk-main,
+:root[data-intro="play"] .rk-header,
+:root[data-intro="play"] .rk-footer-bar,
+:root[data-intro="play"] .rk-scroll-top {
+  visibility: hidden;
+}
+
+:root[data-intro="play"] .rk-stage {
+  visibility: visible;
+}
+
+:root[data-intro="lift"] .rk-main > :not(.rk-stage),
+:root[data-intro="lift"] .rk-header,
+:root[data-intro="lift"] .rk-footer-bar {
+  animation: rk-intro-reveal calc(var(--duration-slow) * 1.5) ease both;
+}
+
+.rk-intro[data-phase="lift"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rk-intro-skip {
+  inset: var(--space-md) var(--space-md) auto auto;
+  position: absolute;
+}
+
+.rk-intro-title {
+  opacity: 0;
+  transform: translateY(var(--space-xs));
+  transition:
+    opacity var(--duration-slow) ease,
+    transform var(--duration-slow) ease;
+}
+
+.rk-intro-hint {
+  inset: auto 0 var(--space-md) 0;
+  opacity: 0;
+  position: absolute;
+  text-align: center;
+  transition: opacity var(--duration-slow) ease;
+}
+
+.rk-intro[data-phase="arrive"] .rk-intro-title,
+.rk-intro[data-phase="lift"] .rk-intro-title {
+  opacity: 1;
+  transform: none;
+}
+
+.rk-intro[data-sound-hint="locked"]:not([data-phase="lift"]) .rk-intro-hint {
+  opacity: var(--opacity-strong);
+}
+
+@keyframes rk-intro-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes rk-intro-unlock {
+  to {
+    overflow: visible;
+  }
+}
+
+@keyframes rk-intro-reveal {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-intro {
+    display: none;
+  }
+}

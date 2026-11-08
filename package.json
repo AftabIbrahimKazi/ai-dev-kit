@@ -1,0 +1,50 @@
+{
+  "name": "ai-dev-kit-doc-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@strata-packages/cursorfx": "^0.2.1",
+    "@strata-packages/offcanvas": "^1.0.2",
+    "@triforge/animation-core": "^0.1.3",
+    "@triforge/compositor-core": "^0.1.3",
+    "@triforge/core-types": "^0.1.1",
+    "@triforge/curve-core": "^0.1.2",
+    "@triforge/fluid-core": "^0.1.2",
+    "@triforge/geometry-nodes": "^0.1.2",
+    "@triforge/hair-core": "^0.1.1",
+    "@triforge/keyframe": "^0.1.2",
+    "@triforge/metaball-core": "^0.1.2",
+    "@triforge/modifier-core": "^0.1.2",
+    "@triforge/particle-core": "^0.1.2",
+    "@triforge/pathtracer-core": "^0.1.2",
+    "@triforge/physics-core": "^0.1.2",
+    "@triforge/radius-parametric-geometry": "^0.1.2",
+    "@triforge/shader-core": "^0.4.3",
+    "@triforge/uv-core": "^0.1.2",
+    "@triforge/volume-core": "^0.1.1",
+    "lucide-react": "^1.67.0",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "strata-css": "^1.9.0",
+    "three": "^0.187.0",
+    "zzfx": "1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "0.187.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "stylelint": "^17.16.0",
+    "stylelint-order": "^8.1.3",
+    "typescript": "^5"
+  }
+}

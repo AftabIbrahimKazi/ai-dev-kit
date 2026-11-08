@@ -1,0 +1,259 @@
+/* ================================
+   TOP HALF — Rules
+   ================================ */
+
+:root {
+  /* Typography */
+  --font-family-display: var(--font-big-shoulders);
+  --font-family-body: var(--font-plex-mono);
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.84375rem;
+  --font-size-default: 1rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.1875rem;
+  --font-size-xl: 1.75rem;
+  --font-size-xxl: 2.25rem;
+  --font-size-xxxl: 3.5rem;
+  --font-size-display: 6rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+  --leading-body: 1.65;
+  --leading-none: 1;
+  --leading-snug: 1.3;
+  --leading-tight: 1.12;
+  --letter-spacing-display: 0.015em;
+  --measure-text: 58ch;
+
+  /* Spacing */
+  --space-xxs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-default: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4.5rem;
+  --space-xxl: 7.5rem;
+
+  /* Radius, border width and blur */
+  --radius-inner: 1rem;
+  --radius-outer: 1.5rem;
+  --radius-pill: 999px;
+  --radius-full: 9999px;
+  --size-footer-end: 6rem;
+  --size-footer-inset: var(--space-xxs);
+  --size-hook-width: var(--size-touch);
+  --size-hook-height: 1.5rem;
+  --border-width-default: 1px;
+  --border-width-rule: 2px;
+  --blur-glass: 14px;
+  --blur-glass-heavy: 22px;
+
+  /* Layout size */
+  --size-card: 14rem;
+  --size-column: 62%;
+  --size-chrome: 6rem;
+  --size-container: 75rem;
+  --size-gutter: var(--space-md);
+  --size-header: 4rem;
+  --size-scrollbar: 0.375rem;
+  --size-touch: 2.75rem;
+  --size-control: var(--size-touch);
+
+  /* Colour palette */
+  --color-ocean-950: #04202a;
+  --color-ocean-900: #07303b;
+  --color-ocean-800: #0b4552;
+  --color-ocean-700: #0f6070;
+  --color-aqua-500: #20b8c4;
+  --color-aqua-300: #7fe3e0;
+  --color-aqua-200: #a9dedb;
+  --color-aqua-100: #eafffb;
+  --color-lime-300: #c6f27d;
+  --color-lime-400: #a6e45a;
+  --color-lime-600: #6fbf2b;
+  --color-coral-500: #ff6a55;
+  --color-coral-300: #ffa496;
+  --color-sky-100: #e4f7fb;
+  --color-sky-300: #a8e2ee;
+  --color-ink-900: #06303a;
+  --color-glass-lo: rgba(255, 255, 255, 0.05);
+  --color-glass-mid: rgba(255, 255, 255, 0.1);
+  --color-glass-gloss: rgba(255, 255, 255, 0.16);
+  --color-glass-hi: rgba(255, 255, 255, 0.3);
+  --color-glass-edge: rgba(255, 255, 255, 0.38);
+  --color-glass-shine: rgba(255, 255, 255, 0.65);
+  --color-glass-shade: rgba(0, 20, 30, 0.45);
+  --color-glass-tint: rgba(2, 36, 48, 0.55);
+  --color-glass-tint-light: rgba(255, 255, 255, 0.55);
+  --color-lime-glow: rgba(166, 228, 90, 0.55);
+  --color-aqua-glow: rgba(127, 227, 224, 0.35);
+
+  /* Semantic colours — same in both themes; wall, surface, text and lamp live in the theme blocks below */
+  --color-danger: var(--color-coral-500);
+  --color-danger-hover: var(--color-coral-300);
+  --color-info: var(--color-aqua-500);
+  --color-info-hover: var(--color-aqua-300);
+  --color-secondary: var(--color-aqua-200);
+  --color-secondary-hover: var(--color-aqua-100);
+  --color-success: var(--color-lime-400);
+  --color-success-hover: var(--color-lime-300);
+  --color-warning: var(--color-lime-300);
+  --color-warning-hover: var(--color-lime-400);
+  --color-denied: var(--color-coral-500);
+  --color-passed: var(--color-aqua-300);
+
+  /* Opacity */
+  --opacity-ghost: 0.12;
+  --opacity-vignette: 1;
+  --shadow-lift: 0 0.25rem 0.75rem var(--color-glass-shade);
+  --opacity-dim: 0.55;
+  --opacity-strong: 0.86;
+
+  /* Transition duration */
+  --duration-instant: 0ms;
+  --duration-fast: 120ms;
+  --duration-default: 240ms;
+  --duration-slow: 600ms;
+
+  /* Strata overrides — every Strata variable the theme replaces points at a theme token */
+  --st-bg: var(--color-surface);
+  --st-bg-secondary: var(--color-surface-alt);
+  --st-border: var(--color-border);
+  --st-border-radius: var(--radius-outer);
+  --st-border-width: var(--border-width-default);
+  --st-danger: var(--color-danger);
+  --st-danger-hover: var(--color-danger-hover);
+  --st-duration: var(--duration-default);
+  --st-duration-fast: var(--duration-fast);
+  --st-duration-slow: var(--duration-slow);
+  --st-font-family: var(--font-family-body);
+  --st-font-size-base: var(--font-size-default);
+  --st-font-weight-base: var(--font-weight-regular);
+  --st-gutter-x: var(--space-md);
+  --st-heading-weight: var(--font-weight-black);
+  --st-info: var(--color-info);
+  --st-info-hover: var(--color-info-hover);
+  --st-line-height-base: var(--leading-body);
+  --st-primary: var(--color-lamp);
+  --st-primary-hover: var(--color-lamp-hi);
+  --st-secondary: var(--color-secondary);
+  --st-secondary-hover: var(--color-secondary-hover);
+  --st-success: var(--color-success);
+  --st-success-hover: var(--color-success-hover);
+  --st-text: var(--color-text-body);
+  --st-text-muted: var(--color-text-muted);
+  --st-warning: var(--color-warning);
+  --st-warning-hover: var(--color-warning-hover);
+}
+
+:root[data-st-theme="dark"] {
+  --color-accent: var(--color-aqua-500);
+  --color-accent-hover: var(--color-aqua-300);
+  --color-point-skills: #3b9eff;
+  --color-point-standards: #a78bfa;
+  --color-point-mods: #ffb84d;
+  --color-point-commands: #ff7ac6;
+  --color-point-maint: #c8b8a6;
+  --color-border: var(--color-glass-edge);
+  --color-focus: var(--color-lime-300);
+  --color-lamp: var(--color-lime-400);
+  --color-lamp-hi: var(--color-lime-300);
+  --color-lamp-lo: var(--color-lime-600);
+  --color-surface: var(--color-glass-tint);
+  --color-surface-alt: var(--color-glass-mid);
+  --color-text-body: var(--color-aqua-100);
+  --color-text-muted: var(--color-aqua-200);
+  --color-text-on-lamp: var(--color-ink-900);
+  --color-wall-glow: var(--color-aqua-glow);
+  --color-wall-glow-alt: var(--color-lime-glow);
+  --color-wall-low: var(--color-ocean-700);
+  --color-wall-mid: var(--color-ocean-800);
+  --color-wall-top: var(--color-ocean-950);
+  --color-vignette: rgba(0, 20, 30, 0.7);
+  --gradient-title: linear-gradient(172deg, #f4fbfc 0%, #c4dce1 34%, #9dbcc5 52%, #d3e6ea 72%, #adc8cf 100%);
+}
+
+:root[data-st-theme="light"] {
+  --color-accent: var(--color-ocean-700);
+  --color-accent-hover: var(--color-ocean-800);
+  --color-point-skills: #1f6fd6;
+  --color-point-standards: #6b4fd8;
+  --color-point-mods: #c77700;
+  --color-point-commands: #d6338f;
+  --color-point-maint: #8a7f72;
+  --color-border: rgba(15, 96, 112, 0.28);
+  --color-glass-shade: rgba(15, 96, 112, 0.22);
+  --color-focus: var(--color-ocean-800);
+  --color-lamp: var(--color-lime-600);
+  --color-lamp-hi: var(--color-lime-400);
+  --color-lamp-lo: var(--color-lime-600);
+  --color-surface: var(--color-glass-tint-light);
+  --color-surface-alt: var(--color-glass-gloss);
+  --color-text-body: var(--color-ink-900);
+  --color-text-muted: var(--color-ocean-700);
+  --color-text-on-lamp: var(--color-ink-900);
+  --color-wall-glow: var(--color-aqua-glow);
+  --color-wall-glow-alt: var(--color-lime-glow);
+  --color-wall-low: var(--color-aqua-300);
+  --color-wall-mid: var(--color-sky-300);
+  --color-wall-top: var(--color-sky-100);
+  --color-vignette: rgba(11, 69, 82, 0.5);
+  --gradient-title: linear-gradient(172deg, #06303a 0%, #1d5866 36%, #3f7a88 54%, #14505e 74%, #0b3f4c 100%);
+}
+
+/* ================================
+   BOTTOM HALF — Media Queries
+   ================================ */
+
+/* Extra Small — Portrait phones */
+@media (max-width: 575.98px) {
+  :root {
+    --font-size-md: 1.0625rem;
+    --font-size-lg: 1.1875rem;
+    --font-size-xl: 1.375rem;
+    --font-size-xxl: 1.75rem;
+    --font-size-xxxl: 2.25rem;
+    --font-size-display: 3.5rem;
+    --space-md: 1.25rem;
+    --space-lg: 1.75rem;
+    --space-xl: 2.5rem;
+    --space-xxl: 4rem;
+  }
+}
+
+/* Small — Landscape phones */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  :root {
+    --font-size-xl: 1.5rem;
+    --font-size-xxl: 2rem;
+    --font-size-xxxl: 2.75rem;
+    --font-size-display: 4.5rem;
+    --space-md: 1.25rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --space-xxl: 5rem;
+  }
+}
+
+/* Medium — Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  :root {
+    --font-size-xxl: 2.125rem;
+    --font-size-xxxl: 3rem;
+    --font-size-display: 5.5rem;
+    --space-xl: 3.5rem;
+    --space-xxl: 6rem;
+  }
+}
+
+/* XX-Large — Larger desktops */
+@media (min-width: 1400px) {
+  :root {
+    --font-size-xxxl: 4rem;
+    --font-size-display: 8rem;
+    --space-xl: 5rem;
+    --space-xxl: 9rem;
+  }
+}
