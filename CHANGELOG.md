@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-09
+
+### Added
+- `RULE AI-20` (keep the shell at the project root): a successful `cd` into a subfolder carries into later commands, so the installed slash commands, which call `node .claude/skills/...` relative to the project, failed with `MODULE_NOT_FOUND` until the session was restarted. The AI now uses absolute paths, a subshell or a tool's own root option, and returns to the project root if it must change directory. Added to `CLAUDE.example.md` and the README. The command paths stay relative on purpose: they must stay shell-portable and safe to commit.
+
 ## 2026-11-08
 
 ### Fixed

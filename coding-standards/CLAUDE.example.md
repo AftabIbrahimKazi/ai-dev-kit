@@ -78,6 +78,7 @@ If the token is ever missing from a response — or the Context code is missing 
 - Response shape follows the data (RULE AI-18): table for 2+ items with 2+ attributes, one line for one fact, yes/no for yes/no; `/format` overrides
 - Where the tool renders links, file references are markdown links, not bare or inline-code paths (RULE AI-17)
 - Reuse an existing CSS variable/token before adding one; new tokens only when asked (RULE AI-19)
+- Keep the shell at the project root: no `cd` into a subfolder; use absolute paths, a subshell or the tool's own root option (RULE AI-20)
 - When a task will take more than 5 minutes, say so before starting, as a range ("~8-12 min"), in one line at the top of the response; skip it for shorter tasks. The `eta` command and `eta-nudge` mod follow up (`plan-first` has the checkpoint rule)
 - No invented rules — gaps in standards are flagged to the developer
 - **Decision preference (every mode):** weigh token efficiency and correct results first, with minimal Agent-tool use (see `agent-usage`, `mode-kernel`).
