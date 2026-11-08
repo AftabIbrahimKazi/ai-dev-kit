@@ -37,6 +37,10 @@ Thanks for helping. This repository is the canonical home of the skills and stan
 - No file name is longer than 30 characters. `tests/naming.test.js` enforces this; its legacy list holds the old exceptions and gets no new entries.
 - Renaming an existing skill for length alone is not worth it: it breaks installs and typed `/names`. If you do rename one, add a row to `migrations/RENAMES.md`.
 
+## The documentation site
+
+The docs site is not on `main`. It lives on the `site` branch and is deployed from there. To work on it, add it as a worktree: `git worktree add site/ai-dev-kit-doc-site site`. Send site changes as a pull request against the `site` branch, not `main`. Kit changes still go to `main`. See [the README section](README.md#the-documentation-website) for the full steps.
+
 ## Commits and pull requests
 
 - Commits follow [git-standards](coding-standards/git-standards.md): `type: summary`, with a type from `feat fix patch style refactor chore docs test remove`, a header of at most 50 characters, no trailing period, present tense.
