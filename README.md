@@ -12,7 +12,6 @@ This code is on the `site` branch of the kit repository, not on `main`. A normal
 | --- | --- |
 | Which branch is deployed? | `site` |
 | Where do site changes go? | Pull requests against `site`. Kit changes go to `main`. |
-| What is not on this branch? | The AI session files used while building it (`CLAUDE.md`, `AGENTS.md`, `handover.md`, `coding-standards/`, `project-context/`, `.claude/`). The standards live in the kit's own `coding-standards/` folder on `main`. |
 
 ## Run it locally
 
