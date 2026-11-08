@@ -388,7 +388,7 @@ function entryFile(pkg, sub) {
             if (k.endsWith('/*') && key.startsWith(k.slice(0, -1))) {
                 const t = pickExport(ex[k]);
                 if (t)
-                    return path.join(pkg.dir, t.replace('*', key.slice(k.length - 1)));
+                    return path.join(pkg.dir, t.replace(/\*/g, key.slice(k.length - 1)));
             }
         if (sub)
             return null;
@@ -664,7 +664,15 @@ async function probePage(dir, root, opts) {
         const st = () => ev('window.SIM.state()');
         const mouse = (type, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1, ...extra });
         const click = async (sel) => {
-            const r = await ev(`(() => { const b = document.querySelector(${JSON.stringify(sel)}); if (!b) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+            const r = await ev(`(() => {
+        const fn = (s) => {
+          const b = document.querySelector(s);
+          if (!b) return null;
+          const r = b.getBoundingClientRect();
+          return [r.x + r.width / 2, r.y + r.height / 2];
+        };
+        return fn.apply(null, [${JSON.stringify(sel)}]);
+      })()`);
             if (!r)
                 return false;
             await mouse('mouseMoved', r[0], r[1], { button: 'none' });

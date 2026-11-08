@@ -10,7 +10,8 @@
     "resolveJsonModule": true,
     "noEmitOnError": true,
     "declaration": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "newLine": "lf"
   },
   "include": ["skills/**/*.ts"]
 }
