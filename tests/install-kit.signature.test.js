@@ -522,3 +522,28 @@ t('the audit reads contrastPairs from .claude/code-audit.json; edit-check report
   const ec = spawnSync('node', [EC, 'src/tokens.css', '--cwd', root], { encoding: 'utf8' }).stdout;
   assert.match(ec, /tokens\.css:4 {2}a11y-09 {2}--color-text on --color-surface is 4\.48:1 in light mode/);
 });
+
+t('prompts: typing < goes back one step and the earlier answer can be changed', () => {
+  const lib = makeLibrary(); const root = tmp();
+  const r = walkPrompts(lib, root, ['n', '<', 'n', 'acme', 'y']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stdout, /Tip: type < at any prompt to go back one step/);
+  assert.match(r.stdout, /Back one step/);
+  assert.strictEqual(readManifest(root).signature.alias, 'acme');
+});
+
+t('prompts: b at a yes/no or menu question also goes back, and the earlier step is asked again', () => {
+  const lib = makeLibrary(); const root = tmp();
+  const r = walkPrompts(lib, root, ['n', 'acme', 'b', 'zed', 'y']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.strictEqual((r.stdout.match(/Project signature \(2 to 6 letters/g) || []).length, 2);
+  assert.strictEqual(readManifest(root).signature.alias, 'zed');
+});
+
+t('prompts: < on the very first question says there is nothing to go back to and asks again', () => {
+  const lib = makeLibrary(); const root = tmp();
+  const r = walkPrompts(lib, root, ['<', 'n', 'acme', 'y']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stdout, /first step; there is nothing to go back to/);
+  assert.strictEqual(readManifest(root).signature.alias, 'acme');
+});

@@ -1068,7 +1068,26 @@ const queuedLines: string[] = [];
 let waiting: ((line: string) => void) | null = null;
 let inputEnded = false;
 function closeRl(): void { if (rl) { rl.close(); rl = null; } queuedLines.length = 0; waiting = null; inputEnded = false; }
-function ask(question: string): Promise<string> {
+// Going back: typing "<" at any prompt (or "b" / "back" at a menu or yes/no) undoes the current step and returns to the
+// previous one that asked something. canGoBack is false on the first question, where there is nothing to return to.
+class BackSignal extends Error {}
+let canGoBack = false;
+let askCount = 0;
+let backTipShown = false;
+function goBackIfAsked(ans: string): void {
+  if (canGoBack && /^(b|back)$/i.test(ans.trim())) throw new BackSignal();
+}
+async function ask(question: string): Promise<string> {
+  if (canGoBack && !backTipShown) { backTipShown = true; console.log(dim('Tip: type < at any prompt to go back one step.')); }
+  for (;;) {
+    const line = await rawAsk(question);
+    askCount++;
+    if (line.trim() !== '<') return line;
+    if (canGoBack) throw new BackSignal();
+    console.log(dim('This is the first step; there is nothing to go back to.'));
+  }
+}
+function rawAsk(question: string): Promise<string> {
   if (!rl) {
     rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     rl.on('line', (l) => { if (waiting) { const w = waiting; waiting = null; if (!process.stdin.isTTY) process.stdout.write(l + '\n'); w(l); } else queuedLines.push(l); });
@@ -1086,6 +1105,7 @@ async function askText(message: string, initial: string): Promise<string> {
 
 async function askYesNo(message: string, initialYes: boolean): Promise<boolean> {
   const ans = (await ask(`${bold(message)} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
+  goBackIfAsked(ans);
   if (!ans) return initialYes;
   return ans.startsWith('y');
 }
@@ -1097,6 +1117,7 @@ async function askSelect(message: string, choices: Choice[], initialIndex: numbe
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
   for (;;) {
     const ans = (await ask(`Type a number [${initialIndex + 1}]: `)).trim();
+    goBackIfAsked(ans);
     if (!ans) return choices[initialIndex].value;
     const n = Number(ans);
     if (Number.isInteger(n) && n >= 1 && n <= choices.length) return choices[n - 1].value;
@@ -1111,6 +1132,7 @@ async function askMultiselect(message: string, choices: Choice[], opts: { defaul
   console.log(dim(`Type the numbers you want, separated by commas (example: 1,3,4), or "all"${opts.defaultAll ? ' or "none"' : ''}. Press Enter for ${defaultWord}.`));
   for (;;) {
     const ans = (await ask('Your choice: ')).trim().toLowerCase();
+    goBackIfAsked(ans);
     if (!ans) return opts.defaultAll ? choices.map((c) => c.value) : [];
     if (ans === 'all') return choices.map((c) => c.value);
     if (ans === 'none') return [];
@@ -1229,19 +1251,56 @@ function printCompany(r: company.CompanyResult): void {
   for (const n of r.notes) console.error(yellow('  note: ' + n));
 }
 
+type Step = () => Promise<void>;
+
+// Copy of the answers so far, so a step can be undone exactly (the arrays are copied, not shared).
+function snapshotArgs(a: CliArgs): CliArgs {
+  return { ...a, skills: [...a.skills], activeStandardsKeys: a.activeStandardsKeys ? [...a.activeStandardsKeys] : undefined };
+}
+
+// Runs the questions one step at a time. A step that asked nothing (its answer came from a flag) is passed over in both
+// directions; going back restores the answers exactly as they were before the step being returned to.
+async function runSteps(args: CliArgs, steps: Step[]): Promise<void> {
+  const snaps: CliArgs[] = [];
+  const asked: boolean[] = [];
+  let i = 0;
+  while (i < steps.length) {
+    snaps[i] = snapshotArgs(args);
+    canGoBack = asked.slice(0, i).some(Boolean);
+    const before = askCount;
+    try {
+      await steps[i]();
+      asked[i] = askCount > before;
+      i++;
+    } catch (e) {
+      if (!(e instanceof BackSignal)) throw e;
+      let j = i - 1;
+      while (j >= 0 && !asked[j]) j--;
+      if (j < 0) { i = 0; continue; }
+      for (const k of Object.keys(args)) delete (args as unknown as Record<string, unknown>)[k];
+      Object.assign(args, snaps[j]);
+      asked.length = j;
+      i = j;
+      console.log(dim('Back one step.'));
+    }
+  }
+}
+
 async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
   if (args.json || !isInteractive()) return;
+  canGoBack = false; askCount = 0; backTipShown = false;
   try {
+    const steps: Step[] = [];
     if (['list', 'install', 'update', 'merge-hooks', 'company'].includes(cmd) && !args.library) {
-      args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
+      steps.push(async () => { if (!args.library) args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess()); });
     }
     if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks', 'company', 'signature'].includes(cmd) && !args.root) {
-      args.root = await resolveRoot();
+      steps.push(async () => { if (!args.root) args.root = await resolveRoot(); });
     }
-
-    if (cmd === 'company' && (args.companyAction || 'sync') === 'sync') await askCompany(args, false);
+    if (cmd === 'company' && (args.companyAction || 'sync') === 'sync') steps.push(() => askCompany(args, false));
 
     if (cmd === 'install') {
+      steps.push(async () => {
       if (!args.tool) {
         const evidence = detectToolEvidence(args.root!);
         const tools = Object.keys(ROOTS) as Tool[];
@@ -1249,6 +1308,8 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
         const detectedIndex = tools.findIndex((t) => evidence[t]);
         args.tool = await askSelect('Target tool:', choices, detectedIndex >= 0 ? detectedIndex : 0);
       }
+      });
+      steps.push(async () => {
       if (!args.skills.length) {
         const catalog = listSkills(args.library!);
         const purposes = loadSkillPurposes(args.library!);
@@ -1295,14 +1356,18 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
           }
         }
       }
-      await askCompany(args, true);
-      await askSignature(args);
+      });
+      steps.push(() => askCompany(args, true));
+      steps.push(() => askSignature(args));
+      steps.push(async () => {
       if (args.company && args.companyDefaults === 'drop') args.standards = false;
       else if (args.company && args.companyDefaults && args.standards === undefined) args.standards = true; // keep or auto: the defaults were chosen in the company question
       if (args.standards === undefined) {
         args.standards = await askYesNo(args.company ? 'Install the default coding-standards too (company rules win where they conflict)?' : 'Install the coding-standards system too?', false);
       }
-      if (args.standards) {
+      });
+      steps.push(async () => {
+        if (!args.standards) return;
         if (!args.scriptStandard) {
           const pkg = readJsonSafe(path.join(args.root!, 'package.json'));
           const looksTs = fs.existsSync(path.join(args.root!, 'tsconfig.json')) || hasDependency(pkg, 'typescript');
@@ -1312,6 +1377,9 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
             { title: 'JS and TS together', value: 'js-and-ts' },
           ], looksTs ? 0 : 1) as 'ts' | 'js' | 'js-and-ts';
         }
+      });
+      steps.push(async () => {
+        if (!args.standards) return;
         if (!args.activeStandardsKeys) {
           const choices: Choice[] = Object.entries(STANDARD_ROW_LABELS).map(([key, label]) => ({ title: label, value: key }));
           args.activeStandardsKeys = await askMultiselect(
@@ -1320,7 +1388,8 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
             { defaultAll: true },
           );
         }
-      }
+      });
+      steps.push(async () => {
       if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
         args.commentStyleLevel = await askSelect('Comment style:', [
           { title: `none ${green('(recommended)')} ${dim('— no comments except rule-mandated ones')}`, value: 'none' },
@@ -1328,13 +1397,17 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
           { title: `descriptive ${dim('— up to 3 short plain-language lines for tricky parts')}`, value: 'descriptive' },
         ], 0);
       }
+      });
+      steps.push(async () => {
       if (args.standards && !args.contextCode) {
         const suggestion = randomContextCode();
         args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
       }
+      });
     }
 
     if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
+      steps.push(async () => {
       const manifest = readManifest(args.root!);
       const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
       const names = Object.keys(pool);
@@ -1348,7 +1421,10 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
         if (scope === 'all') args.all = true;
         else args.skills = await askMultiselect(`Which skills to ${cmd}?`, names.map((n) => ({ title: n, value: n })));
       }
+      });
     }
+
+    await runSteps(args, steps);
   } finally {
     closeRl();
   }

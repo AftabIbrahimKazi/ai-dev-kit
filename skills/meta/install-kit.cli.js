@@ -1108,7 +1108,33 @@ function closeRl() { if (rl) {
     rl.close();
     rl = null;
 } queuedLines.length = 0; waiting = null; inputEnded = false; }
-function ask(question) {
+// Going back: typing "<" at any prompt (or "b" / "back" at a menu or yes/no) undoes the current step and returns to the
+// previous one that asked something. canGoBack is false on the first question, where there is nothing to return to.
+class BackSignal extends Error {
+}
+let canGoBack = false;
+let askCount = 0;
+let backTipShown = false;
+function goBackIfAsked(ans) {
+    if (canGoBack && /^(b|back)$/i.test(ans.trim()))
+        throw new BackSignal();
+}
+async function ask(question) {
+    if (canGoBack && !backTipShown) {
+        backTipShown = true;
+        console.log(dim('Tip: type < at any prompt to go back one step.'));
+    }
+    for (;;) {
+        const line = await rawAsk(question);
+        askCount++;
+        if (line.trim() !== '<')
+            return line;
+        if (canGoBack)
+            throw new BackSignal();
+        console.log(dim('This is the first step; there is nothing to go back to.'));
+    }
+}
+function rawAsk(question) {
     if (!rl) {
         rl = readline.createInterface({ input: process.stdin, output: process.stdout });
         rl.on('line', (l) => { if (waiting) {
@@ -1143,6 +1169,7 @@ async function askText(message, initial) {
 }
 async function askYesNo(message, initialYes) {
     const ans = (await ask(`${bold(message)} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
+    goBackIfAsked(ans);
     if (!ans)
         return initialYes;
     return ans.startsWith('y');
@@ -1154,6 +1181,7 @@ async function askSelect(message, choices, initialIndex) {
     choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
     for (;;) {
         const ans = (await ask(`Type a number [${initialIndex + 1}]: `)).trim();
+        goBackIfAsked(ans);
         if (!ans)
             return choices[initialIndex].value;
         const n = Number(ans);
@@ -1169,6 +1197,7 @@ async function askMultiselect(message, choices, opts = {}) {
     console.log(dim(`Type the numbers you want, separated by commas (example: 1,3,4), or "all"${opts.defaultAll ? ' or "none"' : ''}. Press Enter for ${defaultWord}.`));
     for (;;) {
         const ans = (await ask('Your choice: ')).trim().toLowerCase();
+        goBackIfAsked(ans);
         if (!ans)
             return opts.defaultAll ? choices.map((c) => c.value) : [];
         if (ans === 'all')
@@ -1301,84 +1330,136 @@ function printCompany(r) {
     for (const n of r.notes)
         console.error(yellow('  note: ' + n));
 }
+// Copy of the answers so far, so a step can be undone exactly (the arrays are copied, not shared).
+function snapshotArgs(a) {
+    return { ...a, skills: [...a.skills], activeStandardsKeys: a.activeStandardsKeys ? [...a.activeStandardsKeys] : undefined };
+}
+// Runs the questions one step at a time. A step that asked nothing (its answer came from a flag) is passed over in both
+// directions; going back restores the answers exactly as they were before the step being returned to.
+async function runSteps(args, steps) {
+    const snaps = [];
+    const asked = [];
+    let i = 0;
+    while (i < steps.length) {
+        snaps[i] = snapshotArgs(args);
+        canGoBack = asked.slice(0, i).some(Boolean);
+        const before = askCount;
+        try {
+            await steps[i]();
+            asked[i] = askCount > before;
+            i++;
+        }
+        catch (e) {
+            if (!(e instanceof BackSignal))
+                throw e;
+            let j = i - 1;
+            while (j >= 0 && !asked[j])
+                j--;
+            if (j < 0) {
+                i = 0;
+                continue;
+            }
+            for (const k of Object.keys(args))
+                delete args[k];
+            Object.assign(args, snaps[j]);
+            asked.length = j;
+            i = j;
+            console.log(dim('Back one step.'));
+        }
+    }
+}
 async function fillInteractive(cmd, args) {
     if (args.json || !isInteractive())
         return;
+    canGoBack = false;
+    askCount = 0;
+    backTipShown = false;
     try {
+        const steps = [];
         if (['list', 'install', 'update', 'merge-hooks', 'company'].includes(cmd) && !args.library) {
-            args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess());
+            steps.push(async () => { if (!args.library)
+                args.library = await askText('Path to the ai-dev-kit library', defaultLibraryGuess()); });
         }
         if (['install', 'update', 'uninstall', 'archive', 'unarchive', 'merge-hooks', 'company', 'signature'].includes(cmd) && !args.root) {
-            args.root = await resolveRoot();
+            steps.push(async () => { if (!args.root)
+                args.root = await resolveRoot(); });
         }
         if (cmd === 'company' && (args.companyAction || 'sync') === 'sync')
-            await askCompany(args, false);
+            steps.push(() => askCompany(args, false));
         if (cmd === 'install') {
-            if (!args.tool) {
-                const evidence = detectToolEvidence(args.root);
-                const tools = Object.keys(ROOTS);
-                const choices = tools.map((t) => ({ title: evidence[t] ? `${t}  ${green('— ' + evidence[t])}` : t, value: t }));
-                const detectedIndex = tools.findIndex((t) => evidence[t]);
-                args.tool = await askSelect('Target tool:', choices, detectedIndex >= 0 ? detectedIndex : 0);
-            }
-            if (!args.skills.length) {
-                const catalog = listSkills(args.library);
-                const purposes = loadSkillPurposes(args.library);
-                const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...exports.ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
-                const detected = detectStackSignals(args.root, args.tool).filter((d) => catalog[d.name]);
-                const autoStats = detected.length
-                    ? `${standard.length} standard skills + ${detected.length} matched to this project`
-                    : `${standard.length} standard skills, no framework match found here`;
-                const mode = await askSelect('Skills to install:', [
-                    { title: `Auto-detect ${green('(recommended)')} ${dim('-- ' + autoStats)}`, value: 'auto' },
-                    { title: `Everything ${dim('-- every skill in the library (addons/MCP/mods stay opt-in, asked separately)')}`, value: 'everything' },
-                    { title: 'Pick individually from the full catalog', value: 'pick' },
-                ], 0);
-                if (mode === 'everything') {
-                    args.skills = eligibleCatalogNames(catalog);
+            steps.push(async () => {
+                if (!args.tool) {
+                    const evidence = detectToolEvidence(args.root);
+                    const tools = Object.keys(ROOTS);
+                    const choices = tools.map((t) => ({ title: evidence[t] ? `${t}  ${green('— ' + evidence[t])}` : t, value: t }));
+                    const detectedIndex = tools.findIndex((t) => evidence[t]);
+                    args.tool = await askSelect('Target tool:', choices, detectedIndex >= 0 ? detectedIndex : 0);
                 }
-                else if (mode === 'pick') {
-                    args.skills = await pickSkillsByCategory(catalog, purposes);
-                }
-                else {
-                    let extra = detected.map((d) => d.name);
-                    if (detected.length) {
-                        console.log(green('Matched to this project:'));
-                        for (const d of detected) {
-                            const purpose = purposes[d.name];
-                            console.log(purpose ? `  ${d.name} ${dim(purpose)}  ${green('(' + d.evidence + ')')}` : `  ${d.name} ${green('(' + d.evidence + ')')}`);
-                        }
+            });
+            steps.push(async () => {
+                if (!args.skills.length) {
+                    const catalog = listSkills(args.library);
+                    const purposes = loadSkillPurposes(args.library);
+                    const standard = Array.from(new Set([...UNIVERSAL_SKILLS, ...exports.ARCHIVABLE_SKILLS])).filter((n) => catalog[n]);
+                    const detected = detectStackSignals(args.root, args.tool).filter((d) => catalog[d.name]);
+                    const autoStats = detected.length
+                        ? `${standard.length} standard skills + ${detected.length} matched to this project`
+                        : `${standard.length} standard skills, no framework match found here`;
+                    const mode = await askSelect('Skills to install:', [
+                        { title: `Auto-detect ${green('(recommended)')} ${dim('-- ' + autoStats)}`, value: 'auto' },
+                        { title: `Everything ${dim('-- every skill in the library (addons/MCP/mods stay opt-in, asked separately)')}`, value: 'everything' },
+                        { title: 'Pick individually from the full catalog', value: 'pick' },
+                    ], 0);
+                    if (mode === 'everything') {
+                        args.skills = eligibleCatalogNames(catalog);
+                    }
+                    else if (mode === 'pick') {
+                        args.skills = await pickSkillsByCategory(catalog, purposes);
                     }
                     else {
-                        const presetEntries = Object.entries(exports.STACK_PRESETS);
-                        const presetChoice = await askSelect('No framework signal detected -- pick a stack preset instead?', [
-                            ...presetEntries.map(([key, p]) => ({ title: p.label, value: key })),
-                            { title: `None ${dim('-- just the standard set')}`, value: 'none' },
-                        ], presetEntries.length);
-                        const preset = exports.STACK_PRESETS[presetChoice];
-                        if (preset) {
-                            extra = preset.skills.filter((n) => catalog[n]);
-                            if (preset.gap)
-                                console.log(yellow(`Note: ${preset.gap}`));
+                        let extra = detected.map((d) => d.name);
+                        if (detected.length) {
+                            console.log(green('Matched to this project:'));
+                            for (const d of detected) {
+                                const purpose = purposes[d.name];
+                                console.log(purpose ? `  ${d.name} ${dim(purpose)}  ${green('(' + d.evidence + ')')}` : `  ${d.name} ${green('(' + d.evidence + ')')}`);
+                            }
+                        }
+                        else {
+                            const presetEntries = Object.entries(exports.STACK_PRESETS);
+                            const presetChoice = await askSelect('No framework signal detected -- pick a stack preset instead?', [
+                                ...presetEntries.map(([key, p]) => ({ title: p.label, value: key })),
+                                { title: `None ${dim('-- just the standard set')}`, value: 'none' },
+                            ], presetEntries.length);
+                            const preset = exports.STACK_PRESETS[presetChoice];
+                            if (preset) {
+                                extra = preset.skills.filter((n) => catalog[n]);
+                                if (preset.gap)
+                                    console.log(yellow(`Note: ${preset.gap}`));
+                            }
+                        }
+                        args.skills = Array.from(new Set([...standard, ...extra]));
+                        if (await askYesNo('Add any other skills on top of this set?', false)) {
+                            const picked = await pickSkillsByCategory(catalog, purposes, new Set(args.skills));
+                            args.skills = Array.from(new Set([...args.skills, ...picked]));
                         }
                     }
-                    args.skills = Array.from(new Set([...standard, ...extra]));
-                    if (await askYesNo('Add any other skills on top of this set?', false)) {
-                        const picked = await pickSkillsByCategory(catalog, purposes, new Set(args.skills));
-                        args.skills = Array.from(new Set([...args.skills, ...picked]));
-                    }
                 }
-            }
-            await askCompany(args, true);
-            await askSignature(args);
-            if (args.company && args.companyDefaults === 'drop')
-                args.standards = false;
-            else if (args.company && args.companyDefaults && args.standards === undefined)
-                args.standards = true; // keep or auto: the defaults were chosen in the company question
-            if (args.standards === undefined) {
-                args.standards = await askYesNo(args.company ? 'Install the default coding-standards too (company rules win where they conflict)?' : 'Install the coding-standards system too?', false);
-            }
-            if (args.standards) {
+            });
+            steps.push(() => askCompany(args, true));
+            steps.push(() => askSignature(args));
+            steps.push(async () => {
+                if (args.company && args.companyDefaults === 'drop')
+                    args.standards = false;
+                else if (args.company && args.companyDefaults && args.standards === undefined)
+                    args.standards = true; // keep or auto: the defaults were chosen in the company question
+                if (args.standards === undefined) {
+                    args.standards = await askYesNo(args.company ? 'Install the default coding-standards too (company rules win where they conflict)?' : 'Install the coding-standards system too?', false);
+                }
+            });
+            steps.push(async () => {
+                if (!args.standards)
+                    return;
                 if (!args.scriptStandard) {
                     const pkg = readJsonSafe(path.join(args.root, 'package.json'));
                     const looksTs = fs.existsSync(path.join(args.root, 'tsconfig.json')) || hasDependency(pkg, 'typescript');
@@ -1388,41 +1469,52 @@ async function fillInteractive(cmd, args) {
                         { title: 'JS and TS together', value: 'js-and-ts' },
                     ], looksTs ? 0 : 1);
                 }
+            });
+            steps.push(async () => {
+                if (!args.standards)
+                    return;
                 if (!args.activeStandardsKeys) {
                     const choices = Object.entries(exports.STANDARD_ROW_LABELS).map(([key, label]) => ({ title: label, value: key }));
                     args.activeStandardsKeys = await askMultiselect("Which of these apply to this project? Most projects keep all of them -- deselect only what genuinely doesn't apply (its row is then removed from the Active Standards table, not just left unchecked):", choices, { defaultAll: true });
                 }
-            }
-            if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
-                args.commentStyleLevel = await askSelect('Comment style:', [
-                    { title: `none ${green('(recommended)')} ${dim('— no comments except rule-mandated ones')}`, value: 'none' },
-                    { title: `terse ${dim('— one short line, only when the why is non-obvious')}`, value: 'terse' },
-                    { title: `descriptive ${dim('— up to 3 short plain-language lines for tricky parts')}`, value: 'descriptive' },
-                ], 0);
-            }
-            if (args.standards && !args.contextCode) {
-                const suggestion = randomContextCode();
-                args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
-            }
+            });
+            steps.push(async () => {
+                if (args.skills.some((s) => parseSkillToken(s).name === 'comment-style') && !args.commentStyleLevel) {
+                    args.commentStyleLevel = await askSelect('Comment style:', [
+                        { title: `none ${green('(recommended)')} ${dim('— no comments except rule-mandated ones')}`, value: 'none' },
+                        { title: `terse ${dim('— one short line, only when the why is non-obvious')}`, value: 'terse' },
+                        { title: `descriptive ${dim('— up to 3 short plain-language lines for tricky parts')}`, value: 'descriptive' },
+                    ], 0);
+                }
+            });
+            steps.push(async () => {
+                if (args.standards && !args.contextCode) {
+                    const suggestion = randomContextCode();
+                    args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
+                }
+            });
         }
         if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
-            const manifest = (0, skill_scope_move_1.readManifest)(args.root);
-            const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
-            const names = Object.keys(pool);
-            if (!names.length) {
-                args.all = true;
-            }
-            else {
-                const scope = await askSelect(`Apply ${cmd} to:`, [
-                    { title: 'All tracked skills', value: 'all' },
-                    { title: 'Choose specific skills', value: 'pick' },
-                ], 0);
-                if (scope === 'all')
+            steps.push(async () => {
+                const manifest = (0, skill_scope_move_1.readManifest)(args.root);
+                const pool = cmd === 'unarchive' ? manifest.archived : manifest.skills;
+                const names = Object.keys(pool);
+                if (!names.length) {
                     args.all = true;
-                else
-                    args.skills = await askMultiselect(`Which skills to ${cmd}?`, names.map((n) => ({ title: n, value: n })));
-            }
+                }
+                else {
+                    const scope = await askSelect(`Apply ${cmd} to:`, [
+                        { title: 'All tracked skills', value: 'all' },
+                        { title: 'Choose specific skills', value: 'pick' },
+                    ], 0);
+                    if (scope === 'all')
+                        args.all = true;
+                    else
+                        args.skills = await askMultiselect(`Which skills to ${cmd}?`, names.map((n) => ({ title: n, value: n })));
+                }
+            });
         }
+        await runSteps(args, steps);
     }
     finally {
         closeRl();
