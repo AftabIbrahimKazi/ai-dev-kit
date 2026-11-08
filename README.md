@@ -1,6 +1,6 @@
 # AI Dev Kit docs site
 
-The documentation website for the [AI Dev Kit](https://github.com/AftabIbrahimKazi/ai-dev-kit). A landing page, a docs index with an interactive map of the kit, and one story page per part of the kit (skills, commands, mods, standards, MCP, add-ons, libraries).
+The documentation website for the [AI Dev Kit](https://github.com/AftabIbrahimKazi/ai-dev-kit), live at [https://ai-dev-kit-docs.vercel.app](https://ai-dev-kit-docs.vercel.app). A landing page, a docs index with an interactive map of the kit, and one story page per part of the kit (skills, commands, mods, standards, MCP, add-ons, libraries).
 
 Built with Next.js 16 (App Router, React 19), Strata CSS for utilities, and a Three.js scene driven through Triforge.
 
