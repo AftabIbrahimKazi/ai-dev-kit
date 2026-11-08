@@ -118,6 +118,22 @@ t('detect with no --about reports the project only and writes nothing', () => {
 	assert.ok(!fs.existsSync(path.join(d, 'teardown')));
 });
 
+t('a spec theme reaches the page: params carry it and the shell reads variables, not a fixed look', () => {
+	const d = fakeLibs();
+	cli(d, 'detect', '--about', 'a vending machine', '--name', 'th');
+	const specFile = path.join(d, 'teardown', 'th', 'spec.json');
+	const spec = JSON.parse(fs.readFileSync(specFile, 'utf8'));
+	spec.theme = { font: 'Mono', radius: '24px', cap: '#33aa77', light: { bg: '#ffffff' }, dark: { bg: '#000000' } };
+	fs.writeFileSync(specFile, JSON.stringify(spec));
+	assert.strictEqual(cli(d, 'init', 'th', '--force').status, 0);
+	const base = path.join(d, 'teardown', 'th');
+	assert.ok(fs.readFileSync(path.join(base, 'params.js'), 'utf8').includes('"cap": "#33aa77"'));
+	const main = fs.readFileSync(path.join(base, 'main.js'), 'utf8');
+	assert.ok(main.includes('SPEC.theme') && main.includes("getPropertyValue('--cap')"));
+	const html = fs.readFileSync(path.join(base, 'index.html'), 'utf8');
+	assert.ok(html.includes('var(--font, system-ui') && html.includes('var(--radius, 12px)') && html.includes('var(--radius-btn, 8px)'));
+});
+
 t('init needs a spec, scaffolds any kind, and a second init keeps edited files', () => {
 	const d = fakeLibs();
 	cli(d, 'detect', '--about', 'a vending machine', '--name', 'v');

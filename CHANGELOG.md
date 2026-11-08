@@ -4,6 +4,7 @@
 
 ### Added
 - `RULE AI-20` (keep the shell at the project root): a successful `cd` into a subfolder carries into later commands, so the installed slash commands, which call `node .claude/skills/...` relative to the project, failed with `MODULE_NOT_FOUND` until the session was restarted. The AI now uses absolute paths, a subshell or a tool's own root option, and returns to the project root if it must change directory. Added to `CLAUDE.example.md` and the README. The command paths stay relative on purpose: they must stay shell-portable and safe to commit.
+- `teardown` themes: an optional `theme` block in `spec.json` (`font`, `radius`, `radiusBtn`, `cap`, and the colour roles `bg`, `ink`, `mute`, `panel`, `line`, `accent`, at the top or in `light` / `dark` blocks) sets the page variables, chosen by `?theme=light|dark` or the system scheme. A project supplies its own look; with no theme the page is unchanged. The cut face colour (`cap`) and the panel font and corners were fixed before.
 
 ## 2026-11-08
 

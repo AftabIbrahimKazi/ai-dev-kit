@@ -61,6 +61,9 @@ Never edit the shared files to suit one machine; change `kin.js` or `machine.js`
 7. **Run `sheet`.** Read `sheet.png`, then read single tiles to zoom. Fix, run again. Stop when one full pass finds nothing. Then run `probe`. Never report a machine as done without reading the sheet of the current build and a passing probe.
 8. **Hand over:** `build` output path, and that `dist/` needs any static server (`npx serve dist`), because a module page cannot open from `file://`.
 
+## Theme (the project's look, never the kit's)
+The page ships neutral. To match a project, add an optional `theme` block to `spec.json` and run `init --force`: `font`, `radius` (panels), `radiusBtn` (buttons), `cap` (the cut face), and the colour roles `bg`, `ink`, `mute`, `panel`, `line`, `accent`, either at the top or inside `light` and `dark` blocks. The page picks the block from `?theme=light|dark` (a host page passes the site's choice) or else the system scheme. Take the values from the project's own tokens; never invent a look. A machine's shapes and materials are its own: read `SPEC.theme` in `machine.js` to colour them. No theme: the neutral defaults, unchanged.
+
 ## Rules
 - **Start from a reference, never from imagination.** Build against it and compare tile by tile.
 - **Real numbers, one source.** `kin.js` holds the dimensions and every readout; it has no `three` in it. Check one number by hand: 12 teeth at module 3 is a 36 mm pitch diameter.

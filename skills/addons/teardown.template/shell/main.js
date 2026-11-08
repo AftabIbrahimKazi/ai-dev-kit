@@ -19,6 +19,14 @@ const GLASS = 0.3;
 const canvas = document.getElementById('gl');
 const capture = q.has('capture');
 
+// the project's own look: spec.theme sets the page variables (font, radius, radiusBtn, cap and the six colour roles),
+// with light and dark blocks chosen by ?theme=light|dark or else the system scheme. No theme: the defaults in index.html.
+const THEME = SPEC.theme || {};
+const MODE = q.get('theme') === 'light' || q.get('theme') === 'dark' ? q.get('theme') : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+for (const [key, value] of Object.entries({ ...THEME, ...(THEME[MODE] || {}) })) {
+  if (typeof value === 'string' && /^[a-zA-Z]+$/.test(key)) document.documentElement.style.setProperty('--' + key.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()), value);
+}
+
 // quality tier from real runtime probes (Triforge render-budget); the page still works if the probe fails
 let tier = 'full';
 try { tier = (await initRenderBudget({ allowDevOverride: true })).shaderComplexity; } catch { /* keep full */ }
@@ -83,7 +91,8 @@ for (const m of meshes) {
   }
 }
 const capSize = whole.radius * 6;
-const capMat = new THREE.MeshBasicMaterial({ color: '#d2693f', side: THREE.DoubleSide, stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.ReplaceStencilOp, stencilZFail: THREE.ReplaceStencilOp, stencilZPass: THREE.ReplaceStencilOp });
+const CAP = getComputedStyle(document.documentElement).getPropertyValue('--cap').trim() || '#d2693f';
+const capMat = new THREE.MeshBasicMaterial({ color: CAP, side: THREE.DoubleSide, stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.ReplaceStencilOp, stencilZFail: THREE.ReplaceStencilOp, stencilZPass: THREE.ReplaceStencilOp });
 const cap = new THREE.Mesh(new THREE.PlaneGeometry(capSize, capSize), capMat);
 cap.renderOrder = 1.1;
 cap.userData.want = false;
