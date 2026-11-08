@@ -819,7 +819,7 @@ The documentation website is not in this tree. It lives on the separate `site` b
 
 ## The documentation website
 
-The kit has a docs site (Next.js, deployed on Vercel). Its source lives on a separate git branch called `site`, not on `main`. That keeps the site's files out of the folder you get when you clone the kit.
+The kit has a docs site at [https://ai-dev-kit-docs.vercel.app](https://ai-dev-kit-docs.vercel.app) (Next.js, deployed on Vercel). Its source lives on a separate git branch called `site`, not on `main`. That keeps the site's files out of the folder you get when you clone the kit.
 
 **What you get when you clone.** `git clone` checks out `main` only, so there is no `site/` folder in your working copy. Git still downloads the `site` branch's history in the background. To skip that too, clone with `git clone --single-branch`.
 
