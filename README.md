@@ -147,7 +147,7 @@ If you've never used a terminal before, this is every single thing to type, in o
    Type a number [1]:
    ```
 
-   Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`.
+   Type the number of your answer and press Enter (or just press Enter to accept whatever's shown in `[brackets]`). For a question that lets you pick several things, it says so and lets you type numbers separated by commas (`1,3,4`), or the word `all`. For a yes/no question, type `y` or `n`. Picked the wrong thing? Type `<` (or `b`) at any question to go back one step and answer it again; your earlier answers are kept. On the very first question there is nothing to go back to.
 
    For the skills question specifically, you won't have to pick through the whole catalog by hand: the installer scans your project first and offers **Auto-detect** (a standard skill set plus anything it recognized — a three.js or Astro dependency, an existing Shopify theme, and so on — with the matches named so it's never a silent guess) as the pre-selected option. Pressing Enter there takes it, and it asks afterward whether to add anything else on top. Choosing **Pick individually** instead — or saying yes to adding more after Auto-detect — doesn't dump the whole catalog as one list either: you pick which categories you want (workflow, standards, stack, and so on), then only skills from those categories, each line carrying a short description of what it does.
 

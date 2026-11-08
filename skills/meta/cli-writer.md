@@ -47,6 +47,7 @@ A kit CLI runs on a machine the author never saw: Windows with a space in the pa
 - Ask only for what is missing. Never re-ask a value given as a flag.
 - Plain numbered menus on `node:readline`: `1) claude  2) opencode`, "type a number", the default in brackets, Enter takes it. No arrow keys, no raw mode: it must behave the same in PowerShell, cmd.exe and SSH. Multi-pick takes `1,3,4`, `all` or `none`. Re-ask on bad input; never throw.
 - One shared `readline` interface, closed when prompting ends, or the process hangs on exit.
+- **Every prompt flow can go back.** Build the questions as a list of steps, not one straight run: each step reads and writes its own answers, a copy of the answers is kept before each step, and `<` (or `b` / `back` at a menu or yes/no) restores that copy and re-asks the previous step. A step that asked nothing because a flag answered it is skipped in both directions. On the first question say there is nothing to go back to and re-ask. Print a one-line tip the first time back becomes possible. Without this, one wrong pick forces a restart from scratch (the kit installer had exactly that gap). Test it: back once, back past a flag-answered step, and `<` on the first question.
 - Long lists are chunked (categories first, then items), each item with a one-line purpose, with a running tally of what is chosen.
 
 ## Colour
@@ -69,7 +70,7 @@ A kit CLI runs on a machine the author never saw: Windows with a space in the pa
 2. **Cold start:** delete `node_modules`, run the built `.js` from a fresh clone. It must not crash.
 3. **Non-TTY:** run with stdin from a pipe and no required flag. It must exit 2 with the usage line, not wait.
 4. Run once from Git Bash with a space in the path. Set `MSYS_NO_PATHCONV=1` if a path argument starts with `/`.
-5. Prompts: walk the interactive flow once by hand and read every line as a novice would.
+5. Prompts: walk the interactive flow once by hand and read every line as a novice would, and go back at least once to check the earlier answer can be changed.
 
 ## Register it
 - A new skill companion: follow `skill-writer` and `skill-scope`.

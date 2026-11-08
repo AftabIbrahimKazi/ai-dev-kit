@@ -3,6 +3,7 @@
 ## 2026-11-08
 
 ### Fixed
+- The terminal installer can go back: `<` (or `b` / `back` at a menu or yes/no) returns to the previous question and restores the earlier answers, so a wrong pick no longer means starting over. Steps answered by a flag are skipped both ways. `cli-writer` now requires back navigation in every prompt flow.
 - `/next` no longer archives anything without a mode word and a task. It passes `--require-task`, so a bare `/next`, a wrong first word or a mode word alone moves nothing (a bare `/next` used to archive every archivable skill). `/next` and `/wrap-up` now name the archived skills, and `/next` writes the moved skills to `## Skills` in the handover.
 - `/archive` with no names archives every archivable skill; `/unarchive` with no names restores every archived one (they used to list). `/pickup` names archived skills that the queued next task needs, with the `/unarchive` command (names only, no descriptions).
 
