@@ -249,6 +249,21 @@ Before adding a CSS variable or design token, search the project's token file(s)
 
 ---
 
+## RULE AI-20 — Keep the shell at the project root
+
+A `cd` that succeeds carries into the commands that follow it. Slash commands and scripts that name a path relative to the project root, such as `node .claude/skills/<skill>/<script>.js`, then fail with `MODULE_NOT_FOUND` until the session is restarted. The AI must not change the shell's working directory to run something. Use an absolute path, the tool's own root or cwd option, or a subshell. If a directory change cannot be avoided, return to the project root in the same command. A working directory other than the project root, reported by the tool, is a defect: repair it before the turn ends.
+
+```
+# Wrong — the session stays in src/ and every later relative path breaks
+cd src && npx tsc --noEmit
+
+# Right — absolute path, a subshell, or the tool's own option
+npx tsc --noEmit -p "<project root>"
+(cd src && npx tsc --noEmit)
+```
+
+---
+
 ## Code & Rules
 
 ---
