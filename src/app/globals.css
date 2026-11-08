@@ -176,7 +176,6 @@ h4 {
 .rk-nav-link {
   color: var(--color-text-body);
   display: inline-block;
-  isolation: isolate;
   position: relative;
   text-decoration: none;
   transform-origin: center;
@@ -220,36 +219,6 @@ h4 {
 
 .rk-nav-link:active {
   transform: scale(0.97);
-}
-
-.rk-nav-link::before,
-.rk-footer-link::before {
-  background: linear-gradient(to bottom, var(--color-glass-gloss), var(--color-glass-lo));
-  border: var(--border-width-default) solid var(--color-border);
-  border-radius: var(--radius-full);
-  box-shadow:
-    inset 0 var(--border-width-default) 0 var(--color-glass-shine),
-    0 0 var(--space-md) var(--color-aqua-glow);
-  content: "";
-  inset-block: calc(var(--space-xxs) * -1);
-  inset-inline: calc(var(--space-sm) * -1);
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  transform: translateY(var(--space-xs)) scale(0.6, 0.25);
-  transform-origin: center bottom;
-  transition:
-    opacity var(--duration-default) ease,
-    transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: -1;
-}
-
-.rk-nav-link:hover::before,
-.rk-nav-link:focus-visible::before,
-.rk-footer-link:hover::before,
-.rk-footer-link:focus-visible::before {
-  opacity: 1;
-  transform: translateY(0) scale(1);
 }
 
 .rk-lamp {
@@ -543,9 +512,7 @@ code {
   color: var(--color-text-body);
   column-gap: var(--space-xxs);
   display: inline-flex;
-  isolation: isolate;
   padding: var(--space-xxs) 0;
-  position: relative;
   text-decoration: none;
   transition:
     color var(--duration-fast) ease,
@@ -1147,6 +1114,10 @@ code {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-card)), 1fr));
 }
 
+.rk-guide-grid .rk-link {
+  padding-block: var(--space-default);
+}
+
 .rk-flow {
   flex-wrap: wrap;
   gap: var(--space-md);
@@ -1335,15 +1306,8 @@ code {
   transition:
     background var(--duration-default) ease,
     box-shadow var(--duration-default) ease,
-    transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform var(--duration-default) ease;
   width: var(--space-sm);
-}
-
-.rk-rail-dot:hover,
-.rk-rail-dot:focus-visible {
-  background: var(--color-accent);
-  box-shadow: 0 0 var(--space-sm) var(--color-aqua-glow);
-  transform: scale(1.6);
 }
 
 .rk-rail-dot[data-state="active"] {
@@ -1509,9 +1473,7 @@ code {
   .rk-hl-ts,
   .rk-nav-link,
   .rk-nav-link::after,
-  .rk-nav-link::before,
   .rk-footer-link,
-  .rk-footer-link::before,
   .rk-footer-icon,
   .rk-more::details-content,
   .rk-carousel-track,

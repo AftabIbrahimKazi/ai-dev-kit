@@ -21,7 +21,7 @@ export default function ModuleLinks({ modules, intro }: ModuleLinksProps) {
             <Link
               id={`rk-module-${kitModule.slug}-ts`}
               href={`/docs/${kitModule.slug}`}
-              className="rk-module-ts rk-glass rk-link align-items-center col-gap-[var(--space-md)] d-flex justify-content-between p-[min(var(--space-xs),1dvh)_var(--space-md)] rounded-[var(--radius-pill)]"
+              className="rk-module-ts rk-glass rk-link align-items-center col-gap-[var(--space-md)_var(--space-md)] d-flex justify-content-between p-[min(var(--space-xs),1dvh)_var(--space-md)] rounded-[var(--radius-pill)]"
             >
               <span className="align-items-center col-gap-[var(--space-sm)] d-flex">
                 <ModuleIcon className="text-[var(--color-accent)] flex-shrink-0" size={22} strokeWidth={2.25} />
