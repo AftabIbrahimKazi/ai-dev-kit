@@ -42,6 +42,7 @@ Listed under AI Hub → Skills on Three.js Resources — a curated directory for
 - [Where things live, and how to turn things off](#where-things-live-and-how-to-turn-things-off) — every file the kit writes, and how to remove each one
 - [Key ideas](#key-ideas) — the design philosophy behind the kit
 - [Repository layout](#repository-layout) — the folder tree, annotated
+- [The documentation website](#the-documentation-website) — the docs site lives on its own `site` branch, not in this folder tree
 - [Recent additions](#recent-additions) — latest changes, newest first
 - [Frequently asked questions](#frequently-asked-questions)
 - [Contributing and support](#contributing-and-support)
@@ -813,6 +814,27 @@ coding-standards/
   tooling/         ← lint configs enforcing the machine-checkable rules
   CLAUDE.example.md← session-protocol template — wire into CLAUDE.md (Claude Code) or AGENTS.md (OpenCode)
 ```
+
+The documentation website is not in this tree. It lives on the separate `site` branch (see below), so a normal clone of this repo does not check it out.
+
+## The documentation website
+
+The kit has a docs site (Next.js, deployed on Vercel). Its source lives on a separate git branch called `site`, not on `main`. That keeps the site's files out of the folder you get when you clone the kit.
+
+**What you get when you clone.** `git clone` checks out `main` only, so there is no `site/` folder in your working copy. Git still downloads the `site` branch's history in the background. To skip that too, clone with `git clone --single-branch`.
+
+**To work on the site**, from the root of your kit checkout:
+
+```bash
+git worktree add site/ai-dev-kit-doc-site site
+cd site/ai-dev-kit-doc-site
+npm install
+npm run dev
+```
+
+`site/` is ignored by `main`, so the worktree never shows up in `git status` here. Keeping the site at that exact path matters: the scripts that rebuild the site's kit map (`scripts/build-kit-graph.ts`, `scripts/build-map-links.ts`) read the kit's files three folders up.
+
+**To change the kit's content and refresh the site**, commit the kit change on `main`, then re-run those two scripts inside the site worktree and commit the result on the `site` branch. The site's own README, on that branch, has the full steps and the Vercel setup.
 
 ## Recent additions
 
