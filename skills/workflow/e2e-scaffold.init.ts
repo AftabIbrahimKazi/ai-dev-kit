@@ -81,7 +81,8 @@ export function init(cwd: string, opt: { port?: number; command?: string; dryRun
     const target = useTs ? rel : rel.replace(/\.ts$/, '.js');
     const abs = path.join(cwd, target);
     if (fs.existsSync(abs) && !opt.force) { skipped.push(target); continue; }
-    const text = body.replace(/\{\{PORT\}\}/g, String(port)).replace(/\{\{DEV_COMMAND\}\}/g, command.replace(/'/g, "\\'"));
+    const escapedCommand = command.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    const text = body.replace(/\{\{PORT\}\}/g, String(port)).replace(/\{\{DEV_COMMAND\}\}/g, () => escapedCommand);
     if (!opt.dryRun) { fs.mkdirSync(path.dirname(abs), { recursive: true }); fs.writeFileSync(abs, text); }
     wrote.push(target);
   }
