@@ -79,6 +79,11 @@
       "name": "skill-hint",
       "source": "./skill-hint",
       "description": "Attaches one keyword-matched line naming skills that may apply to the prompt, once per skill per session; names /unarchive for an archived one. Hint only, never loads or moves a skill."
+    },
+    {
+      "name": "session-journal",
+      "source": "./session-journal",
+      "description": "Writes a short journal of the session after every turn, outside the project (~/.ai-dev-kit/sessions/): what was asked, files edited, commands run (secrets scrubbed), failures. On compaction it gives the summarizer a digest of those facts; at session start it deletes journals idle 5 hours or more, and using one resets its timer. Separate from handover.md. No model call, no network."
     }
   ]
 }

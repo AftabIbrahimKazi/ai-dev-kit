@@ -1,0 +1,8 @@
+{
+  "name": "session-journal",
+  "version": "0.1.0",
+  "description": "A script-written journal of one session, kept outside the project in ~/.ai-dev-kit/sessions/<project>/: after each turn it records what was asked, files edited, commands run (secrets scrubbed) and failures; on compaction it hands the summarizer a short digest of those facts; at session start it deletes journals idle for 5 hours or more (using a journal resets its timer). Separate from handover.md, which it never reads or writes. No model call, no network. Fails open. Reads env: HOME, USERPROFILE.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}
