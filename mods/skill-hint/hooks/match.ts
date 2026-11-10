@@ -10,12 +10,32 @@ export const DEFAULT_RULES: Rules = {
   'intent-capture': ['make it better', 'clean up', 'clean it up', 'improve', 'polish', 'tidy', 'fix it up', 'make it nicer'],
   'session-budget': ['token*', 'cost', 'budget', 'context window', 'expensive'],
   'e2e-scaffold': ['playwright', 'e2e', 'end-to-end'],
+  'perf-audit': ['perf*', 'slow', 'lighthouse', 'bundle', 'page weight', 'load time', 'vitals'],
   'responsive-check': ['responsive', 'breakpoint*', 'viewport', 'screen size', 'mobile layout'],
   'resolve-conflicts': ['conflict*', 'rebase', 'cherry-pick'],
   'version-bump': ['bump', 'release', 'changelog'],
 }
 
-export interface Manifest { skills?: Record<string, unknown>; archived?: Record<string, unknown> }
+export interface Manifest { skills?: Record<string, unknown>; archived?: Record<string, unknown>; skillRoot?: string }
+
+// Skills whose mechanical step a script can run outright when the prompt matches, so the facts arrive with the prompt
+// and no skill has to load first. Only scripts that read and print; measured for perf-audit on 2026-11-11 (Haiku, one
+// Astro build, 2 runs each): model-led $0.019 and ~15k output tokens, script-led $0.006 and ~2.3k.
+export interface ScriptRun { skill: string; script: string; args: string[]; header: string }
+export const SCRIPT_RUNS: ScriptRun[] = [
+  { skill: 'perf-audit', script: 'weigh.js', args: ['--top', '7'], header: 'skill-hint ran perf-audit/weigh.js (static payload weigh-in; read this table instead of listing files):' },
+]
+
+// The script to run for this prompt, or null: the skill must match a trigger and be installed and active (an archived
+// skill has no script in place). Once per skill per session (ran).
+export function scriptFor(text: string, rules: Rules, manifest: Manifest | null, ran: Set<string>): ScriptRun | null {
+  if (!manifest?.skills) return null
+  const hit = matchSkills(text, rules)
+  const run = SCRIPT_RUNS.find((s) => hit.includes(s.skill) && s.skill in manifest.skills! && !ran.has(s.skill))
+  if (!run) return null
+  ran.add(run.skill)
+  return run
+}
 
 function esc(s: string): string { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') }
 
