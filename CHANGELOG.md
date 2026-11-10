@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-11
+
+### Added
+- Seven skills gained a companion script for their mechanical steps, so the model reads one summary instead of running greps and listings by hand: `perf-audit/weigh.js` (static payload weigh-in: JS/CSS gzip totals, heavy chunks and images, PNG without a modern sibling, fonts and `font-display`, blocking scripts, lazy and LCP attributes, unhashed names), `e2e-scaffold/init.js` (stack detect, write the Playwright config, fixtures and smoke test from the templates, wire `package.json` and `.gitignore`, refuse to re-scaffold), `astro-page/conventions.js` (`scan` the prefixes, folders, entry-script pattern and `client:*` use; `check` new files against them), `security-audit/recon.js` (routes, auth markers, data stores, env reads, outbound calls, sinks, masked secrets, obvious things, with `file:line`; an inventory, never a finding), `memory-bank/index.js` (`check`, `rebuild` and `init` for `INDEX.md`), `shopify-toolkit-install/get.js` (scratch clone, copy chosen skills, snapshot note, telemetry notice; never applies the opt-out) and `skill-ablation/archive.js` (archive and restore with a manifest, including the hooks block of `.claude/settings.json`). Each skill now calls its script and lists what still needs the model. `interpretation-checkpoint` got none: its only mechanical step is a glob, and its companion name would exceed the 30-character file-name rule. Token saving is expected, not yet measured; see the perf-audit gate note in the kit's memory.
+
 ## 2026-11-10
 
 ### Fixed

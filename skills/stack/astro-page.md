@@ -12,6 +12,11 @@ New surface area in an Astro project should be indistinguishable from existing s
 2. **At end:** append one dated bullet only for a new, non-obvious lesson (a convention discovered the hard way, a scaffolding step that was missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Discover the project's conventions (never assume)
+Start with the scan; it answers most of the list below in one read:
+```
+node <skill-root>/astro-page/conventions.js scan
+```
+It names the token file and prefix, the selector prefix, the pages, components, layouts, styles and scripts folders, the entry-script pattern, `client:*` use, the asset path, page-lifecycle hooks and a few sibling files. Open one sibling it names; do not grep for what it already answered.
 Before writing anything, establish from the project itself:
 - **Standards docs:** session-protocol file (`CLAUDE.md`/`AGENTS.md`), `coding-standards/`, or equivalent — load the chain for every file role you'll touch (component, stylesheet, script).
 - **Prefixes:** CSS token prefix and selector signature (e.g. `--ex-` / `ex-`) — grep an existing stylesheet to confirm.
@@ -34,5 +39,5 @@ Before writing anything, establish from the project itself:
 
 ## Step 3 — Verify
 - Dev-server render of the new route, console clean.
-- Grep your new files for convention violations: hardcoded colors/sizes with existing tokens, missing prefix on selectors, wrong import style.
+- `node <skill-root>/astro-page/conventions.js check <new files...>` flags hardcoded colours where a token file exists, selectors without the project prefix, `client:load`, and inline `<script>` where siblings use entry scripts (exit 1 on a finding). Still by hand: wrong import style, sizes that an existing token covers.
 - Accessibility pass per project standard (landmarks, alt text, focus, reduced-motion for animated pages).

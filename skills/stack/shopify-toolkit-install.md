@@ -19,11 +19,12 @@ Shopify publishes its own skills (Liquid, Shopify CLI, storefront GraphQL, partn
 ### 1. Confirm scope
 Ask which of the toolkit's skill folders to install (default: all) — typical set: `shopify-liquid`, `shopify-dev`, `shopify-use-shopify-cli`, `shopify-storefront-graphql`, `shopify-partner`, `shopify-onboarding-dev`. Only proceed once the project is confirmed to be a Shopify theme/app (has `shopify.theme.toml`, a `templates/`+`sections/` Liquid layout, or the user just said so).
 
-### 2. Clone to a scratch location, not into the project directly
-Shallow-clone (`git clone --depth 1`) the source repo into a temp directory — never directly into the skill root, so a partial/failed clone can't corrupt the project's existing skills.
-
-### 3. Copy selected skill folders into the routed skill root
-Copy each chosen `skills/<shopify-skill-name>/` folder whole (SKILL.md + any companion scripts/data/assets) into `<skill-root>/<same-name>/` (routed per `install-kit` Step 1) — flat layout, same convention `install-kit` uses for this kit's own skills. Keep the `shopify-*` naming as-is; it already avoids collision with ai-dev-kit skill names. Delete the temp clone once the copy succeeds.
+### 2 and 3. Pull with the script
+```
+node <skill-root>/shopify-toolkit-install/get.js list                      # what is upstream, and its commit
+node <skill-root>/shopify-toolkit-install/get.js install --root <project> [--skills a,b] [--dry-run]
+```
+`install` shallow-clones the source to a scratch folder (never into the skill root, so a failed clone cannot corrupt existing skills), copies each chosen `skills/<name>/` folder whole into the routed skill root (from `.ai-dev-kit.json`, else the tool folder present, else `.claude/skills`), deletes the clone, writes the Step 5 note and prints the Step 4 telemetry text. Existing folders are kept unless `--force`. `--source <url>` only when the Source line above changed. Keep the `shopify-*` naming as-is; it already avoids collision with ai-dev-kit skill names.
 
 ### 4. Flag the telemetry hook before wiring anything
 The toolkit's scripts send usage telemetry (queries, code, model identifiers) to shopify.dev by default. Before finishing, tell the user this plainly and give the two opt-out mechanisms Shopify documents: set `OPT_OUT_INSTRUMENTATION=true`, or create an empty file at `~/.config/shopify-ai-toolkit/opt-out`. Ask whether to apply the opt-out now — never silently leave a phone-home default active without surfacing it, and never enable/wire any hook config on the user's behalf without asking first (same bar as `hooks-enforcement`'s treatment of its own sample hooks).

@@ -32,7 +32,7 @@ Name all five, or it is not a finding:
 Missing a deployment fact (proxy headers, IAM, env)? Mark `needs_validation` and state the fact plus the safe check that settles it. Never assume it. Only `confirmed` findings get a severity.
 
 ## Phases (full audit)
-1. **Recon.** Entry points (routes, handlers, CLI args, queues, webhooks), principals and roles, data stores, outbound calls, secrets, build/release path. Output a half-page map, not a tour.
+1. **Recon.** Run `node <skill-root>/security-audit/recon.js` first: it lists entry points (coded and file routes, bins), auth markers, data stores, environment reads, outbound calls, dangerous sinks (shell, SQL strings, eval, HTML, file paths, redirects), secret-looking strings (masked) and obvious things, each with `file:line`. It is an inventory, never a finding. Add by hand what it cannot see: principals and roles, queues and webhooks, the build/release path. Output a half-page map, not a tour.
 2. **Pick classes** from the table below that fit the app type; skip the rest. Split a large codebase by subsystem and list what was and was not covered.
 3. **Hunt** each class: trace untrusted input to its sink, then check the guard on each path to the same state change.
 4. **Validate** by trying to disprove each candidate (upstream check? reachable? does the sink get the value?). Drop what fails, with a one-line reason.
