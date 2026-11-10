@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { DEFAULT_RULES, hintFor, matchSkills, mergeRules } from '../hooks/match'
+import { DEFAULT_RULES, hintFor, matchSkills, mergeRules, scriptFor } from '../hooks/match'
 
 test('keywords match whole words, prefixes and phrases, case-insensitively', () => {
   expect(matchSkills('The build is Broken again', DEFAULT_RULES)).toContain('debug-protocol')
@@ -37,4 +37,16 @@ test('the project skill-scope triggers extend the defaults', () => {
   const rules = mergeRules(DEFAULT_RULES, { skills: { 'security-audit': ['owasp'] } })
   expect(matchSkills('check owasp top ten', rules)).toEqual(['security-audit'])
   expect(Object.keys(rules)).toContain('debug-protocol')
+})
+
+test('scriptFor runs a listed script only for an installed, active skill, once per session', () => {
+  const rules = mergeRules(DEFAULT_RULES, null)
+  const ran = new Set<string>()
+  expect(scriptFor('the site is slow', rules, null, ran)).toBeNull() // no manifest: nothing installed
+  expect(scriptFor('the site is slow', rules, { skills: {}, archived: { 'perf-audit': {} } }, ran)).toBeNull() // archived: script not in place
+  const run = scriptFor('the site is slow', rules, { skills: { 'perf-audit': {} } }, ran)
+  expect(run?.skill).toBe('perf-audit')
+  expect(run?.script).toBe('weigh.js')
+  expect(scriptFor('still slow', rules, { skills: { 'perf-audit': {} } }, ran)).toBeNull() // once per session
+  expect(scriptFor('add a button', rules, { skills: { 'perf-audit': {} } }, new Set())).toBeNull()
 })

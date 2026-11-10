@@ -1,7 +1,7 @@
 {
   "name": "skill-hint",
-  "version": "0.1.0",
-  "description": "On each typed prompt, matches keywords in code (no model call) and attaches one line naming skills that may apply, once per skill per session. An archived skill is named with the /unarchive command to run. Hint only: it never loads, archives or restores a skill. Reads .ai-dev-kit.json and the project's skill-scope triggers; no env, no network.",
+  "version": "0.2.0",
+  "description": "On each typed prompt, matches keywords in code (no model call) and attaches one line naming skills that may apply, once per skill per session. An archived skill is named with the /unarchive command to run. For perf-audit it also runs the skill's read-only weigh.js once per session and attaches the table, so the facts arrive without a skill load. Never loads, archives or restores a skill. Reads .ai-dev-kit.json and the project's skill-scope triggers; no env, no network.",
   "author": {
     "name": "Aftab Ibrahim Kazi"
   }
