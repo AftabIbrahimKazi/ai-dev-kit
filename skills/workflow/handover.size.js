@@ -90,6 +90,22 @@ function learningsFiles(cwd) {
     }
     return out;
 }
+// The memory-bank skill is optional; when it is installed next to this skill and the project has a bank, its index
+// check rides this hook so an unindexed or over-long entry is reported at session start too.
+function bankProblems(cwd) {
+    if (!fs.existsSync(path.join(cwd, 'memory-bank')))
+        return [];
+    const file = path.join(__dirname, '..', 'memory-bank', 'index.js');
+    if (!fs.existsSync(file))
+        return [];
+    try {
+        const mod = require(file);
+        return mod.check(cwd).map((p) => ({ file: 'memory-bank/' + p.file, kind: 'bank', found: 0, limit: 0, detail: p.kind + ': ' + p.detail }));
+    }
+    catch {
+        return [];
+    }
+}
 function check(cwd, maxLines = exports.MAX_LINES, maxBullets = exports.MAX_BULLETS) {
     const problems = [];
     const rel = (p) => path.relative(cwd, p).split(path.sep).join('/');
@@ -107,6 +123,7 @@ function check(cwd, maxLines = exports.MAX_LINES, maxBullets = exports.MAX_BULLE
         if (bullets > maxBullets)
             problems.push({ file: rel(f), kind: 'bullets', found: bullets, limit: maxBullets });
     }
+    problems.push(...bankProblems(cwd));
     return problems;
 }
 function describe(p) {
@@ -114,6 +131,8 @@ function describe(p) {
         return `${p.file}: ${p.found} lines (limit ${p.limit})`;
     if (p.kind === 'sessions')
         return `${p.file}: ${p.found} session sections (want 1, "## Last session")`;
+    if (p.kind === 'bank')
+        return `${p.file}: ${p.detail} (memory-bank index.js rebuild fixes index lines)`;
     return `${p.file}: ${p.found} bullets (limit ${p.limit})`;
 }
 function parse(argv) {

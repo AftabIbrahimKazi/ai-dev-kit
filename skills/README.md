@@ -150,6 +150,9 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
 | `/version-bump` | bump a package.json version + changelog entry | `version-bump` |
+| `/perf` | static payload weigh-in of a build, ranked | `perf-audit` |
+| `/e2e` | Playwright scaffold status or init | `e2e-scaffold` |
+| `/recon` | security recon map with file:line | `security-audit` |
 | `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
 | `/persona` | choose the reply persona: gender and skill level, off, status | `personality` |
 | `/narration` | mute, voice, volume, speed, pitch for reply narration | `narrate` |

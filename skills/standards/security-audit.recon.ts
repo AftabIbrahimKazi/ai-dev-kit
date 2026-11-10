@@ -78,7 +78,7 @@ function walk(dir: string, out: string[] = []): string[] {
   let es: fs.Dirent[];
   try { es = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
   for (const e of es) {
-    if (SKIP.has(e.name)) continue;
+    if (SKIP.has(e.name) || (e.name.startsWith('.') && e.isDirectory())) continue; // dot-folders are tooling (.claude, .git, .next)
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, out); else out.push(p);
   }

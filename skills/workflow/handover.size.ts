@@ -14,7 +14,7 @@ import * as path from 'node:path';
 export const MAX_LINES = 120;
 export const MAX_BULLETS = 30;
 
-export interface Problem { file: string; kind: 'lines' | 'sessions' | 'bullets'; found: number; limit: number }
+export interface Problem { file: string; kind: 'lines' | 'sessions' | 'bullets' | 'bank'; found: number; limit: number; detail?: string }
 
 function countLines(text: string): number {
   return text.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n').length;
@@ -56,6 +56,18 @@ function learningsFiles(cwd: string): string[] {
   return out;
 }
 
+// The memory-bank skill is optional; when it is installed next to this skill and the project has a bank, its index
+// check rides this hook so an unindexed or over-long entry is reported at session start too.
+function bankProblems(cwd: string): Problem[] {
+  if (!fs.existsSync(path.join(cwd, 'memory-bank'))) return [];
+  const file = path.join(__dirname, '..', 'memory-bank', 'index.js');
+  if (!fs.existsSync(file)) return [];
+  try {
+    const mod = require(file) as { check: (cwd: string) => { kind: string; file: string; detail: string }[] };
+    return mod.check(cwd).map((p) => ({ file: 'memory-bank/' + p.file, kind: 'bank' as const, found: 0, limit: 0, detail: p.kind + ': ' + p.detail }));
+  } catch { return []; }
+}
+
 export function check(cwd: string, maxLines = MAX_LINES, maxBullets = MAX_BULLETS): Problem[] {
   const problems: Problem[] = [];
   const rel = (p: string) => path.relative(cwd, p).split(path.sep).join('/');
@@ -70,12 +82,14 @@ export function check(cwd: string, maxLines = MAX_LINES, maxBullets = MAX_BULLET
     const bullets = countBullets(fs.readFileSync(f, 'utf8'));
     if (bullets > maxBullets) problems.push({ file: rel(f), kind: 'bullets', found: bullets, limit: maxBullets });
   }
+  problems.push(...bankProblems(cwd));
   return problems;
 }
 
 export function describe(p: Problem): string {
   if (p.kind === 'lines') return `${p.file}: ${p.found} lines (limit ${p.limit})`;
   if (p.kind === 'sessions') return `${p.file}: ${p.found} session sections (want 1, "## Last session")`;
+  if (p.kind === 'bank') return `${p.file}: ${p.detail} (memory-bank index.js rebuild fixes index lines)`;
   return `${p.file}: ${p.found} bullets (limit ${p.limit})`;
 }
 
