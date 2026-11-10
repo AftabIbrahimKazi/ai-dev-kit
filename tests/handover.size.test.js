@@ -107,3 +107,23 @@ t('a "## Next task" section is not a session section and adds no finding', () =>
   assert.strictEqual(countSessionSections(fs.readFileSync(path.join(d, 'handover.md'), 'utf8')), 1);
   assert.strictEqual(run(d, 'check').stdout, '');
 });
+
+t('memory-bank index problems ride the hook when the skill is installed and the project has a bank', () => {
+  const d = proj();
+  write(d, 'handover.md', '# H\n\n## Last session\nok\n');
+  write(d, 'memory-bank/INDEX.md', '# Memory bank\n');
+  write(d, 'memory-bank/decisions/a.md', '# A\nhook\n');
+  // the size script looks for ../memory-bank/index.js next to itself: in the library that is skills/workflow/../memory-bank, absent by design
+  const lib = check(d);
+  assert.deepStrictEqual(lib, []);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'size root-'));
+  fs.mkdirSync(path.join(root, 'handover'));
+  fs.mkdirSync(path.join(root, 'memory-bank'));
+  fs.copyFileSync(CLI, path.join(root, 'handover', 'size.js'));
+  fs.copyFileSync(path.join(__dirname, '..', 'skills', 'memory', 'memory-bank.index.js'), path.join(root, 'memory-bank', 'index.js'));
+  const r = spawnSync(process.execPath, [path.join(root, 'handover', 'size.js'), 'check', '--cwd', d], { encoding: 'utf8' });
+  assert.match(r.stdout, /memory-bank\/decisions\/a\.md: unindexed/);
+  const clean = proj();
+  write(clean, 'handover.md', '# H\n\n## Last session\nok\n');
+  assert.strictEqual(spawnSync(process.execPath, [path.join(root, 'handover', 'size.js'), 'check', '--cwd', clean], { encoding: 'utf8' }).stdout, '');
+});

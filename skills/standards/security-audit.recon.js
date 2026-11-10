@@ -67,8 +67,8 @@ function walk(dir, out = []) {
         return out;
     }
     for (const e of es) {
-        if (SKIP.has(e.name))
-            continue;
+        if (SKIP.has(e.name) || (e.name.startsWith('.') && e.isDirectory()))
+            continue; // dot-folders are tooling (.claude, .git, .next)
         const p = path.join(dir, e.name);
         if (e.isDirectory())
             walk(p, out);

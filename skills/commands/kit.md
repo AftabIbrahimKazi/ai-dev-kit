@@ -26,6 +26,9 @@ Answer from this table only. If the user typed a situation after `/kit`, name th
 | Same, and start it now | `/next tsk-start <task>` |
 | Bump a package version and its changelog entry | `/version-bump <major|feature|patch|alpha|beta|rc|release>` (optional: a scope path, `--dry-run`) |
 | Images, video or fonts are too heavy | `/optimize-assets` (optional: `convert src/img --to webp,avif`, `precompress dist`) |
+| Is the site heavy or slow to load | `/perf` (optional: `--dist build`) |
+| Set up Playwright end-to-end tests | `/e2e status`, then `/e2e init` (optional: `--port 3100`, `--dry-run`) |
+| Start a security audit with a map of the code | `/recon` |
 | A project with requirement docs, brand notes or Figma | `/ctx init`, then `/figma <export folder>` (opt-in add-on) |
 | A diagram of the stack or folder structure, for a README or site | `/diagram detect` (or `--structure`), then `/diagram build <spec>` (opt-in `diagram` add-on) |
 | A 3D simulator, cutaway or exploded view of a machine | `/teardown detect --about "<the machine>"`, then `init <name>`, `check <dir>`, `sheet <dir>` (opt-in `teardown` add-on, uses Triforge) |

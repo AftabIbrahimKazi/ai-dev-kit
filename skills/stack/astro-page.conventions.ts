@@ -30,7 +30,7 @@ function walk(dir: string, out: string[] = [], depth = 0): string[] {
   let es: fs.Dirent[];
   try { es = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
   for (const e of es) {
-    if (SKIP.has(e.name)) continue;
+    if (SKIP.has(e.name) || (e.name.startsWith('.') && e.isDirectory())) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, out, depth + 1); else out.push(p);
   }

@@ -62,7 +62,7 @@ Costs roughly 25 input tokens per user message, mostly served from cache after t
 
 Archiving and restoring skills is deliberately not a hook: a session-start archive plus a per-prompt restore cost more in surprises and re-reads than they save. It happens only when the user runs `/archive`, `/unarchive` or `/next`.
 
-`SessionStart` hook — warns when `handover.md` is over 120 lines, has more than one session section, or a `learnings.md` is over 30 bullets. Prints nothing when all are within limits, so it costs no tokens until a limit is crossed, and fails open:
+`SessionStart` hook — warns when `handover.md` is over 120 lines, has more than one session section, or a `learnings.md` is over 30 bullets; when the `memory-bank` skill is installed and the project has a `memory-bank/` folder, it also reports unindexed or over-long entries there. Prints nothing when all are within limits, so it costs no tokens until a limit is crossed, and fails open:
 <!-- hook:core -->
 ```json
 {

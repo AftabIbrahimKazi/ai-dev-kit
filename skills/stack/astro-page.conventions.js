@@ -26,7 +26,7 @@ function walk(dir, out = [], depth = 0) {
         return out;
     }
     for (const e of es) {
-        if (SKIP.has(e.name))
+        if (SKIP.has(e.name) || (e.name.startsWith('.') && e.isDirectory()))
             continue;
         const p = path.join(dir, e.name);
         if (e.isDirectory())
