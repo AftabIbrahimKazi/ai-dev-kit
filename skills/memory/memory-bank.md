@@ -43,6 +43,7 @@ Capture at these moments (not on a timer):
 Rules: distill — never paste transcripts, diffs, or code blocks longer than 5 lines (link `file:line` instead). Check the index for an existing entry to update before creating; delete entries proven wrong; add the index line in the same step as the file (an unindexed memory is invisible). Link related entries by filename.
 
 ## Maintenance
-- Entries whose subject was removed from the codebase → delete file + index line.
+- `node <skill-root>/memory-bank/index.js check` lists unindexed entries, dead index lines, entries over 20 lines, entries with no summary line and an index over 40 lines; `rebuild` rewrites `INDEX.md` from the files (keeps every existing hook, adds a first-line hook for new files: sharpen those); `init` creates the folder. Run `check` before a gardener pass and after a batch of captures.
+- Entries whose subject was removed from the codebase → delete file + index line (`/stale` lists bullets that name missing files).
 - The `memory-gardener` skill's pruning rules apply to `memory-bank/` too — invoke it when INDEX.md exceeds ~40 lines.
 - Commit memory-bank changes with the work that produced them — the memory and the code change share a commit and stay in sync.

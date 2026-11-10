@@ -12,16 +12,16 @@ Performance work fails two ways: optimizing without measuring (fixing the wrong 
 2. **At end:** append one dated bullet only for a new, non-obvious lesson (the biggest win found and its measured impact, or a check that produced noise). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
 
 ## Step 1 — Weigh the payload (static, no server needed)
-- Production build → sizes: total JS, total CSS, largest chunks. Flag any single JS chunk > ~150KB gzip and note what's in it (build analyzer if the project has one; otherwise inspect the dist folder).
-- **Assets are usually the real weight:** list images/textures/video by size, sorted. Flag: images > ~200KB, anything uncompressed (PNG where WebP/AVIF works), assets larger than their largest displayed size, missing responsive variants.
-- Fonts: count families × weights; flag > 4 font files or missing `font-display: swap`.
-- Dead weight: grep for imports of libraries used once trivially (a 30KB dep for one function).
+Run the production build, then the script; read its table, do not re-list files by hand:
+```
+node <skill-root>/perf-audit/weigh.js [--dist <build folder>]
+```
+It prints JS and CSS totals (raw and gzip), chunks over 150 KB gzip, images over 200 KB, PNG/JPEG with no WebP/AVIF sibling, video, font count and `font-display`, and unhashed asset names. With no build folder it weighs the source and says so. `--json` for a script.
+Still by hand (the script cannot see these): an asset larger than its largest displayed size, missing responsive variants, what is inside a heavy chunk (build analyzer if the project has one), and dead weight: grep for imports of libraries used once trivially (a 30 KB dep for one function).
 
 ## Step 2 — Loading strategy
-- What blocks first paint? Render-blocking CSS/JS in `<head>`, synchronous third-party scripts.
-- Are below-fold images/sections lazy (`loading="lazy"`, `client:visible` in Astro)?
-- Is the largest above-fold image preloaded and prioritized (`fetchpriority="high"`)? That's usually LCP.
-- Caching/immutability: hashed filenames on static assets.
+The same run lists, per HTML file: blocking scripts in `<head>`, synchronous third-party scripts and stylesheets, `<img>` without `loading="lazy"`, no `fetchpriority="high"` image or image preload (that is usually LCP), `<img>` without width and height, Google Fonts without a preconnect. Confirm each on the page before ranking it: the script reads markup, not the rendered fold.
+Framework-specific: below-fold islands lazy (`client:visible` in Astro), hashed filenames on static assets (the script counts unhashed ones).
 
 ## Step 3 — Runtime behavior (needs the app running)
 - Long tasks on load and on scroll (DevTools performance trace or judgement from code: heavy work in scroll handlers?).

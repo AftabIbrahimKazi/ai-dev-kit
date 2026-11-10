@@ -21,7 +21,10 @@ Never run mid-task — this needs a clean session boundary, not a mid-edit inter
 ## Procedure
 
 ### 1. Archive, don't delete
-Move the project's session-protocol file (`CLAUDE.md`/`AGENTS.md`), skill root (`.claude/skills/` or `.opencode/skills/`), and any hooks config into a dated archive folder (e.g. `.ablation-archive/<date>/`), not the trash. State the archive path before continuing — this is the undo path if the bare run goes badly.
+```
+node <skill-root>/skill-ablation/archive.js archive --root <project> [--dry-run]
+```
+Moves the session-protocol file (`CLAUDE.md`/`AGENTS.md`), every skill root (`.claude/skills/`, `.opencode/skills/`, `.agents/skills/`), `.claude/commands/` and the `hooks` block of `.claude/settings.json` (permissions stay) into `.ablation-archive/<date>/` with a manifest, and gitignores the folder. Nothing is deleted. State the archive path before continuing — `restore` (all, or `--only name,name` for single skills, `session`, `commands`, `hooks`) is the undo path if the bare run goes badly, and it is how step 4 brings one instruction back.
 
 ### 2. Run bare, for real work only
 Start the next session with none of it loaded. Do **not** pre-guess which instruction the model will need back — that defeats the test. Work the actual backlog (real tasks, not synthetic ones) for a defined window: a handful of real sessions, or ~1 week of normal use, whichever the user prefers.
