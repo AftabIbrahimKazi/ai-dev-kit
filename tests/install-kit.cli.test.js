@@ -661,7 +661,7 @@ function commandsLibrary() {
 }
 const cmdFile = (root, name) => path.join(root, '.claude', 'commands', name + '.md');
 
-t('install copies commands whose skill is installed, renders {{skill-root}}, and skips addon commands', () => {
+t('install copies commands whose skill is installed, renders {{skill-root}}, and leaves a self-installed addon command to its setup', () => {
   const lib = commandsLibrary(), target = tmp();
   const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'narrate'] });
   assert.deepStrictEqual(res.commands.added.sort(), ['kit', 'next']);

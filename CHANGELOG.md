@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-10
+
+### Fixed
+- `install-kit` now writes the slash commands of installed add-ons (`/diagram`, `/teardown`, `/teardown-film`, `/teardown-sound`, `/persona`, `/ctx`, `/figma`). Every add-on command was skipped on the assumption that the add-on's own setup writes it; only `narrate` does that (`/narration` stays with its `setup.js`). Found by installing the add-ons into a scratch project.
+
+### Added
+- Mod `session-journal`: after every turn a script appends one line (the ask, files edited, commands run with secrets scrubbed, failures) to `~/.ai-dev-kit/sessions/<project>/<first-launch>.jsonl`, outside the project and separate from `handover.md`. On compaction it passes the summarizer a capped digest of those facts; at session start it deletes journals idle 5 hours or more, and reading one for a digest resets its timer. No model call, no network, fails open. Measured: no token saving and no recall gain in a 5-prompt test (both arms 40/40 on hidden tests, 6/6 file recall, mean cost $1.61 without and $1.58 with), so it is a safety net for long sessions, not a saving.
+
 ## 2026-11-09
 
 ### Added

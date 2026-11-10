@@ -102,12 +102,14 @@ const sha = (text: string): string => crypto.createHash('sha1').update(text).dig
 
 export interface CommandsResult { added: string[]; updated: string[]; removed: string[]; kept: string[] }
 
-// A command whose skill is an opt-in addon (narrate, personality, project-context) is installed by that addon's own setup.
+// A command written by its own skill's setup script (narrate's setup.js copies /narration) is left to that script.
+// Every other command, add-on ones included (/diagram, /teardown, /persona, /ctx), is installed here once its skill is.
+const SELF_INSTALLED_COMMANDS = new Set(['narration']);
 function eligibleCommand(c: CommandInfo, manifest: Manifest, catalog: Catalog): boolean {
   if (c.needs === null) return true;
+  if (SELF_INSTALLED_COMMANDS.has(c.name)) return false;
   if (!manifest.skills[c.needs] && !manifest.archived[c.needs]) return false;
-  const entry = catalog[c.needs];
-  return !!entry && !isOptInOnly(entry, c.needs);
+  return !!catalog[c.needs];
 }
 
 export function syncCommands(root: string, manifest: Manifest, library: string, opts: { force?: boolean; install: boolean }): CommandsResult {
