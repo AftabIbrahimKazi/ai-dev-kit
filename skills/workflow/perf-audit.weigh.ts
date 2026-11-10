@@ -91,7 +91,15 @@ function fontDisplay(cssFiles: string[]): Report['fonts']['display'] {
   return swap + other === faces ? 'other' : 'missing';
 }
 
-const stripComments = (html: string): string => html.replace(/<!--[\s\S]*?-->/g, '');
+const stripComments = (html: string): string => {
+  let current = html;
+  let previous: string;
+  do {
+    previous = current;
+    current = current.replace(/<!--[\s\S]*?-->/g, '');
+  } while (current !== previous);
+  return current;
+};
 
 export function checkHtml(file: string, html: string, rel: string): HtmlFinding[] {
   const out: HtmlFinding[] = [];
