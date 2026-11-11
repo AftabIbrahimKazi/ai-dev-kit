@@ -7,4 +7,4 @@ Static payload weigh-in, ranked by bytes:
 
 !`node {{skill-root}}/skill-scope/auto.js run perf-audit weigh.js --summary $ARGUMENTS`
 
-Relay the table as is. If it says no build folder was found, ask whether to build first. Open no file it does not name and apply no fix unless asked.
+Relay the table as is. If it says no build folder was found, ask whether to build first. Open no file it does not name and apply no fix unless asked. Keep the reply under 12 lines.
