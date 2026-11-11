@@ -106,6 +106,22 @@ export const ADDONS_GUIDE: ModuleGuide = {
       ],
     },
     {
+      id: "figma-code",
+      name: "Figma Code",
+      hl: "group:skills-addons",
+      line: "An exported Figma SVG turned into pixel-matched HTML and CSS by a script.",
+      rows: [
+        { label: "Does", text: "figma-code.cli.js reads the SVG, writes index.html and styles.css, renders both in headless Chrome or Edge and diffs them pixel for pixel. PASS means the page matches." },
+        { label: "You", text: "Export the frame as SVG with Outline text unchecked, then type /figma-code build <path.svg>, adding --download-fonts to fetch Google Fonts. Give the path, never an attachment." },
+        { label: "AI", text: "Runs the script and reports what the diff says. It does not draw or tune layout." },
+      ],
+      moreLabel: "Fonts and project-context",
+      more: [
+        "An SVG holds font names, not files. A missing font looks like a layout bug in the diff, so the script lists missing fonts and fetches them only with --download-fonts.",
+        "With project-context, the SVG lives in project-context/design/ and each build records one row per frame in figma-code.md.",
+      ],
+    },
+    {
       id: "teardown",
       name: "Teardown",
       hl: "group:skills-addons",

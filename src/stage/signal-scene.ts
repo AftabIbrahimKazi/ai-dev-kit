@@ -3,14 +3,15 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
+  Color,
   Group,
   LineBasicMaterial,
   LineSegments,
   Mesh,
-  MeshBasicMaterial,
   NormalBlending,
   Points,
   PointsMaterial,
+  ShaderMaterial,
   SphereGeometry,
   Sprite,
   SpriteMaterial,
@@ -18,6 +19,7 @@ import {
 } from "three";
 import type { HoverFanSpec, SignalFanSpec, StagePalette } from "@/types/kit-stage";
 import { smoothstep } from "./math-utils";
+import { CORE_FRAGMENT, CORE_VERTEX } from "./node-shading";
 import {
   ACTOR_CLAUDE,
   ACTOR_YOU,
@@ -121,7 +123,7 @@ export class SignalScene {
   private _ripples: Sprite[] = [];
   private _cores: Mesh[] = [];
   private _geometries: BufferGeometry[] = [];
-  private _coreMaterials: MeshBasicMaterial[] = [];
+  private _coreMaterials: ShaderMaterial[] = [];
   private _coreHalos: Sprite[] = [];
   private _haloStrength: number = HALO_STRENGTH_DARK;
   private _blending: typeof AdditiveBlending | typeof NormalBlending = AdditiveBlending;
@@ -156,8 +158,11 @@ export class SignalScene {
     this._packet?.material.color.copy(you);
     this._trail?.material.color.copy(you);
     this._ripples.forEach((ripple) => ripple.material.color.copy(you));
-    this._coreMaterials[0]?.color.copy(you);
-    this._coreMaterials[1]?.color.copy(claude);
+    this._coreMaterials[0]?.uniforms.uColor.value.copy(you);
+    this._coreMaterials[1]?.uniforms.uColor.value.copy(claude);
+    this._coreMaterials.forEach((material) => {
+      material.uniforms.uLight.value = palette.isDark ? 0 : 1;
+    });
     this._coreHalos[0]?.material.color.copy(you);
     this._coreHalos[1]?.material.color.copy(claude);
     this._blendables.forEach((material) => {
@@ -334,7 +339,7 @@ export class SignalScene {
     const geometry = new SphereGeometry(1, SPHERE_WIDTH_SEGMENTS, SPHERE_HEIGHT_SEGMENTS);
     this._geometries.push(geometry);
     [this._you, this._claude].forEach((position) => {
-      const material = new MeshBasicMaterial({ transparent: true });
+      const material = new ShaderMaterial({ vertexShader: CORE_VERTEX, fragmentShader: CORE_FRAGMENT, uniforms: { uColor: { value: new Color() }, uLight: { value: 0 } }, transparent: true });
       this._coreMaterials.push(material);
       const core = new Mesh(geometry, material);
       core.position.copy(position);

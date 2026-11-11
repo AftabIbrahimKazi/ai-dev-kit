@@ -15,6 +15,7 @@ import {
 } from "three";
 import type { KitGraphEdgeRow, StageNode, StagePalette } from "@/types/kit-stage";
 import { getDampFactor } from "./math-utils";
+import { NODE_SHADING_GLSL } from "./node-shading";
 import {
   AXIS_COUNT,
   EDGE_CURVE,
@@ -39,17 +40,6 @@ import {
   NODE_LIGHTNESS_MAX,
   NODE_ALPHA_GAIN,
   NODE_ALPHA_MIN,
-  NODE_LIGHT_DIRECTION,
-  NODE_RIM_DARKEN,
-  NODE_RIM_GLOW,
-  NODE_RIM_POWER,
-  NODE_SHADE_CEIL,
-  NODE_SHADE_CEIL_DARK,
-  NODE_SHADE_CURVE,
-  NODE_SHADE_FLOOR,
-  NODE_SHADE_FLOOR_DARK,
-  NODE_SPEC_GAIN,
-  NODE_SPEC_POWER,
   NODE_SCALE_GAIN,
   NODE_SCALE_MIN,
   SPHERE_HEIGHT_SEGMENTS,
@@ -81,18 +71,9 @@ varying vec3 vColor;
 varying float vLit;
 varying vec3 vNormal;
 varying vec3 vView;
+${NODE_SHADING_GLSL}
 void main() {
-  vec3 n = normalize(vNormal);
-  vec3 v = normalize(vView);
-  vec3 l = normalize(vec3(${NODE_LIGHT_DIRECTION[0].toFixed(2)}, ${NODE_LIGHT_DIRECTION[1].toFixed(2)}, ${NODE_LIGHT_DIRECTION[2].toFixed(2)}));
-  float diffuse = pow(clamp(dot(n, l) * 0.5 + 0.5, 0.0, 1.0), ${NODE_SHADE_CURVE.toFixed(2)});
-  float floorShade = mix(${NODE_SHADE_FLOOR_DARK.toFixed(2)}, ${NODE_SHADE_FLOOR.toFixed(2)}, uLight);
-  float ceilShade = mix(${NODE_SHADE_CEIL_DARK.toFixed(2)}, ${NODE_SHADE_CEIL.toFixed(2)}, uLight);
-  vec3 body = vColor * mix(floorShade, ceilShade, diffuse);
-  float spec = pow(max(dot(n, normalize(l + v)), 0.0), ${NODE_SPEC_POWER.toFixed(1)}) * ${NODE_SPEC_GAIN.toFixed(2)};
-  float rim = pow(1.0 - max(dot(n, v), 0.0), ${NODE_RIM_POWER.toFixed(1)});
-  vec3 shaded = body + vec3(spec) + vColor * rim * ${NODE_RIM_GLOW.toFixed(2)} * (1.0 - uLight);
-  shaded = mix(shaded, shaded * ${NODE_RIM_DARKEN.toFixed(2)}, rim * uLight);
+  vec3 shaded = shadeNode(vColor, normalize(vNormal), normalize(vView), uLight);
   gl_FragColor = linearToOutputTexel(vec4(shaded, ${NODE_ALPHA_MIN.toFixed(2)} + ${NODE_ALPHA_GAIN.toFixed(2)} * vLit));
 }`;
 

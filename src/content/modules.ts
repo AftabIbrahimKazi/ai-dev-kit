@@ -29,8 +29,8 @@ export const KIT_MODULES: readonly KitModule[] = [
     metaDescription: "Slash commands you type to run an AI Dev Kit action, such as archiving skills or picking up a handover. Each command is listed with what it does.",
     source: "kit repository skills/commands/ folder",
     parts: [
-      "archive", "audit", "commit-check", "ctx", "diagram", "eta", "figma", "format", "githooks", "kit", "narration", "next",
-      "optimize-assets", "persona", "pickup", "quiet", "resolve-conflicts", "responsive-check", "stale", "teardown", "teardown-film",
+      "archive", "audit", "commit-check", "ctx", "diagram", "e2e", "eta", "figma", "figma-code", "format", "githooks", "kit", "narration", "next",
+      "optimize-assets", "perf", "persona", "pickup", "quiet", "recon", "resolve-conflicts", "responsive-check", "stale", "teardown", "teardown-film",
       "teardown-sound", "unarchive", "untrack", "version-bump", "wrap-up",
     ],
   },
@@ -41,8 +41,8 @@ export const KIT_MODULES: readonly KitModule[] = [
     metaDescription: "Hook-based plugins in the AI Dev Kit that run in code on tool calls and can block an action. See what each mod does and how to enable it.",
     source: "kit repository mods/ folder",
     parts: [
-      "aiignore-guard", "budget-ledger", "debug-nudge", "design-audit-offer", "edit-check", "eta-nudge", "guard",
-      "gap-log", "learnings-inject", "marker-guard", "output-compact", "precommit-gate", "prefilter-rank", "skill-hint", "standards-chain",
+      "aiignore-guard", "budget-ledger", "debug-nudge", "design-audit-offer", "edit-check", "eta-nudge", "feature-usage", "guard",
+      "gap-log", "learnings-inject", "marker-guard", "output-compact", "precommit-gate", "prefilter-rank", "session-journal", "skill-hint", "standards-chain",
     ],
   },
   {
@@ -71,7 +71,7 @@ export const KIT_MODULES: readonly KitModule[] = [
     summary: "Opt-in extras: reply personas, read-aloud, project docs, the prefilter, diagrams and 3D simulators.",
     metaDescription: "Opt-in AI Dev Kit extras: reply personas, read-aloud, project docs, the prefilter, diagrams and 3D simulators. Install only the ones you need.",
     source: "kit repository skills/addons/ and extensions/ folders",
-    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
+    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "figma-code", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
   },
   {
     slug: "libraries",
