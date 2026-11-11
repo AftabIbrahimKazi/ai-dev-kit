@@ -7,4 +7,4 @@ Audit summary (worst rules, worst files, biggest fix):
 
 !`node {{skill-root}}/skill-scope/auto.js run code-audit audit.js --no-fail --summary $ARGUMENTS`
 
-Relay the summary as is. Open a file only when a finding needs judgment; rerun with `--rule <id>` for the full list of one rule.
+Relay the summary as is. Open a file only when a finding needs judgment; rerun with `--rule <id>` for the full list of one rule. Keep the reply under 12 lines.

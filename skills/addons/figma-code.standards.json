@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "block": "",
+  "rules": [
+    { "id": "class-names", "kind": "safe", "type": "rename-classes", "scheme": "bem", "prefix": "", "enabled": true },
+    { "id": "hex-short", "kind": "safe", "type": "hex-short", "enabled": true },
+    { "id": "px-to-rem", "kind": "risky", "type": "px-to-rem", "base": 16, "props": ["font-size", "gap", "padding", "margin"], "enabled": true },
+    { "id": "round-px", "kind": "risky", "type": "round-px", "maxDelta": 0.5, "enabled": true },
+    { "id": "colors-to-tokens", "kind": "risky", "type": "colors-to-tokens", "tokens": "", "enabled": false }
+  ]
+}
