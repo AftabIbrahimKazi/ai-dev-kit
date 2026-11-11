@@ -306,10 +306,10 @@ t('an image fill with a rotation, a mask or a stranger transform is still kept a
 t('the report puts the outlined-text warning first and groups repeated notes with a count', () => {
   const out = F.renderBuild({ name: 'x', out: '.', width: 10, height: 10, leaves: { boxes: 1, texts: 0, raws: 3, flexRows: 0, flexColumns: 0 }, images: 2,
     notes: [{ kind: 'inline-svg', detail: '<path> kept as inline SVG: vector path' }, { kind: 'inline-svg', detail: '<path id="a"> kept as inline SVG: vector path' }, { kind: 'inline-svg', detail: '<g> kept as inline SVG: filter' }, { kind: 'no-text', detail: 'no text nodes found: export again with Outline text unchecked' }],
-    fonts: { used: ['Inter'], missing: ['Inter'], assumedMetrics: [], checked: true }, gate: { ok: true, maxDiff: 1, diff: { w: 10, h: 10, total: 100, differing: 0, percent: 0, boxes: [], sizeMismatch: null } } });
+    fonts: { used: ['Inter'], missing: ['Inter'], assumedMetrics: [], checked: true, files: 0, unresolved: [], notes: [] }, recorded: null, gate: { ok: true, maxDiff: 1, diff: { w: 10, h: 10, total: 100, differing: 0, percent: 0, boxes: [], sizeMismatch: null } } });
   const lines = out.split('\n');
   assert.match(lines[1], /^WARNING: no text nodes found/);
-  assert.match(lines[2], /^FONTS NOT INSTALLED: Inter/);
+  assert.match(lines[2], /^FONTS NOT AVAILABLE: Inter\. Run again with --download-fonts/);
   assert.ok(lines.includes('note: 2 x <path> kept as inline SVG: vector path'), out);
   assert.ok(lines.some((l) => l.startsWith('2 image file(s) extracted to assets/ and placed with CSS backgrounds')));
 });

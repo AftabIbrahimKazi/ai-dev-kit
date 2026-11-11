@@ -20,6 +20,7 @@
 // folders named in the report is written, and an existing component is never overwritten without --force.
 // Exit codes: 0 done, 1 the diff is over --max-diff, 2 bad usage, 3 no browser.
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.contextDesign = exports.cssWeight = void 0;
 exports.findChrome = findChrome;
 exports.screenshot = screenshot;
 exports.decodePng = decodePng;
@@ -27,10 +28,18 @@ exports.encodePng = encodePng;
 exports.diffImages = diffImages;
 exports.installedFonts = installedFonts;
 exports.missingFonts = missingFonts;
+exports.fontFaceCss = fontFaceCss;
+exports.readFontInfo = readFontInfo;
+exports.loadFontDir = loadFontDir;
+exports.probeFonts = probeFonts;
+exports.downloadGoogleFonts = downloadGoogleFonts;
 exports.parseXml = parseXml;
 exports.parseSvg = parseSvg;
 exports.buildTree = buildTree;
 exports.emit = emit;
+exports.contextSvgs = contextSvgs;
+exports.recordBuild = recordBuild;
+exports.outputOf = outputOf;
 exports.build = build;
 exports.loadRules = loadRules;
 exports.applyRule = applyRule;
@@ -291,6 +300,180 @@ function missingFonts(families, installed = installedFonts()) {
     const miss = families.filter((f) => !GENERIC.has(f.toLowerCase()) && !installed.some((i) => i === f.toLowerCase() || i.startsWith(f.toLowerCase() + ' ') || i.replace(/[\s_-]/g, '').startsWith(f.toLowerCase().replace(/[\s_-]/g, ''))));
     return { missing: [...new Set(miss)], checked: true };
 }
+const cssWeight = (w) => { const v = (w || '400').trim().toLowerCase(); return v === 'normal' ? '400' : v === 'bold' ? '700' : /^\d+$/.test(v) ? v : '400'; };
+exports.cssWeight = cssWeight;
+const quoteStack = (stack) => stack.split(',').map((x) => x.trim()).filter(Boolean).map((x) => (/^["']/.test(x) || GENERIC.has(x.toLowerCase()) ? x : `"${x}"`)).join(', ');
+function fontFaceCss(files, urlOf) {
+    return files.map((f) => `@font-face {\n  font-family: "${f.family}";\n  src: url(${urlOf(f)}) format("${f.format}");\n  font-weight: ${f.weight};\n  font-style: ${f.style};\n  font-display: swap;\n}`).join('\n');
+}
+// Family, weight (or a range for a variable font) and style from a TrueType or OpenType file's tables.
+function readFontInfo(buf) {
+    if (buf.length < 12)
+        return null;
+    const sig = buf.readUInt32BE(0);
+    if (sig !== 0x00010000 && sig !== 0x4f54544f && sig !== 0x74727565)
+        return null;
+    const T = {};
+    for (let i = 0, n = buf.readUInt16BE(4); i < n; i++) {
+        const r = 12 + 16 * i;
+        if (r + 16 > buf.length)
+            break;
+        T[buf.toString('latin1', r, r + 4)] = buf.readUInt32BE(r + 8);
+    }
+    const names = {};
+    if (T.name !== undefined) {
+        const nm = T.name, count = buf.readUInt16BE(nm + 2), so = buf.readUInt16BE(nm + 4);
+        for (let i = 0; i < count; i++) {
+            const r = nm + 6 + 12 * i, plat = buf.readUInt16BE(r), id = buf.readUInt16BE(r + 6), len = buf.readUInt16BE(r + 8), off = buf.readUInt16BE(r + 10);
+            const raw = buf.subarray(nm + so + off, nm + so + off + len);
+            const s = plat === 3 || plat === 0 ? Buffer.from(raw).swap16().toString('utf16le') : raw.toString('latin1');
+            if (names[id] === undefined || plat === 3)
+                names[id] = s;
+        }
+    }
+    const family = names[16] || names[1];
+    if (!family)
+        return null;
+    let weight = '400', style = 'normal';
+    if (T['OS/2'] !== undefined) {
+        const o = T['OS/2'];
+        weight = String(buf.readUInt16BE(o + 4) || 400);
+        if (buf.readUInt16BE(o + 62) & 1)
+            style = 'italic';
+    }
+    if (T.fvar !== undefined) {
+        const v = T.fvar, ao = buf.readUInt16BE(v + 4), ac = buf.readUInt16BE(v + 8), as = buf.readUInt16BE(v + 10);
+        for (let i = 0; i < ac; i++) {
+            const b = v + ao + i * as;
+            if (buf.toString('latin1', b, b + 4) === 'wght')
+                weight = `${Math.round(buf.readInt32BE(b + 4) / 65536)} ${Math.round(buf.readInt32BE(b + 12) / 65536)}`;
+        }
+    }
+    return { family, weight, style };
+}
+// The user's own font files (--fonts DIR): .ttf and .otf are read; .woff and .woff2 are skipped and said so.
+function loadFontDir(dir) {
+    const files = [], skipped = [];
+    for (const n of fs.readdirSync(dir).sort()) {
+        if (/\.woff2?$/i.test(n)) {
+            skipped.push(n);
+            continue;
+        }
+        if (!/\.(ttf|otf)$/i.test(n))
+            continue;
+        const p = path.join(dir, n);
+        const info = readFontInfo(fs.readFileSync(p));
+        if (info)
+            files.push({ ...info, file: p, format: /\.otf$/i.test(n) ? 'opentype' : 'truetype' });
+        else
+            skipped.push(n);
+    }
+    return { files, skipped };
+}
+// Measures ascent, descent (as a fraction of the size) and whether the family is available, in the same browser that draws
+// the diff. A family that is neither installed nor supplied measures as the fallback the page would really use.
+function probeFonts(specs, faces) {
+    const out = new Map();
+    if (!specs.length)
+        return out;
+    const chrome = findChrome();
+    if (!chrome)
+        throw new Blocked('no Chrome or Edge found. Install Chrome, or set CHROME to the browser file.');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'figma-code-probe-'));
+    try {
+        const payload = JSON.stringify(specs.map((s) => ({ key: s.key, first: quoteStack(s.family), css: quoteStack(s.stack), weight: s.weight.split(' ')[0], style: s.style }))).replace(/</g, '\\u003c');
+        const script = `(async()=>{const S=${payload};const out={};const c=document.createElement('canvas').getContext('2d');
+const W=(f)=>{c.font=f;return c.measureText('mmmmmmmmmmlli').width};
+for(const s of S){const f=s.style+' '+s.weight+' 1000px ';
+try{await document.fonts.load(f+s.first,'Hg')}catch(e){}
+const avail=W(f+s.first+', monospace')!==W(f+'monospace')||W(f+s.first+', serif')!==W(f+'serif');
+c.font=f+s.css;const m=c.measureText('Hg');
+out[s.key]={a:m.fontBoundingBoxAscent/1000,d:m.fontBoundingBoxDescent/1000,avail};}
+const pre=document.createElement('pre');pre.id='fc';pre.textContent=JSON.stringify(out);document.body.appendChild(pre);})();`;
+        const html = `<!doctype html><meta charset="utf-8"><style>${fontFaceCss(faces, (f) => fileUrl(f.file))}</style><body><script>${script}</script></body>`;
+        const probe = path.join(tmp, 'probe.html');
+        fs.writeFileSync(probe, html);
+        const prof = path.join(tmp, 'profile');
+        const r = cp.spawnSync(chrome, ['--headless=new', '--disable-gpu', '--no-first-run', `--user-data-dir=${prof}`, '--virtual-time-budget=8000', '--dump-dom', fileUrl(probe)], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 60000 });
+        const m = /<pre id="fc">([\s\S]*?)<\/pre>/.exec(r.stdout || '');
+        if (!m)
+            throw new Error('the browser did not return font metrics');
+        const j = JSON.parse(dec(m[1]));
+        for (const [k, v] of Object.entries(j))
+            out.set(k, v);
+    }
+    finally {
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+    return out;
+}
+// Google Fonts, TrueType files, saved flat into `dir`. Asked for by the user with --download-fonts; the caller says so first.
+// A family that is not found is tried once with " Pro" added (Be Vietnam is Be Vietnam Pro there); the @font-face keeps the
+// name the design uses. Weights a family lacks fall back to its regular file and are reported.
+async function downloadGoogleFonts(specs, dir, get = fetch) {
+    const files = [], unresolved = [], notes = [];
+    const byFamily = new Map();
+    for (const s of specs) {
+        if (GENERIC.has(s.family.toLowerCase()))
+            continue;
+        const e = byFamily.get(s.family) || { w: new Set(), italic: false };
+        e.w.add(s.weight.split(' ')[0]);
+        if (s.style === 'italic')
+            e.italic = true;
+        byFamily.set(s.family, e);
+    }
+    fs.mkdirSync(dir, { recursive: true });
+    for (const [family, e] of byFamily) {
+        const ws = [...e.w].map(Number).sort((a, b) => a - b);
+        const variants = e.italic ? ws.flatMap((w) => [`0,${w}`, `1,${w}`]) : ws.map(String);
+        const axis = e.italic ? 'ital,wght' : 'wght';
+        let css = null, used = family, plain = false;
+        for (const name of [family, family + ' Pro']) {
+            for (const q of [`${name.replace(/ /g, '+')}:${axis}@${variants.join(';')}`, name.replace(/ /g, '+')]) {
+                try {
+                    const r = await get(`https://fonts.googleapis.com/css2?family=${q}&display=swap`);
+                    if (r.ok) {
+                        css = await r.text();
+                        used = name;
+                        plain = !q.includes('@');
+                        break;
+                    }
+                }
+                catch (err) {
+                    notes.push(`${family}: ${err.message}`);
+                }
+            }
+            if (css)
+                break;
+        }
+        if (!css) {
+            unresolved.push(family);
+            continue;
+        }
+        if (used !== family)
+            notes.push(`${family} is "${used}" on Google Fonts; the @font-face keeps the name "${family}"`);
+        if (plain && ws.some((w) => w !== 400))
+            notes.push(`${family}: only the regular weight was found; weights ${ws.filter((w) => w !== 400).join(', ')} will be synthesized by the browser`);
+        for (const b of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
+            const url = /url\(([^)]+)\)/.exec(b[1]), weight = /font-weight:\s*([\d\s]+)/.exec(b[1]), style = /font-style:\s*(\w+)/.exec(b[1]);
+            if (!url)
+                continue;
+            const u = url[1].replace(/["']/g, ''), w = (weight ? weight[1].trim() : '400'), st = style ? style[1] : 'normal';
+            const name = `${family.replace(/\W+/g, '')}-${w.replace(/\s+/g, '_')}-${st}.ttf`;
+            const dest = path.join(dir, name);
+            if (!fs.existsSync(dest)) {
+                const r = await get(u);
+                if (!r.ok) {
+                    notes.push(`${family}: ${u} returned ${r.status}`);
+                    continue;
+                }
+                fs.writeFileSync(dest, Buffer.from(await r.arrayBuffer()));
+            }
+            files.push({ family, weight: w, style: st, file: dest, format: 'truetype' });
+        }
+    }
+    return { files, unresolved, notes };
+}
 const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 const dec = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => (e[0] === '#' ? String.fromCodePoint(e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10)) : ENT[e.toLowerCase()] ?? m));
 function parseXml(src) {
@@ -379,7 +562,8 @@ function cssColor(fill, alpha) {
 }
 const alphaOf = (s) => Math.max(0, Math.min(1, parseFloat(s.opacity ?? '1') * parseFloat(s['fill-opacity'] ?? '1')));
 const REFS = /url\(\s*['"]?#([^)'"\s]+)['"]?\s*\)|(?:xlink:)?href\s*=\s*"#([^"]+)"/g;
-function parseSvg(svgText, srcDir = '.') {
+function parseSvg(svgText, srcDir = '.', metrics) {
+    const specs = new Map();
     const doc = parseXml(svgText);
     const svg = kidsOf(doc).find((k) => k.tag === 'svg');
     if (!svg)
@@ -616,7 +800,11 @@ function parseSvg(svgText, srcDir = '.') {
                     return raw(el, ctx, 'text fill is a gradient or keyword');
                 const size = parseFloat(ln.st['font-size'] ?? '16') * ctx.s;
                 const fam = firstFamily(ln.st['font-family']);
-                const known = METRICS[fam.toLowerCase()];
+                const weight = (0, exports.cssWeight)(ln.st['font-weight']), fstyle = /italic|oblique/.test(ln.st['font-style'] || '') ? 'italic' : 'normal';
+                const stack = ln.st['font-family'] || 'sans-serif', key = `${stack}|${weight}|${fstyle}`;
+                specs.set(key, { key, stack, family: fam, weight, style: fstyle });
+                const measured = metrics && metrics.get(key); // measured in the browser when available, else the table, else Arial
+                const known = measured ? [measured.a, measured.d] : METRICS[fam.toLowerCase()];
                 if (!GENERIC.has(fam.toLowerCase()))
                     families.add(fam);
                 if (!known)
@@ -654,7 +842,7 @@ function parseSvg(svgText, srcDir = '.') {
     kidsOf(svg).forEach((k) => walk(k, root));
     if (!texts && /<path\b/i.test(svgText))
         notes.push({ kind: 'no-text', detail: 'no text nodes found: if the design has text, export the SVG again with "Outline text" unchecked (Export settings, SVG) so it can become real HTML text' });
-    return { width: Math.round(width), height: Math.round(height), leaves, notes, families: [...families], assumed: [...assumed], assets: [...assets], texts, raws, files: [...files.values()] };
+    return { width: Math.round(width), height: Math.round(height), leaves, notes, families: [...families], assumed: [...assumed], assets: [...assets], texts, raws, files: [...files.values()], fontSpecs: [...specs.values()] };
 }
 const TOL = 0.01;
 const inside = (inner, outer) => inner.x >= outer.x - TOL && inner.y >= outer.y - TOL && inner.x + inner.w <= outer.x + outer.w + TOL && inner.y + inner.h <= outer.y + outer.h + TOL;
@@ -794,14 +982,61 @@ function emit(tree, parsed, title) {
 const PHOTO_TOL = 48;
 const looseOf = (m, override) => (m.photos && m.photos.length ? { rects: m.photos, tol: override ?? m.photoTol ?? PHOTO_TOL } : undefined);
 function render(htmlOrSvg, w, h, out) { screenshot(htmlOrSvg, w, h, out); return decodePng(fs.readFileSync(out)); }
+// ---- the project-context folder (the private, gitignored docs folder of the project-context add-on)
+const contextDesign = (root) => { const d = path.join(root, 'project-context', 'design'); return fs.existsSync(d) && fs.statSync(d).isDirectory() ? d : null; };
+exports.contextDesign = contextDesign;
+function contextSvgs(root) {
+    const d = (0, exports.contextDesign)(root);
+    if (!d)
+        return [];
+    const out = [];
+    const walk = (p) => { for (const e of fs.readdirSync(p, { withFileTypes: true })) {
+        const f = path.join(p, e.name);
+        if (e.isDirectory())
+            walk(f);
+        else if (/\.svg$/i.test(e.name))
+            out.push(f);
+    } };
+    walk(d);
+    return out.sort();
+}
+// One row per frame in project-context/design/figma-code.md, replaced on a rebuild, so a later session (or /ctx analyze) sees
+// the state of each conversion without opening the output. No pixels and no markup are copied into the private folder.
+function recordBuild(root, r, source) {
+    const d = (0, exports.contextDesign)(root);
+    if (!d)
+        return null;
+    const file = path.join(d, 'figma-code.md');
+    const head = ['# figma-code builds', '', 'Written by `figma-code build`; one row per frame, replaced on a rebuild. The conversion output is in the folder named in each row, not here.', '', '| Frame | Source | Size (px) | Diff | Text lines | Inline SVG layers | Images | Fonts missing | Output | Built |', '|---|---|---|---|---|---|---|---|---|---|'];
+    const cell = (s) => s.replace(/\|/g, '\\|');
+    const row = `| ${cell(r.name)} | ${cell(norm(path.relative(root, source)))} | ${r.width} x ${r.height} | ${r.gate.diff.percent}% (${r.gate.ok ? 'pass' : 'FAIL'}, limit ${r.gate.maxDiff}%) | ${r.leaves.texts} | ${r.leaves.raws} | ${r.images} | ${r.fonts.missing.join(', ') || 'none'} | ${cell(norm(path.relative(root, r.out)))} | ${new Date().toISOString().slice(0, 10)} |`;
+    const old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split(/\r?\n/).filter((l) => /^\| /.test(l) && !/^\| Frame /.test(l) && !l.startsWith(`| ${cell(r.name)} |`)) : [];
+    fs.writeFileSync(file, [...head, ...old, row].join('\n') + '\n');
+    return norm(path.relative(root, file));
+}
+function outputOf(svgFile, name, out) {
+    const n = name || path.basename(svgFile, path.extname(svgFile)).replace(/[^A-Za-z0-9_-]+/g, '-').toLowerCase();
+    return { name: n, out: path.resolve(out || path.join('figma-code-out', n)) };
+}
 function build(svgFile, o) {
     const svgText = fs.readFileSync(svgFile, 'utf8');
-    const name = o.name || path.basename(svgFile, path.extname(svgFile)).replace(/[^A-Za-z0-9_-]+/g, '-').toLowerCase();
-    const out = path.resolve(o.out || path.join('figma-code-out', name));
-    const parsed = parseSvg(svgText, path.dirname(svgFile));
+    const { name, out } = outputOf(svgFile, o.name, o.out);
+    const faces = o.faces || [];
+    // text metrics and font availability come from the browser that draws the diff; fonts given or downloaded are loaded for it
+    const probe = probeFonts(parseSvg(svgText, path.dirname(svgFile)).fontSpecs, faces);
+    const parsed = parseSvg(svgText, path.dirname(svgFile), new Map([...probe].map(([k, v]) => [k, { a: v.a, d: v.d }])));
     const tree = buildTree(parsed.leaves, parsed.width, parsed.height);
     const built = emit(tree, parsed, name);
     fs.mkdirSync(out, { recursive: true });
+    if (faces.length) {
+        fs.mkdirSync(path.join(out, 'assets'), { recursive: true });
+        for (const f of faces) {
+            const dest = path.join(out, 'assets', path.basename(f.file));
+            if (path.resolve(f.file) !== path.resolve(dest))
+                fs.copyFileSync(f.file, dest);
+        }
+        built.css = built.css.replace('/* generated by figma-code */\n', `/* generated by figma-code */\n${fontFaceCss(faces, (f) => 'assets/' + path.basename(f.file))}\n`);
+    }
     let html = built.html;
     if (parsed.files.length) {
         fs.mkdirSync(path.join(out, 'assets'), { recursive: true });
@@ -826,17 +1061,33 @@ function build(svgFile, o) {
     fs.copyFileSync(svgFile, copy);
     const meta = { name, width: parsed.width, height: parsed.height, classes: built.classes, source: 'source.svg', photos: parsed.leaves.filter((l) => l.role === 'image').map((l) => ({ x: Math.floor(l.x), y: Math.floor(l.y), w: Math.ceil(l.w) + 1, h: Math.ceil(l.h) + 1 })), photoTol: o.photoTol ?? PHOTO_TOL };
     fs.writeFileSync(path.join(out, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
-    const ref = render(copy, parsed.width, parsed.height, path.join(out, 'reference.png'));
+    // With font files the reference SVG is drawn inline in a page that loads them (an SVG file opened directly cannot).
+    let refSource = copy;
+    const tmpRef = fs.mkdtempSync(path.join(os.tmpdir(), 'figma-code-ref-'));
+    try {
+        if (faces.length) {
+            refSource = path.join(tmpRef, 'reference.html');
+            fs.writeFileSync(refSource, `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaceCss(faces, (f) => fileUrl(f.file))}\nbody{margin:0;background:#fff}</style></head><body>${svgText.replace(/^\s*<\?xml[^>]*\?>/, '')}</body></html>`);
+        }
+        var ref = render(refSource, parsed.width, parsed.height, path.join(out, 'reference.png'));
+    }
+    finally {
+        fs.rmSync(tmpRef, { recursive: true, force: true });
+    }
     const got = render(path.join(out, 'index.html'), parsed.width, parsed.height, path.join(out, 'render.png'));
     const diff = diffImages(ref, got, o.tol, looseOf(meta));
-    const fonts = missingFonts(parsed.families);
+    const missing = [...new Set(parsed.fontSpecs.filter((s) => probe.get(s.key) && !probe.get(s.key).avail && !faces.some((f) => f.family === s.family)).map((s) => s.family))].filter((f) => !GENERIC.has(f.toLowerCase()));
+    const fonts = { missing, checked: probe.size > 0 };
     const count = (t, f) => (f(t) ? 1 : 0) + t.kids.reduce((s, k) => s + count(k, f), 0);
-    return {
+    const report = {
         name, out, width: parsed.width, height: parsed.height,
         leaves: { boxes: parsed.leaves.filter((l) => l.kind === 'box').length, texts: parsed.texts, raws: parsed.raws, flexRows: count(tree, (x) => x.flex?.dir === 'row'), flexColumns: count(tree, (x) => x.flex?.dir === 'column') },
-        notes: parsed.notes, fonts: { used: parsed.families, missing: fonts.missing, assumedMetrics: parsed.assumed, checked: fonts.checked },
-        gate: { diff, ok: diff.percent <= o.maxDiff && !diff.sizeMismatch, maxDiff: o.maxDiff }, images: parsed.files.length,
+        notes: parsed.notes, fonts: { used: parsed.families, missing: fonts.missing, assumedMetrics: parsed.assumed, checked: fonts.checked, files: faces.length, unresolved: o.unresolvedFonts || [], notes: o.fontNotes || [] },
+        gate: { diff, ok: diff.percent <= o.maxDiff && !diff.sizeMismatch, maxDiff: o.maxDiff }, images: parsed.files.length, recorded: null,
     };
+    if (o.record !== false)
+        report.recorded = recordBuild(path.resolve(o.root || process.cwd()), report, svgFile);
+    return report;
 }
 const RULES_FILE = 'figma-code.standards.json';
 function loadRules(file) {
@@ -1113,10 +1364,14 @@ function renderBuild(r) {
     const noText = r.notes.find((n) => n.kind === 'no-text');
     if (noText)
         L.push('WARNING: ' + noText.detail);
+    if (r.fonts.files)
+        L.push(`fonts: ${r.fonts.files} font file(s) loaded for the reference render and written into the page as @font-face (copied to assets/)`);
+    for (const n of r.fonts.notes)
+        L.push('fonts: ' + n);
+    if (r.fonts.unresolved.length)
+        L.push(`NOT FOUND on Google Fonts: ${r.fonts.unresolved.join(', ')}. Put the font file(s) (.ttf or .otf) in a folder and run again with --fonts <folder>.`);
     if (r.fonts.missing.length)
-        L.push(`FONTS NOT INSTALLED: ${r.fonts.missing.join(', ')}. Both renders fall back to another font here, so text positions are only as good as the fallback; install them, run again, and trust the diff after that.`);
-    else if (!r.fonts.checked && r.fonts.used.length)
-        L.push(`fonts used (could not check they are installed): ${r.fonts.used.join(', ')}`);
+        L.push(`FONTS NOT AVAILABLE: ${r.fonts.missing.join(', ')}. Run again with --download-fonts (fetches them from Google Fonts into assets/, self-hosted) or --fonts <folder> with your own .ttf or .otf files. Until then both renders fall back to another font, so the text diff is only as good as the fallback.`);
     if (r.fonts.assumedMetrics.length)
         L.push(`font metrics assumed (Arial values) for: ${r.fonts.assumedMetrics.join(', ')}; text may sit a pixel or two off`);
     L.push(`${r.leaves.boxes} boxes, ${r.leaves.texts} text lines, ${r.leaves.flexRows} flex rows, ${r.leaves.flexColumns} flex columns, ${r.leaves.raws} inline SVG layers`);
@@ -1134,12 +1389,14 @@ function renderBuild(r) {
     if (sorted.length > 8)
         L.push(`(+${sorted.length - 8} more kinds of notes; --json lists every one)`);
     L.push(...gateLines(r.gate, 'pixel diff vs the SVG'));
+    if (r.recorded)
+        L.push(`recorded in ${r.recorded} (project-context)`);
     return L.join('\n');
 }
 function parseArgs(argv) {
     const [cmd, ...rest] = argv;
     const pos = [], flags = {};
-    const withValue = new Set(['name', 'out', 'max-diff', 'tol', 'rules', 'root', 'framework', 'width', 'height', 'photo-tol']);
+    const withValue = new Set(['name', 'out', 'max-diff', 'tol', 'rules', 'root', 'framework', 'width', 'height', 'photo-tol', 'fonts']);
     for (let i = 0; i < rest.length; i++) {
         const a = rest[i];
         if (a.startsWith('--')) {
@@ -1182,9 +1439,9 @@ function detect(root) {
     };
     walk(root, 0);
     const f = detectFramework(root);
-    return { chrome: findChrome(), node: process.version, framework: f.framework, evidence: f.evidence, svgs, fonts: installedFonts() !== null };
+    return { chrome: findChrome(), node: process.version, framework: f.framework, evidence: f.evidence, svgs, context: { design: !!(0, exports.contextDesign)(root), svgs: contextSvgs(root).map((p) => norm(path.relative(root, p))), fontsDir: (0, exports.contextDesign)(root) && fs.existsSync(path.join((0, exports.contextDesign)(root), 'fonts')) ? 'project-context/design/fonts' : null } };
 }
-function main() {
+async function main() {
     let json = false;
     try {
         const { cmd, pos, flags } = parseArgs(process.argv.slice(2));
@@ -1197,15 +1454,50 @@ function main() {
         const done = (ok) => { process.exitCode = ok || noFail ? 0 : 1; };
         if (cmd === 'detect') {
             const d = detect(path.resolve(String(flags.root || process.cwd())));
-            console.log(json ? JSON.stringify(d) : [`browser: ${d.chrome ?? 'NOT FOUND (install Chrome or Edge, or set CHROME)'}`, `node: ${d.node}`, `framework: ${d.framework} (${d.evidence})`, `font check: ${d.fonts ? 'available' : 'not available on this machine'}`, `svg files: ${d.svgs.length ? d.svgs.join(', ') : 'none found'}`].join('\n'));
+            console.log(json ? JSON.stringify(d) : [`browser: ${d.chrome ?? 'NOT FOUND (install Chrome or Edge, or set CHROME)'}`, `node: ${d.node}`, `framework: ${d.framework} (${d.evidence})`, `project-context: ${d.context.design ? `design/ found, ${d.context.svgs.length} SVG(s)${d.context.fontsDir ? ', fonts folder ' + d.context.fontsDir : ''}` : 'no project-context/design/ folder (run /ctx init to set it up; optional)'}`, `svg files: ${d.svgs.length ? d.svgs.join(', ') : 'none found'}`].join('\n'));
             process.exitCode = d.chrome ? 0 : 3;
         }
         else if (cmd === 'build') {
-            if (!pos[0])
-                throw new Usage('build needs an SVG file');
-            if (!fs.existsSync(pos[0]))
-                throw new Usage('not found: ' + pos[0]);
-            const r = build(pos[0], { name: flags.name, out: flags.out, maxDiff, tol, photoTol: flags['photo-tol'] !== undefined ? Number(flags['photo-tol']) : undefined });
+            const root = path.resolve(String(flags.root || process.cwd()));
+            let svg = pos[0];
+            if (!svg) {
+                // no file named: the project-context/design/ folder is where design exports live, so look there and say what was assumed
+                const found = contextSvgs(root);
+                if (found.length === 1) {
+                    svg = found[0];
+                    console.error(`assumed: ${norm(path.relative(root, svg))} (the only SVG in project-context/design/)`);
+                }
+                else
+                    throw new Usage(found.length ? 'several SVGs in project-context/design/; name one:\n  ' + found.map((f) => norm(path.relative(root, f))).join('\n  ') : 'build needs an SVG file (none found in project-context/design/ either)');
+            }
+            if (!fs.existsSync(svg))
+                throw new Usage('not found: ' + svg);
+            const { out } = outputOf(svg, flags.name, flags.out);
+            const faces = [], fontNotes = [];
+            let unresolved = [];
+            const ctxFonts = (0, exports.contextDesign)(root) && fs.existsSync(path.join((0, exports.contextDesign)(root), 'fonts')) ? path.join((0, exports.contextDesign)(root), 'fonts') : null;
+            const fdir = flags.fonts ? String(flags.fonts) : ctxFonts;
+            if (fdir) {
+                if (!fs.existsSync(fdir))
+                    throw new Usage('no such font folder: ' + fdir);
+                const lf = loadFontDir(fdir);
+                faces.push(...lf.files);
+                if (lf.skipped.length)
+                    fontNotes.push(`skipped ${lf.skipped.join(', ')} (only .ttf and .otf files are read, not .woff or .woff2)`);
+                if (!flags.fonts && lf.files.length)
+                    fontNotes.push(`using the ${lf.files.length} font file(s) in project-context/design/fonts/`);
+            }
+            if (flags['download-fonts']) {
+                const need = parseSvg(fs.readFileSync(svg, 'utf8')).fontSpecs.filter((s) => !faces.some((f) => f.family === s.family) && !GENERIC.has(s.family.toLowerCase()));
+                if (need.length) {
+                    console.error(`downloading fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com): ${[...new Set(need.map((s) => s.family))].join(', ')}`);
+                    const g = await downloadGoogleFonts(need, path.join(out, 'assets'));
+                    faces.push(...g.files);
+                    fontNotes.push(...g.notes);
+                    unresolved = g.unresolved;
+                }
+            }
+            const r = build(svg, { name: flags.name, out: flags.out, maxDiff, tol, photoTol: flags['photo-tol'] !== undefined ? Number(flags['photo-tol']) : undefined, faces, fontNotes, unresolvedFonts: unresolved, root, record: !flags['no-record'] });
             console.log(json ? JSON.stringify(r) : renderBuild(r));
             done(r.gate.ok);
         }
@@ -1271,4 +1563,4 @@ function main() {
     }
 }
 if (require.main === module)
-    main();
+    void main();
