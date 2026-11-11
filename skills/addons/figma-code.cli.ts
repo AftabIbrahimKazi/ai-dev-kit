@@ -731,7 +731,7 @@ export function recordBuild(root: string, r: BuildReport, source: string): strin
   if (!d) return null;
   const file = path.join(d, 'figma-code.md');
   const head = ['# figma-code builds', '', 'Written by `figma-code build`; one row per frame, replaced on a rebuild. The conversion output is in the folder named in each row, not here.', '', '| Frame | Source | Size (px) | Diff | Text lines | Inline SVG layers | Images | Fonts missing | Output | Built |', '|---|---|---|---|---|---|---|---|---|---|'];
-  const cell = (s: string): string => s.replace(/\|/g, '\\|');
+  const cell = (s: string): string => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
   const row = `| ${cell(r.name)} | ${cell(norm(path.relative(root, source)))} | ${r.width} x ${r.height} | ${r.gate.diff.percent}% (${r.gate.ok ? 'pass' : 'FAIL'}, limit ${r.gate.maxDiff}%) | ${r.leaves.texts} | ${r.leaves.raws} | ${r.images} | ${r.fonts.missing.join(', ') || 'none'} | ${cell(norm(path.relative(root, r.out)))} | ${new Date().toISOString().slice(0, 10)} |`;
   const old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split(/\r?\n/).filter((l) => /^\| /.test(l) && !/^\| Frame /.test(l) && !l.startsWith(`| ${cell(r.name)} |`)) : [];
   fs.writeFileSync(file, [...head, ...old, row].join('\n') + '\n');
