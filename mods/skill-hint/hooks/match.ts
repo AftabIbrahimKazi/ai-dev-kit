@@ -8,7 +8,7 @@ export const DEFAULT_RULES: Rules = {
   'debug-protocol': ['bug', 'error*', 'fail*', 'broken', 'crash*', 'exception', 'regression', 'traceback', 'not working', "doesn't work", "isn't working", 'stack trace'],
   'plan-first': ['refactor', 'migrat*', 'rewrite', 'overhaul', 'all files', 'every file', 'multiple files', 'across the', 'end to end', 'step by step'],
   'intent-capture': ['make it better', 'clean up', 'clean it up', 'improve', 'polish', 'tidy', 'fix it up', 'make it nicer'],
-  'session-budget': ['token*', 'cost', 'budget', 'context window', 'expensive'],
+  'session-budget': ['token*', 'cost', 'budget', 'context window', 'expensive', 'usage tracking', 'feature usage', 'track usage', 'tracking usage', 'track which features', 'which features', 'kit usage', 'kit-usage'],
   'e2e-scaffold': ['playwright', 'e2e', 'end-to-end'],
   'perf-audit': ['perf*', 'slow', 'lighthouse', 'bundle', 'page weight', 'load time', 'vitals'],
   'responsive-check': ['responsive', 'breakpoint*', 'viewport', 'screen size', 'mobile layout'],

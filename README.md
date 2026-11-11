@@ -518,6 +518,8 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 
 **Mod command** (Claude Code, from the `budget-ledger` mod): `/budget` shows the same ledger report.
 
+**Mod command** (Claude Code, from the `feature-usage` mod): `/kit-usage` switches feature-usage tracking on or off, turns the first-use notice on or off, and `/kit-usage report` lists which skills, commands and scripts were used and which installed ones never were.
+
 **Skills by name** (Claude Code turns every installed skill into `/<skill-name> <free text>`, which loads it on purpose instead of waiting for the agent to match it):
 
 | Group | Commands | Use when |
@@ -625,6 +627,7 @@ Mods are small, optional Claude Code plug-ins in [`mods/`](mods/). They run in c
 | Mod | What it does | Kind | Needs or pairs with |
 |---|---|---|---|
 | `budget-ledger` | Logs real token use, cost, cache and tool-result sizes per turn, one file per session; adds `/budget` | observes only | nothing |
+| `feature-usage` | Records which skills load, commands are typed and kit scripts run, one name-only row each in `~/.ai-dev-kit/usage/log`; adds `/kit-usage` (on, off, notify, status, report). Switchable at install (`--usage on\|off`) and in plain words | observes only | `session-budget`'s `usage.js` for the report |
 | `precommit-gate` | Gates `git commit` and `git push`: blocks leaked secrets, secret files, bad messages and `--no-verify`; warns once on stray files and debug leftovers | blocks | the `pre-commit` skill |
 | `guard` | Denies edits to secret files, lockfiles and `.git`, and destructive commands (root-like recursive deletes, force push, deleting remote main, `reset --hard`, `clean -f`, publish, download piped into a shell); settings in `.claude/guard.json` | blocks | nothing |
 | `edit-check` | After each edit, runs syntax, ESLint, Stylelint and standards checks and shows the model only the problems; a clean file adds nothing | reminds | the `pre-merge-gate` skill |
@@ -670,6 +673,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `skill-scope/auto.js` | Archives the per-session-archivable skills and restores the ones a task names (trigger words in `triggers.json`; a finished theme locks `ux-theory` to expansion phrases) | `/next`, and two Claude Code hooks |
 | `skill-scope/auto.js pickup` | Prints the queued task with what its mode means, the handover verbatim and the archived-skills report; `apply --require-task` also writes the `## Next task` and `## Skills` lines | `/pickup`, `/next` |
 | `handover/draft.js` | The mechanical half of a handover: header line, commits since the last one, uncommitted files, existing next task, size check, optional session-journal facts | `/wrap-up` |
+| `session-budget/usage.js` | Feature-usage switch and report: `on`, `off`, `notify on\|off`, `status`, `report [--days N] [--all-projects]`, `reset --yes`; reads the log the `feature-usage` mod writes and lists installed features never used | `/kit-usage` |
 | `skill-scope/kit.js` | Keyword scorer over the command table: prints the single best command for a situation, or the whole table | `/kit` |
 | `skill-scope/auto.js run` | Restores an archived skill, then runs its script; the six commands for archivable skills call it | `/audit`, `/stale`, `/version-bump` and three more |
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
@@ -875,7 +879,7 @@ npm run dev
 - **`output-compact` mod.** Runs `session-budget`'s compactor on every Bash/PowerShell result automatically, instead of depending on the agent remembering to pipe a command through it by hand. No-ops below the compactor's own savings floor, fails open, no network.
 - **`misfire-log`.** Opt-in skill that logs the moment a skill/mod/addon should have fired but didn't (or got bypassed by a direct/manual path), with a `report.js` that ranks the repeat offenders — so a pattern noticed mid-task survives to actually drive the next kit update instead of staying a one-off memory.
 - **Project-wide audit.** [`code-audit`](skills/standards/code-audit.md) checks 47 script-checkable rules (CSS, HTML, JS/TS, page SEO/accessibility/performance basics, git history, versioning) across a whole project, groups violations by rule with the worst files first, lists `file:line` on request and keeps a baseline so counts can only go down. It also lists what it cannot check, so the agent knows what still needs reading.
-- **Optional Claude Code mods.** [`mods/`](mods/) ships fifteen opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank`, `eta-nudge`, `aiignore-guard`, `skill-hint` and others listed in the table above. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
+- **Optional Claude Code mods.** [`mods/`](mods/) ships seventeen opt-in mods installed through [`mod-setup`](skills/meta/mod-setup.md): `budget-ledger`, `precommit-gate`, `guard`, `edit-check`, `debug-nudge`, `standards-chain`, `output-compact`, `prefilter-rank`, `eta-nudge`, `aiignore-guard`, `skill-hint` and others listed in the table above. Each wraps a tool-agnostic script, a local loopback call, or a few pure rules, fails open, and nothing in the kit depends on them.
 - **Delegated execution in plan mode.** [`plan-first`](skills/workflow/plan-first.md) can hand a written plan to the next cheaper model through `delegate.js`, with commit and push blocked for the executor, then verify and fix the result itself.
 - **Haiku 5.5.** [`haiku-5-5`](skills/models/claude/haiku-5-5.md) covers the new adaptive-thinking Haiku, its breaking API changes against 4.5 and how to route to it.
 - **Installs into ESM projects.** The installer now adds a one-line `package.json` at the skill root so the CommonJS companion scripts keep running inside Astro, Vite and other `"type": "module"` projects.

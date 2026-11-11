@@ -51,6 +51,15 @@ test('plain-language prompts match the new audit, asset, memory and context rule
   expect(m('draw a diagram of the system')).toContain('diagram')
 })
 
+test('plain-language usage-tracking requests route to session-budget, which carries the switch script', () => {
+  const m = (t: string) => matchSkills(t, DEFAULT_RULES)
+  expect(m('turn off usage tracking')).toContain('session-budget')
+  expect(m('please track which features get used')).toContain('session-budget')
+  expect(m('show me the kit-usage report')).toContain('session-budget')
+  expect(m('which features were never used?')).toContain('session-budget')
+  expect(m('the cpu usage is high')).not.toContain('session-budget')
+})
+
 test('common words in unrelated text do not trigger the new rules', () => {
   const m = (t: string) => matchSkills(t, DEFAULT_RULES)
   expect(m('add an audit log column to the users table')).toEqual([])

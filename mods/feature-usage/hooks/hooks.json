@@ -1,0 +1,4 @@
+{
+  "description": "feature-usage hooks module",
+  "modules": ["./register.ts"]
+}
