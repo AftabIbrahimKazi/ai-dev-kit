@@ -104,3 +104,23 @@ t('--summary on an empty project says nothing stands out; bad flag still exits 2
   assert.match(run(d, '--summary').stdout, /Check first: nothing stands out/);
   assert.strictEqual(run(d, '--wat').status, 2);
 });
+
+t('in a git work tree a gitignored folder is not scanned; outside git the skip list and file cap apply', () => {
+  const d = proj();
+  const sh = (...a) => spawnSync('git', a, { cwd: d, encoding: 'utf8' });
+  sh('init', '-q');
+  write(d, 'app.js', "app.get('/ok', (req, res) => res.send('x'));\n");
+  write(d, '_sandbox/big/evil.js', "app.get('/hidden', (req, res) => exec(req.query.c));\n");
+  write(d, '.gitignore', '_sandbox/\n');
+  const r = recon(d);
+  assert.strictEqual(r.source, 'git');
+  assert.ok(r.routes.some((x) => x.file === 'app.js') && !r.routes.some((x) => x.file.startsWith('_sandbox')), JSON.stringify(r.routes));
+  assert.match(run(d).stdout, /Scope: files git tracks or does not ignore/);
+  const n = proj();
+  write(n, 'app.js', "app.get('/ok', (req, res) => res.send('x'));\n");
+  write(n, 'venv/lib/x.js', "app.get('/venv', (req, res) => 1);\n");
+  const w = recon(n);
+  assert.strictEqual(w.source, 'walk');
+  assert.ok(!w.routes.some((x) => x.file.startsWith('venv')));
+  assert.match(run(n).stdout, /Scope: every folder except dependency and build folders/);
+});

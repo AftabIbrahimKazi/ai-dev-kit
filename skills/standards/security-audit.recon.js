@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MAX_FILES = void 0;
+exports.listFiles = listFiles;
 exports.recon = recon;
 exports.render = render;
 exports.summarize = summarize;
@@ -14,6 +16,7 @@ exports.summarize = summarize;
 // Exit codes: 0 done, 2 bad usage.
 const fs = require("node:fs");
 const path = require("node:path");
+const cp = require("node:child_process");
 const SKIP = new Set(['node_modules', 'vendor', 'dist', 'build', '.git', 'coverage', '.next', '.astro', '.output', 'out']);
 const SOURCE = /\.(js|jsx|mjs|cjs|ts|tsx|mts|php|py|rb|go|java|cs|astro|vue|svelte)$/i;
 const CONFIG = /\.(json|ya?ml|toml|env|ini|xml)$|^\.env/i;
@@ -59,6 +62,9 @@ const OBVIOUS = [
     ['weak-random', /Math\.random\(\)[^;]{0,40}(?:token|secret|password|id|key)|\brandom\.random\(\)|\brand\(\)/i],
     ['seed-credential', /\b(?:admin|root|test)\s*['"]?\s*[,:]\s*['"](?:admin|password|123456|test|root)['"]/i],
 ];
+// Folders that hold other people's code or caches; the plain walk (no git) never enters them.
+const SKIP_WALK = new Set([...SKIP, 'venv', '.venv', 'env', '__pycache__', 'site-packages', 'target', 'bower_components', 'Pods', '.gradle', '.idea']);
+exports.MAX_FILES = 20000;
 function walk(dir, out = []) {
     let es;
     try {
@@ -68,7 +74,9 @@ function walk(dir, out = []) {
         return out;
     }
     for (const e of es) {
-        if (SKIP.has(e.name) || (e.name.startsWith('.') && e.isDirectory()))
+        if (out.length >= exports.MAX_FILES)
+            return out;
+        if (SKIP_WALK.has(e.name) || (e.name.startsWith('.') && e.isDirectory()))
             continue; // dot-folders are tooling (.claude, .git, .next)
         const p = path.join(dir, e.name);
         if (e.isDirectory())
@@ -78,10 +86,26 @@ function walk(dir, out = []) {
     }
     return out;
 }
+// In a git work tree the files git tracks or does not ignore are the project's own code: a gitignored sandbox, virtual
+// environment or build cache is never scanned (a 30,000-file sandbox once made a scan take minutes). Outside git, or when
+// git fails, the plain walk runs with the skip list and a file cap.
+function listFiles(cwd) {
+    try {
+        const r = cp.spawnSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], { cwd, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+        if (r.status === 0 && r.stdout) {
+            const files = r.stdout.split('\0').filter(Boolean).filter((f) => !f.split('/').some((seg, i, a) => SKIP.has(seg) || (i < a.length - 1 && seg.startsWith('.')))).map((f) => path.join(cwd, f));
+            return { files: files.slice(0, exports.MAX_FILES), source: 'git', capped: files.length > exports.MAX_FILES };
+        }
+    }
+    catch { /* no git: walk */ }
+    const files = walk(cwd);
+    return { files, source: 'walk', capped: files.length >= exports.MAX_FILES };
+}
 function recon(cwd, top = 15) {
-    const all = walk(cwd);
+    const listed = listFiles(cwd);
+    const all = listed.files;
     const rel = (f) => norm(path.relative(cwd, f));
-    const r = { files: 0, stack: [], routes: [], fileRoutes: [], envReads: {}, outbound: [], secrets: [], sinks: {}, authMarkers: [], obvious: [], dataStores: [], entryBins: [], envFilesTracked: [] };
+    const r = { source: listed.source, capped: listed.capped, files: 0, stack: [], routes: [], fileRoutes: [], envReads: {}, outbound: [], secrets: [], sinks: {}, authMarkers: [], obvious: [], dataStores: [], entryBins: [], envFilesTracked: [] };
     const stack = new Set();
     const stores = new Set();
     const pkgPath = path.join(cwd, 'package.json');
@@ -194,6 +218,9 @@ function render(r) {
         L.push('  none found'); for (const x of rows)
         L.push('  ' + x); };
     L.push(`Recon over ${r.files} source and config files. Stack: ${r.stack.join(', ') || 'unknown'}.`);
+    L.push(r.source === 'git' ? 'Scope: files git tracks or does not ignore (a gitignored folder is not scanned).' : 'Scope: every folder except dependency and build folders (not a git work tree).');
+    if (r.capped)
+        L.push(`NOTE: capped at ${exports.MAX_FILES} files; run it from a subfolder (--cwd) to cover the rest.`);
     sec(`Entry points (${r.routes.length} coded routes, ${r.fileRoutes.length} file routes${r.entryBins.length ? ', bins: ' + r.entryBins.join(', ') : ''}):`, [...r.routes.map((h) => `${h.text}  ${h.file}:${h.line}`), ...r.fileRoutes.slice(0, 20)]);
     sec(`Auth markers (${r.authMarkers.length}): routes with none nearby are the first hunt`, r.authMarkers.map((h) => `${h.file}:${h.line}  ${h.text}`));
     sec(`Data stores:`, r.dataStores);
@@ -212,6 +239,8 @@ function render(r) {
 // What /recon relays: a grouped map, one line per group, under 20 lines. Names no vulnerability; "check first" only orders the hunt.
 function summarize(r) {
     const L = [`Recon over ${r.files} files. Stack: ${r.stack.join(', ') || 'unknown'}.`];
+    if (r.capped)
+        L.push(`NOTE: capped at ${exports.MAX_FILES} files; run it from a subfolder (--cwd) to cover the rest.`);
     const routeFiles = new Set([...r.routes.map((h) => h.file), ...r.fileRoutes]);
     const authFiles = new Set(r.authMarkers.map((h) => h.file));
     const bare = [...routeFiles].filter((f) => !authFiles.has(f));
