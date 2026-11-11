@@ -499,6 +499,7 @@ code {
 .rk-footer-github {
   column-gap: var(--space-xxs);
   justify-content: center;
+  margin-inline-start: auto;
   padding-inline: 0;
   width: var(--size-footer-end);
 }
@@ -611,6 +612,15 @@ code {
   height: calc(100dvh - var(--size-chrome));
   position: sticky;
   top: var(--size-chrome);
+}
+
+.rk-pin::after {
+  content: "";
+  height: var(--size-chrome);
+}
+
+.rk-chapter-last .rk-pin::after {
+  display: none;
 }
 
 .rk-chapter-last .rk-pin {

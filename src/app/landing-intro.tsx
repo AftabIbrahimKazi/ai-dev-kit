@@ -6,7 +6,7 @@ import type { ToneName } from "@/sound/sound-config";
 import { soundEngine } from "@/sound/sound-engine";
 import { INTRO_ATTRIBUTE, INTRO_DONE, INTRO_LIFT, INTRO_PHASE_EVENT, INTRO_PLAY, STAGE_READY, STAGE_READY_ATTRIBUTE, STAGE_READY_EVENT } from "@/stage/stage-config";
 import type { IntroPhaseDetail } from "@/types/kit-stage";
-import { INTRO_STORAGE_KEY } from "./intro-config";
+import { INTRO_STORAGE_KEY, IS_INTRO_ONCE } from "./intro-config";
 import "./landing-intro.css";
 
 interface IntroStep {
@@ -43,7 +43,7 @@ export default function LandingIntro() {
     let isStarted = false;
 
     try {
-      localStorage.setItem(INTRO_STORAGE_KEY, "1");
+      if (IS_INTRO_ONCE) localStorage.setItem(INTRO_STORAGE_KEY, "1");
     } catch {
       /* storage blocked: the intro may replay next visit */
     }

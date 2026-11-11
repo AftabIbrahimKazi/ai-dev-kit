@@ -5,6 +5,7 @@
 .rk-intro {
   align-items: flex-end;
   animation: rk-intro-failsafe calc(var(--duration-slow) * 20) linear forwards;
+  background: radial-gradient(ellipse at center, transparent 35%, color-mix(in srgb, var(--color-cinema) 70%, transparent) 100%);
   display: none;
   inset: 0;
   justify-content: center;
@@ -13,6 +14,35 @@
   position: fixed;
   transition: opacity var(--duration-slow) ease;
   z-index: 3000;
+}
+
+.rk-intro::before,
+.rk-intro::after {
+  background: var(--color-cinema);
+  content: "";
+  height: 11dvh;
+  inset-inline: 0;
+  position: absolute;
+  transition: transform calc(var(--duration-slow) * 2) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rk-intro::before {
+  inset-block-start: 0;
+  transform: translateY(-100%);
+}
+
+.rk-intro::after {
+  inset-block-end: 0;
+  transform: translateY(100%);
+}
+
+.rk-intro[data-phase="draw"]::before,
+.rk-intro[data-phase="pulse"]::before,
+.rk-intro[data-phase="arrive"]::before,
+.rk-intro[data-phase="draw"]::after,
+.rk-intro[data-phase="pulse"]::after,
+.rk-intro[data-phase="arrive"]::after {
+  transform: none;
 }
 
 :root[data-intro="play"] .rk-intro,
@@ -39,7 +69,7 @@
 :root[data-intro="lift"] .rk-main > :not(.rk-stage),
 :root[data-intro="lift"] .rk-header,
 :root[data-intro="lift"] .rk-footer-bar {
-  animation: rk-intro-reveal calc(var(--duration-slow) * 1.5) ease both;
+  animation: rk-intro-reveal calc(var(--duration-slow) * 2) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .rk-intro[data-phase="lift"] {
@@ -48,16 +78,49 @@
 }
 
 .rk-intro-skip {
+  animation: rk-intro-skip-in var(--duration-slow) ease calc(var(--duration-slow) * 1.5) both;
   inset: var(--space-md) var(--space-md) auto auto;
   position: absolute;
 }
 
 .rk-intro-title {
+  filter: blur(var(--space-xs));
+  opacity: 0;
+  transform: translateY(var(--space-md)) scale(0.94);
+  transition:
+    filter calc(var(--duration-slow) * 1.6) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity calc(var(--duration-slow) * 1.2) ease,
+    transform calc(var(--duration-slow) * 1.6) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rk-intro-title > :first-child {
+  letter-spacing: 0.3em;
+  transition-property: letter-spacing, opacity, transform;
+}
+
+.rk-intro[data-phase="arrive"] .rk-intro-title > :first-child,
+.rk-intro[data-phase="lift"] .rk-intro-title > :first-child {
+  letter-spacing: var(--letter-spacing-display);
+  transition-duration: calc(var(--duration-slow) * 3), var(--duration-slow), calc(var(--duration-slow) * 1.4);
+}
+
+.rk-intro-title > * {
   opacity: 0;
   transform: translateY(var(--space-xs));
   transition:
     opacity var(--duration-slow) ease,
-    transform var(--duration-slow) ease;
+    transform calc(var(--duration-slow) * 1.4) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rk-intro[data-phase="arrive"] .rk-intro-title > *,
+.rk-intro[data-phase="lift"] .rk-intro-title > * {
+  opacity: 1;
+  transform: none;
+}
+
+.rk-intro[data-phase="arrive"] .rk-intro-title > :nth-child(2),
+.rk-intro[data-phase="lift"] .rk-intro-title > :nth-child(2) {
+  transition-delay: var(--duration-default);
 }
 
 .rk-intro-hint {
@@ -70,8 +133,14 @@
 
 .rk-intro[data-phase="arrive"] .rk-intro-title,
 .rk-intro[data-phase="lift"] .rk-intro-title {
+  filter: none;
   opacity: 1;
   transform: none;
+}
+
+.rk-intro[data-phase="lift"] .rk-intro-title {
+  transform: translateY(calc(var(--space-sm) * -1)) scale(1.04);
+  transition-duration: calc(var(--duration-slow) * 1.2);
 }
 
 .rk-intro[data-sound-hint="locked"]:not([data-phase="lift"]) .rk-intro-hint {
@@ -94,6 +163,14 @@
 @keyframes rk-intro-reveal {
   from {
     opacity: 0;
+    transform: translateY(var(--space-md));
+  }
+}
+
+@keyframes rk-intro-skip-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-xs) * -1));
   }
 }
 
@@ -104,5 +181,9 @@
 @media (prefers-reduced-motion: reduce) {
   .rk-intro {
     display: none;
+  }
+
+  .rk-intro-skip {
+    animation: none;
   }
 }

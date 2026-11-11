@@ -113,6 +113,7 @@
 
   /* Transition duration */
   --duration-instant: 0ms;
+  --color-cinema: #02090b;
   --duration-fast: 120ms;
   --duration-default: 240ms;
   --duration-slow: 600ms;
