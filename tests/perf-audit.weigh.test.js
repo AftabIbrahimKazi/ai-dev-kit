@@ -106,3 +106,26 @@ t('bad usage exits 2 with one usage line', () => {
     assert.strictEqual(r.stderr.trim().split('\n').length, 1);
   }
 });
+
+t('--summary ranks findings by bytes, at most 7 rows, each with a fix and an effort', () => {
+  const d = proj();
+  write(d, 'dist/index.html', '<html><head><script src="a.js"></script></head><body><img src="x.png"></body></html>');
+  fs.mkdirSync(path.join(d, 'dist', 'js'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'dist', 'js', 'vendor.js'), random(400 * 1024));
+  fs.writeFileSync(path.join(d, 'dist', 'hero.png'), random(300 * 1024));
+  const out = run(d, '--summary').stdout;
+  const rows = out.split('\n').filter((l) => l.startsWith('| ') && !l.startsWith('| finding'));
+  assert.ok(rows.length >= 3 && rows.length <= 7, out);
+  assert.match(out, /^Build folder: dist\nHeaviest: chunk dist\/js\/vendor\.js/);
+  assert.ok(rows[0].includes('vendor.js') && rows[1].includes('hero.png'), out);
+  assert.ok(rows.every((r) => /\| [SML] \|$/.test(r)), out);
+  assert.ok(!/^Totals/m.test(out), 'no full report in summary mode');
+});
+t('--summary with no build folder says to ask about building; a clean build says so', () => {
+  const d = proj();
+  write(d, 'src/a.txt', 'x');
+  assert.match(run(d, '--summary').stdout, /no build folder found: ask whether to build first/);
+  const c = proj();
+  write(c, 'dist/index.html', '<html><head></head><body></body></html>');
+  assert.match(run(c, '--summary').stdout, /No static findings/);
+});
