@@ -84,3 +84,23 @@ t('bad usage exits 2 with one usage line', () => {
     assert.strictEqual(r.stderr.trim().split('\n').length, 1);
   }
 });
+
+t('--summary is a grouped map under 20 lines that names no vulnerability', () => {
+  const d = fixture();
+  const out = run(d, '--summary').stdout;
+  assert.ok(out.split('\n').length < 20, out);
+  assert.match(out, /^Recon over \d+ files\. Stack: .*express/);
+  assert.match(out, /Entry points: \d+ coded/);
+  assert.match(out, /Route files with no auth marker/);
+  assert.match(out, /Sink classes: /);
+  assert.match(out, /Check first: /);
+  assert.match(out, /Inventory only, no findings/);
+  assert.ok(!/SQL injection|vulnerab(le|ility) found/i.test(out), out);
+  assert.ok(!/^Entry points \(/m.test(out), 'no full inventory in summary mode');
+});
+t('--summary on an empty project says nothing stands out; bad flag still exits 2', () => {
+  const d = proj();
+  write(d, 'a.txt', 'x');
+  assert.match(run(d, '--summary').stdout, /Check first: nothing stands out/);
+  assert.strictEqual(run(d, '--wat').status, 2);
+});
