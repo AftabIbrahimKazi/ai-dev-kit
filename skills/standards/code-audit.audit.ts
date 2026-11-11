@@ -3,7 +3,7 @@
 // Counts, not prose: the model reads a few dozen lines instead of opening files to look for violations.
 //
 //   node audit.js [path...] [--standard css,html,js,ts,a11y,seo,perf,git,version] [--rule ID] [--top N] [--limit N]
-//                 [--changed] [--suggest-exempt] [--context] [--baseline] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
+//                 [--summary] [--changed] [--suggest-exempt] [--context] [--baseline] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
 //
 // Findings are "rule" (a violation) or "review" (a heuristic candidate that needs judgement) or "info" (a count).
 // Exit 0 normally; with a saved baseline (.claude/code-audit.baseline.json) exit 1 only when a count rose.
@@ -908,7 +908,7 @@ function listFiles(cwd: string): string[] {
 export interface AuditOpt {
   rule?: string | null; top?: number; sections?: number; limit?: number; baseline?: boolean; context?: boolean;
   noGit?: boolean; ignore?: string[]; paths?: string[]; standard?: string[] | null; includeGenerated?: boolean;
-  showSkipped?: boolean; commits?: number; noFail?: boolean; changed?: boolean;
+  showSkipped?: boolean; commits?: number; noFail?: boolean; changed?: boolean; summary?: boolean;
 }
 export interface AuditResult { scanned: number; generated: number; aiIgnored: number; skipped: string[]; findings: Finding[] }
 
@@ -1010,6 +1010,19 @@ function report(res: AuditResult, base: Baseline | null, opt: Required<Pick<Audi
     return out.join('\n');
   }
   if (!rules.length) return out.join('\n');
+  if (opt.summary) {
+    // What /audit relays: the worst rules, the worst files, and the one fix with the biggest effect (most occurrences). Counts only.
+    const viol = rules.filter((r) => RULES[r].kind === 'rule');
+    if (!viol.length) { out.push('no rule violations; review candidates only (rerun without --summary to list them)'); return out.join('\n'); }
+    out.push('worst rules:', ...viol.slice(0, 5).map((r) => `  ${r} ${total(t[r])} in ${Object.keys(t[r]).length} files: ${RULES[r].what}`));
+    const perFile: Record<string, number> = {};
+    for (const r of viol) for (const [file, ls] of Object.entries(t[r])) if (ls[0] !== 0) perFile[file] = (perFile[file] || 0) + ls.length;
+    out.push('worst files:', ...Object.entries(perFile).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([f, n]) => `  ${f} ${n}`));
+    out.push(`biggest fix: ${viol[0]} (${total(t[viol[0]])} occurrences); list them with --rule ${viol[0]}`);
+    const sh = vendorHint(res.findings);
+    if (sh) out.push(sh);
+    return out.join('\n');
+  }
   out.push('rule             kind    count  files  what');
   for (const r of rules) out.push(`${r.padEnd(16)} ${RULES[r].kind.padEnd(7)} ${String(total(t[r])).padStart(5)} ${String(Object.keys(t[r]).length).padStart(6)}  ${RULES[r].what}`);
   const hint = vendorHint(res.findings);
@@ -1080,6 +1093,7 @@ function main(): void {
     else if (v === '--commits') opt.commits = Math.max(1, Number(a[++i]) || 200);
     else if (v === '--sections') opt.sections = Math.max(1, Number(a[++i]) || 6);
     else if (v === '--audit') continue; // accepted so the old edit-check spelling still works
+    else if (v === '--summary') opt.summary = true;
     else if (v === '--no-fail') opt.noFail = true; // always exit 0: a slash command aborts on a non-zero exit
     else if (v.startsWith('--')) { console.log(`unknown option ${v}; see the header of this file`); process.exitCode = 2; return; }
     else opt.paths!.push(v);

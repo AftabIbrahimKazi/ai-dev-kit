@@ -3,8 +3,8 @@ description: Standards audit of the whole project (runs the code-audit script, t
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
-Audit report (counts, worst files first):
+Audit summary (worst rules, worst files, biggest fix):
 
-!`node {{skill-root}}/skill-scope/auto.js run code-audit audit.js --no-fail --top 15 $ARGUMENTS`
+!`node {{skill-root}}/skill-scope/auto.js run code-audit audit.js --no-fail --summary $ARGUMENTS`
 
-Summarize the report in under 12 lines: the worst rules, the worst files, and the one fix with the biggest effect. Open a file only when a finding needs judgment.
+Relay the summary as is. Open a file only when a finding needs judgment; rerun with `--rule <id>` for the full list of one rule.
