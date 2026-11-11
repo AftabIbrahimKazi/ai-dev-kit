@@ -24,7 +24,7 @@ export const ACTOR_CLAUDE = 1 as const;
 export const YOU_POSITION: readonly [number, number, number] = [0, -6, 150];
 export const CLAUDE_POSITION: readonly [number, number, number] = [0, 0, 0];
 
-export const MAX_NODES = 256 as const;
+export const MAX_NODES = 384 as const;
 export const NODE_BASE_RADIUS = 0.9 as const;
 export const NODE_DEGREE_RADIUS = 0.28 as const;
 export const NODE_SCALE_MIN = 0.3 as const;
