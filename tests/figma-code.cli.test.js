@@ -267,3 +267,81 @@ live('adapt --dry-run writes nothing into the project', () => {
   assert.ok(j.files.includes('components/Card.jsx'));
   assert.deepStrictEqual(fs.readdirSync(root), ['package.json']);
 });
+
+// ---- Figma image fills: a rect painted by a pattern holding one embedded image
+const imgPng = () => { const px = new Uint8Array(8 * 4 * 4); for (let i = 0; i < 32; i++) px.set([i % 2 ? 220 : 30, 100, i < 16 ? 200 : 40, 255], i * 4); return F.encodePng({ w: 8, h: 4, px }); };
+const IMG_SVG = () => `<svg width="200" height="120" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect width="200" height="120" fill="white"/>
+<rect x="20" y="10" width="120" height="60" rx="8" fill="url(#pattern0)"/>
+<rect x="150" y="10" width="40" height="60" fill="url(#pattern1)"/>
+<defs>
+<pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1"><use xlink:href="#image0" transform="scale(0.125 0.25)"/></pattern>
+<pattern id="pattern1" patternContentUnits="objectBoundingBox" width="1" height="1"><use xlink:href="#image0" transform="matrix(0.25 0 0 0.5 -0.1 -0.2)"/></pattern>
+<image id="image0" width="8" height="4" preserveAspectRatio="none" xlink:href="data:image/png;base64,${imgPng().toString('base64')}"/>
+</defs>
+</svg>`;
+
+t('image fills become boxes with a CSS background placed from the pattern matrix, and the image is extracted once', () => {
+  const p = F.parseSvg(IMG_SVG());
+  assert.strictEqual(p.raws, 0);
+  assert.strictEqual(p.files.length, 1);
+  assert.strictEqual(p.files[0].name, 'image0.png');
+  assert.deepStrictEqual(Buffer.from(p.files[0].data).subarray(1, 4).toString(), 'PNG');
+  const [a, b] = p.leaves.filter((l) => l.role === 'image');
+  assert.strictEqual(a.css['background-size'], '120px 60px'); // scale 0.125 x 8 px x 120 wide; 0.25 x 4 px x 60 high
+  assert.strictEqual(a.css['background-position'], '0 0');
+  assert.strictEqual(a.css['border-radius'], '8px');
+  assert.strictEqual(b.css['background-size'], '80px 120px'); // 0.25 x 8 x 40, 0.5 x 4 x 60
+  assert.strictEqual(b.css['background-position'], '-4px -12px'); // -0.1 x 40, -0.2 x 60
+  assert.match(a.css['background-image'], /^url\(assets\/image0\.png\)$/);
+});
+
+t('an image fill with a rotation, a mask or a stranger transform is still kept as inline SVG', () => {
+  const rot = IMG_SVG().replace('<rect x="20" y="10" width="120" height="60" rx="8"', '<rect x="20" y="10" width="120" height="60" transform="rotate(-90 20 10)" rx="8"');
+  assert.strictEqual(F.parseSvg(rot).raws, 1);
+  const skew = IMG_SVG().replace('transform="scale(0.125 0.25)"', 'transform="rotate(5)"');
+  assert.strictEqual(F.parseSvg(skew).raws, 1);
+});
+
+t('the report puts the outlined-text warning first and groups repeated notes with a count', () => {
+  const out = F.renderBuild({ name: 'x', out: '.', width: 10, height: 10, leaves: { boxes: 1, texts: 0, raws: 3, flexRows: 0, flexColumns: 0 }, images: 2,
+    notes: [{ kind: 'inline-svg', detail: '<path> kept as inline SVG: vector path' }, { kind: 'inline-svg', detail: '<path id="a"> kept as inline SVG: vector path' }, { kind: 'inline-svg', detail: '<g> kept as inline SVG: filter' }, { kind: 'no-text', detail: 'no text nodes found: export again with Outline text unchecked' }],
+    fonts: { used: ['Inter'], missing: ['Inter'], assumedMetrics: [], checked: true }, gate: { ok: true, maxDiff: 1, diff: { w: 10, h: 10, total: 100, differing: 0, percent: 0, boxes: [], sizeMismatch: null } } });
+  const lines = out.split('\n');
+  assert.match(lines[1], /^WARNING: no text nodes found/);
+  assert.match(lines[2], /^FONTS NOT INSTALLED: Inter/);
+  assert.ok(lines.includes('note: 2 x <path> kept as inline SVG: vector path'), out);
+  assert.ok(lines.some((l) => l.startsWith('2 image file(s) extracted to assets/ and placed with CSS backgrounds')));
+});
+
+live('build: an image-fill page matches the SVG, writes the image to assets/, and every adapter keeps the background working', () => {
+  const d = tmp(); fs.writeFileSync(path.join(d, 'img.svg'), IMG_SVG());
+  const out = path.join(d, 'out');
+  const r = run('build', path.join(d, 'img.svg'), '--out', out, '--json');
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  const j = JSON.parse(r.stdout);
+  assert.strictEqual(j.images, 1);
+  assert.ok(j.gate.diff.percent <= 1, 'diff ' + j.gate.diff.percent);
+  assert.ok(fs.existsSync(path.join(out, 'assets', 'image0.png')));
+  assert.match(fs.readFileSync(path.join(out, 'styles.css'), 'utf8'), /background-image: url\(assets\/image0\.png\)/);
+  assert.ok(fs.statSync(path.join(out, 'index.html')).size < 3000, 'no base64 left in the page');
+  for (const [fw, manifest] of [['next', { 'package.json': { dependencies: { next: '14' } } }], ['astro', { 'package.json': { dependencies: { astro: '4' } } }], ['laravel', { 'composer.json': { require: { 'laravel/framework': '11' } } }]]) {
+    const root = path.join(d, 'p-' + fw); fs.mkdirSync(root);
+    for (const [f, body] of Object.entries(manifest)) fs.writeFileSync(path.join(root, f), JSON.stringify(body));
+    const a = run('adapt', out, '--root', root, '--json');
+    assert.strictEqual(a.status, 0, fw + ': ' + a.stdout + a.stderr);
+    assert.ok(fs.existsSync(path.join(root, 'public', 'figma-code', 'img', 'image0.png')), fw + ' copied the image');
+    const all = fs.readdirSync(root, { recursive: true }).filter((f) => /\.(css|astro|php)$/.test(f)).map((f) => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+    assert.match(all, /url\(\/figma-code\/img\/image0\.png\)/, fw + ' css points at the copied image');
+    assert.ok(!/url\(assets\//.test(all), fw + ' left no relative asset path');
+  }
+});
+
+t('diffImages: a photo box uses the looser tolerance, the rest of the page stays strict', () => {
+  const mk = (v) => ({ w: 40, h: 40, px: Uint8Array.from({ length: 40 * 40 * 4 }, (_x, i) => (i % 4 === 3 ? 255 : v)) });
+  const a = mk(100), b = mk(130); // every pixel is 30 levels off
+  assert.strictEqual(F.diffImages(a, b, 16).differing, 1600);
+  const loose = { rects: [{ x: 0, y: 0, w: 20, h: 40 }], tol: 48 };
+  assert.strictEqual(F.diffImages(a, b, 16, loose).differing, 800, 'the left half is a photo and passes, the right half is strict');
+  assert.strictEqual(F.diffImages(a, mk(160), 16, loose).differing, 1600, 'a real difference still fails inside the photo');
+});

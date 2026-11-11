@@ -9,7 +9,7 @@
 // Plain Node, no dependencies; the browser is the only external tool (Chrome or Edge).
 //
 //   node cli.js detect [--root D]
-//   node cli.js build <file.svg> [--name N] [--out DIR] [--max-diff P] [--tol N] [--no-fail] [--json]
+//   node cli.js build <file.svg> [--name N] [--out DIR] [--max-diff P] [--tol N] [--photo-tol N] [--no-fail] [--json]
 //   node cli.js diff <a> <b> [--width W --height H] [--tol N] [--max-diff P] [--no-fail] [--json]     (png, html or svg)
 //   node cli.js standards <dir> [--rules FILE] [--max-diff P] [--dry-run] [--no-fail] [--json]
 //   node cli.js adapt <dir> [--root D] [--framework next|astro|laravel|plain] [--max-diff P] [--dry-run] [--no-fail] [--json]
@@ -133,8 +133,16 @@ export interface DiffResult { w: number; h: number; total: number; differing: nu
 
 // A pixel differs when any channel is off by more than `tol` (of 255): anti-aliasing never matches bit for bit.
 // Failing pixels are grouped into 16 px cells, joined when they touch, and reported as boxes, worst first.
-export function diffImages(a: Img, b: Img, tol = 16): DiffResult {
+export interface Loose { rects: { x: number; y: number; w: number; h: number }[]; tol: number }
+export function diffImages(a: Img, b: Img, tol = 16, loose?: Loose): DiffResult {
   const w = Math.min(a.w, b.w), h = Math.min(a.h, b.h);
+  // Photos are resampled differently by the SVG and the CSS pipelines (a few levels of difference on every pixel, no
+  // placement error), so pixels inside a photo box use the looser tolerance; everything else keeps the strict one.
+  let mask: Uint8Array | null = null;
+  if (loose && loose.rects.length) {
+    mask = new Uint8Array(w * h);
+    for (const r of loose.rects) for (let y = Math.max(0, r.y); y < Math.min(h, r.y + r.h); y++) mask.fill(1, y * w + Math.max(0, r.x), y * w + Math.min(w, r.x + r.w));
+  }
   const sizeMismatch = a.w !== b.w || a.h !== b.h ? `sizes differ: ${a.w}x${a.h} vs ${b.w}x${b.h}` : null;
   const total = Math.max(a.w * a.h, b.w * b.h);
   const CELL = 16, cw = Math.ceil(w / CELL), ch = Math.ceil(h / CELL);
@@ -142,7 +150,8 @@ export function diffImages(a: Img, b: Img, tol = 16): DiffResult {
   let differing = Math.abs(a.w * a.h - b.w * b.h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = (y * a.w + x) * 4, j = (y * b.w + x) * 4;
-    if (Math.abs(a.px[i] - b.px[j]) > tol || Math.abs(a.px[i + 1] - b.px[j + 1]) > tol || Math.abs(a.px[i + 2] - b.px[j + 2]) > tol || Math.abs(a.px[i + 3] - b.px[j + 3]) > tol) {
+    const t = mask && mask[y * w + x] ? loose!.tol : tol;
+    if (Math.abs(a.px[i] - b.px[j]) > t || Math.abs(a.px[i + 1] - b.px[j + 1]) > t || Math.abs(a.px[i + 2] - b.px[j + 2]) > t || Math.abs(a.px[i + 3] - b.px[j + 3]) > t) {
       differing++; cells[Math.floor(y / CELL) * cw + Math.floor(x / CELL)]++;
     }
   }
@@ -262,7 +271,7 @@ export interface BuildNote { kind: string; detail: string }
 
 interface Ctx { tx: number; ty: number; s: number; style: Style; ancestors: XNode[] }
 
-export interface Parsed { width: number; height: number; leaves: Leaf[]; notes: BuildNote[]; families: string[]; assumed: string[]; assets: string[]; texts: number; raws: number }
+export interface Parsed { width: number; height: number; leaves: Leaf[]; notes: BuildNote[]; families: string[]; assumed: string[]; assets: string[]; texts: number; raws: number; files: { name: string; data: Buffer }[] }
 
 const REFS = /url\(\s*['"]?#([^)'"\s]+)['"]?\s*\)|(?:xlink:)?href\s*=\s*"#([^"]+)"/g;
 export function parseSvg(svgText: string, srcDir = '.'): Parsed {
@@ -287,6 +296,34 @@ export function parseSvg(svgText: string, srcDir = '.'): Parsed {
   const leaves: Leaf[] = [];
   const families = new Set<string>(), assumed = new Set<string>(), assets = new Set<string>();
   let texts = 0, raws = 0;
+  const files = new Map<string, { name: string; data: Buffer }>();
+
+  // A Figma image fill: a rect painted with a pattern that holds one embedded image, scaled by a plain scale or matrix in
+  // bounding-box units. The image is written out as a file and the rect becomes a box with a CSS background that places it
+  // exactly (size and offset from the matrix), so the page keeps real image files instead of base64 inside inline SVG.
+  const imagePaint = (fill: string, w: number, h: number): Style | null => {
+    const m = /^url\(\s*#([^)\s]+)\s*\)$/.exec(fill.trim());
+    const pat = m ? byId.get(m[1]) : undefined;
+    if (!pat || pat.tag !== 'pattern' || (pat.attrs.patternContentUnits || '') !== 'objectBoundingBox' || pat.attrs.width !== '1' || pat.attrs.height !== '1') return null;
+    const kids = kidsOf(pat);
+    if (kids.length !== 1 || kids[0].tag !== 'use') return null;
+    const use = kids[0];
+    const img = byId.get((use.attrs['xlink:href'] || use.attrs.href || '').replace(/^#/, ''));
+    if (!img || img.tag !== 'image') return null;
+    const iw = parseFloat(img.attrs.width), ih = parseFloat(img.attrs.height);
+    const data = /^data:image\/(png|jpeg|jpg|webp|gif);base64,([\s\S]+)$/.exec(img.attrs['xlink:href'] || img.attrs.href || '');
+    if (!data || !(iw > 0) || !(ih > 0)) return null;
+    const N = '(-?[\\d.]+(?:e-?\\d+)?)';
+    let a = 1, d = 1, e = 0, f = 0;
+    const t = (use.attrs.transform || '').trim();
+    const sc = new RegExp(`^scale\\(\\s*${N}[\\s,]+${N}\\s*\\)$`).exec(t);
+    const mx = new RegExp(`^matrix\\(\\s*${N}[\\s,]+0[\\s,]+0[\\s,]+${N}[\\s,]+${N}[\\s,]+${N}\\s*\\)$`).exec(t);
+    if (sc) { a = +sc[1]; d = +sc[2]; } else if (mx) { a = +mx[1]; d = +mx[2]; e = +mx[3]; f = +mx[4]; } else if (t) return null;
+    if (!(a > 0) || !(d > 0)) return null;
+    const name = (img.attrs.id || 'image').replace(/[^\w-]+/g, '-') + '.' + (data[1] === 'jpeg' ? 'jpg' : data[1]);
+    files.set(name, { name, data: Buffer.from(data[2], 'base64') });
+    return { 'background-image': `url(assets/${name})`, 'background-repeat': 'no-repeat', 'background-size': `${px(a * iw * w)} ${px(d * ih * h)}`, 'background-position': `${px(e * w)} ${px(f * h)}` };
+  };
 
   // Everything an element refers to by id (gradients, clips, filters, patterns and what they use), so a raw layer is self-contained.
   const refsOf = (xml: string, out: Set<string> = new Set()): Set<string> => {
@@ -364,6 +401,14 @@ export function parseSvg(svgText: string, srcDir = '.'): Parsed {
       } else if (tag === 'circle') { const r = num0(el.attrs.r); x = num0(el.attrs.cx) - r; y = num0(el.attrs.cy) - r; w = h = 2 * r; radius = '50%'; }
       else { const rx = num0(el.attrs.rx), ry = num0(el.attrs.ry); x = num0(el.attrs.cx) - rx; y = num0(el.attrs.cy) - ry; w = 2 * rx; h = 2 * ry; radius = '50%'; }
       const color = cssColor(st.fill, alphaOf(st));
+      if (color === null && tag === 'rect' && alphaOf(st) === 1) {
+        const paint = imagePaint(st.fill || '', ctx.s * w, ctx.s * h);
+        if (paint) {
+          const [px0, py0] = A(x, y);
+          leaves.push({ kind: 'box', x: px0, y: py0, w: ctx.s * w, h: ctx.s * h, css: { ...paint, ...(radius !== '0' ? { 'border-radius': radius } : {}) }, role: 'image' });
+          return;
+        }
+      }
       if (color === null) return raw(el, ctx, 'fill is a gradient, pattern or keyword CSS cannot match');
       if (color === 'transparent') return;
       const [ax, ay] = A(x, y);
@@ -415,7 +460,7 @@ export function parseSvg(svgText: string, srcDir = '.'): Parsed {
   const root: Ctx = { tx: hasVb ? -vb[0] : 0, ty: hasVb ? -vb[1] : 0, s: s0, style: styleOf(svg, {}, classes), ancestors: [] };
   kidsOf(svg).forEach((k) => walk(k, root));
   if (!texts && /<path\b/i.test(svgText)) notes.push({ kind: 'no-text', detail: 'no text nodes found: if the design has text, export the SVG again with "Outline text" unchecked (Export settings, SVG) so it can become real HTML text' });
-  return { width: Math.round(width), height: Math.round(height), leaves, notes, families: [...families], assumed: [...assumed], assets: [...assets], texts, raws };
+  return { width: Math.round(width), height: Math.round(height), leaves, notes, families: [...families], assumed: [...assumed], assets: [...assets], texts, raws, files: [...files.values()] };
 }
 
 // ---- structure: nesting by containment, then flex rows and columns where the geometry is exact
@@ -530,14 +575,16 @@ export function emit(tree: TNode, parsed: Parsed, title: string): Built {
 
 // ============================================================ the gated pipeline steps
 export interface GateResult { diff: DiffResult; ok: boolean; maxDiff: number }
-export interface Meta { name: string; width: number; height: number; classes: Record<string, string>; source: string; framework?: string; component?: string }
+export interface Meta { name: string; width: number; height: number; classes: Record<string, string>; source: string; framework?: string; component?: string; photos?: { x: number; y: number; w: number; h: number }[]; photoTol?: number }
+const PHOTO_TOL = 48;
+const looseOf = (m: Meta, override?: number): Loose | undefined => (m.photos && m.photos.length ? { rects: m.photos, tol: override ?? m.photoTol ?? PHOTO_TOL } : undefined);
 
 function render(htmlOrSvg: string, w: number, h: number, out: string): Img { screenshot(htmlOrSvg, w, h, out); return decodePng(fs.readFileSync(out)); }
 
-export interface BuildOpts { name?: string; out?: string; maxDiff: number; tol: number }
+export interface BuildOpts { name?: string; out?: string; maxDiff: number; tol: number; photoTol?: number }
 export interface BuildReport {
   name: string; out: string; width: number; height: number; leaves: { boxes: number; texts: number; raws: number; flexRows: number; flexColumns: number };
-  notes: BuildNote[]; fonts: { used: string[]; missing: string[]; assumedMetrics: string[]; checked: boolean }; gate: GateResult;
+  notes: BuildNote[]; fonts: { used: string[]; missing: string[]; assumedMetrics: string[]; checked: boolean }; gate: GateResult; images: number;
 }
 export function build(svgFile: string, o: BuildOpts): BuildReport {
   const svgText = fs.readFileSync(svgFile, 'utf8');
@@ -548,6 +595,7 @@ export function build(svgFile: string, o: BuildOpts): BuildReport {
   const built = emit(tree, parsed, name);
   fs.mkdirSync(out, { recursive: true });
   let html = built.html;
+  if (parsed.files.length) { fs.mkdirSync(path.join(out, 'assets'), { recursive: true }); for (const f of parsed.files) fs.writeFileSync(path.join(out, 'assets', f.name), f.data); }
   if (parsed.assets.length) {
     fs.mkdirSync(path.join(out, 'assets'), { recursive: true });
     for (const a of new Set(parsed.assets)) {
@@ -560,17 +608,18 @@ export function build(svgFile: string, o: BuildOpts): BuildReport {
   fs.writeFileSync(path.join(out, 'styles.css'), built.css);
   const copy = path.join(out, 'source.svg');
   fs.copyFileSync(svgFile, copy);
-  fs.writeFileSync(path.join(out, 'meta.json'), JSON.stringify({ name, width: parsed.width, height: parsed.height, classes: built.classes, source: 'source.svg' } as Meta, null, 2) + '\n');
+  const meta: Meta = { name, width: parsed.width, height: parsed.height, classes: built.classes, source: 'source.svg', photos: parsed.leaves.filter((l) => l.role === 'image').map((l) => ({ x: Math.floor(l.x), y: Math.floor(l.y), w: Math.ceil(l.w) + 1, h: Math.ceil(l.h) + 1 })), photoTol: o.photoTol ?? PHOTO_TOL };
+  fs.writeFileSync(path.join(out, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
   const ref = render(copy, parsed.width, parsed.height, path.join(out, 'reference.png'));
   const got = render(path.join(out, 'index.html'), parsed.width, parsed.height, path.join(out, 'render.png'));
-  const diff = diffImages(ref, got, o.tol);
+  const diff = diffImages(ref, got, o.tol, looseOf(meta));
   const fonts = missingFonts(parsed.families);
   const count = (t: TNode, f: (x: TNode) => boolean): number => (f(t) ? 1 : 0) + t.kids.reduce((s, k) => s + count(k, f), 0);
   return {
     name, out, width: parsed.width, height: parsed.height,
     leaves: { boxes: parsed.leaves.filter((l) => l.kind === 'box').length, texts: parsed.texts, raws: parsed.raws, flexRows: count(tree, (x) => x.flex?.dir === 'row'), flexColumns: count(tree, (x) => x.flex?.dir === 'column') },
     notes: parsed.notes, fonts: { used: parsed.families, missing: fonts.missing, assumedMetrics: parsed.assumed, checked: fonts.checked },
-    gate: { diff, ok: diff.percent <= o.maxDiff && !diff.sizeMismatch, maxDiff: o.maxDiff },
+    gate: { diff, ok: diff.percent <= o.maxDiff && !diff.sizeMismatch, maxDiff: o.maxDiff }, images: parsed.files.length,
   };
 }
 
@@ -641,7 +690,7 @@ export function standards(dir: string, rulesFile: string | undefined, o: { maxDi
   const meta = JSON.parse(fs.readFileSync(path.join(d, 'meta.json'), 'utf8')) as Meta;
   const rules = loadRules(rulesFile);
   const ref = decodePng(fs.readFileSync(path.join(d, 'reference.png')));
-  const score = (): number => { const p = path.join(d, 'render.png'); screenshot(path.join(d, 'index.html'), meta.width, meta.height, p); return diffImages(ref, decodePng(fs.readFileSync(p)), o.tol).percent; };
+  const score = (): number => { const p = path.join(d, 'render.png'); screenshot(path.join(d, 'index.html'), meta.width, meta.height, p); return diffImages(ref, decodePng(fs.readFileSync(p)), o.tol, looseOf(meta)).percent; };
   const original = rd(d);
   let cur = original;
   const baseline = score();
@@ -671,7 +720,7 @@ export function standards(dir: string, rulesFile: string | undefined, o: { maxDi
   // The last render may be a reverted trial, so render the state that was kept.
   const finalPng = path.join(d, 'render.png');
   screenshot(path.join(d, 'index.html'), meta.width, meta.height, finalPng);
-  const finalDiff = diffImages(ref, decodePng(fs.readFileSync(finalPng)), o.tol);
+  const finalDiff = diffImages(ref, decodePng(fs.readFileSync(finalPng)), o.tol, looseOf(meta));
   return { dir: d, baseline, final: finalDiff.percent, results, gate: { diff: finalDiff, ok: finalDiff.percent <= o.maxDiff, maxDiff: o.maxDiff } };
 }
 
@@ -744,18 +793,19 @@ export function adapt(dir: string, o: { root: string; framework?: Framework; max
   const markup = bodyOf(f.html);
   const pubDir = `figma-code/${meta.name}`;
   const fixAssets = (s: string, prefix: string): string => assets.reduce((t, a) => t.split(`"assets/${a}"`).join(`"${prefix}/${a}"`), s);
+  const fixCss = (s: string, prefix: string): string => s.split('url(assets/').join(`url(${prefix}/`); // CSS backgrounds point at the same copied assets
   let verify: { html: string; css: string };
   const need = (rel: string): string => { const p = path.join(root, rel); if (fs.existsSync(p) && !o.force) throw new Usage(`${norm(path.relative(process.cwd(), p))} already exists; pass --force to overwrite it`); return p; };
   if (det.framework === 'astro') {
     const rel = norm(path.relative(root, path.join(src, 'components', comp + '.astro')));
     const body = fixAssets(markup, '/' + pubDir);
-    files.push({ rel, text: `---\n// generated by figma-code from ${meta.source}; edit the markup and styles freely\n---\n${body}\n<style is:global>\n${f.css}</style>\n` });
+    files.push({ rel, text: `---\n// generated by figma-code from ${meta.source}; edit the markup and styles freely\n---\n${body}\n<style is:global>\n${fixCss(f.css, '/' + pubDir)}</style>\n` });
     for (const a of assets) files.push({ rel: `public/${pubDir}/${a}`, copyFrom: path.join(d, 'assets', a) });
     verify = { html: markup, css: f.css };
   } else if (det.framework === 'next') {
     const rel = norm(path.relative(root, path.join(src, 'components', comp + '.jsx')));
     const jsx = fixAssets(toJsx(markup, true), '/' + pubDir);
-    const css = f.css.replace(/^\*, \*::before, \*::after \{ box-sizing: border-box; \}\nbody \{[^}]*\}\n/m, '').replace(/^(\.fc-root|\.[\w-]+)( \{)/m, '$1$2');
+    const css = fixCss(f.css, '/' + pubDir).replace(/^\*, \*::before, \*::after \{ box-sizing: border-box; \}\nbody \{[^}]*\}\n/m, '').replace(/^(\.fc-root|\.[\w-]+)( \{)/m, '$1$2');
     const rootClass = Object.entries(f.classes).find(([, r]) => r === 'root')![0];
     files.push({ rel, text: `// generated by figma-code from ${meta.source}; edit the markup and styles freely\nimport styles from './${comp}.module.css';\n\nexport default function ${comp}() {\n  return (\n${jsx}\n  );\n}\n` });
     files.push({ rel: norm(path.relative(root, path.join(src, 'components', comp + '.module.css'))), text: `.${rootClass}, .${rootClass} * { box-sizing: border-box; }\n${css}` });
@@ -766,7 +816,7 @@ export function adapt(dir: string, o: { root: string; framework?: Framework; max
     const dash = meta.name.replace(/[^A-Za-z0-9-]+/g, '-').toLowerCase();
     const bl = (s: string): string => s.replace(/@/g, '@@').replace(/\{\{/g, '@{{').replace(/\{!!/g, '@{!!');
     files.push({ rel: `resources/views/components/${dash}.blade.php`, text: `{{-- generated by figma-code from ${meta.source}; edit the markup and styles freely --}}\n<link rel="stylesheet" href="{{ asset('css/figma-code/${dash}.css') }}">\n${bl(fixAssets(markup, "/" + pubDir))}\n` });
-    files.push({ rel: `public/css/figma-code/${dash}.css`, text: f.css });
+    files.push({ rel: `public/css/figma-code/${dash}.css`, text: fixCss(f.css, '/' + pubDir) });
     for (const a of assets) files.push({ rel: `public/${pubDir}/${a}`, copyFrom: path.join(d, 'assets', a) });
     verify = { html: markup, css: f.css };
   }
@@ -778,7 +828,7 @@ export function adapt(dir: string, o: { root: string; framework?: Framework; max
       if (assets.length) { fs.mkdirSync(path.join(tmp, 'assets')); for (const a of assets) fs.copyFileSync(path.join(d, 'assets', a), path.join(tmp, 'assets', a)); }
       const ref = decodePng(fs.readFileSync(path.join(d, 'reference.png')));
       const img = render(path.join(tmp, 'index.html'), meta.width, meta.height, path.join(tmp, 'render.png'));
-      const diff = diffImages(ref, img, o.tol);
+      const diff = diffImages(ref, img, o.tol, looseOf(meta));
       return { diff, ok: diff.percent <= o.maxDiff && !diff.sizeMismatch, maxDiff: o.maxDiff } as GateResult;
     } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
   })();
@@ -805,12 +855,19 @@ const gateLines = (g: GateResult, label: string): string[] => [
 
 export function renderBuild(r: BuildReport): string {
   const L = [`figma-code build: ${r.name} (${r.width}x${r.height}) -> ${norm(path.relative(process.cwd(), r.out)) || '.'}`];
-  if (r.fonts.missing.length) L.push(`FONTS NOT INSTALLED: ${r.fonts.missing.join(', ')}. The diff below may be a font difference, not a layout bug; install them or expect a gap.`);
+  const noText = r.notes.find((n) => n.kind === 'no-text');
+  if (noText) L.push('WARNING: ' + noText.detail);
+  if (r.fonts.missing.length) L.push(`FONTS NOT INSTALLED: ${r.fonts.missing.join(', ')}. Both renders fall back to another font here, so text positions are only as good as the fallback; install them, run again, and trust the diff after that.`);
   else if (!r.fonts.checked && r.fonts.used.length) L.push(`fonts used (could not check they are installed): ${r.fonts.used.join(', ')}`);
   if (r.fonts.assumedMetrics.length) L.push(`font metrics assumed (Arial values) for: ${r.fonts.assumedMetrics.join(', ')}; text may sit a pixel or two off`);
   L.push(`${r.leaves.boxes} boxes, ${r.leaves.texts} text lines, ${r.leaves.flexRows} flex rows, ${r.leaves.flexColumns} flex columns, ${r.leaves.raws} inline SVG layers`);
-  for (const n of r.notes.slice(0, 12)) L.push(`note: ${n.detail}`);
-  if (r.notes.length > 12) L.push(`(+${r.notes.length - 12} more notes; --json lists them)`);
+  if (r.images) L.push(`${r.images} image file(s) extracted to assets/ and placed with CSS backgrounds (photo boxes are diffed at a looser tolerance because SVG and CSS resample photos differently; everything else is strict)`);
+  // the same reason repeated is one line with a count (a page can have 200 vector paths kept as inline SVG)
+  const groups = new Map<string, number>();
+  for (const n of r.notes.filter((x) => x.kind !== 'no-text')) { const k = n.detail.replace(/ id="[^"]*"/, '').replace(/^<(\w+)[^>]*>/, '<$1>'); groups.set(k, (groups.get(k) || 0) + 1); }
+  const sorted = [...groups].sort((a, b) => b[1] - a[1]);
+  for (const [k, c] of sorted.slice(0, 8)) L.push(`note: ${c} x ${k}`);
+  if (sorted.length > 8) L.push(`(+${sorted.length - 8} more kinds of notes; --json lists every one)`);
   L.push(...gateLines(r.gate, 'pixel diff vs the SVG'));
   return L.join('\n');
 }
@@ -818,7 +875,7 @@ export function renderBuild(r: BuildReport): string {
 function parseArgs(argv: string[]): { cmd: string; pos: string[]; flags: Record<string, string | boolean> } {
   const [cmd, ...rest] = argv;
   const pos: string[] = [], flags: Record<string, string | boolean> = {};
-  const withValue = new Set(['name', 'out', 'max-diff', 'tol', 'rules', 'root', 'framework', 'width', 'height']);
+  const withValue = new Set(['name', 'out', 'max-diff', 'tol', 'rules', 'root', 'framework', 'width', 'height', 'photo-tol']);
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a.startsWith('--')) { const k = a.slice(2); if (withValue.has(k)) { if (rest[i + 1] === undefined) throw new Usage(`--${k} needs a value`); flags[k] = rest[++i]; } else flags[k] = true; }
@@ -857,7 +914,7 @@ function main(): void {
     } else if (cmd === 'build') {
       if (!pos[0]) throw new Usage('build needs an SVG file');
       if (!fs.existsSync(pos[0])) throw new Usage('not found: ' + pos[0]);
-      const r = build(pos[0], { name: flags.name as string | undefined, out: flags.out as string | undefined, maxDiff, tol });
+      const r = build(pos[0], { name: flags.name as string | undefined, out: flags.out as string | undefined, maxDiff, tol, photoTol: flags['photo-tol'] !== undefined ? Number(flags['photo-tol']) : undefined });
       console.log(json ? JSON.stringify(r) : renderBuild(r));
       done(r.gate.ok);
     } else if (cmd === 'diff') {
