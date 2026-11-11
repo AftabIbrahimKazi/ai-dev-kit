@@ -8,7 +8,7 @@ figma-code report:
 !`node {{skill-root}}/figma-code/cli.js $ARGUMENTS --no-fail`
 
 Use the `figma-code` skill if it is installed. If the user attached or pasted an SVG instead of giving a path, tell them to give the file's path (an attached export can be 15 MB and overflows the prompt). Relay the report. By argument:
-- `build <file.svg>`: say fonts first (missing fonts explain a failing diff), then the diff and its worst regions, then what was kept as inline SVG. A failing gate: install the missing font or re-export with "Outline text" unchecked; never raise `--max-diff` to pass.
+- `build [file.svg]`: with no file it uses the only SVG in `project-context/design/`. Tell the user `--download-fonts` fetches the design's fonts from Google Fonts (the only network use) and `--fonts <folder>` takes their own files. Say fonts first (missing fonts explain a failing diff), then the diff and its worst regions, then what was kept as inline SVG, and where the project-context row was recorded. A failing gate: install the missing font or re-export with "Outline text" unchecked; never raise `--max-diff` to pass.
 - `standards <dir>` and `adapt <dir>`: say which rules applied or were reverted and which files were written. Run `adapt --dry-run` first when the target folder is unclear.
 - `diff <a> <b>`, `detect`: relay as is.
 - No argument or a bad one: show the usage line and the five commands.
