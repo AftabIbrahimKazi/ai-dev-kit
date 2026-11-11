@@ -14,6 +14,14 @@ export const DEFAULT_RULES: Rules = {
   'responsive-check': ['responsive', 'breakpoint*', 'viewport', 'screen size', 'mobile layout'],
   'resolve-conflicts': ['conflict*', 'rebase', 'cherry-pick'],
   'version-bump': ['bump', 'release', 'changelog'],
+  'code-audit': ['audit the project', 'audit this project', 'audit the code', 'code audit', 'health check', 'check the standards', 'lint the project', 'standards violation*'],
+  'security-audit': ['security audit', 'security review', 'attack surface', 'recon', 'vulnerabilit*', 'owasp', 'pentest'],
+  'memory-gardener': ['stale notes', 'prune memory', 'stale memory', 'memory cleanup', 'clean up memory', 'learnings.md'],
+  'optimize-assets': ['compress images', 'optimize images', 'optimise images', 'webp', 'avif', 'heavy assets', 'image size', 'asset size'],
+  'project-context': ['figma export', 'design docs', 'project-context', 'requirements doc*'],
+  'diagram': ['architecture diagram', 'draw a diagram', 'system diagram', 'diagram of'],
+  'pre-commit': ['before commit', 'before i commit', 'staged files', 'staged changes', 'commit check'],
+  'untrack': ['untrack', 'stop tracking', 'remove from git but keep', 'gitignore a tracked'],
 }
 
 export interface Manifest { skills?: Record<string, unknown>; archived?: Record<string, unknown>; skillRoot?: string }
@@ -24,6 +32,11 @@ export interface Manifest { skills?: Record<string, unknown>; archived?: Record<
 export interface ScriptRun { skill: string; script: string; args: string[]; header: string }
 export const SCRIPT_RUNS: ScriptRun[] = [
   { skill: 'perf-audit', script: 'weigh.js', args: ['--top', '7'], header: 'skill-hint ran perf-audit/weigh.js (static payload weigh-in; read this table instead of listing files):' },
+  { skill: 'code-audit', script: 'audit.js', args: ['--top', '15'], header: 'skill-hint ran code-audit/audit.js (rule counts by file; read this instead of opening files to hunt violations):' },
+  { skill: 'security-audit', script: 'recon.js', args: ['--top', '20'], header: 'skill-hint ran security-audit/recon.js (entry points, env reads, sinks with file:line; it names no finding, you do):' },
+  { skill: 'memory-gardener', script: 'stale.js', args: [], header: 'skill-hint ran memory-gardener/stale.js (memory bullets naming missing files; candidates only, you decide):' },
+  { skill: 'optimize-assets', script: 'convert.js', args: ['scan'], header: 'skill-hint ran optimize-assets/convert.js scan (heavy assets found; nothing converted, ask before converting):' },
+  { skill: 'project-context', script: 'scan.js', args: ['status'], header: 'skill-hint ran project-context/scan.js status (folders, stale or current, leak check):' },
 ]
 
 // The script to run for this prompt, or null: the skill must match a trigger and be installed and active (an archived

@@ -39,6 +39,46 @@ test('the project skill-scope triggers extend the defaults', () => {
   expect(Object.keys(rules)).toContain('debug-protocol')
 })
 
+test('plain-language prompts match the new audit, asset, memory and context rules', () => {
+  const m = (t: string) => matchSkills(t, DEFAULT_RULES)
+  expect(m('please audit the project against our standards')).toContain('code-audit')
+  expect(m('do a security review and map the attack surface')).toContain('security-audit')
+  expect(m('prune memory, the notes are stale notes now')).toContain('memory-gardener')
+  expect(m('compress images to webp')).toContain('optimize-assets')
+  expect(m('read the figma export into design docs')).toContain('project-context')
+  expect(m('check my staged changes before commit')).toContain('pre-commit')
+  expect(m('stop tracking the .env file')).toContain('untrack')
+  expect(m('draw a diagram of the system')).toContain('diagram')
+})
+
+test('common words in unrelated text do not trigger the new rules', () => {
+  const m = (t: string) => matchSkills(t, DEFAULT_RULES)
+  expect(m('add an audit log column to the users table')).toEqual([])
+  expect(m('write the recipe for the reconciliation job')).toEqual([])
+  expect(m('rename the memory variable and fix the image tag')).toEqual([])
+})
+
+test('each new script run is read-only, once per session, installed skills only', () => {
+  const rules = mergeRules(DEFAULT_RULES, null)
+  const cases: [string, string, string][] = [
+    ['audit the project', 'code-audit', 'audit.js'],
+    ['map the attack surface', 'security-audit', 'recon.js'],
+    ['prune memory', 'memory-gardener', 'stale.js'],
+    ['compress images', 'optimize-assets', 'convert.js'],
+    ['read the figma export', 'project-context', 'scan.js'],
+  ]
+  for (const [text, skill, script] of cases) {
+    const ran = new Set<string>()
+    const manifest = { skills: { [skill]: {} } }
+    const run = scriptFor(text, rules, manifest, ran)
+    expect(run?.skill).toBe(skill)
+    expect(run?.script).toBe(script)
+    expect(run?.args.join(' ')).not.toMatch(/(^|\s)(convert|compress|--to|--write|--force|--out|init|add|stamp|install)(\s|$)/)
+    expect(scriptFor(text, rules, manifest, ran)).toBeNull()
+    expect(scriptFor(text, rules, { skills: {}, archived: { [skill]: {} } }, new Set())).toBeNull()
+  }
+})
+
 test('scriptFor runs a listed script only for an installed, active skill, once per session', () => {
   const rules = mergeRules(DEFAULT_RULES, null)
   const ran = new Set<string>()
