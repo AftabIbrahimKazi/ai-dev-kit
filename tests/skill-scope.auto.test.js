@@ -238,3 +238,33 @@ t('report names archived skills the queued next task needs, names only', () => {
   assert.ok(!/perf-audit --/.test(r.stdout));
   assert.ok(!/next task needs/.test(run('report', '--root', root, '--mark').stdout));
 });
+t('/next writes the Next task line and the Skills block itself, touching nothing else', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  const hf = path.join(root, 'handover.md');
+  fs.writeFileSync(hf, '# H\n\n## Current state\nkeep me\n\n## Next task\nold\n\n## Skills\narchived: old\n\n## Decisions\nkeep too\n');
+  const r = run('apply', '--root', root, '--require-task', 'tsk-start', 'check', 'responsive', 'layout', 'on', 'mobile');
+  assert.ok(/recorded in handover.md: tsk-start: check responsive layout on mobile/.test(r.stdout), r.stdout);
+  const h = fs.readFileSync(hf, 'utf8');
+  assert.ok(h.includes('## Next task\ntsk-start: check responsive layout on mobile\n'), h);
+  assert.ok(h.includes('## Skills\narchived: perf-audit\n'), h);
+  assert.ok(!h.includes('old') && h.includes('keep me') && h.includes('## Decisions\nkeep too'), h);
+  assert.strictEqual(h.match(/## Next task/g).length, 1);
+});
+t('/next creates handover.md when missing, adds sections after Current state, drops an empty Skills block', () => {
+  const root = makeProject(['handover']);
+  const hf = path.join(root, 'handover.md');
+  run('apply', '--root', root, '--require-task', 'tsk-note', 'write', 'docs');
+  assert.strictEqual(fs.readFileSync(hf, 'utf8'), '# Handover\n\n## Next task\ntsk-note: write docs\n');
+  fs.writeFileSync(hf, '# H\n\n## Current state\nx\n\n## Known issues\ny\n\n## Skills\narchived: old\n');
+  run('apply', '--root', root, '--require-task', 'tsk-note', 'write', 'docs');
+  const h = fs.readFileSync(hf, 'utf8');
+  assert.ok(h.indexOf('## Current state') < h.indexOf('## Next task') && h.indexOf('## Next task') < h.indexOf('## Known issues'), h);
+  assert.ok(!h.includes('## Skills'), h);
+});
+t('/next leaves the file alone and says so when a handover/ folder exists', () => {
+  const root = makeProject(['perf-audit']);
+  fs.mkdirSync(path.join(root, 'handover'));
+  const r = run('apply', '--root', root, '--require-task', 'tsk-note', 'write', 'docs');
+  assert.ok(/handover\/ folder exists/.test(r.stdout), r.stdout);
+  assert.ok(!fs.existsSync(path.join(root, 'handover.md')));
+});
