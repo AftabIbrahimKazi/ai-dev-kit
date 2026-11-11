@@ -3,7 +3,7 @@
 // outbound calls, secret-looking strings, dangerous sinks and obvious things, with file:line, so the hunt starts from
 // a map instead of a tour. Counts and locations only: it names no finding, the model does. Reads files only; no network.
 //
-//   node recon.js [--cwd D] [--top N] [--json]
+//   node recon.js [--cwd D] [--top N] [--json] [--summary]   (--summary: the grouped map /recon relays, under 20 lines)
 //
 // Secrets are masked (first 4 characters and the length). Skips node_modules, vendor, dist, build, .git and lockfiles.
 // Exit codes: 0 done, 2 bad usage.
@@ -166,19 +166,46 @@ export function render(r: Recon): string {
   return L.join('\n');
 }
 
+// What /recon relays: a grouped map, one line per group, under 20 lines. Names no vulnerability; "check first" only orders the hunt.
+export function summarize(r: Recon): string {
+  const L: string[] = [`Recon over ${r.files} files. Stack: ${r.stack.join(', ') || 'unknown'}.`];
+  const routeFiles = new Set([...r.routes.map((h) => h.file), ...r.fileRoutes]);
+  const authFiles = new Set(r.authMarkers.map((h) => h.file));
+  const bare = [...routeFiles].filter((f) => !authFiles.has(f));
+  L.push(`Entry points: ${r.routes.length} coded, ${r.fileRoutes.length} file routes${r.entryBins.length ? ', bins ' + r.entryBins.join(', ') : ''}.`);
+  L.push(`Route files with no auth marker (${bare.length} of ${routeFiles.size}): ${bare.slice(0, 5).join(', ') || 'none'}${bare.length > 5 ? ', ...' : ''}`);
+  L.push(`Data stores: ${r.dataStores.slice(0, 6).join(', ') || 'none found'}.`);
+  const outFiles = new Set(r.outbound.map((h) => h.file));
+  L.push(`Outbound calls: ${r.outbound.length} in ${outFiles.size} files${outFiles.size ? ' (' + [...outFiles].slice(0, 3).join(', ') + (outFiles.size > 3 ? ', ...' : '') + ')' : ''}. Env names read: ${Object.keys(r.envReads).length}.`);
+  const sinks = Object.entries(r.sinks).sort((a, b) => b[1].length - a[1].length);
+  L.push(`Sink classes: ${sinks.map(([k, hs]) => k + ' ' + hs.length + ' (' + hs[0].file + ':' + hs[0].line + ')').join('; ') || 'none'}.`);
+  const kinds = new Map<string, number>();
+  for (const h of r.obvious) { const k = h.text.split(':')[0]; kinds.set(k, (kinds.get(k) ?? 0) + 1); }
+  L.push(`Obvious items: ${[...kinds].map(([k, n]) => k + ' x' + n).join(', ') || 'none'}.`);
+  const first: string[] = [];
+  if (r.secrets.length) first.push(`${r.secrets.length} secret-looking string(s), e.g. ${r.secrets[0].file}:${r.secrets[0].line} ${r.secrets[0].text}`);
+  if (r.envFilesTracked.length) first.push(`env file in the tree: ${r.envFilesTracked[0]} (is it git-ignored?)`);
+  for (const k of ['disabled-tls', 'cors-any', 'seed-credential', 'debug-flag', 'admin-route']) { const h = r.obvious.find((x) => x.text.startsWith(k)); if (h) first.push(`${h.text.slice(0, 60)} at ${h.file}:${h.line}`); }
+  if (bare.length) first.push(`route file without auth marker: ${bare[0]}`);
+  L.push(first.length ? 'Check first: ' + first.slice(0, 4).join(' | ') : 'Check first: nothing stands out; pick attack classes from the skill table.');
+  L.push('Inventory only, no findings; a finding needs the five parts the security-audit skill lists.');
+  return L.join('\n');
+}
+
 function main(): void {
-  let cwd = process.cwd(), top = 15, json = false;
+  let cwd = process.cwd(), top = 15, json = false, summary = false;
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const f = argv[i];
     if (f === '--cwd') cwd = path.resolve(argv[++i] ?? '');
     else if (f === '--top') top = Number(argv[++i]);
     else if (f === '--json') json = true;
-    else { console.error('usage: recon.js [--cwd D] [--top N] [--json]'); process.exitCode = 2; return; }
+    else if (f === '--summary') summary = true;
+    else { console.error('usage: recon.js [--cwd D] [--top N] [--json] [--summary]'); process.exitCode = 2; return; }
   }
-  if (!(top > 0)) { console.error('usage: recon.js [--cwd D] [--top N] [--json]'); process.exitCode = 2; return; }
+  if (!(top > 0)) { console.error('usage: recon.js [--cwd D] [--top N] [--json] [--summary]'); process.exitCode = 2; return; }
   const r = recon(cwd, top);
-  console.log(json ? JSON.stringify(r) : render(r));
+  console.log(json ? JSON.stringify(r) : summary ? summarize(r) : render(r));
 }
 
 if (require.main === module) main();
