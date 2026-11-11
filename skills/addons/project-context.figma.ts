@@ -6,7 +6,8 @@
 //
 //   node figma.js <file-or-folder>...   print the draft to stdout
 //   node figma.js <file-or-folder>... --write   write project-context/design/figma.md (needs project-context/design/)
-// Options: --cwd D, --link <figma url> (recorded in the file), --json.  Exit 1 on a usage error, 2 on other errors.
+// Options: --cwd D, --link <figma url> (recorded in the file), --tokens <css file> (else common token files are tried; colors
+// and type sizes get a token column), --json.  Exit 1 on a usage error, 2 on other errors.
 import fs = require('node:fs');
 import path = require('node:path');
 
@@ -14,7 +15,51 @@ const IMG = new Set(['png', 'jpg', 'jpeg', 'webp', 'svg']);
 const ext = (f: string): string => path.extname(f).slice(1).toLowerCase();
 const norm = (p: string): string => p.split(path.sep).join('/');
 
-export interface FigmaArgs { inputs: string[]; cwd: string; write?: boolean; json?: boolean; link?: string }
+export interface FigmaArgs { inputs: string[]; cwd: string; write?: boolean; json?: boolean; link?: string; tokens?: string }
+
+// ---- token mapping: match extracted colors and type sizes to the project's own CSS custom properties ----
+const TOKEN_FILES = ['src/styles/tokens.css', 'src/styles/variables.css', 'src/css/tokens.css', 'styles/tokens.css', 'css/tokens.css', 'assets/css/tokens.css', 'src/tokens.css', 'tokens.css', 'variables.css', 'src/styles/theme.css', 'theme.css'];
+export interface Tokens { file: string; colors: [string, string][]; sizes: [string, number][] }
+export function parseTokens(text: string, file = ''): Tokens {
+  const colors: [string, string][] = [];
+  const sizes: [string, number][] = [];
+  for (const m of text.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) {
+    const name = m[1], val = m[2].trim();
+    const hx = /^#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})$/i.exec(val);
+    const rg = /^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i.exec(val);
+    if (hx) colors.push([name, hex6(val)]);
+    else if (rg) colors.push([name, toHex(rg[1], rg[2], rg[3])]);
+    else if (/size|text|font|fs-/i.test(name) && !/family|weight|line/i.test(name)) {
+      const px = /^(\d+(?:\.\d+)?)px$/.exec(val), rem = /^(\d+(?:\.\d+)?)rem$/.exec(val);
+      if (px) sizes.push([name, parseFloat(px[1])]); else if (rem) sizes.push([name, parseFloat(rem[1]) * 16]);
+    }
+  }
+  return { file, colors, sizes };
+}
+export function findTokens(cwd: string, explicit?: string): Tokens | null {
+  for (const c of explicit ? [explicit] : TOKEN_FILES) {
+    const p = path.resolve(cwd, c);
+    try { const t = parseTokens(fs.readFileSync(p, 'utf8'), norm(path.relative(cwd, p))); if (t.colors.length || t.sizes.length) return t; } catch { /* next candidate */ }
+  }
+  return null;
+}
+const rgbOf = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+// Exact match first; else the nearest color within a distance of 24 (of 441); else none.
+export function nearestColor(hex: string, tokens: Tokens): string {
+  const t = rgbOf(hex);
+  let best: [string, number] | null = null;
+  for (const [name, h] of tokens.colors) {
+    const d = Math.hypot(...rgbOf(h).map((v, i) => v - t[i]));
+    if (!best || d < best[1]) best = [name, d];
+  }
+  if (!best) return '-';
+  return best[1] === 0 ? `\`${best[0]}\`` : best[1] <= 24 ? `~\`${best[0]}\`` : '-';
+}
+export function nearestSize(px: number, tokens: Tokens): string {
+  let best: [string, number] | null = null;
+  for (const [name, v] of tokens.sizes) { const d = Math.abs(v - px); if (!best || d < best[1]) best = [name, d]; }
+  return !best ? '-' : best[1] === 0 ? `\`${best[0]}\`` : best[1] <= 1 ? `~\`${best[0]}\`` : '-';
+}
 
 export function parseArgs(argv: string[]): FigmaArgs {
   const o: FigmaArgs = { inputs: [], cwd: process.cwd() };
@@ -24,6 +69,7 @@ export function parseArgs(argv: string[]): FigmaArgs {
     else if (a === '--json') o.json = true;
     else if (a === '--cwd') o.cwd = argv[++i];
     else if (a === '--link') o.link = argv[++i];
+    else if (a === '--tokens') o.tokens = argv[++i];
     else if (a.startsWith('--')) throw new Error(`unknown option ${a}`);
     else o.inputs.push(a);
   }
@@ -118,7 +164,7 @@ function shown(o: FigmaArgs, abs: string): string {
 export interface FrameInfo extends Partial<SvgInfo> { file: string; kind: 'svg' | 'raster'; kb: number }
 export interface FigmaScanResult {
   link: string | null; files: FrameInfo[]; colors: [string, number][]; fonts: [string, number][];
-  sizes: [number, number][]; flat: number;
+  sizes: [number, number][]; flat: number; tokens: Tokens | null;
 }
 
 export function scan(o: FigmaArgs): FigmaScanResult {
@@ -138,6 +184,7 @@ export function scan(o: FigmaArgs): FigmaScanResult {
     fonts: tally(svgs.flatMap((f) => f.fonts || [])),
     sizes: tally(svgs.flatMap((f) => f.sizes || [])).sort((a, b) => a[0] - b[0]),
     flat: files.filter((f) => f.kind === 'raster').length,
+    tokens: findTokens(o.cwd, o.tokens),
   };
 }
 
@@ -149,9 +196,16 @@ export function render(r: FigmaScanResult): string {
     'Generated by `figma.js` from exported files. Edit freely; re-run to refresh the tables.', '',
     '## Frames', '', '| File | Type | Size (px) | KB | Text found |', '|---|---|---|---|---|'];
   for (const f of r.files) L.push(`| ${cell(f.file)} | ${f.kind} | ${dims(f.size)} | ${f.kb} | ${f.texts ? f.texts.length : 'n/a'} |`);
-  if (r.colors.length) { L.push('', '## Colors (SVG exports, by use)', '', '| Color | Uses |', '|---|---|'); for (const [c, n] of r.colors.slice(0, 24)) L.push(`| ${c} | ${n} |`); }
+  const tk = r.tokens && r.tokens.colors.length ? r.tokens : null;
+  if (r.colors.length) {
+    L.push('', '## Colors (SVG exports, by use)', '', tk ? `Token column from \`${tk.file}\`: exact match, or ~ for the nearest within a small distance, or - for none.` : '', tk ? '| Color | Uses | Token |' : '| Color | Uses |', tk ? '|---|---|---|' : '|---|---|');
+    for (const [c, n] of r.colors.slice(0, 24)) L.push(tk ? `| ${c} | ${n} | ${nearestColor(c, tk)} |` : `| ${c} | ${n} |`);
+  }
   if (r.fonts.length) { L.push('', '## Fonts', '', '| Family | Uses |', '|---|---|'); for (const [c, n] of r.fonts) L.push(`| ${cell(c)} | ${n} |`); }
-  if (r.sizes.length) { L.push('', '## Type sizes (px)', '', r.sizes.map(([s]) => s).join(', ')); }
+  if (r.sizes.length) {
+    const ts = r.tokens && r.tokens.sizes.length ? r.tokens : null;
+    L.push('', '## Type sizes (px)', '', r.sizes.map(([s]) => (ts ? `${s} (${nearestSize(s, ts)})` : String(s))).join(', '));
+  }
   const txt = r.files.filter((f) => f.texts && f.texts.length);
   if (txt.length) {
     L.push('', '## Text per frame', '');

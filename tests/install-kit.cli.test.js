@@ -759,7 +759,7 @@ t('every real command resolves to a skill or has a fallback entry', () => {
   const names = cmds.map((c) => c.name);
   for (const n of ['next', 'audit', 'version-bump', 'kit', 'eta', 'wrap-up']) assert.ok(names.includes(n), n);
   assert.strictEqual(cmds.find((c) => c.name === 'audit').needs, 'code-audit');
-  assert.strictEqual(cmds.find((c) => c.name === 'kit').needs, null);
+  assert.strictEqual(cmds.find((c) => c.name === 'kit').needs, 'skill-scope'); // its lookup script ships with skill-scope, like /next
 });
 
 // ---- What's new: CHANGELOG sections newer than the project's lastSeen ----
