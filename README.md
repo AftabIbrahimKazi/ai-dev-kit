@@ -668,6 +668,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `handover/size.js` | Reports a `handover.md` over 120 lines or with stacked session sections, and a `learnings.md` over 30 bullets; silent when within limits | `/wrap-up`, and a Claude Code session-start hook |
 | `skill-scope/auto.js` | Archives the per-session-archivable skills and restores the ones a task names (trigger words in `triggers.json`; a finished theme locks `ux-theory` to expansion phrases) | `/next`, and two Claude Code hooks |
 | `skill-scope/auto.js pickup` | Prints the queued task with what its mode means, the handover verbatim and the archived-skills report; `apply --require-task` also writes the `## Next task` and `## Skills` lines | `/pickup`, `/next` |
+| `handover/draft.js` | The mechanical half of a handover: header line, commits since the last one, uncommitted files, existing next task, size check, optional session-journal facts | `/wrap-up` |
 | `skill-scope/kit.js` | Keyword scorer over the command table: prints the single best command for a situation, or the whole table | `/kit` |
 | `skill-scope/auto.js run` | Restores an archived skill, then runs its script; the six commands for archivable skills call it | `/audit`, `/stale`, `/version-bump` and three more |
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
