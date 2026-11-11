@@ -282,3 +282,15 @@ t('cli: git findings are cached per ref state and recomputed when a ref moves', 
   assert.match(run(), /g-06/);
   assert.notStrictEqual(fs.statSync(cache).mtimeMs, stamp);
 });
+
+t('--summary prints the worst rules, worst files and the biggest fix in under 16 lines', () => {
+  const d = tmp();
+  put(d, 'a.js', 'console.log(1)\nconsole.log(2)\nconsole.log(3)\nvar x = 1\n');
+  put(d, 'b.js', 'console.log(4)\n');
+  const out = cli(d, '--summary').stdout;
+  assert.match(out, /worst rules:\n {2}js-03 4 in 2 files/);
+  assert.match(out, /worst files:\n {2}a\.js 4\n/);
+  assert.match(out, /biggest fix: js-03 \(4 occurrences\); list them with --rule js-03/);
+  assert.ok(out.split('\n').length < 16, out);
+  assert.ok(!/rule {13}kind/.test(out), 'no full table in summary mode');
+});
