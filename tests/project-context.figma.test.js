@@ -87,3 +87,20 @@ t('figma-style export: named white and black count, outlined text is flagged, ou
   assert.strictEqual(r.files[0].outlined, false);
   assert.match(F.render(r), /Figma outlines text into paths/);
 });
+
+t('tokens: colors and type sizes map to the project custom properties, exact first, nearest within a small distance', () => {
+  const d = dir();
+  fs.mkdirSync(path.join(d, 'src', 'styles'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'src', 'styles', 'tokens.css'), ':root{--color-bg:#ffffff;--color-ink:#1a2b3d;--color-accent:rgb(250,0,0);--text-body:1rem;--text-title:24px;--space-4:16px;--font-sans:Inter}');
+  fs.mkdirSync(path.join(d, 'out')); fs.writeFileSync(path.join(d, 'out', 'a.svg'), SVG);
+  const out = cli(d, 'out').stdout;
+  assert.match(out, /Token column from `src\/styles\/tokens\.css`/);
+  assert.match(out, /\| #ffffff \| 2 \| `--color-bg` \|/);
+  assert.match(out, /\| #1a2b3c \| 1 \| ~`--color-ink` \|/);
+  assert.match(out, /\| #ff0000 \| 1 \| ~`--color-accent` \|/);
+  assert.match(out, /16 \(`--text-body`\), 24 \(`--text-title`\)/);
+  assert.ok(!/--space-4|--font-sans/.test(out), 'only color and type-size tokens are used');
+  const none = dir(); fs.mkdirSync(path.join(none, 'out')); fs.writeFileSync(path.join(none, 'out', 'a.svg'), SVG);
+  assert.ok(!/Token column/.test(cli(none, 'out').stdout), 'no token file: no token column');
+  assert.match(cli(d, 'out', '--tokens', 'src/styles/tokens.css').stdout, /Token column/);
+});
