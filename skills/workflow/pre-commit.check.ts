@@ -2,7 +2,7 @@
 // Mechanical half of the pre-commit skill: staged-diff checks that need no judgment.
 // Works in any tool (plain Node + git). Prints a compact report; exit 1 when a BLOCK finding exists.
 //
-//   node check.js [--staged | --all | --push] [--files a,b] [--message TEXT | --message-file F] [--cwd D] [--json]
+//   node check.js [--staged | --all | --push] [--files a,b] [--message TEXT | --message-file F] [--cwd D] [--json] [--verdict] [--version-check]
 //   node check.js --detect "<shell command>" [--shell powershell]  -> JSON describing any git commit/push in it
 //
 // Modes: --staged (default) the index; --all tracked changes vs HEAD (git commit -a); --push commits no remote has.
@@ -145,7 +145,15 @@ export function checkMessage(msg: string): Finding[] {
   return out;
 }
 
-export interface CheckOpts { cwd?: string; mode?: Mode; files?: string[]; message?: string }
+export interface CheckOpts { cwd?: string; mode?: Mode; files?: string[]; message?: string; version?: boolean }
+
+// Files that are almost never meant to be committed: editor and OS leftovers, merge leftovers, logs, temp files.
+const STRAY = /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini|\.idea\/|npm-debug\.log[^/]*|[^/]+\.(orig|rej|bak|tmp|log|swp)|[^/]+~)$|(^|\/)(\.idea|\.vs)\//i;
+// Where a version number may live, in the order a project would bump it; a change set that touches code without touching any of them may need a bump.
+const VERSION_FILES = ['package.json', 'composer.json', 'pyproject.toml', 'Cargo.toml', 'version.txt', 'VERSION'];
+const hasVersion = (cwd: string, f: string): boolean => {
+  try { const t = fs.readFileSync(path.join(cwd, f), 'utf8'); return /"version"\s*:|^\s*version\s*=/m.test(t) || f === 'version.txt' || f === 'VERSION'; } catch { return false; }
+};
 export interface CheckResult { label: string; files: number; findings: Finding[] }
 
 export function check(opts: CheckOpts): CheckResult {
@@ -157,6 +165,7 @@ export function check(opts: CheckOpts): CheckResult {
   for (const f of names) {
     if (SENSITIVE_FILE.test(f)) findings.push({ sev: 'BLOCK', kind: 'file', file: f, msg: 'secret-bearing file is in the change set' });
     if (/^project-context\//.test(f)) findings.push({ sev: 'BLOCK', kind: 'file', file: f, msg: 'private project-context file is in the change set; unstage it (git rm --cached)' });
+    if (STRAY.test(f)) findings.push({ sev: 'WARN', kind: 'stray', file: f, msg: 'looks like an editor, OS, merge or log leftover; unstage it?' });
     const abs = path.join(cwd, f);
     try { if (mode !== 'push' && fs.statSync(abs).size > BIG_FILE) findings.push({ sev: 'WARN', kind: 'size', file: f, msg: `${(fs.statSync(abs).size / BIG_FILE).toFixed(1)} MB file` }); } catch { /* deleted or unreadable */ }
   }
@@ -187,18 +196,28 @@ export function check(opts: CheckOpts): CheckResult {
     if (untracked.length) findings.push({ sev: 'WARN', kind: 'untracked', msg: `${untracked.length} untracked: ${untracked.slice(0, 6).join(', ')}${untracked.length > 6 ? ', …' : ''}` });
   }
 
+  // Opt-in (--version-check): code changed, a version file exists, and none of the version files is in the change set.
+  if (opts.version && mode !== 'push') {
+    const code = names.filter((f) => CODE_EXT.test(f) && !SKIP_DEBUG.test(f));
+    const present = VERSION_FILES.filter((f) => hasVersion(cwd, f));
+    if (code.length && present.length && !present.some((f) => names.includes(f))) {
+      findings.push({ sev: 'WARN', kind: 'version', msg: `${code.length} code file(s) changed, ${present[0]} has a version and is not in the change set; bump it if this is a release-worthy change` });
+    }
+  }
+
   if (opts.message) findings.push(...checkMessage(opts.message));
   return { label, files: names.length, findings };
 }
 
-export function report(res: CheckResult): string {
+export function report(res: CheckResult, verdict = false): string {
   const b = res.findings.filter((f) => f.sev === 'BLOCK').length;
   const w = res.findings.length - b;
   const head = `precommit-check (${res.label}, ${res.files} file(s)): ${b} BLOCK, ${w} WARN`;
   const rows = res.findings
     .sort((x, y) => (x.sev === y.sev ? 0 : x.sev === 'BLOCK' ? -1 : 1))
     .map((f) => `${f.sev.padEnd(5)} ${f.kind}${f.file ? '  ' + f.file + (f.line ? ':' + f.line : '') : ''}  ${f.msg}`);
-  return [head, ...rows].join('\n');
+  const v = !verdict ? [] : [b ? `verdict: STOP, ${b} BLOCK finding(s); fix or unstage before committing` : w ? `verdict: REVIEW, ${w} warning(s); the commit is allowed once you accept them` : res.files ? 'verdict: SAFE, nothing found in the staged change' : 'verdict: nothing staged'];
+  return [head, ...rows, ...v].join('\n');
 }
 
 // ---- shell command parsing: is this a git commit or push, and with what? ----
@@ -288,6 +307,7 @@ function main(): void {
   const opt: CheckOpts = { mode: 'staged' };
   let json = false;
   let noFail = false;
+  let verdict = false;
   for (let i = 0; i < a.length; i++) {
     const k = a[i];
     if (k === '--json') json = true;
@@ -295,6 +315,8 @@ function main(): void {
     else if (k === '--all') opt.mode = 'all';
     else if (k === '--push') opt.mode = 'push';
     else if (k === '--files') opt.files = a[++i].split(',').filter(Boolean);
+    else if (k === '--verdict') verdict = true;
+    else if (k === '--version-check') opt.version = true;
     else if (k === '--no-fail') noFail = true; // always exit 0: a slash command aborts on a non-zero exit
     else if (k === '--message') opt.message = a[++i];
     else if (k === '--message-file') opt.message = fs.readFileSync(a[++i], 'utf8');
@@ -306,7 +328,7 @@ function main(): void {
     }
   }
   const res = check(opt);
-  console.log(json ? JSON.stringify(res, null, 2) : report(res));
+  console.log(json ? JSON.stringify(res, null, 2) : report(res, verdict));
   process.exitCode = !noFail && res.findings.some((f) => f.sev === 'BLOCK') ? 1 : 0;
 }
 

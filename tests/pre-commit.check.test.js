@@ -178,3 +178,29 @@ t('a staged file under project-context/ blocks, even when force-added past .giti
   assert.deepStrictEqual(kinds(r, 'BLOCK'), ['file:project-context/design/brand.md']);
   assert.match(r.findings[0].msg, /private project-context file/);
 });
+
+t('stray editor, OS and merge leftovers warn', () => {
+  const d = repo(); put(d, 'src/a.js', 'const a = 1;\n'); put(d, '.DS_Store', 'x'); put(d, 'src/a.js.orig', 'x'); put(d, 'debug.log', 'x'); sh(d, 'add', '-f', '.');
+  const r = check({ cwd: d });
+  assert.deepStrictEqual(kinds(r, 'WARN').filter((k) => k.startsWith('stray')).sort(), ['stray:.DS_Store', 'stray:debug.log', 'stray:src/a.js.orig']);
+});
+t('--version-check warns when code changes and the version file is not staged; silent otherwise', () => {
+  const d = repo(); put(d, 'package.json', '{"name":"x","version":"1.0.0"}\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: pkg');
+  put(d, 'src/a.js', 'const a = 1;\n'); sh(d, 'add', '.');
+  assert.deepStrictEqual(kinds(check({ cwd: d, version: true }), 'WARN'), ['version:']);
+  assert.deepStrictEqual(check({ cwd: d }).findings, []); // off unless asked
+  put(d, 'package.json', '{"name":"x","version":"1.0.1"}\n'); sh(d, 'add', '.');
+  assert.deepStrictEqual(check({ cwd: d, version: true }).findings, []);
+  const e = repo(); put(e, 'src/a.js', 'const a = 1;\n'); sh(e, 'add', '.');
+  assert.deepStrictEqual(check({ cwd: e, version: true }).findings, []); // no version file in the project
+});
+t('--verdict ends the report with STOP, REVIEW, SAFE or nothing staged', () => {
+  const v = (d) => spawnSync('node', [SCRIPT, '--staged', '--no-fail', '--verdict', '--cwd', d], { encoding: 'utf8' }).stdout.trim().split('\n').pop();
+  const a = repo(); put(a, 'k.js', `const k = "${KEY}";\n`); sh(a, 'add', '.');
+  assert.match(v(a), /^verdict: STOP, 1 BLOCK/);
+  const b = repo(); put(b, 'src/a.js', 'const a = 1;\nconsole.log(a);\n'); sh(b, 'add', '.');
+  assert.match(v(b), /^verdict: REVIEW, 1 warning/);
+  const c = repo(); put(c, 'src/a.js', 'const a = 1;\n'); sh(c, 'add', '.');
+  assert.match(v(c), /^verdict: SAFE/);
+  assert.match(v(repo()), /^verdict: nothing staged/);
+});

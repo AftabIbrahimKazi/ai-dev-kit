@@ -3,8 +3,8 @@ description: Mechanical check of staged changes before commit
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git status:*)
 ---
-Staged-change check:
+Staged-change check (secrets, sensitive and stray files, debug leftovers, version bump, message when given):
 
-!`node {{skill-root}}/pre-commit/check.js --staged --no-fail $ARGUMENTS`
+!`node {{skill-root}}/pre-commit/check.js --staged --no-fail --verdict --version-check $ARGUMENTS`
 
-If the report has a BLOCK finding, list it and stop. Otherwise check the message, version bump and stray files by hand (use the `pre-commit` skill if it is installed) and say in 6 lines or fewer whether the commit is safe to run. Do not run `git commit` unless asked.
+Relay the report and its verdict line as is. On STOP, list the BLOCK findings and stop. Pass a draft message as `--message "<text>"` to have its format checked too. Do not run `git commit` unless asked.
