@@ -77,10 +77,43 @@ export function plan(task: string, forced: string[], triggers: Triggers, install
   };
 }
 
-interface Args { cmd?: string; root?: string; task: string; keep: string[]; dryRun: boolean; json: boolean; addOnly: boolean; quiet: boolean; requireTask: boolean; modeOk: boolean }
+interface Args { cmd?: string; root?: string; task: string; keep: string[]; dryRun: boolean; json: boolean; addOnly: boolean; quiet: boolean; requireTask: boolean; modeOk: boolean; mode: string }
+
+// Section helpers for handover.md: a section runs from its "## name" line to the next "## " line.
+function sectionRange(lines: string[], name: string): [number, number] | null {
+  const s = lines.findIndex((l) => l.trim().toLowerCase() === '## ' + name.toLowerCase());
+  if (s < 0) return null;
+  let e = lines.length;
+  for (let i = s + 1; i < lines.length; i++) if (/^## /.test(lines[i])) { e = i; break; }
+  return [s, e];
+}
+
+// /next step 2 as code: replace the "## Next task" line and the "## Skills" block, touch nothing else. Returns a one-line report.
+export function writeNext(root: string, mode: string, task: string, archived: string[], restored: string[]): string {
+  if (fs.existsSync(path.join(root, 'handover'))) return 'handover/ folder exists: write the per-role file per the role-session skill (script did not write)';
+  const file = path.join(root, 'handover.md');
+  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '# Handover\n';
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  let lines = text.split(/\r?\n/);
+  if (lines[lines.length - 1] === '') lines.pop();
+  const put = (name: string, body: string[], after: string | null): void => {
+    const r = sectionRange(lines, name);
+    const block = body.length ? ['## ' + name, ...body, ''] : [];
+    if (r) { lines.splice(r[0], r[1] - r[0], ...block); return; }
+    if (!block.length) return;
+    const a = after ? sectionRange(lines, after) : null;
+    const at = a ? a[1] : lines.length;
+    lines.splice(at, 0, ...(at > 0 && lines[at - 1] !== '' ? [''] : []), ...block);
+  };
+  put('Next task', [mode + ': ' + task], 'Current state');
+  put('Skills', [archived.length ? 'archived: ' + archived.join(', ') : '', restored.length ? 'restored: ' + restored.join(', ') : ''].filter(Boolean), 'Next task');
+  while (lines.length && lines[lines.length - 1] === '') lines.pop();
+  fs.writeFileSync(file, lines.join(eol) + eol);
+  return 'recorded in handover.md: ' + mode + ': ' + task;
+}
 
 function parseArgs(argv: string[]): Args | null {
-  const a: Args = { task: '', keep: [], dryRun: false, json: false, addOnly: false, quiet: false, requireTask: false, modeOk: false };
+  const a: Args = { task: '', keep: [], dryRun: false, json: false, addOnly: false, quiet: false, requireTask: false, modeOk: false, mode: '' };
   const [cmd, ...rest] = argv;
   if (cmd !== 'apply' && cmd !== 'status') return null;
   a.cmd = cmd;
@@ -99,6 +132,7 @@ function parseArgs(argv: string[]): Args | null {
   }
   // /next passes "tsk-note" or "tsk-start" first; the mode word is for the command, never a trigger word.
   a.modeOk = /^(?:tsk-note|tsk-start)\b/i.test(a.task);
+  a.mode = a.modeOk ? a.task.match(/^(tsk-note|tsk-start)/i)![1].toLowerCase() : '';
   a.task = a.task.replace(/^(?:tsk-note|tsk-start)\b\s*/i, '');
   return a;
 }
@@ -242,9 +276,11 @@ function main(): void {
       if (p.restore.length) doUnarchive({ root, skills: p.restore, by });
     }
     if (args.quiet && !p.restore.length) return;
+    // /next: the script records the task line and the skills it moved, so the command only relays the result.
+    const rec = args.requireTask && args.cmd === 'apply' && !args.dryRun ? writeNext(root, args.mode, args.task.trim(), p.archive, p.restore) : '';
     if (args.json) console.log(JSON.stringify({ dryRun: args.dryRun, ...p }));
     else console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length + (p.archive.length ? ' (' + p.archive.join(', ') + ')' : '') +
-      (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active'));
+      (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active') + (rec ? '\n' + rec : ''));
   } catch (e) {
     console.error('error: ' + (e as Error).message);
     process.exitCode = 1;
