@@ -2,7 +2,9 @@
 // Static payload weigh-in for the perf-audit skill (Step 1 and the static half of Step 2). One ranked table instead of
 // a dozen ls, du and grep calls the model would otherwise read line by line. Reads files only; never edits, no network.
 //
-//   node weigh.js [--cwd D] [--dist DIR] [--src DIR] [--top N] [--json]
+//   node weigh.js [--cwd D] [--dist DIR] [--src DIR] [--top N] [--json] [--summary]
+//
+// --summary prints at most 7 rows ranked by bytes with a fix and an effort each (what /perf relays).
 //
 // Finds the production build folder (dist, build, out, .output/public, .next/static, public) or takes --dist.
 // Reports: JS and CSS totals, every chunk over 150 KB gzip, images over 200 KB, PNG and JPEG with no WebP/AVIF sibling,
@@ -210,8 +212,39 @@ export function render(r: Report): string {
   return L.join('\n');
 }
 
-function parse(argv: string[]): { cwd: string; dist?: string; src?: string; top: number; json: boolean } | null {
-  const a: { cwd: string; dist?: string; src?: string; top: number; json: boolean } = { cwd: process.cwd(), top: 10, json: false };
+// What /perf relays: at most 7 rows ranked by bytes (rows with no byte size follow, in a fixed order), each with a fix and an effort (S/M/L) from a lookup.
+const HTML_FIX: Record<string, [string, string]> = {
+  'blocking-script': ['add defer or async to the head script', 'S'],
+  'third-party-sync': ['load it async or after interaction', 'M'],
+  'third-party-css': ['self-host or preload the stylesheet', 'M'],
+  'eager-images': ['add loading="lazy" to below-the-fold images', 'S'],
+  'no-lcp-priority': ['add fetchpriority="high" to the hero image', 'S'],
+  'img-no-dimensions': ['add width and height attributes', 'S'],
+  'font-no-preconnect': ['preconnect to fonts.gstatic.com', 'S'],
+};
+export function summarize(r: Report, max = 7): string {
+  const rows: { text: string; bytes: number; fix: string; effort: string }[] = [];
+  for (const c of r.heavyChunks) rows.push({ text: `chunk ${c.file}`, bytes: c.gzip, fix: 'split by route or lazy-load; drop unused imports', effort: 'M' });
+  for (const i of r.heavyImages) rows.push({ text: `image ${i.file}`, bytes: i.size, fix: 'resize to display size, convert to WebP/AVIF', effort: 'S' });
+  if (r.legacyRasters.length) rows.push({ text: `${r.legacyRasters.length} PNG/JPEG without WebP/AVIF (e.g. ${r.legacyRasters[0].file})`, bytes: r.legacyRasters.reduce((a, x) => a + x.size, 0), fix: 'add WebP/AVIF versions', effort: 'S' });
+  for (const v of r.video) rows.push({ text: `video ${v.file}`, bytes: v.size, fix: 'compress, add a poster, load on demand', effort: 'M' });
+  if (r.fonts.files.length > FONT_FILE_LIMIT) rows.push({ text: `${r.fonts.files.length} font files`, bytes: r.fonts.files.reduce((a, x) => a + x.size, 0), fix: `subset and keep at most ${FONT_FILE_LIMIT} files`, effort: 'M' });
+  else if (r.fonts.display === 'missing' || r.fonts.display === 'other') rows.push({ text: 'font-display', bytes: 0, fix: 'set font-display: swap on every @font-face', effort: 'S' });
+  const kinds = new Map<string, HtmlFinding[]>();
+  for (const h of r.html) kinds.set(h.kind, [...(kinds.get(h.kind) ?? []), h]);
+  for (const [k, list] of kinds) { const [fix, effort] = HTML_FIX[k] ?? ['see the weigh-in output', 'M']; rows.push({ text: `${k} in ${list.length} page${list.length === 1 ? '' : 's'} (${list[0].file})`, bytes: 0, fix, effort }); }
+  if (r.unhashed) rows.push({ text: `${r.unhashed} unhashed JS/CSS names`, bytes: 0, fix: 'enable content hashes in the build', effort: 'M' });
+  const L: string[] = [r.dist ? `Build folder: ${r.dist}` : 'no build folder found: ask whether to build first; numbers below are from source'];
+  if (!rows.length) { L.push('No static findings over the thresholds; the next step is the runtime half (browser trace).'); return L.join('\n'); }
+  rows.sort((a, b) => b.bytes - a.bytes);
+  L.push(`Heaviest: ${rows[0].text}${rows[0].bytes ? ' (' + fmt(rows[0].bytes) + ')' : ''}`, '', '| finding | size | fix | effort |', '|---|---|---|---|');
+  for (const x of rows.slice(0, max)) L.push(`| ${x.text} | ${x.bytes ? fmt(x.bytes) : '-'} | ${x.fix} | ${x.effort} |`);
+  if (rows.length > max) L.push(`(+${rows.length - max} smaller findings; rerun without --summary)`);
+  return L.join('\n');
+}
+
+function parse(argv: string[]): { cwd: string; dist?: string; src?: string; top: number; json: boolean; summary: boolean } | null {
+  const a: { cwd: string; dist?: string; src?: string; top: number; json: boolean; summary: boolean } = { cwd: process.cwd(), top: 10, json: false, summary: false };
   for (let i = 0; i < argv.length; i++) {
     const f = argv[i];
     if (f === '--cwd') a.cwd = path.resolve(argv[++i] ?? '');
@@ -219,6 +252,7 @@ function parse(argv: string[]): { cwd: string; dist?: string; src?: string; top:
     else if (f === '--src') a.src = argv[++i];
     else if (f === '--top') a.top = Number(argv[++i]);
     else if (f === '--json') a.json = true;
+    else if (f === '--summary') a.summary = true;
     else return null;
   }
   if (!(a.top > 0) || (a.dist !== undefined && !a.dist) || (a.src !== undefined && !a.src)) return null;
@@ -227,10 +261,10 @@ function parse(argv: string[]): { cwd: string; dist?: string; src?: string; top:
 
 function main(): void {
   const a = parse(process.argv.slice(2));
-  if (!a) { console.error('usage: weigh.js [--cwd D] [--dist DIR] [--src DIR] [--top N] [--json]'); process.exitCode = 2; return; }
+  if (!a) { console.error('usage: weigh.js [--cwd D] [--dist DIR] [--src DIR] [--top N] [--json] [--summary]'); process.exitCode = 2; return; }
   try {
     const r = weigh(a.cwd, a);
-    console.log(a.json ? JSON.stringify(r) : render(r));
+    console.log(a.json ? JSON.stringify(r) : a.summary ? summarize(r) : render(r));
   } catch (e) {
     console.error('error: ' + (e as Error).message);
     process.exitCode = 1;
