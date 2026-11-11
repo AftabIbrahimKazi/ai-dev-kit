@@ -172,7 +172,7 @@ function manualCmd(cmd: string, rest: string[]): void {
   const names = rest.filter((x, i) => !x.startsWith('--') && rest[i - 1] !== '--root');
   try {
     const manifest = readManifest(root);
-    if (!manifest.tool) throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
+    if (!manifest.tool && cmd !== 'pickup') throw new Error('no install manifest at ' + path.join(root, '.ai-dev-kit.json') + ' -- run install-kit first');
     const trig = loadTriggers().skills;
     const set = Object.keys(trig);
     if (cmd === 'wrap') {
@@ -214,6 +214,18 @@ function manualCmd(cmd: string, rest: string[]): void {
       }
       return;
     }
+    if (cmd === 'pickup') {
+      // /pickup: the handover verbatim, its queued task with the meaning of the mode, then the skills report below.
+      const hf = path.join(root, 'handover.md');
+      if (!fs.existsSync(hf)) console.log(fs.existsSync(path.join(root, 'handover')) ? 'NO_HANDOVER_FILE: a handover/ folder exists; follow the role-session skill' : 'NO_HANDOVER_FILE');
+      else {
+        const body = fs.readFileSync(hf, 'utf8');
+        const nm = body.match(/^## Next task\s*\r?\n+([^\r\n]+)/m);
+        const mode = nm ? nm[1].match(/^(tsk-note|tsk-start)/i)?.[1].toLowerCase() : undefined;
+        console.log(nm ? 'NEXT TASK (' + (mode === 'tsk-start' ? 'was begun' : mode === 'tsk-note' ? 'queued, not started' : 'no mode word') + '): ' + nm[1] : 'NEXT TASK: none recorded');
+        console.log('--- handover.md ---\n' + body.trimEnd() + '\n--- skills ---');
+      }
+    }
     const since = manifest.scopeMark ?? '';
     const ev = (manifest.scopeLog ?? []).filter((e) => e.t > since);
     const pick = (by: string, a: string): string[] => [...new Set(ev.filter((e) => e.by === by && e.a === a).flatMap((e) => e.n))];
@@ -224,7 +236,7 @@ function manualCmd(cmd: string, rest: string[]): void {
     if (am.length) lines.push('archived by you: ' + (am.length > 6 ? am.length + ' skills (listed below)' : am.join(', ')));
     const arch = Object.keys(manifest.archived);
     lines.push('archived now (' + arch.length + '): ' + (arch.join(', ') || 'none'));
-    if (!rest.includes('--mark')) {
+    if (!rest.includes('--mark')) { // report and pickup both list the archived skills the queued task needs
       // /pickup: name archived skills the queued next task would need, so the user can restore them. Names only, no descriptions.
       try {
         const m = fs.readFileSync(path.join(root, 'handover.md'), 'utf8').match(/^## Next task\s*\r?\n+([^\r\n]+)/m);
@@ -242,7 +254,7 @@ function manualCmd(cmd: string, rest: string[]): void {
 }
 
 function main(): void {
-  if (['list', 'add', 'drop', 'report', 'wrap'].includes(process.argv[2])) { manualCmd(process.argv[2], process.argv.slice(3)); return; }
+  if (['list', 'add', 'drop', 'report', 'wrap', 'pickup'].includes(process.argv[2])) { manualCmd(process.argv[2], process.argv.slice(3)); return; }
   if (process.argv[2] === 'run') { runSkillScript(process.argv.slice(3)); return; }
   const args = parseArgs(process.argv.slice(2));
   if (!args) {

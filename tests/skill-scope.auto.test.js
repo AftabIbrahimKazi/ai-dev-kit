@@ -268,3 +268,25 @@ t('/next leaves the file alone and says so when a handover/ folder exists', () =
   assert.ok(/handover\/ folder exists/.test(r.stdout), r.stdout);
   assert.ok(!fs.existsSync(path.join(root, 'handover.md')));
 });
+t('pickup prints the queued task with its mode, the handover verbatim, then the skills report', () => {
+  const root = makeProject(['perf-audit', 'responsive-check']);
+  run('apply', '--root', root);
+  fs.writeFileSync(path.join(root, 'handover.md'), '# H\n\n## Next task\ntsk-note: check responsive layout on mobile\n');
+  const r = run('pickup', '--root', root);
+  assert.ok(r.stdout.startsWith('NEXT TASK (queued, not started): tsk-note: check responsive layout on mobile'), r.stdout);
+  assert.ok(r.stdout.includes('--- handover.md ---\n# H'), r.stdout);
+  assert.ok(/next task needs archived: responsive-check/.test(r.stdout), r.stdout);
+  fs.writeFileSync(path.join(root, 'handover.md'), '# H\n\n## Next task\ntsk-start: x\n');
+  assert.ok(/^NEXT TASK \(was begun\)/.test(run('pickup', '--root', root).stdout));
+});
+t('pickup with no handover prints NO_HANDOVER_FILE, and works without an install manifest', () => {
+  const root = makeProject(['perf-audit']);
+  assert.ok(run('pickup', '--root', root).stdout.startsWith('NO_HANDOVER_FILE'));
+  fs.mkdirSync(path.join(root, 'handover'));
+  assert.ok(/handover\/ folder exists/.test(run('pickup', '--root', root).stdout));
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'bare-'));
+  fs.writeFileSync(path.join(bare, 'handover.md'), '# H\n');
+  const r = run('pickup', '--root', bare);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.ok(r.stdout.includes('NEXT TASK: none recorded') && r.stdout.includes('# H'), r.stdout);
+});

@@ -3,12 +3,8 @@ description: Resume from handover.md without re-explaining
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
-Handover file (printed as NO_HANDOVER_FILE if there is none):
+Handover, queued task and archived skills (to bring one back: `/unarchive <name>`):
 
-!`node -e "try{process.stdout.write(require('fs').readFileSync('handover.md','utf8'))}catch(e){console.log('NO_HANDOVER_FILE')}"`
+!`node {{skill-root}}/skill-scope/auto.js pickup`
 
-Skills archived right now (to bring one back: `/unarchive <name>`):
-
-!`node {{skill-root}}/skill-scope/auto.js report`
-
-Treat the handover above as the authoritative current state: do not re-read files it already summarizes. If it has a `## Next task` section, say that first, with its mode (`tsk-note` was queued, `tsk-start` was begun); this command never starts it. In 8 lines or fewer say where things stand, what is in flight, and the next step; verify only what it flags as in flight (for example `git status` if it mentions uncommitted work). If the file is missing, say so; if a `handover/` folder exists instead, follow the `role-session` skill. Edit nothing.
+The handover above is the authoritative state: do not re-read files it summarizes. Say the NEXT TASK line first; this command never starts it. Then in 8 lines or fewer give where things stand and the next step; run `git status` only if it flags uncommitted work. NO_HANDOVER_FILE means say so and stop; if it names a `handover/` folder, follow the `role-session` skill. Edit nothing.
