@@ -18,6 +18,7 @@ exports.pruneSkillTriggers = pruneSkillTriggers;
 exports.removeParallelSessionSection = removeParallelSessionSection;
 exports.applyActiveStandards = applyActiveStandards;
 exports.installStandards = installStandards;
+exports.setUsageTracking = setUsageTracking;
 exports.doInstall = doInstall;
 exports.parseChangelog = parseChangelog;
 exports.whatsNew = whatsNew;
@@ -51,6 +52,7 @@ exports.orderedCategories = orderedCategories;
 //   node install-kit.cli.js company <sync|remove|status> --root <target> [--library <path>] [--company-from <folder>]
 //                                      [--company-defaults keep|drop|auto] [--force] [--dry-run] [--purge]   (install also takes the company flags)
 //   node install-kit.cli.js signature <set <alias>|remove|show> --root <target> [--dry-run]   (install takes --signature <alias|none>)
+//   install also takes --usage on|off and --usage-notify on|off: the feature-usage switch (which skills, commands and scripts get used, kept by a script)
 //
 // Testing the prompts: AI_DEV_KIT_INTERACTIVE=1 forces them on piped input (one answer per line; a closed input means Enter).
 //
@@ -68,6 +70,7 @@ exports.orderedCategories = orderedCategories;
 // (and, for archive/unarchive, what it moved aside), so no command ever touches a folder it didn't create.
 const fs = require("node:fs");
 const crypto = require("node:crypto");
+const os = require("node:os");
 const path = require("node:path");
 const readline = require("node:readline");
 const verifyModule = require("./install-kit.verify");
@@ -604,6 +607,27 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
     }
     return result;
 }
+// The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
+// <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
+function setUsageTracking(track, notify) {
+    if (track === undefined && notify === undefined)
+        return undefined;
+    const file = path.join(process.env.AI_DEV_KIT_HOME || os.homedir(), '.ai-dev-kit', 'usage', 'config.json');
+    const cur = { track: true, notify: false };
+    try {
+        const j = JSON.parse(fs.readFileSync(file, 'utf8'));
+        cur.track = j.track !== false;
+        cur.notify = j.notify === true;
+    }
+    catch { /* no config yet: the defaults */ }
+    if (track !== undefined)
+        cur.track = track === 'on';
+    if (notify !== undefined)
+        cur.notify = notify === 'on';
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(cur, null, 2) + '\n');
+    return { file, ...cur };
+}
 function doInstall(args) {
     if (args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature))
         sig.normalizeAlias(args.signature); // a bad alias stops here, before anything is written
@@ -660,8 +684,9 @@ function doInstall(args) {
     const companyResult = args.company
         ? company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults })
         : undefined;
+    const usageResult = setUsageTracking(args.usage, args.usageNotify);
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult };
+    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -1296,6 +1321,15 @@ async function askCompany(args, ask) {
     }
 }
 // The project signature is the user's own choice: an alias that watermarks code written to the standards, or none.
+// Feature-usage tracking is the user's own choice and never touches the project: it writes one small config file in the home folder.
+async function askUsage(args) {
+    if (args.usage !== undefined)
+        return;
+    console.log(dim('Usage tracking: a script, not the AI (so it costs no tokens), writes one local line each time a skill loads, a slash command is typed or a kit script runs. Names only, never your prompts, files or code, and nothing leaves this machine. It needs the optional feature-usage mod (Claude Code only). See it with /kit-usage report; turn it off any time with /kit-usage off.'));
+    args.usage = (await askYesNo('Keep track of which kit features get used?', true)) ? 'on' : 'off';
+    if (args.usage === 'on' && args.usageNotify === undefined)
+        args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only)', false)) ? 'on' : 'off';
+}
 async function askSignature(args) {
     if (args.signature !== undefined)
         return;
@@ -1496,6 +1530,8 @@ async function fillInteractive(cmd, args) {
                     args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
                 }
             });
+            // last, so the questions above keep their order; the answer only writes a small file in the home folder
+            steps.push(() => askUsage(args));
         }
         if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
             steps.push(async () => {
@@ -1576,6 +1612,17 @@ function parseArgs(argv) {
         }
         else if (k === '--signature')
             a.signature = argv[++i];
+        else if (k === '--usage' || k === '--usage-notify') {
+            const v = argv[++i];
+            if (v !== 'on' && v !== 'off') {
+                console.error(red(`error: ${k} must be on or off`));
+                process.exit(2);
+            }
+            if (k === '--usage')
+                a.usage = v;
+            else
+                a.usageNotify = v;
+        }
         else if (k === '--purge-company' || k === '--purge')
             a.purgeCompany = true;
         else if (k === '--dry-run')

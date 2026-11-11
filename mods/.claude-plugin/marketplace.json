@@ -84,6 +84,11 @@
       "name": "session-journal",
       "source": "./session-journal",
       "description": "Writes a short journal of the session after every turn, outside the project (~/.ai-dev-kit/sessions/): what was asked, files edited, commands run (secrets scrubbed), failures. On compaction it gives the summarizer a digest of those facts; at session start it deletes journals idle 5 hours or more, and using one resets its timer. Separate from handover.md. No model call, no network."
+    },
+    {
+      "name": "feature-usage",
+      "source": "./feature-usage",
+      "description": "Records which kit skills load, slash commands are typed and kit scripts run, one name-only row each (never prompts, arguments or code), in ~/.ai-dev-kit/usage/log, so no model is asked whether a feature was used. Observes only, adds no model-visible text, no network. /kit-usage switches it on or off and shows a report (needs the session-budget skill)."
     }
   ]
 }
