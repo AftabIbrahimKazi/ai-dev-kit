@@ -21,6 +21,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import type * as MoveModule from './skill-scope.move';
+import type * as ExplainModule from './skill-scope.explain';
+import type { ExplainCtx } from './skill-scope.explain';
 
 // Installed, companions lose the skill prefix (move.js, triggers.json); in the library they keep it.
 function sibling<T>(installed: string, library: string, load: (p: string) => T): T {
@@ -28,6 +30,13 @@ function sibling<T>(installed: string, library: string, load: (p: string) => T):
   return load(p);
 }
 const { doArchive, doUnarchive, readManifest, writeManifest } = sibling('move.js', 'skill-scope.move.js', (p) => require(p) as typeof MoveModule);
+const { explain, tidyTask, findRoot } = sibling('explain.js', 'skill-scope.explain.js', (p) => require(p) as typeof ExplainModule);
+
+// Every failure prints a pre-written plain-language message (no stack trace) and sets the exit code.
+function fail(e: unknown, ctx: ExplainCtx = {}): void {
+  console.error('error: ' + explain(e, { cwd: process.cwd(), script: 'skill-scope/auto.js', ...ctx }).message);
+  process.exitCode = 1;
+}
 
 // A skill maps to its trigger words, or to { triggers, locked }: when a project file in locked.files exists and
 // contains locked.contains, locked.triggers replace the normal ones (a finished theme restores its design
@@ -128,8 +137,9 @@ function parseArgs(argv: string[]): Args | null {
     else if (f === '--quiet') a.quiet = true;
     else if (f === '--require-task') a.requireTask = true;
     else if (f.startsWith('--')) return null;
-    else a.task = (a.task + ' ' + f).trim();
+    else a.task = tidyTask([a.task, f]); // joins pieces the shell split, drops newlines, turns C:\\paths into C:/paths
   }
+  a.task = tidyTask([a.task]);
   // /next passes "tsk-note" or "tsk-start" first; the mode word is for the command, never a trigger word.
   a.modeOk = /^(?:tsk-note|tsk-start)\b/i.test(a.task);
   a.mode = a.modeOk ? a.task.match(/^(tsk-note|tsk-start)/i)![1].toLowerCase() : '';
@@ -155,8 +165,7 @@ function runSkillScript(argv: string[]): void {
     const r = spawnSync(process.execPath, [file, ...rest], { stdio: 'inherit' });
     process.exitCode = r.status ?? 1;
   } catch (e) {
-    console.error('error: ' + (e as Error).message);
-    process.exitCode = 1;
+    fail(e);
   }
 }
 
@@ -168,7 +177,7 @@ function runSkillScript(argv: string[]): void {
 //   report [--mark]          moves since the last wrap-up; --mark starts the next window (run by /wrap-up)
 function manualCmd(cmd: string, rest: string[]): void {
   const ri = rest.indexOf('--root');
-  const root = ri >= 0 ? rest[ri + 1] : fs.existsSync(path.join(process.cwd(), '.ai-dev-kit.json')) ? process.cwd() : path.dirname(path.dirname(path.dirname(__dirname)));
+  const root = ri >= 0 ? rest[ri + 1] : findRoot(process.cwd()) ?? path.dirname(path.dirname(path.dirname(__dirname)));
   const names = rest.filter((x, i) => !x.startsWith('--') && rest[i - 1] !== '--root');
   try {
     const manifest = readManifest(root);
@@ -248,8 +257,7 @@ function manualCmd(cmd: string, rest: string[]): void {
     console.log(lines.join('\n'));
     if (rest.includes('--mark')) { manifest.scopeMark = new Date().toISOString(); writeManifest(root, manifest); }
   } catch (e) {
-    console.error('error: ' + (e as Error).message);
-    process.exitCode = 1;
+    fail(e, { root });
   }
 }
 
@@ -269,12 +277,9 @@ function main(): void {
   }
   let root = args.root;
   if (!root) {
-    if (!fs.existsSync(path.join(process.cwd(), '.ai-dev-kit.json'))) {
-      console.error('error: no --root and no .ai-dev-kit.json in the current folder. Pass --root <target project>.');
-      process.exitCode = 1;
-      return;
-    }
-    root = process.cwd();
+    // Auto-fix first: a terminal left in a subfolder still finds the project above it.
+    root = findRoot(process.cwd()) ?? undefined;
+    if (!root) { fail(new Error('no --root and no .ai-dev-kit.json in the current folder')); return; }
     if (!args.quiet) console.error('assumed --root ' + root);
   }
   try {
@@ -294,8 +299,7 @@ function main(): void {
     else console.log((args.dryRun || args.cmd === 'status' ? 'would archive ' : 'archived ') + p.archive.length + (p.archive.length ? ' (' + p.archive.join(', ') + ')' : '') +
       (p.restore.length ? ', restored ' + p.restore.join(', ') + ' (read ' + p.restore.map((n) => manifest.skillRoot + '/' + n + '/SKILL.md').join(', ') + ' now)' : '') + (p.loaded.length ? '; active for this task: ' + p.loaded.join(', ') : '; none active') + (rec ? '\n' + rec : ''));
   } catch (e) {
-    console.error('error: ' + (e as Error).message);
-    process.exitCode = 1;
+    fail(e, { root });
   }
 }
 
