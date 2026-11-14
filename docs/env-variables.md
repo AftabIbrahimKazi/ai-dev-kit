@@ -15,6 +15,7 @@ Secrets (marked **secret**) belong in your shell or your OS user environment, ne
 | `NARRATE_TMP` | Folder for narration audio files | narrate | no |
 | `CHROME`, `CHROME_PATH` | Chrome or Edge executable for headless runs | figma-code, teardown | no |
 | `CLAUDE_CODE_BIN` | Path to the Claude Code executable, for delegated headless runs | plan-first delegate | no |
+| `MODERN_WEB_RUNNER` | A node script used instead of npx for the modern-web scan (tests, offline mirrors) | modern-web | no |
 | `FFMPEG` | ffmpeg executable for teardown film | teardown-film | no |
 | `IMAGEMAGICK_BIN` | `magick` executable for image conversion | image-gen | no |
 | `LAYA_HOME` | Folder for the Laya prefilter's venv and models | laya-ctl, aiignore-guard | no |
