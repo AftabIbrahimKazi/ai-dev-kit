@@ -45,9 +45,14 @@ A kit CLI runs on a machine the author never saw: Windows with a space in the pa
 ## Interactive mode (for a human at a terminal)
 - Prompt only when **stdin and stdout are both a TTY**, a required flag is missing, and `--json` is not set. Otherwise fail with the usage line. A tool that waits for input under a pipe hangs the agent running it.
 - Ask only for what is missing. Never re-ask a value given as a flag.
-- Plain numbered menus on `node:readline`: `1) claude  2) opencode`, "type a number", the default in brackets, Enter takes it. No arrow keys, no raw mode: it must behave the same in PowerShell, cmd.exe and SSH. Multi-pick takes `1,3,4`, `all` or `none`. Re-ask on bad input; never throw.
-- One shared `readline` interface, closed when prompting ends, or the process hangs on exit.
-- **Every prompt flow can go back.** Build the questions as a list of steps, not one straight run: each step reads and writes its own answers, a copy of the answers is kept before each step, and `<` (or `b` / `back` at a menu or yes/no) restores that copy and re-asks the previous step. A step that asked nothing because a flag answered it is skipped in both directions. On the first question say there is nothing to go back to and re-ask. Print a one-line tip the first time back becomes possible. Without this, one wrong pick forces a restart from scratch (the kit installer had exactly that gap). Test it: back once, back past a flag-answered step, and `<` on the first question.
+- **Every question is a menu, not typed numbers.** On a real terminal (stdin and stdout both a TTY) use arrow-key menus in raw mode, like `npx create-next-app`: Up/Down move, Space ticks (multi-pick), Enter confirms, Left / Backspace / Esc goes back, Right redoes, `q` or Ctrl-C quits. The kit's module is `install-kit.select.ts` (`runMenu`, with the terminal injected so a test can fake it): copy it, do not write another. Type text only where a menu cannot work (a folder path, a short code) and always show a default.
+- **Fallback is the numbered prompt.** Not a TTY, or `AI_DEV_KIT_NO_MENUS=1`: plain `node:readline` numbered menus (`1) claude  2) opencode`, default in brackets, Enter takes it; multi-pick takes `1,3,4`, `all` or `none`). Raw mode is never entered without a TTY. Re-ask on bad input; never throw.
+- One shared `readline` interface, closed when prompting ends (and before a raw-mode menu takes stdin), or the process hangs on exit.
+- **Every prompt flow can undo and redo.** Build the questions as a list of steps, not one straight run: each step reads and writes its own answers, a copy of the answers is kept before each step, and Left (or `<` / `b` / `back` at the numbered prompt) restores that copy and re-asks the previous step with the earlier answer pre-selected. Right replays an answer the user went back over; the redo list is cleared as soon as an earlier answer changes. A step that asked nothing because a flag answered it is skipped in both directions. The first question has nothing to go back to and says so. Without this, one wrong pick forces a restart from scratch (the kit installer had exactly that gap).
+- **Orient the user on every screen:** a "Step 3 of 9" header, the question, a one-line plain meaning for each option, and a footer listing the keys that work on that screen (show Left only when back is possible, Right only when a redo exists). Explain the keys once on the first screen.
+- **Summary before writing.** After the last question list every answer, then Install / Change an answer (jumps to that step, other answers stay pre-selected) / Cancel. Nothing is written until Install; Cancel and `q` write nothing and exit 130.
+- **`--yes` takes every default** and asks nothing, so a script or an agent can install without a terminal. The defaults are the pre-selected, recommended answers.
+- **A rule the tool depends on is verified by the tool's own verify step.** The kit installer once skipped its `[CX]` context rule on the company-only path and nobody noticed: the rule needs its own check (`install-kit.verify`) and a test per path that can reach it.
 - Long lists are chunked (categories first, then items), each item with a one-line purpose, with a running tally of what is chosen.
 
 ## Colour
@@ -71,6 +76,7 @@ A kit CLI runs on a machine the author never saw: Windows with a space in the pa
 3. **Non-TTY:** run with stdin from a pipe and no required flag. It must exit 2 with the usage line, not wait.
 4. Run once from Git Bash with a space in the path. Set `MSYS_NO_PATHCONV=1` if a path argument starts with `/`.
 5. Prompts: walk the interactive flow once by hand and read every line as a novice would, and go back at least once to check the earlier answer can be changed.
+6. Menus: drive them with a fake terminal (an input that emits key chunks, an output that records), as `tests/install-kit.select.test.js` does. Cover Up/Down/Enter, Left on the first step (ignored), Right with and without a remembered answer, back then redo, redo cleared after an earlier answer changes, the summary screen (Install, Change, Cancel) and `q`. Pipe answers with `AI_DEV_KIT_NO_MENUS=1` for the numbered fallback and run once with `--yes`.
 
 ## Register it
 - A new skill companion: follow `skill-writer` and `skill-scope`.
@@ -84,7 +90,8 @@ A kit CLI runs on a machine the author never saw: Windows with a space in the pa
 - [ ] Usage block in the header; unknown command exits 2 with one usage line
 - [ ] `--dry-run` if it writes, `--json` if scripted; assumptions printed
 - [ ] Manifest-tracked; nothing overwritten without `--force`; re-run is safe
-- [ ] Prompts only on a double TTY with a missing flag; numbered menus; no hang under a pipe
+- [ ] Prompts only on a double TTY with a missing flag; arrow-key menus there, numbered fallback otherwise; no hang under a pipe
+- [ ] Undo, redo, step header, key footer and a summary screen before anything is written; `--yes` works
 - [ ] Colour gated on TTY and `NO_COLOR`; none in JSON output
 - [ ] `execFile` with arrays; `path.join`; works with a space in the path
 - [ ] Walkthrough written for a novice comes before the flag reference

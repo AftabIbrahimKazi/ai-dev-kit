@@ -145,6 +145,26 @@ t('uninstall --remove-standards never deletes the company files', () => {
   assert.ok(!has(root, 'coding-standards/company/INDEX.md'));
 });
 
+t('company-only path: the CX rule block carries the Context code, verify checks it, sync keeps it', () => {
+  const lib = makeLibrary(); const root = tmp(); const co = makeCompany();
+  const r = install(lib, root, { company: true, companyFrom: co, companyDefaults: 'drop', contextCode: 'X7' });
+  const body = read(root, 'CLAUDE.md');
+  assert.ok(body.includes('Begin every response with `[CX X7]`') && /\| Context code \| X7 \|/.test(body));
+  assert.ok(r.verify.ok, JSON.stringify(r.verify.findings));
+  c.doCompanySync({ library: lib, root, companyDefaults: 'drop' });
+  assert.ok(read(root, 'CLAUDE.md').includes('[CX X7]'));
+  assert.strictEqual((read(root, 'CLAUDE.md').match(/ai-dev-kit:cx:start/g) || []).length, 1);
+});
+
+t('company-only path: verify fails when the CX block is stripped', () => {
+  const lib = makeLibrary(); const root = tmp(); const co = makeCompany();
+  install(lib, root, { company: true, companyFrom: co, companyDefaults: 'drop', contextCode: 'none' });
+  const p = path.join(root, 'CLAUDE.md');
+  fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/<!-- ai-dev-kit:cx:start -->[\s\S]*?<!-- ai-dev-kit:cx:end -->/, ''));
+  const v = require('../skills/meta/install-kit.verify.js').verify({ root, tool: 'claude' });
+  assert.ok(!v.ok && v.findings.some((f) => f.check === 'session-protocol' && /CX/.test(f.message)), JSON.stringify(v.findings));
+});
+
 t('a company-only protocol file the step created is removed with it', () => {
   const lib = makeLibrary(); const root = tmp(); const co = makeCompany();
   install(lib, root, { company: true, companyFrom: co, companyDefaults: 'drop' });
