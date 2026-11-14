@@ -1,0 +1,55 @@
+// A/B on planning cost. Arm A: Claude (Haiku) drafts the plan. Arm B: planext.js (local Ollama) drafts it, then Claude (Haiku) reads and verifies it.
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const KIT = 'c:/wamp64/www/My Projects/ai/ai-dev-kit';
+const CLAUDE = 'C:/Users/ibrah/.vscode/extensions/anthropic.claude-code-2.1.325-win32-x64/resources/native-binary/claude.exe';
+const OUT = __dirname;
+const TASK = 'Add pagination (page and pageSize query parameters, total count in the response) to the orders list API in src/api/orders.ts and to the List component in src/ui/List.tsx, with tests.';
+const REAL = ['src/api/orders.ts', 'src/ui/List.tsx', 'src/api/orders.test.ts', 'src/ui/List.test.tsx', 'package.json'];
+
+function setup(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+  const w = (f, s) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), s); };
+  w('package.json', JSON.stringify({ name: 'orders-app', scripts: { dev: 'vite', test: 'vitest' }, dependencies: { react: '18', express: '4' }, devDependencies: { vitest: '1' } }, null, 2));
+  w('README.md', '# Orders app\nA small orders dashboard: an Express API and a React list.\n');
+  w('src/api/orders.ts', "import { Router } from 'express';\nexport const orders = Router();\nconst DB = Array.from({ length: 95 }, (_, i) => ({ id: i + 1, total: i * 3 }));\norders.get('/orders', (_req, res) => res.json(DB));\n");
+  w('src/api/orders.test.ts', "import { test, expect } from 'vitest';\ntest('lists orders', () => { expect(1).toBe(1); });\n");
+  w('src/ui/List.tsx', "import { useEffect, useState } from 'react';\nexport function List() {\n  const [rows, setRows] = useState<{ id: number; total: number }[]>([]);\n  useEffect(() => { fetch('/orders').then((r) => r.json()).then(setRows); }, []);\n  return <ul>{rows.map((r) => <li key={r.id}>{r.total}</li>)}</ul>;\n}\n");
+  w('src/ui/List.test.tsx', "import { test } from 'vitest';\ntest('renders', () => {});\n");
+  w('.claude/state-audit.json', '{"reviewer":"ollama"}');
+  spawnSync('git', ['init', '-q'], { cwd: dir });
+}
+function claude(dir, prompt) {
+  const t0 = Date.now();
+  const r = spawnSync(CLAUDE, ['-p', prompt, '--model', 'haiku', '--output-format', 'json', '--permission-mode', 'plan', '--allowedTools', 'Read,Glob,Grep'], { cwd: dir, encoding: 'utf8', input: '', timeout: 600000, env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+  let j = {}; try { j = JSON.parse(r.stdout); } catch { j = { error: (r.stdout || r.stderr || '').slice(0, 200) }; }
+  const u = j.usage || {};
+  return { cost: j.total_cost_usd, turns: j.num_turns, out_tokens: u.output_tokens, in_tokens: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), secs: Math.round((Date.now() - t0) / 1000), text: String(j.result || ''), err: j.error };
+}
+function quality(dir, planText) {
+  const paths = [...planText.matchAll(/(?:^|[\s`(|:])((?:[\w.-]+\/)+[\w.-]+\.[A-Za-z]{1,6})(?=[\s`),|.;]|$)/gm)].map((m) => m[1]);
+  const uniq = [...new Set(paths)];
+  const real = uniq.filter((p) => fs.existsSync(path.join(dir, p)));
+  const named = ['src/api/orders.ts', 'src/ui/List.tsx'].filter((p) => planText.includes(p));
+  return { paths: uniq.length, real: real.length, bad: uniq.filter((p) => !fs.existsSync(path.join(dir, p)) && !planText.includes('NEW: ' + p)).length, namesBothFiles: named.length === 2, mentionsPageSize: /pageSize/.test(planText), mentionsTests: /test/i.test(planText), steps: (planText.match(/^\s*\d+\./gm) || []).length };
+}
+const row = (o) => { fs.appendFileSync(path.join(OUT, 'results.jsonl'), JSON.stringify(o) + '\n'); console.log(JSON.stringify(o)); };
+
+const arm = process.argv[2];
+const run = process.argv[3];
+const dir = path.join(OUT, `${arm}-${run}`);
+setup(dir);
+if (arm === 'A') {
+  const r = claude(dir, `Write an implementation plan for this task. Read the project first. Format: "# Plan: <title>", then numbered steps "N. <action> | files: <exact paths> | done when: <check>" (at most 7), then "## Won't do". Output only the plan.\n\nTASK: ${TASK}`);
+  row({ arm, run, claude_cost: r.cost, turns: r.turns, out_tokens: r.out_tokens, in_tokens: r.in_tokens, secs: r.secs, ...quality(dir, r.text), err: r.err });
+} else {
+  const t0 = Date.now();
+  const p = spawnSync(process.execPath, [path.join(KIT, 'skills/workflow/plan-first.planext.js'), TASK, '--root', dir, '--delay', '0', '--out', 'docs/plans/p.md'], { encoding: 'utf8', timeout: 900000 });
+  const planSecs = Math.round((Date.now() - t0) / 1000);
+  const planFile = path.join(dir, 'docs/plans/p.md');
+  const plan = fs.existsSync(planFile) ? fs.readFileSync(planFile, 'utf8') : '';
+  if (!plan) { row({ arm, run, error: 'no plan', out: (p.stdout || '') + (p.stderr || '') }); process.exit(0); }
+  const r = claude(dir, `A plan was drafted by a small model in docs/plans/p.md. Read it. Check every file path it names exists (and the "Unverified paths" list), fix any wrong or missing step, and print the corrected final plan only, in the same format.\n\nTASK: ${TASK}`);
+  row({ arm, run, planner_secs: planSecs, planext_out: (p.stdout || '').trim(), draft_quality: quality(dir, plan), claude_cost: r.cost, turns: r.turns, out_tokens: r.out_tokens, in_tokens: r.in_tokens, secs: r.secs, final_quality: quality(dir, r.text), err: r.err });
+}

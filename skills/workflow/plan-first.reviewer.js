@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.neverSend = void 0;
 exports.readConfig = readConfig;
 exports.parseVerdict = parseVerdict;
+exports.generate = generate;
 exports.review = review;
 // A second model reads a file or plan so Claude spends no tokens on it. Order is fixed: Gemini first, then a local
 // Ollama model, then nothing (the caller falls back to its static scan). Every failure (no key, rate limit, offline,
@@ -28,7 +29,7 @@ function readConfig(root) {
     try {
         const c = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'state-audit.json'), 'utf8'));
         if (c.reviewer === 'auto' || c.reviewer === 'ollama' || c.reviewer === 'static')
-            return { reviewer: c.reviewer, timeoutMs: c.timeoutMs };
+            return { reviewer: c.reviewer, timeoutMs: c.timeoutMs, maxTokens: c.maxTokens };
     }
     catch { /* no config: static */ }
     return { reviewer: 'static' };
@@ -67,56 +68,70 @@ function parseVerdict(text) {
         return null;
     return { status: first, findings: lines.slice(1).join('\n').trim() };
 }
-async function gemini(prompt, text, env, timeoutMs) {
+async function geminiRaw(prompt, text, env, timeoutMs, maxTokens) {
     const key = env.GEMINI_API_KEY;
     if (!key)
         return 'no GEMINI_API_KEY';
     const base = (env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
     const model = env.GEMINI_REVIEW_MODEL || 'gemini-2.5-flash';
     try {
-        const r = await postJson(`${base}/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: `${prompt}\n\n${text}` }] }], generationConfig: { temperature: 0 } }, { 'x-goog-api-key': key }, timeoutMs);
+        const r = await postJson(`${base}/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: `${prompt}\n\n${text}` }] }], generationConfig: { temperature: 0, maxOutputTokens: maxTokens } }, { 'x-goog-api-key': key }, timeoutMs);
         if (!r.ok)
             return r.status === 429 ? 'Gemini rate limit (429)' : `Gemini HTTP ${r.status}`;
-        const out = (r.json?.candidates?.[0]?.content?.parts?.[0]?.text) || '';
-        const v = parseVerdict(out);
-        return v ? { ...v, backend: 'gemini' } : 'Gemini reply had no PASS/WARN/FAIL line';
+        return { text: (r.json?.candidates?.[0]?.content?.parts?.[0]?.text) || '', backend: 'gemini' };
     }
     catch (e) {
         return 'Gemini unreachable: ' + (e.name === 'AbortError' ? 'timeout' : e.message);
     }
 }
-async function ollama(prompt, text, env, timeoutMs) {
+async function ollamaRaw(prompt, text, env, timeoutMs, maxTokens) {
     const { base, model } = ollamaSettings(env);
     if (!/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?/i.test(base))
         return 'Ollama base URL is not loopback; not used';
     try {
-        const r = await postJson(`${base.replace(/\/$/, '')}/api/generate`, { model, prompt: `${prompt}\n\n${text}`, stream: false, options: { temperature: 0 } }, {}, timeoutMs);
+        const r = await postJson(`${base.replace(/\/$/, '')}/api/generate`, { model, prompt: `${prompt}\n\n${text}`, stream: false, options: { temperature: 0, num_predict: maxTokens } }, {}, timeoutMs);
         if (!r.ok)
             return `Ollama HTTP ${r.status}`;
-        const v = parseVerdict((r.json?.response) || '');
-        return v ? { ...v, backend: 'ollama' } : 'Ollama reply had no PASS/WARN/FAIL line';
+        return { text: (r.json?.response) || '', backend: 'ollama' };
     }
     catch (e) {
         return 'Ollama unreachable: ' + (e.name === 'AbortError' ? 'timeout' : e.message);
     }
 }
-async function review(prompt, text, cfg, env = process.env) {
+// Same order for both uses: Gemini (when allowed), then Ollama, then nothing. `accept` decides whether a reply is usable.
+async function ask(prompt, text, cfg, env, accept, defaultCap = 600) {
     if (cfg.reviewer === 'static')
-        return { status: 'UNAVAILABLE', findings: '', backend: 'static', note: 'reviewer is "static": no model was asked' };
+        return { note: 'reviewer is "static": no model was asked' };
     const body = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
     const t = cfg.timeoutMs ?? 25000;
+    const cap = cfg.maxTokens ?? defaultCap; // an uncapped small model can ramble for thousands of tokens and hit the timeout
     const notes = [];
-    if (cfg.reviewer === 'auto') {
-        const g = await gemini(prompt, body, env, t);
-        if (typeof g !== 'string')
-            return g;
-        notes.push(g);
+    const steps = [];
+    if (cfg.reviewer === 'auto')
+        steps.push(() => geminiRaw(prompt, body, env, t, cap));
+    steps.push(() => ollamaRaw(prompt, body, env, t, cap));
+    for (const step of steps) {
+        const r = await step();
+        if (typeof r === 'string') {
+            notes.push(r);
+            continue;
+        }
+        if (accept(r.text))
+            return { ...r, note: notes.length ? notes.join('; ') : undefined };
+        notes.push(`${r.backend === 'gemini' ? 'Gemini' : 'Ollama'} reply was not usable`);
     }
-    const o = await ollama(prompt, body, env, t);
-    if (typeof o !== 'string')
-        return notes.length ? { ...o, note: notes.join('; ') } : o;
-    notes.push(o);
-    return { status: 'UNAVAILABLE', findings: '', backend: 'static', note: notes.join('; ') };
+    return { note: notes.join('; ') };
+}
+// Free text from the same backends (the external planner uses this). Returns null note-only when nothing answered.
+async function generate(prompt, text, cfg, env = process.env) {
+    return ask(prompt, text, cfg, env, (t) => t.trim().length > 0, 1500);
+}
+async function review(prompt, text, cfg, env = process.env) {
+    const r = await ask(prompt, text, cfg, env, (t) => parseVerdict(t) !== null);
+    if (!('text' in r))
+        return { status: 'UNAVAILABLE', findings: '', backend: 'static', note: r.note };
+    const v = parseVerdict(r.text);
+    return { ...v, backend: r.backend, note: r.note };
 }
 async function main() {
     const a = process.argv.slice(2);

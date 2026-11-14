@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+// External planner: a free or local model drafts the plan, so Claude spends its tokens on executing it, not on
+// brainstorming it. Three short turns (product, risk, tech lead) turn a task and a small project summary into one plan file
+// with exact paths and acceptance checks. Plain Node, no dependencies. Gemini first, then local Ollama; never a browser.
+//
+//   node planext.js "<task>" [--out <file>] [--root <dir>] [--delay <seconds>] [--dry-run] [--force]
+//
+// Needs a reviewer: .claude/state-audit.json "reviewer": "auto" or "ollama" (installer: --reviewer). With "static" nothing
+// is sent and this prints how to turn it on. Only a small summary goes out (folder names, package names, the README head,
+// files the task names); files that look like secrets never do. Free-tier Gemini may keep inputs: use "ollama" for private code.
+// Writes docs/plans/<slug>.md, marked as generated, and lists any path in it that does not exist so Claude checks those first.
+// Exit codes: 0 plan written, 1 error or no model answered, 2 bad usage, 3 blocked (no reviewer, or this path is off).
+import fs = require('node:fs');
+import path = require('node:path');
+import type * as ReviewerModule from './plan-first.reviewer';
+
+function sibling<T>(installed: string, library: string): T {
+  return require(path.join(__dirname, fs.existsSync(path.join(__dirname, installed)) ? installed : library)) as T;
+}
+const rev = sibling<typeof ReviewerModule>('reviewer.js', 'plan-first.reviewer.js');
+
+const SKIP = /^(node_modules|\.git|\.next|dist|build|coverage|vendor|\.claude|_sandbox|\.cache)$/;
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+export function slugify(task: string): string {
+  return task.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'plan';
+}
+
+// A small, bounded summary of the project: the model needs the stack and the layout, not the code.
+export function buildContext(root: string, task: string): string {
+  const out: string[] = [];
+  const tree: string[] = [];
+  const walk = (dir: string, depth: number): void => {
+    if (depth > 2 || tree.length >= 60) return;
+    let ents: fs.Dirent[] = [];
+    try { ents = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)); } catch { return; }
+    for (const e of ents) {
+      if (SKIP.test(e.name) || tree.length >= 60) continue;
+      const rel = path.relative(root, path.join(dir, e.name)).split(path.sep).join('/');
+      if (rev.neverSend(rel)) continue;
+      tree.push(rel + (e.isDirectory() ? '/' : ''));
+      if (e.isDirectory()) walk(path.join(dir, e.name), depth + 1);
+    }
+  };
+  walk(root, 0);
+  out.push('PROJECT FILES (depth 2):\n' + tree.join('\n'));
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as { name?: string; scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+    out.push(`PACKAGE: ${pkg.name || '(unnamed)'}\nscripts: ${Object.keys(pkg.scripts || {}).join(', ')}\ndependencies: ${Object.keys({ ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) }).slice(0, 40).join(', ')}`);
+  } catch { /* no package.json */ }
+  try { out.push('README (first 25 lines):\n' + fs.readFileSync(path.join(root, 'README.md'), 'utf8').split(/\r?\n/).slice(0, 25).join('\n')); } catch { /* none */ }
+  const named = [...new Set([...task.matchAll(/[\w./\\-]+\.[A-Za-z]{1,6}\b/g)].map((m) => m[0].replace(/\\/g, '/')))].filter((f) => fs.existsSync(path.join(root, f)) && !rev.neverSend(f)).slice(0, 4);
+  for (const f of named) { try { out.push(`FILE ${f}:\n` + fs.readFileSync(path.join(root, f), 'utf8').slice(0, 5000)); } catch { /* unreadable */ } }
+  return out.join('\n\n');
+}
+
+const STRICT = 'Output only dense Markdown. No greetings, no filler, no restating the task. Never invent a file path: use only paths from PROJECT FILES, or write NEW: before a path that does not exist yet.';
+export const TURNS = [
+  { name: 'product', prompt: `You are the product owner. From the TASK and the project summary, write the requirements as at most 12 bullets and an acceptance check for each that a test or a person can run. ${STRICT}` },
+  { name: 'risk', prompt: `You are the security and reliability engineer. Read the TASK, the project summary and the requirements. List at most 8 risks and missing cases (input validation, auth, errors, empty states, concurrency, data loss), each with the requirement it affects. ${STRICT}` },
+  { name: 'lead', prompt: `You are the tech lead. Merge the requirements and risks into ONE implementation plan in exactly this shape:\n# Plan: <title>\n## Steps\n1. <action> | files: <exact paths> | done when: <check>\n(at most 7 steps, each small enough for one sitting, in build order)\n## Won't do\n- <scope you decline>\n## Open questions\n- <anything the plan cannot decide>\n${STRICT}` },
+];
+
+// Paths the plan names that exist neither in the project nor behind a NEW: marker: the first thing Claude verifies.
+export function unverifiedPaths(root: string, plan: string): string[] {
+  const bad: string[] = [];
+  for (const m of plan.matchAll(/(?:^|[\s`(|:])((?:NEW:\s*)?(?:[\w.-]+\/)+[\w.-]+\.[A-Za-z]{1,6})(?=[\s`),|.;]|$)/gm)) {
+    const raw = m[1];
+    if (/^NEW:/i.test(raw)) continue;
+    if (/^https?:/i.test(raw) || !fs.existsSync(path.join(root, raw))) bad.push(raw);
+  }
+  return [...new Set(bad)];
+}
+
+export interface PlanExtResult { file: string; backend: string; turns: number; unverified: string[]; notes: string[] }
+
+export async function draft(root: string, task: string, out: string, opt: { delayMs: number; env?: NodeJS.ProcessEnv; dryRun?: boolean }): Promise<PlanExtResult | { blocked: string }> {
+  // A plan is long text from a model that may run on a CPU: a hook's 25 s timeout would cut it off. 4 minutes per turn unless the config says otherwise.
+  const cfg = { ...rev.readConfig(root), timeoutMs: rev.readConfig(root).timeoutMs ?? 240000 };
+  if (cfg.reviewer === 'static') return { blocked: 'No planner model is turned on for this project. Set "reviewer" to "ollama" (a model on this machine) or "auto" (Gemini, then Ollama) in .claude/state-audit.json, or run install-kit with --reviewer ollama.' };
+  const context = buildContext(root, task);
+  if (opt.dryRun) return { file: out, backend: 'dry-run', turns: 0, unverified: [], notes: [`would send ${context.length} characters of project summary in ${TURNS.length} turns`] };
+  let carry = '';
+  let backend = '';
+  const notes: string[] = [];
+  for (let i = 0; i < TURNS.length; i++) {
+    if (i > 0 && opt.delayMs > 0) await sleep(opt.delayMs); // spaces the calls out, so a free tier does not answer 429
+    const r = await rev.generate(TURNS[i].prompt, `TASK:\n${task}\n\n${context}\n\n${carry}`, cfg, opt.env || process.env);
+    if (!('text' in r)) return { blocked: `No model answered the ${TURNS[i].name} turn (${r.note}). Start Ollama, or set GEMINI_API_KEY in your shell.` };
+    backend = backend || r.backend;
+    if (r.note) notes.push(r.note);
+    carry += `\n\n${TURNS[i].name.toUpperCase()} OUTPUT:\n${r.text.trim()}`;
+  }
+  const plan = carry.slice(carry.lastIndexOf('LEAD OUTPUT:') + 'LEAD OUTPUT:'.length).trim();
+  const bad = unverifiedPaths(root, plan);
+  const header = `<!-- generated by plan-first/planext.js via ${backend}; a small model wrote this: verify every path before editing -->\n`;
+  const footer = bad.length ? `\n\n## Unverified paths\n${bad.map((p) => `- ${p}`).join('\n')}\n` : '\n';
+  fs.mkdirSync(path.dirname(path.resolve(root, out)), { recursive: true });
+  fs.writeFileSync(path.resolve(root, out), header + plan + footer);
+  return { file: out, backend, turns: TURNS.length, unverified: bad, notes };
+}
+
+async function main(): Promise<void> {
+  const a = process.argv.slice(2);
+  let root = process.cwd(), out = '', delay = 5, dry = false, force = false;
+  const words: string[] = [];
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === '--root') root = path.resolve(a[++i] || '');
+    else if (a[i] === '--out') out = a[++i] || '';
+    else if (a[i] === '--delay') delay = Number(a[++i]);
+    else if (a[i] === '--dry-run') dry = true;
+    else if (a[i] === '--force') force = true;
+    else if (a[i].startsWith('--')) { words.length = 0; break; }
+    else words.push(a[i]);
+  }
+  const task = words.join(' ').replace(/\r?\n+/g, ' ').trim();
+  if (!task || !Number.isFinite(delay)) { console.error('usage: planext.js "<task>" [--out <file>] [--root <dir>] [--delay <seconds>] [--dry-run] [--force]'); process.exitCode = 2; return; }
+  if (!force && rev.readPlanPath(root) === 'goldfish') { console.log('The external planner is off for this project (it chose Goldfish only). Pass --force to use it anyway.'); process.exitCode = 3; return; }
+  try {
+    const r = await draft(root, task, out || path.join('docs', 'plans', slugify(task) + '.md'), { delayMs: delay * 1000, dryRun: dry });
+    if ('blocked' in r) { console.log(r.blocked); process.exitCode = r.blocked.startsWith('No planner') ? 3 : 1; return; }
+    console.log(`${dry ? 'would write' : 'plan written'}: ${r.file} (${r.backend}, ${r.turns} turns)${r.unverified.length ? `; ${r.unverified.length} unverified path(s) listed at the end: check them first` : ''}`);
+    for (const n of r.notes) console.log(`note: ${n}`);
+  } catch (e) { console.error('error: ' + (e as Error).message); process.exitCode = 1; }
+}
+
+if (require.main === module) void main();
