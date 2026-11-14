@@ -80,6 +80,7 @@ exports.RULES = Object.fromEntries([
     R('h-03', 'html', 'rule', 'id selector in CSS (ids are for behaviour, classes for styling)'),
     R('h-04', 'html', 'rule', '<img> has no alt attribute', true),
     R('h-05', 'html', 'rule', 'presentational attribute', true),
+    R('data-presence', 'html', 'rule', 'data attribute used by presence (value-less attribute or [data-x] selector); keep it present with a value (RULE 21)'),
     R('h-08', 'html', 'rule', 'heading level skipped'),
     R('h-10', 'html', 'rule', 'banned tag in UI markup', true),
     R('a11y-03', 'a11y', 'rule', 'page must have exactly one <main>'),
@@ -317,6 +318,10 @@ function cssChecks(rel, text) {
         const id = /#([A-Za-z_-][\w-]*)/.exec(pre);
         if (id)
             add(L(m.index + m[0].indexOf('#')), 'h-03', `id selector #${id[1]}`);
+        // A selector on the mere presence of a data attribute means script adds and removes it; select the value instead.
+        const bare = /\[\s*data-[\w-]+\s*\]/.exec(pre);
+        if (bare)
+            add(L(m.index + m[0].indexOf(bare[0])), 'data-presence', `selector ${bare[0].replace(/\s+/g, '')} targets presence; select the value, e.g. [data-state="open"]`);
     }
     for (const m of plain.matchAll(/(?<![\w-])outline(?:-width)?\s*:\s*(none|0)\b/gi)) {
         if (!/:not\(\s*:focus-visible\s*\)|focus-inner/i.test(preludeAt(plain, m.index)))
@@ -345,6 +350,11 @@ function markupChecks(rel, text) {
             add(L(m.index), 'h-02', 'inline style');
     for (const m of html.matchAll(/\s(align|valign|bgcolor)\s*=/gi))
         add(L(m.index), 'h-05', `presentational attribute ${m[1].toLowerCase()}`);
+    // A value-less data attribute (<div data-open>) is state by presence: script has to add and remove it. Give it a value and keep it present.
+    for (const tag of html.matchAll(/<[A-Za-z][^<>]*>/g)) {
+        for (const a of tag[0].matchAll(/\sdata-[\w-]+(?=[\s/>])(?!\s*=)/g))
+            add(L(tag.index + a.index), 'data-presence', `value-less attribute ${a[0].trim()}; use ${a[0].trim()}="default"`);
+    }
     if (!EMAIL_FILE.test(rel))
         for (const m of html.matchAll(/<(br|strong|small)\b/gi))
             add(L(m.index), 'h-10', `<${m[1].toLowerCase()}> is banned in UI markup`);
@@ -417,8 +427,9 @@ function scriptChecks(rel, text) {
         add(L(m.index), id('js-09', 'ts-10'), 'var is not permitted');
     for (const m of code.matchAll(/(?<![=!<>+\-*/%&|^])==(?!=)|!=(?!=)/g))
         add(L(m.index), id('js-10', 'ts-11'), `${m[0]} instead of ${m[0] === '==' ? '===' : '!=='}`);
-    for (const m of withStrings.matchAll(/\.removeAttribute\(\s*['"]data-[\w-]+['"]|\.setAttribute\(\s*['"]data-[\w-]+['"]\s*,\s*(?:''|"")\s*\)/g))
-        add(L(m.index), id('js-11', 'ts-16'), 'state attribute removed or set empty');
+    // A data attribute carries state by value and is always present: removing it, toggling its presence, deleting a dataset key or blanking it are all the same mistake.
+    for (const m of withStrings.matchAll(/\.removeAttribute\(\s*['"]data-[\w-]+['"]|\.toggleAttribute\(\s*['"]data-[\w-]+['"]|\.setAttribute\(\s*['"]data-[\w-]+['"]\s*,\s*(?:''|"")\s*\)|\bdelete\s+[\w$.]*\.dataset\b|\.dataset(?:\.[\w$]+|\[[^\]]+\])\s*=\s*(?:''|"")(?!\s*[+?:])/g))
+        add(L(m.index), id('js-11', 'ts-16'), 'state attribute removed, toggled by presence or set empty');
     for (const m of code.matchAll(/\.classList\s*\.\s*(add|remove|toggle)\s*\(/g))
         add(L(m.index), id('js-11-class', 'ts-16-class'), `classList.${m[1]}`);
     const listeners = [...code.matchAll(/\baddEventListener\s*\(/g)];

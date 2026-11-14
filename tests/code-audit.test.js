@@ -87,6 +87,17 @@ t('ts-15 assertions: review unless commented; import/export aliases and as const
   const ts = lines('const a = b as HTMLElement;', 'const c = d as HTMLElement; // present in layout', "import { x as y } from './z';", 'export { y as z };', 'const e = [1] as const;', 'const s = "x as Foo";');
   assert.deepStrictEqual(hits('a.ts', ts), ['ts-15@1']);
 });
+t('data attributes by presence: toggleAttribute, delete dataset key and blanking are rules; setting a value is fine', () => {
+  const js = lines("el.toggleAttribute('data-open');", 'delete el.dataset.open;', "el.dataset.open = '';", "el.dataset.state = 'open';", "el.toggleAttribute('hidden');", "el.dataset.name = cond ? 'a' : '';");
+  assert.deepStrictEqual(hits('a.js', js), ['js-11@1', 'js-11@2', 'js-11@3']);
+});
+
+t('data attributes by presence: value-less attribute in markup and [data-x] selector in css are flagged; value forms are not', () => {
+  assert.deepStrictEqual(hits('a.html', '<div class="modal" data-open></div>\n<div class="modal" data-state="closed"></div>\n<div data-open />\n'), ['data-presence@1', 'data-presence@3']);
+  assert.deepStrictEqual(hits('a.css', '.modal[data-open] { opacity: 1; }\n.modal[data-state="open"] { opacity: 1; }\n'), ['data-presence@1']);
+  assert.deepStrictEqual(hits('a.html', '<!-- <div data-open></div> -->\n<p>use data-open in prose</p>\n'), []);
+});
+
 t('state attributes: removeAttribute(data-*) and empty setAttribute are rules, classList is a review', () => {
   const js = lines("el.removeAttribute('data-open');", "el.setAttribute('data-open', '');", "el.setAttribute('data-open', 'true');", "el.removeAttribute('href');", "el.classList.add('is-open');");
   assert.deepStrictEqual(hits('a.js', js), ['js-11@1', 'js-11@2', 'js-11-class@5']);
