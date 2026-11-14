@@ -42,6 +42,7 @@ import os = require('node:os');
 import path = require('node:path');
 import readline = require('node:readline');
 import verifyModule = require('./install-kit.verify');
+import select = require('./install-kit.select');
 import company = require('./install-kit.company');
 import sig = require('./install-kit.signature');
 import {
@@ -595,6 +596,7 @@ export interface CliArgs {
   companyDefaults?: company.DefaultsMode;
   usage?: 'on' | 'off'; // feature-usage tracking (the feature-usage mod and session-budget/usage.js read the same file)
   usageNotify?: 'on' | 'off';
+  yes?: boolean; // --yes: accept every default, ask nothing
   signature?: string; // project signature: an alias of 2 to 6 letters, or "none"
   signatureAction?: string;
   companyAction?: string;
@@ -1128,12 +1130,78 @@ function rawAsk(question: string): Promise<string> {
   return new Promise((resolve) => { waiting = resolve; rl!.setPrompt(question); rl!.prompt(); });
 }
 
+// --yes: every question takes its default (the pre-selected, recommended answer) and nothing is asked.
+let autoYes = false;
+
 async function askText(message: string, initial: string): Promise<string> {
+  if (autoYes) return initial;
   const ans = (await ask(`${bold(message)} [${initial}]: `)).trim();
   return ans || initial;
 }
 
+// ---- Arrow-key menus (a real terminal only; a pipe, --json or AI_DEV_KIT_NO_MENUS=1 keeps the numbered prompts) ----
+// Every answer is remembered by its question: going back pre-selects it, and Right replays it (redo) until an earlier
+// answer changes, which forgets the later ones. The log feeds the summary screen shown before anything is written.
+let menuIOOverride: select.MenuIO | null = null; // a test drives the menus through a fake terminal
+export function setMenuIO(io: select.MenuIO | null): void { menuIOOverride = io; }
+const menuIO = (): select.MenuIO => menuIOOverride ?? { input: process.stdin as never, output: process.stdout, color: COLOR_ENABLED };
+// Test hook: the prompt layer with the step runner, so a fake terminal can drive back, redo and the summary screen.
+export const __testApi = {
+  runSteps: (args: CliArgs, steps: Array<() => Promise<void>>): Promise<void> => { stepNo = 0; keysShown = false; memory.clear(); memOrder.length = 0; answerLog.length = 0; canGoBack = false; askCount = 0; return runSteps(args, steps); },
+  askYesNo: (m: string, d: boolean): Promise<boolean> => askYesNo(m, d),
+  askSelect: (m: string, c: Choice[], i: number): Promise<string> => askSelect(m, c, i),
+  askMultiselect: (m: string, c: Choice[], o?: { defaultAll?: boolean }): Promise<string[]> => askMultiselect(m, c, o),
+};
+function useMenus(): boolean {
+  if (menuIOOverride) return true;
+  const i = process.stdin as NodeJS.ReadStream;
+  return !!i.isTTY && !!process.stdout.isTTY && typeof i.setRawMode === 'function' && process.env.AI_DEV_KIT_NO_MENUS !== '1' && !process.env.AI_DEV_KIT_INTERACTIVE;
+}
+let stepNo = 0;
+let stepTotal = 0;
+let keysShown = false;
+const memory = new Map<string, string[]>();
+const memOrder: string[] = [];
+const answerLog: { step: number; q: string; a: string }[] = [];
+const plain = (s: string): string => s.replace(/\x1b\[[0-9;]*m/g, '');
+function remember(q: string, vals: string[], shown: string): void {
+  const prev = memory.get(q);
+  const pos = memOrder.indexOf(q);
+  if (prev && prev.join('\u0000') !== vals.join('\u0000') && pos >= 0) {
+    for (const later of memOrder.slice(pos + 1)) memory.delete(later);
+    memOrder.length = pos + 1;
+  }
+  memory.set(q, vals);
+  if (pos < 0) memOrder.push(q);
+  const at = answerLog.findIndex((e) => e.q === q);
+  const entry = { step: stepNo - 1, q: plain(q), a: shown };
+  if (at >= 0) answerLog[at] = entry; else answerLog.push(entry);
+}
+async function menuPick(message: string, choices: Choice[], multi: boolean, fallback: number[]): Promise<string[]> {
+  closeRl(); // raw mode owns stdin while a menu is open
+  if (!keysShown) {
+    keysShown = true;
+    console.log(dim('Keys: Up/Down move, Space ticks, Enter confirms, Left goes back (undo), Right replays an answer you went back over (redo), q quits. Nothing is written until the last screen.'));
+  }
+  const prev = memory.get(message);
+  const initial = prev ? prev.map((v) => choices.findIndex((c) => c.value === v)).filter((x) => x >= 0) : fallback;
+  const r = await select.runMenu(menuIO(), {
+    header: `Step ${stepNo} of ${stepTotal}`, question: message, items: choices.map((c) => ({ title: c.title })),
+    multi, initial, canBack: canGoBack, canRedo: !!prev,
+  });
+  askCount++;
+  if (r.kind === 'back') throw new BackSignal();
+  const vals = r.picked.map((i) => choices[i].value);
+  remember(message, vals, r.picked.map((i) => plain(choices[i].title).split('  ')[0].split(' -- ')[0]).join(', ') || 'none');
+  return vals;
+}
+
 async function askYesNo(message: string, initialYes: boolean): Promise<boolean> {
+  if (autoYes) return initialYes;
+  if (useMenus()) {
+    const v = await menuPick(message, [{ title: 'Yes', value: 'yes' }, { title: 'No', value: 'no' }], false, [initialYes ? 0 : 1]);
+    return v[0] === 'yes';
+  }
   const ans = (await ask(`${bold(message)} (${initialYes ? 'Y/n' : 'y/N'}): `)).trim().toLowerCase();
   goBackIfAsked(ans);
   if (!ans) return initialYes;
@@ -1143,6 +1211,8 @@ async function askYesNo(message: string, initialYes: boolean): Promise<boolean> 
 // A plain numbered menu -- "1) claude  2) opencode" -- typed instead of arrow-keyed, so it behaves
 // the same in every terminal (PowerShell, cmd.exe, any SSH session) with no raw-mode surprises.
 async function askSelect(message: string, choices: Choice[], initialIndex: number): Promise<string> {
+  if (autoYes) return choices[initialIndex].value;
+  if (useMenus()) return (await menuPick(message, choices, false, [initialIndex]))[0];
   console.log(bold(message));
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
   for (;;) {
@@ -1156,6 +1226,8 @@ async function askSelect(message: string, choices: Choice[], initialIndex: numbe
 }
 
 async function askMultiselect(message: string, choices: Choice[], opts: { defaultAll?: boolean } = {}): Promise<string[]> {
+  if (autoYes) return opts.defaultAll ? choices.map((c) => c.value) : [];
+  if (useMenus()) return menuPick(message, choices, true, opts.defaultAll ? choices.map((_, i) => i) : []);
   console.log(bold(message));
   choices.forEach((c, i) => console.log(`  ${i + 1}) ${c.title}`));
   const defaultWord = opts.defaultAll ? 'all' : 'none';
@@ -1302,31 +1374,54 @@ async function runSteps(args: CliArgs, steps: Step[]): Promise<void> {
   const snaps: CliArgs[] = [];
   const asked: boolean[] = [];
   let i = 0;
-  while (i < steps.length) {
-    snaps[i] = snapshotArgs(args);
-    canGoBack = asked.slice(0, i).some(Boolean);
-    const before = askCount;
-    try {
-      await steps[i]();
-      asked[i] = askCount > before;
-      i++;
-    } catch (e) {
-      if (!(e instanceof BackSignal)) throw e;
-      let j = i - 1;
-      while (j >= 0 && !asked[j]) j--;
-      if (j < 0) { i = 0; continue; }
-      for (const k of Object.keys(args)) delete (args as unknown as Record<string, unknown>)[k];
-      Object.assign(args, snaps[j]);
-      asked.length = j;
-      i = j;
-      console.log(dim('Back one step.'));
+  // Restores the answers exactly as they were before step j, and forgets the log lines from j on (they are asked again).
+  const rewind = (j: number): void => {
+    for (const k of Object.keys(args)) delete (args as unknown as Record<string, unknown>)[k];
+    Object.assign(args, snaps[j]);
+    asked.length = j;
+    for (let k = answerLog.length - 1; k >= 0; k--) if (answerLog[k].step >= j) answerLog.splice(k, 1);
+    i = j;
+  };
+  stepTotal = steps.length;
+  for (;;) {
+    while (i < steps.length) {
+      snaps[i] = snapshotArgs(args);
+      canGoBack = asked.slice(0, i).some(Boolean);
+      stepNo = i + 1;
+      const before = askCount;
+      try {
+        await steps[i]();
+        asked[i] = askCount > before;
+        i++;
+      } catch (e) {
+        if (!(e instanceof BackSignal)) throw e;
+        let j = i - 1;
+        while (j >= 0 && !asked[j]) j--;
+        if (j < 0) { i = 0; continue; }
+        rewind(j);
+        console.log(dim('Back one step.'));
+      }
     }
+    // Summary screen: nothing has been written yet. Install, change one answer (its step is asked again, the other
+    // answers stay pre-selected), or cancel.
+    if (autoYes || !useMenus() || !answerLog.length) return;
+    const io = menuIO();
+    console.log(bold('\nYour answers:'));
+    for (const e of answerLog) console.log(`  ${e.q}  ${cyan(e.a)}`);
+    const what = await select.runMenu(io, { header: 'Review', question: 'Ready to write the files?', items: [{ title: 'Install' }, { title: 'Change an answer' }, { title: 'Cancel (nothing is written)' }], canBack: false, initial: [0] });
+    const pick = what.kind === 'pick' ? what.picked[0] : 0;
+    if (pick === 0) return;
+    if (pick === 2) throw new select.QuitSignal('cancel');
+    const which = await select.runMenu(io, { header: 'Review', question: 'Which answer?', items: answerLog.map((e) => ({ title: e.q.slice(0, 70), hint: e.a })), canBack: true, initial: [0] });
+    if (which.kind === 'pick') rewind(answerLog[which.picked[0]].step);
   }
 }
 
 async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
-  if (args.json || !isInteractive()) return;
+  autoYes = !!args.yes;
+  if (args.json || (!isInteractive() && !autoYes)) return;
   canGoBack = false; askCount = 0; backTipShown = false;
+  stepNo = 0; stepTotal = 0; keysShown = false; memory.clear(); memOrder.length = 0; answerLog.length = 0;
   try {
     const steps: Step[] = [];
     if (['list', 'install', 'update', 'merge-hooks', 'company'].includes(cmd) && !args.library) {
@@ -1437,7 +1532,8 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       }
       });
       steps.push(async () => {
-      if (args.standards && !args.contextCode) {
+      // RULE AI-01 belongs to every standards path (defaults, company, both): the company-only path gets its own CX block.
+      if ((args.standards || args.company) && !args.contextCode) {
         const suggestion = randomContextCode();
         args.contextCode = await askText(`Context code (2-4 chars, or "none")`, suggestion);
       }
@@ -1465,6 +1561,10 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
     }
 
     await runSteps(args, steps);
+  } catch (e) {
+    if (!(e instanceof select.QuitSignal)) throw e;
+    console.log('\nCancelled. Nothing was written.');
+    process.exit(130); // no fetch is open here, so exit() is safe
   } finally {
     closeRl();
   }
@@ -1483,6 +1583,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--remove-standards') a.removeStandards = true;
     else if (k === '--remove-hooks') a.removeHooks = true;
     else if (k === '--no-commands') a.noCommands = true;
+    else if (k === '--yes' || k === '-y') a.yes = true;
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

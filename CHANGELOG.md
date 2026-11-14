@@ -2,6 +2,10 @@
 
 ## 2026-11-15
 
+### Added
+- Installer menus (`install-kit.select`): arrow-key menus on a real terminal (Up/Down, Space, Enter), Left undoes, Right redoes (cleared when an earlier answer changes), "Step n of m" header and key footer on every screen, a summary screen (Install / Change an answer / Cancel) before anything is written, `--yes` for every default. Piped input keeps the numbered prompts. `cli-writer` carries the new contract.
+- RULE AI-01 on every standards path: a company-only install gets its own marked CX block and the Context code question; `install-kit.verify` checks it and `company sync` keeps it.
+
 ### Fixed
 - Slash commands no longer fail with MODULE_NOT_FOUND after a `cd` into a subfolder: installed command lines anchor the script path to the git root (`CLAUDE_PROJECT_DIR` is not set in `!` lines, measured). Run `install-kit update` to refresh existing installs.
 - Kit scripts print a plain-language message instead of a stack trace (`skill-scope.explain`: 8 known mistakes), find the project from a nested folder, and repair task text split by the shell (newlines, Windows backslash paths).

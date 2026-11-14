@@ -78,8 +78,19 @@ function checkSessionProtocol(root: string, protocolFile: string, findings: Find
   const abs = path.join(root, protocolFile);
   if (!fs.existsSync(abs)) { add(findings, 'fail', 'session-protocol', `${protocolFile} is missing -- the detected tool will start every session with no contract`); return; }
   const body = fs.readFileSync(abs, 'utf8');
-  // A company-only install writes a small protocol file of its own (no standards template, so no [CX] rule).
-  if (!/\[CX/.test(body) && body.includes('ai-dev-kit:company-standards:start') && !fs.existsSync(path.join(root, 'coding-standards', 'index.md'))) return;
+  // A company-only install has no standards template, so its [CX] rule comes from the kit's own marked block (RULE AI-01 is a kit rule).
+  if (!/\[CX/.test(body) && body.includes('ai-dev-kit:company-standards:start') && !fs.existsSync(path.join(root, 'coding-standards', 'index.md'))) {
+    add(findings, 'fail', 'session-protocol', `${protocolFile} has company standards but no CX rule block (RULE AI-01) -- run "company sync" to restore it`);
+    return;
+  }
+  const cx = /<!-- ai-dev-kit:cx:start -->([\s\S]*?)<!-- ai-dev-kit:cx:end -->/.exec(body);
+  if (cx) {
+    const code = /\|\s*Context code\s*\|\s*([^|\s]+)\s*\|/.exec(cx[1])?.[1];
+    const token = /Begin every response with `\[CX( [^\]]+)?\]`/.exec(cx[1]);
+    if (!token) add(findings, 'fail', 'session-protocol', `${protocolFile}'s CX rule block does not name the [CX] token`);
+    else if (code && token[1]?.trim() !== code) add(findings, 'fail', 'session-protocol', `${protocolFile}'s CX rule block and its Context code row disagree`);
+    return;
+  }
   if (!/\[CX/.test(body)) { add(findings, 'fail', 'session-protocol', `${protocolFile} exists but has no [CX] rule -- it isn't the standards template, or it was stripped`); return; }
   if (/\[2[–-]4 chars you choose/.test(body)) add(findings, 'fail', 'session-protocol', `${protocolFile}'s Context code row still has the unfilled placeholder -- RULE AI-01 was never actually set`);
 }
