@@ -62,6 +62,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [resolve-conflicts](workflow/resolve-conflicts.md) | Resolve merge/rebase conflicts by mode (both, ours, theirs), pace (all, auto, step) and developer role; `scope.js` companion lists the conflict set and verifies role scope; [roles example](workflow/resolve-conflicts.roles.example.json) ships `frontend` and `backend` |
 | [responsive-check](workflow/responsive-check.md) | Range-based viewport check and fix (RULE 17 zones by default; `--range`, `--min`, `--max`, `--width`, `--detect`); `probes.js` plans viewports and detects breakpoints, `measure.js` measures in Playwright |
 | [optimize-assets](workflow/optimize-assets.md) | Convert (webp, avif, jpg, mp4, woff2 ...), compress and pre-compress (gzip, brotli) assets with the converters installed; `convert.js` companion also scans for heavy assets and lists references; originals are never touched |
+| [implicit-state-audit](standards/implicit-state-audit.md) | Find hidden state machines in UI code (boolean-flag explosion, scattered DOM state, timer-sequenced state); `scan.js` companion finds them for 0 tokens, an optional Gemini or Ollama reviewer reads only flagged files |
 | [readme-writer](workflow/readme-writer.md) | Write, restructure or fact-check a README: hook first, every count, flag and metric checked against the code; `audit.js` companion checks links, counts, flags, sample sizes and size |
 | [version-bump](workflow/version-bump.md) | Bump a `package.json` version (major/feature/patch/alpha/beta/rc/release) and insert the matching `CHANGELOG.md` entry, scoped to the whole project, one group, or one package; `bump.js` companion runs the mechanical edit |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
@@ -152,6 +153,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
 | `/dupe` | copy a marked block into other files with per-file values | `plan-first` |
+| `/state-audit` | find hidden state machines (boolean flags, scattered toggles) in UI code | `implicit-state-audit` |
 | `/version-bump` | bump a package.json version + changelog entry | `version-bump` |
 | `/perf` | static payload weigh-in of a build, ranked | `perf-audit` |
 | `/e2e` | Playwright scaffold status or init | `e2e-scaffold` |

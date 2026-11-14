@@ -20,6 +20,25 @@ const put = (d, f, text) => { fs.mkdirSync(path.dirname(path.join(d, f)), { recu
 const kinds = (res, sev) => res.findings.filter((f) => f.sev === sev).map((f) => f.kind + ':' + (f.file || ''));
 const KEY = 'sk-ant-' + 'a1B2c3D4'.repeat(4);
 
+const BAD_STATE = "import { useState } from 'react';\nexport function P() {\n  const [isLoading, setL] = useState(false);\n  const [isError, setE] = useState(false);\n  const [isSuccess, setS] = useState(false);\n  return null;\n}\n";
+
+t('state audit: a UI file with loading, error and success flags BLOCKs the commit, naming the impossible state', () => {
+  const d = repo(); put(d, 'src/P.tsx', BAD_STATE); sh(d, 'add', '.');
+  const f = check({ cwd: d }).findings.filter((x) => x.kind === 'state');
+  assert.deepStrictEqual(f.map((x) => x.sev), ['BLOCK']);
+  assert.ok(/isLoading: true/.test(f[0].msg) && f[0].file === 'src/P.tsx');
+});
+
+t('state audit: commitGate "warn" downgrades it, "off" skips it, a clean union and non-UI files add nothing', () => {
+  const d = repo(); put(d, 'src/P.tsx', BAD_STATE); sh(d, 'add', '.');
+  put(d, '.claude/state-audit.json', '{"commitGate":"warn"}');
+  assert.deepStrictEqual(check({ cwd: d }).findings.filter((x) => x.kind === 'state').map((x) => x.sev), ['WARN']);
+  put(d, '.claude/state-audit.json', '{"commitGate":"off"}');
+  assert.deepStrictEqual(check({ cwd: d }).findings.filter((x) => x.kind === 'state'), []);
+  const e = repo(); put(e, 'src/ok.tsx', "type S = 'idle' | 'loading';\nexport function P() { const [s] = useState<S>('idle'); return s; }\n"); put(e, 'notes.md', BAD_STATE); sh(e, 'add', '.');
+  assert.deepStrictEqual(check({ cwd: e }).findings.filter((x) => x.kind === 'state'), []);
+});
+
 t('clean staged change has no findings', () => {
   const d = repo(); put(d, 'src/a.js', 'const a = 1;\n'); sh(d, 'add', '.');
   assert.deepStrictEqual(check({ cwd: d }).findings, []);

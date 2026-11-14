@@ -22,8 +22,8 @@ const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) {
 const found = new Map();
 for (const f of [...walk(path.join(root, 'skills')), ...walk(path.join(root, 'mods'))]) {
   const text = fs.readFileSync(f, 'utf8');
-  for (const m of text.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)|process\.env\[['"]([A-Z][A-Z0-9_()]*)['"]\]|env\.get\(['"]([A-Z][A-Z0-9_]*)['"]\)/g)) {
-    const name = m[1] || m[2] || m[3];
+  for (const m of text.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)|process\.env\[['"]([A-Z][A-Z0-9_()]*)['"]\]|env\.get\(['"]([A-Z][A-Z0-9_]*)['"]\)|(?<![\w.])env\.([A-Z][A-Z0-9_]*)\b/g)) {
+    const name = m[1] || m[2] || m[3] || m[4];
     if (!found.has(name)) found.set(name, path.relative(root, f));
   }
 }
