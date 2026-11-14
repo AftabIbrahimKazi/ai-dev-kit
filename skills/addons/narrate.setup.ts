@@ -53,7 +53,10 @@ export function installCommand(project: string, skillRoot?: string): string {
   if (fs.existsSync(dest)) return `commands: ${posix(dest)} already exists, left alone`;
   const root = skillRoot || '.claude/skills';
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, fs.readFileSync(src, 'utf8').replace(/\{\{skill-root\}\}/g, root));
+  // Same anchoring as install-kit's renderCommand: a `cd` into a subfolder must not break the script path.
+  const anchor = '$(git rev-parse --show-toplevel 2>/dev/null || echo .)';
+  const body = fs.readFileSync(src, 'utf8').replace(/\{\{skill-root\}\}(\/[^\s`]*)/g, (_m, rest: string) => `"${anchor}/${root}${rest}"`).replace(/\{\{skill-root\}\}/g, root);
+  fs.writeFileSync(dest, body.replace(/^allowed-tools: (.*)$/m, (_l, tools: string) => `allowed-tools: ${tools}, Bash(git rev-parse:*)`));
   return `commands: installed ${posix(dest)}; type /narration status`;
 }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15
+
+### Fixed
+- Slash commands no longer fail with MODULE_NOT_FOUND after a `cd` into a subfolder: installed command lines anchor the script path to the git root (`CLAUDE_PROJECT_DIR` is not set in `!` lines, measured). Run `install-kit update` to refresh existing installs.
+- Kit scripts print a plain-language message instead of a stack trace (`skill-scope.explain`: 8 known mistakes), find the project from a nested folder, and repair task text split by the shell (newlines, Windows backslash paths).
+
 ## 2026-11-11
 
 ### Added

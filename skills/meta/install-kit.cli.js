@@ -118,8 +118,16 @@ function commandsDirOf(manifest) {
         return null; // Codex has no command folder
     return path.join(path.dirname(manifest.skillRoot), 'commands');
 }
+// A `!` line runs in the shell's current folder, so a relative skill path breaks after a `cd` into a subfolder.
+// Measured (claude -p from a nested folder): CLAUDE_PROJECT_DIR is not set there, `git rev-parse --show-toplevel` works.
+// So the script path is anchored to the git root, falling back to the old relative path outside a git repo.
+const ROOT_EXPR = '$(git rev-parse --show-toplevel 2>/dev/null || echo .)';
 function renderCommand(body, manifest) {
-    return body.replace(/\{\{skill-root\}\}/g, manifest.skillRoot.split(path.sep).join('/'));
+    const root = manifest.skillRoot.split(path.sep).join('/');
+    let anchored = false;
+    const out = body.replace(/\{\{skill-root\}\}(\/[^\s`]*)/g, (_m, rest) => { anchored = true; return `"${ROOT_EXPR}/${root}${rest}"`; })
+        .replace(/\{\{skill-root\}\}/g, root);
+    return anchored ? out.replace(/^allowed-tools: (.*)$/m, (_l, tools) => `allowed-tools: ${tools}, Bash(git rev-parse:*)`) : out;
 }
 const sha = (text) => crypto.createHash('sha1').update(text).digest('hex');
 // A command written by its own skill's setup script (narrate's setup.js copies /narration) is left to that script.

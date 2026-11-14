@@ -110,7 +110,7 @@ t('setup installs the command with the skill root filled in and never overwrites
   assert.ok(installCommand(d, 'skills').startsWith('commands: installed'));
   const f = path.join(d, '.claude', 'commands', 'narration.md');
   const body = fs.readFileSync(f, 'utf8');
-  assert.ok(body.includes('node skills/narrate/speak.js') && !body.includes('{{skill-root}}'));
+  assert.ok(body.includes('/skills/narrate/speak.js"') && body.includes('git rev-parse --show-toplevel') && !body.includes('{{skill-root}}'));
   fs.writeFileSync(f, 'mine');
   assert.ok(installCommand(d, 'skills').includes('already exists'));
   assert.strictEqual(fs.readFileSync(f, 'utf8'), 'mine');
