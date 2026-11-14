@@ -24,6 +24,7 @@
     "skill-writer": ["skill"],
     "mod-writer": ["mod", "hook"],
     "command-writer": ["command", "slash"],
-    "cli-writer": ["cli", "installer", "script"]
+    "cli-writer": ["cli", "installer", "script"],
+    "readme-writer": ["readme"]
   }
 }
