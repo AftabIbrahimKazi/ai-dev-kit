@@ -3,6 +3,7 @@
 ## 2026-11-15
 
 ### Added
+- `/dupe` and `plan-first/dupe.js`: copy a marked block into other files with per-file values, plus a plan-first rule (a block needed in 2 or more files is copied by script). Measured on 5 pages, Haiku, 3 runs per arm: 5/5 correct both ways, 14 turns and 4,760 output tokens by hand versus 6 turns and 2,630 with the script (cost per run $0.0090 versus $0.0081).
 - `docs/env-variables.md`: every environment variable the kit reads (names, purpose, reader, secret flag), with a test that fails when code reads one the page lacks. A per-project secrets file and resolver were measured and rejected (0 tokens saved, extra secret copies).
 - `readme-writer` skill (workflow, per-session archivable on the word "readme") with an `audit.js` companion that checks links, count parity, flag parity, sample sizes and README size without spending tokens.
 - Installer menus (`install-kit.select`): arrow-key menus on a real terminal (Up/Down, Space, Enter), Left undoes, Right redoes (cleared when an earlier answer changes), "Step n of m" header and key footer on every screen, a summary screen (Install / Change an answer / Cancel) before anything is written, `--yes` for every default. Piped input keeps the numbered prompts. `cli-writer` carries the new contract.

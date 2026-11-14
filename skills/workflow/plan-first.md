@@ -48,5 +48,6 @@ In plan mode, or when asked to plan a big or repetitive task with defined rules,
 - **Enumerate files by actually checking** (glob/grep), not from memory — the plan's value is that it's grounded.
 - **One plan, then execute without pausing.** No re-asking permission at each step; the plan WAS the permission. Stop mid-run only for scope changes or destructive surprises.
 - **"Won't do" is load-bearing** — it's where scope creep and over-engineering get declined in advance.
+- **A block needed in 2 or more files is copied by script, never retyped.** Wrap the source in `<!-- dupe:name -->` ... `<!-- /dupe:name -->`, write one JSON of per-file literal values, run `node <skill-root>/plan-first/dupe.js --from <file> --block name --to a,b --slots slots.json` (`/dupe`). For a framework with includes or components, make one shared component instead. Measured: 5 pages, Haiku, 3 runs per arm, same 5/5 correct, 14 turns and 4,760 output tokens by hand versus 6 turns and 2,630 with the script.
 - If execution reveals the plan was wrong, say so in one line and state the correction — don't silently diverge.
 - Plans are not deliverables: no headers, no prose padding, no restating the user's request back at length.
