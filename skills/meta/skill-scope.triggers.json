@@ -25,6 +25,7 @@
     "mod-writer": ["mod", "hook"],
     "command-writer": ["command", "slash"],
     "cli-writer": ["cli", "installer", "script"],
-    "readme-writer": ["readme"]
+    "readme-writer": ["readme"],
+    "implicit-state-audit": ["state-audit", "state machine", "boolean flag*", "isloading", "implicit state"]
   }
 }

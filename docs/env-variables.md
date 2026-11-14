@@ -14,6 +14,7 @@ Secrets (marked **secret**) belong in your shell or your OS user environment, ne
 | `NARRATE` | `0` mutes spoken narration | narrate | no |
 | `NARRATE_TMP` | Folder for narration audio files | narrate | no |
 | `CHROME`, `CHROME_PATH` | Chrome or Edge executable for headless runs | figma-code, teardown | no |
+| `CLAUDE_CODE_BIN` | Path to the Claude Code executable, for delegated headless runs | plan-first delegate | no |
 | `FFMPEG` | ffmpeg executable for teardown film | teardown-film | no |
 | `IMAGEMAGICK_BIN` | `magick` executable for image conversion | image-gen | no |
 | `LAYA_HOME` | Folder for the Laya prefilter's venv and models | laya-ctl, aiignore-guard | no |
@@ -29,8 +30,9 @@ Secrets (marked **secret**) belong in your shell or your OS user environment, ne
 | `IMAGE_GEN_HOME` | Folder for image-gen's usage log | image-gen | no |
 | `IMAGE_PROVIDERS` | Provider order, for example `gemini,cloudflare` | image-gen | no |
 | `IMAGE_WARN_PCT`, `IMAGE_SOFT_LIMIT_PCT` | Free-tier usage percentages that warn and that stop | image-gen | no |
-| `GEMINI_API_KEY` | Key for Gemini image generation | image-gen | **secret** |
+| `GEMINI_API_KEY` | Key for Gemini image generation and for the optional Gemini reviewer | image-gen, plan-first reviewer | **secret** |
 | `GEMINI_IMAGE_MODEL` | Gemini image model name | image-gen | no |
+| `GEMINI_REVIEW_MODEL` | Gemini model the state-audit and plan reviewer asks (default `gemini-2.5-flash`) | plan-first reviewer | no |
 | `GEMINI_DAILY_CAP` | Daily image cap for Gemini | image-gen | no |
 | `GEMINI_API_BASE` | Override of the Gemini API base URL (tests) | image-gen | no |
 | `CLOUDFLARE_API_TOKEN` | Token for Cloudflare Workers AI images | image-gen | **secret** |

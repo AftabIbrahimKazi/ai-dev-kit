@@ -597,6 +597,7 @@ export interface CliArgs {
   usage?: 'on' | 'off'; // feature-usage tracking (the feature-usage mod and session-budget/usage.js read the same file)
   usageNotify?: 'on' | 'off';
   yes?: boolean; // --yes: accept every default, ask nothing
+  reviewer?: 'auto' | 'ollama' | 'static'; // second reviewer for hidden-state bugs (--reviewer)
   signature?: string; // project signature: an alias of 2 to 6 letters, or "none"
   signatureAction?: string;
   companyAction?: string;
@@ -678,6 +679,12 @@ export function doInstall(args: CliArgs): DoInstallResult {
     ? company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults })
     : undefined;
   const usageResult = setUsageTracking(args.usage, args.usageNotify);
+  // The hidden-state reviewer choice lives in one small file the state-audit mod and plan-first/reviewer.js read.
+  // Only written when a choice was made; delete .claude/state-audit.json to go back to "static" (no model, no network).
+  if (args.reviewer && Object.keys(manifest.skills).includes('implicit-state-audit')) {
+    const cfg = path.join(args.root!, '.claude', 'state-audit.json');
+    if (!fs.existsSync(cfg) || args.force) { fs.mkdirSync(path.dirname(cfg), { recursive: true }); fs.writeFileSync(cfg, JSON.stringify({ reviewer: args.reviewer }, null, 2) + '\n'); }
+  }
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
   return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult };
 }
@@ -1337,6 +1344,19 @@ async function askUsage(args: CliArgs): Promise<void> {
   if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only)', false)) ? 'on' : 'off';
 }
 
+// Reviewer for hidden-state bugs. Asked only when implicit-state-audit is being installed. Auto is pre-selected, but it sends a
+// changed file to Gemini's free tier (which may keep inputs), so --yes never picks it: --yes means "static", no model, no network.
+async function askReviewer(args: CliArgs): Promise<void> {
+  if (args.reviewer !== undefined || !args.skills.some((s) => parseSkillToken(s).name === 'implicit-state-audit')) return;
+  if (autoYes) { args.reviewer = 'static'; return; }
+  console.log(dim('A second model can read a file the free scan flagged, so Claude spends no tokens on it. Free-tier Gemini may keep what it is sent: choose Ollama only for private code. Only flagged files are ever sent, never files that look like secrets.'));
+  args.reviewer = await askSelect('Reviewer for hidden-state bugs:', [
+    { title: `Auto ${dim('-- Gemini first (needs GEMINI_API_KEY in your shell), then a local Ollama model')}`, value: 'auto' },
+    { title: `Ollama only ${dim('-- a model on this machine; nothing leaves it (private code)')}`, value: 'ollama' },
+    { title: `Static scan only ${dim('-- no AI reads your code; the free scan still runs')}`, value: 'static' },
+  ], 0) as 'auto' | 'ollama' | 'static';
+}
+
 async function askSignature(args: CliArgs): Promise<void> {
   if (args.signature !== undefined) return;
   let hint = '';
@@ -1539,6 +1559,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       }
       });
       // last, so the questions above keep their order; the answer only writes a small file in the home folder
+      steps.push(() => askReviewer(args));
       steps.push(() => askUsage(args));
     }
 
@@ -1584,6 +1605,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--remove-hooks') a.removeHooks = true;
     else if (k === '--no-commands') a.noCommands = true;
     else if (k === '--yes' || k === '-y') a.yes = true;
+    else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.reviewer = v; }
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

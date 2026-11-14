@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addedLines = addedLines;
 exports.strictFindings = strictFindings;
+exports.stateFindings = stateFindings;
 exports.checkMessage = checkMessage;
 exports.check = check;
 exports.report = report;
@@ -126,6 +127,41 @@ function strictFindings(cwd, diff) {
     }
     return out;
 }
+function stateEngine() {
+    for (const p of [path.join(__dirname, '..', 'implicit-state-audit', 'scan.js'), path.join(__dirname, '..', 'standards', 'implicit-state-audit.scan.js')]) {
+        try {
+            if (fs.existsSync(p))
+                return require(p);
+        }
+        catch { /* a broken engine means no audit, never a wrong block */ }
+    }
+    return null;
+}
+function stateFindings(cwd, names) {
+    let gate = 'block';
+    try {
+        const c = JSON.parse(fs.readFileSync(path.join(cwd, '.claude', 'state-audit.json'), 'utf8'));
+        if (c.commitGate)
+            gate = c.commitGate;
+    }
+    catch { /* no config: block on FAIL */ }
+    if (gate === 'off')
+        return [];
+    // Test, story and fixture files hold sample code, not app state: the audit skips them (same rule as the scanner).
+    const files = names.filter((f) => /\.(tsx?|jsx?|mjs|cjs|vue|svelte|astro)$/i.test(f) && !/(^|\/)(node_modules|handover)\//.test(f) && !/(?:[.-](?:test|spec|stories)\.[a-z]+$)|(?:(?:^|\/)(?:tests?|__tests__|__mocks__|fixtures?|e2e)\/)/i.test(f));
+    const eng = files.length ? stateEngine() : null;
+    if (!eng)
+        return [];
+    try {
+        return eng.scanFiles(cwd, files, true).findings.map((f) => ({
+            sev: f.level === 'fail' && gate !== 'warn' ? 'BLOCK' : 'WARN', kind: 'state', file: f.file, line: f.line,
+            msg: `${f.rule} ${f.flags.join(', ')}${f.impossible.length ? ' (' + f.impossible[0] + ')' : ''}: ${f.fix}`,
+        }));
+    }
+    catch {
+        return [];
+    }
+}
 // handover/locks.d/ is role-session lane state (gitignored, claimed by mkdir). This check runs inside a hook,
 // so git is told to leave it out: its content is never read. Handover notes are scanned like any file.
 const LANE = 'handover/locks.d';
@@ -227,7 +263,7 @@ function check(opts) {
     // Strict projects (.claude/edit-check.json "strict": true): a hard-rule finding on a line this change adds blocks the commit.
     // The rules are the code-audit engine's per-edit set (plus the ui-* ones where ui-standards is installed). Old code never blocks.
     if (mode !== 'push')
-        findings.push(...strictFindings(cwd, diff));
+        findings.push(...strictFindings(cwd, diff), ...stateFindings(cwd, names));
     if (mode === 'staged') {
         const lane = git(['diff', '--cached', '--name-only', '--', `:(top)${LANE}`], cwd).out.split('\n').filter(Boolean); // names only
         if (lane.length)

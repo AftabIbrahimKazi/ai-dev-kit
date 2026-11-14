@@ -59,6 +59,8 @@ stale-but-green) still applies even without the file.
 ## Step 5 — Verify, then stop
 
 Run `test:e2e` and confirm the smoke test passes before reporting done — an unverified
-scaffold is worse than none. **Do not** generate additional feature-specific specs at
+scaffold is worse than none. If the `implicit-state-audit` skill is installed, also run
+`node <skill-root>/implicit-state-audit/scan.js --changed` on the UI files you changed:
+a FAIL (flags that allow impossible states) counts as a failed test, a WARN is reported. **Do not** generate additional feature-specific specs at
 this point; that's the next request, done against the fixtures/POM layer just built,
 not a blind batch of guessed coverage (see QA-E2E-02/03 if the standard is installed).

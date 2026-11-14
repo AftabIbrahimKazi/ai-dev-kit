@@ -1,0 +1,4 @@
+{
+  "description": "state-audit hooks module",
+  "modules": ["./register.ts"]
+}
