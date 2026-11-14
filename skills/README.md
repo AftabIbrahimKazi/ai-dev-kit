@@ -151,6 +151,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/resolve-conflicts` | conflict set + role scope, then guided resolution | `resolve-conflicts` |
 | `/responsive-check` | viewport plan or breakpoint report, then check | `responsive-check` |
 | `/optimize-assets` | asset scan, convert, compress, pre-compress | `optimize-assets` |
+| `/dupe` | copy a marked block into other files with per-file values | `plan-first` |
 | `/version-bump` | bump a package.json version + changelog entry | `version-bump` |
 | `/perf` | static payload weigh-in of a build, ranked | `perf-audit` |
 | `/e2e` | Playwright scaffold status or init | `e2e-scaffold` |
