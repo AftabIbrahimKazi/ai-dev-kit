@@ -6,9 +6,9 @@
 //   node goldfish.js prepare <plan.md> [--root <dir>]   write the bundle and the five stage prompts, print how to run them
 //   node goldfish.js local   <plan.md> [--root <dir>] [--delay <seconds>]   run the stages on Gemini or Ollama (no Claude tokens)
 //
-// prepare: for the Claude path. It prints the dispatch text; Claude starts one FRESH subagent per stage (Read, Grep and Glob
-//   only, no CLAUDE.md, no conversation). That costs Claude tokens by design: a fresh context is the point. If subagents
-//   cannot be started, stop: a review in the same context is not a goldfish review.
+// prepare: for the Claude path. It prints the dispatch text; Claude runs the stages inline, one after another (the kit's
+//   agent-usage policy: no subagents unless the user asks). Same-context reviews are weaker than fresh-context ones; say so.
+//   If the user asks for subagents, one FRESH subagent per stage (Read, Grep and Glob only, no CLAUDE.md, no conversation).
 // local: the cheap path. The same prompts go to Gemini (if allowed), then Ollama, through plan-first/reviewer.js, and the
 //   reports are written next to the bundle. Needs a reviewer other than "static" in .claude/state-audit.json.
 // Files go to ~/.ai-dev-kit/goldfish/<plan>-<hash>/ (AI_DEV_KIT_HOME moves it), never into the project. Secret-looking files
@@ -86,9 +86,9 @@ export function prepare(root: string, planFile: string, home = process.env.AI_DE
 export function dispatchText(p: Prepared): string {
   const lines = [
     `goldfish prepare: ${p.files.length} referenced file(s), ${p.chars} chars in ${p.bundle}`,
-    'Start one FRESH subagent per stage below: tools Read, Grep and Glob only, no CLAUDE.md, no conversation. Give each exactly: "Read <prompt file>, then follow it using only <material>." If you cannot start subagents, stop and say so.',
+    'Run the stages YOURSELF, inline, one after another. Do NOT start subagents (agent-usage policy) unless the user asked for them in this request. For each stage: Read the prompt file, then follow it using only the listed material (plus earlier stage reports where marked). Keep each report to 12 lines or fewer and say in your summary that these were inline reviews, not fresh-context ones.',
     ...STAGES.map((s, i) => `  ${s.id}. ${s.name.padEnd(24)} prompt ${p.stageFiles[i]}  material ${s.usesBundle ? p.bundle : p.planOnly}${s.needs.length ? '  (after stages ' + s.needs.join(', ') + '; add their reports)' : ''}`),
-    'Stages 1, 2, 3 and 5 can run at the same time; stage 4 follows. Take each report as written (12 lines or fewer), then YOU resolve the findings and decide: reviewers advise, they do not decide. Edit the plan, do not argue with a reviewer.',
+    'Run stage 4 after stages 1-3. Take each report as written (12 lines or fewer), then YOU resolve the findings and decide: reviewers advise, they do not decide. Edit the plan, do not argue with a reviewer.',
   ];
   return lines.join('\n');
 }
