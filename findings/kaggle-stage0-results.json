@@ -1,0 +1,141 @@
+{
+  "started": "2026-11-15 20:17:44",
+  "steps": {
+    "nvidia_smi": "Tesla T4, 15360 MiB, 580.178.04\nTesla T4, 15360 MiB, 580.178.04",
+    "cpu_count": 4,
+    "disk_free_gb": "/dev/loop2           20G    1G       20G   1% /kaggle/working",
+    "ollama_install_s": 28,
+    "ollama_gpu_detect": "Warning: could not connect to a running Ollama instance\nWarning: client version is 0.40.16\n00:04.0 3D controller: NVIDIA Corporation TU104GL [Tesla T4] (rev a1)\n00:05.0 3D controller: NVIDIA Corporation TU104GL [Tesla T4] (rev a1)",
+    "model_pull_s": 168,
+    "first_call": {
+      "ctx": 8192,
+      "wall_s": 151.4,
+      "prompt_tokens": 38,
+      "gen_tokens": 48,
+      "gen_tok_s": 2.4,
+      "prompt_tok_s": 0.9,
+      "load_s": 87.4
+    },
+    "ollama_ps": "NAME               ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL               \nqwen3-coder:30b    06c1097efce0    19 GB    100% GPU     8192       llamacpp    29 minutes from now",
+    "nvidia_smi_loaded": "9841 MiB, 41 %\n9311 MiB, 32 %",
+    "ollama_log_gpu": "time=2026-11-15T20:18:12.169Z level=INFO source=routes.go:2474 msg=\"server config\" env=\"map[CUDA_VISIBLE_DEVICES: GGML_VK_VISIBLE_DEVICES: GPU_DEVICE_ORDINAL: HIP_VISIBLE_DEVICES: HSA_OVERRIDE_GFX_VERSION: HTTPS_PROXY: HTTP_PROXY: LLAMA_ARG_FIT: LLAMA_ARG_FIT_TARGET: NO_PROXY: OLLAMA_CONTEXT_LENGTH:0 OLLAMA_CREATE_REMOTE:false OLLAMA_DEBUG:INFO OLLAMA_DEBUG_LOG_REQUESTS:false OLLAMA_EDITOR: OLLAMA_FLASH_ATTENTION:false OLLAMA_GO_TEMPLATE:true OLLAMA_GPU_OVERHEAD:0 OLLAMA_HOST:http://127.0.0.1:11434 OLLAMA_IGPU_ENABLE: OLLAMA_KEEP_ALIVE:5m0s OLLAMA_KV_CACHE_TYPE: OLLAMA_LLM_LIBRARY: OLLAMA_LOAD_TIMEOUT:5m0s OLLAMA_MAX_LOADED_MODELS:0 OLLAMA_MAX_QUEUE:512 OLLAMA_MAX_TRANSFER_STREAMS:4 OLLAMA_MODELS:/root/.ollama/models OLLAMA_NOHISTORY:false OLLAMA_NOPRUNE:false OLLAMA_NO_CLOUD:false OLLAMA_NUM_PARALLEL:1 OLLAMA_ORIGINS:[http://localhost https://localhost http://localhost:* https://localhost:* http://127.0.0.1 https://127.0.0.1 http://127.0.0.1:* https://127.0.0.1:* http://0.0.0.0 https://0.0.0.0 http://0.0.0.0:* https://0.0.0.0:* app://* file://* tauri://* vscode-webview://* vscode-file://*] OLLAMA_REMOTES:[ollama.com] OLLAMA_SCHED_SPREAD:false OLLAMA_VULKAN:true ROCR_VISIBLE_DEVICES: http_proxy: https_proxy: no_proxy:]\"\ntime=2026-11-15T20:18:12.174Z level=INFO source=runner.go:60 msg=\"discovering available GPUs...\"\ntime=2026-11-15T20:18:20.029Z level=INFO source=types.go:32 msg=\"inference compute\" id=0 filter_id=0 library=CUDA compute=7.5 name=CUDA0 description=\"Tesla T4\" libdirs=ollama,cuda_v13 driver=13.0 pci_id=0000:00:04.0 type=discrete total=\"14.6 GiB\" available=\"14.5 GiB\"\ntime=2026-11-15T20:18:20.029Z level=INFO source=types.go:32 msg=\"inference compute\" id=1 filter_id=1 library=CUDA compute=7.5 name=CUDA1 description=\"Tesla T4\" libdirs=ollama,cuda_v13 driver=13.0 pci_id=0000:00:05.0 type=discrete total=\"14.6 GiB\" available=\"14.5 GiB\"\ntime=2026-11-15T20:21:10.907Z level=INFO source=sched.go:658 msg=\"gpu memory\" id=0 library=CUDA available=\"14.0 GiB\" free=\"14.5 GiB\" minimum=\"457.0 MiB\" overhead=\"0 B\"\ntime=2026-11-15T20:21:10.907Z level=INFO source=sched.go:658 msg=\"gpu memory\" id=1 library=CUDA available=\"14.0 GiB\" free=\"14.5 GiB\" minimum=\"457.0 MiB\" overhead=\"0 B\"\nggml_cuda_init: found 2 CUDA devices (Total VRAM: 29823 MiB):\nload_backend: loaded CUDA backend from /usr/local/lib/ollama/cuda_v13/libggml-cuda.so\ncmn  common_param:   - CUDA0   : Tesla T4 (14911 MiB, 14806 MiB free)\ncmn  common_param:   - CUDA1   : Tesla T4 (14911 MiB, 14806 MiB free)\ncmn  common_param: system_info: n_threads = 2 (n_threads_batch = 2) / 4 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | AVX512 = 1 | LLAMAFILE = 1 | REPACK = 1 | CUDA : ARCHS = 750,800,860,870,890,900,1000,1030,1100,1200,1210 | USE_GRAPHS = 1 | FA_QUANTS = q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16 | \ncommon_memory_breakdown_print: |   - CUDA0 (T4)         | 14911 = 14806 + (9703 =  8975 +     400 +     328) +       -9598 |",
+    "ctx_8192": {
+      "ctx": 8192,
+      "wall_s": 3.2,
+      "prompt_tokens": 5826,
+      "gen_tokens": 35,
+      "gen_tok_s": 60.8,
+      "prompt_tok_s": 2230.1,
+      "load_s": 0.0
+    },
+    "ollama_ps_8192": "NAME               ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL               \nqwen3-coder:30b    06c1097efce0    19 GB    100% GPU     8192       llamacpp    29 minutes from now",
+    "ctx_32768": {
+      "ctx": 32768,
+      "wall_s": 32.5,
+      "prompt_tokens": 30777,
+      "gen_tokens": 35,
+      "gen_tok_s": 38.5,
+      "prompt_tok_s": 1351.3,
+      "load_s": 8.5
+    },
+    "ollama_ps_32768": "NAME               ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL               \nqwen3-coder:30b    06c1097efce0    22 GB    100% GPU     32768      llamacpp    29 minutes from now",
+    "ctx_65536": {
+      "ctx": 65536,
+      "wall_s": 35.7,
+      "prompt_tokens": 32770,
+      "gen_tokens": 35,
+      "gen_tok_s": 37.2,
+      "prompt_tok_s": 1282.0,
+      "load_s": 8.8
+    },
+    "ollama_ps_65536": "NAME               ID              SIZE     PROCESSOR    CONTEXT    RUNNER      UNTIL               \nqwen3-coder:30b    06c1097efce0    26 GB    100% GPU     65536      llamacpp    29 minutes from now",
+    "sample1": {
+      "ctx": 16384,
+      "wall_s": 21.1,
+      "prompt_tokens": 55,
+      "gen_tokens": 829,
+      "gen_tok_s": 65.6,
+      "prompt_tok_s": 196.6,
+      "load_s": 8.2
+    },
+    "sample2": {
+      "ctx": 16384,
+      "wall_s": 23.8,
+      "prompt_tokens": 54,
+      "gen_tokens": 1579,
+      "gen_tok_s": 66.9,
+      "prompt_tok_s": 597.5,
+      "load_s": 0.0
+    },
+    "sample3": {
+      "ctx": 16384,
+      "wall_s": 17.6,
+      "prompt_tokens": 66,
+      "gen_tokens": 1158,
+      "gen_tok_s": 66.7,
+      "prompt_tok_s": 634.7,
+      "load_s": 0.0
+    },
+    "done": "ok",
+    "log_tail_ollama": "slot print_timing: id  0 | task 2410 |    graphs reused =       3548\nslot print_timing: id  0 | task 2410 |   graph reallocs =          0    /     0        (same size) / (changed size)\nslot      release: id  0 | task 2410 | stop processing: n_tokens = 1223, truncated = 0\nsrv  update_slots: all slots are idle\n[GIN] 2026/11/15 - 20:25:53 | 200 |   17.57s |       127.0.0.1 | POST     \"/api/generate\""
+  },
+  "ctx_runs": [
+    {
+      "ctx": 8192,
+      "wall_s": 3.2,
+      "prompt_tokens": 5826,
+      "gen_tokens": 35,
+      "gen_tok_s": 60.8,
+      "prompt_tok_s": 2230.1,
+      "load_s": 0.0
+    },
+    {
+      "ctx": 32768,
+      "wall_s": 32.5,
+      "prompt_tokens": 30777,
+      "gen_tokens": 35,
+      "gen_tok_s": 38.5,
+      "prompt_tok_s": 1351.3,
+      "load_s": 8.5
+    },
+    {
+      "ctx": 65536,
+      "wall_s": 35.7,
+      "prompt_tokens": 32770,
+      "gen_tokens": 35,
+      "gen_tok_s": 37.2,
+      "prompt_tok_s": 1282.0,
+      "load_s": 8.8
+    }
+  ],
+  "samples": [
+    {
+      "ctx": 16384,
+      "wall_s": 21.1,
+      "prompt_tokens": 55,
+      "gen_tokens": 829,
+      "gen_tok_s": 65.6,
+      "prompt_tok_s": 196.6,
+      "load_s": 8.2
+    },
+    {
+      "ctx": 16384,
+      "wall_s": 23.8,
+      "prompt_tokens": 54,
+      "gen_tokens": 1579,
+      "gen_tok_s": 66.9,
+      "prompt_tok_s": 597.5,
+      "load_s": 0.0
+    },
+    {
+      "ctx": 16384,
+      "wall_s": 17.6,
+      "prompt_tokens": 66,
+      "gen_tokens": 1158,
+      "gen_tok_s": 66.7,
+      "prompt_tok_s": 634.7,
+      "load_s": 0.0
+    }
+  ],
+  "elapsed_s": 490
+}
