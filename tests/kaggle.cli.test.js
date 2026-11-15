@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const k = require('../skills/addons/kaggle.cli.js');
+const k = require('../skills/cloud/kaggle/kaggle.cli.js');
 
 let failed = 0;
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + e.message); } };
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kg-'));
-const BIN = path.join(__dirname, '..', 'skills', 'addons', 'kaggle.cli.js');
+const BIN = path.join(__dirname, '..', 'skills', 'cloud', 'kaggle', 'kaggle.cli.js');
 
 const GOOD = `# Plan
 
@@ -59,6 +59,12 @@ t('parseFiles: reads FILE blocks, rejects absolute and parent paths', () => {
   assert.deepStrictEqual(f.map((x) => x.path), ['src/a.js', 'b/c.json']);
   assert.strictEqual(f[0].content, 'const a = 1;\n');
 });
+t('parseFiles: an answer with no code fences (seen live) still splits on FILE lines', () => {
+  const f = k.parseFiles('FILE: src/config.json\n{\n  "port": 3000\n}\n\nFILE: src/config.js\nmodule.exports = require("./config.json");\n');
+  assert.deepStrictEqual(f.map((x) => x.path), ['src/config.json', 'src/config.js']);
+  assert.strictEqual(f[0].content, '{\n  "port": 3000\n}\n');
+  assert.strictEqual(f[1].content, 'module.exports = require("./config.json");\n');
+});
 t('gateFile: placeholder, bad JS, bad JSON, cut HTML, empty; clean passes', () => {
   assert.ok(k.gateFile('a.js', '// rest of the file\n').some((x) => x.includes('placeholder')));
   assert.ok(k.gateFile('a.js', 'const = ;').some((x) => x.includes('syntax')));
@@ -83,7 +89,7 @@ t('budgetCheck: open session blocks, weekly cap blocks, --force passes, old rows
   assert.strictEqual(k.budgetCheck([{ id: 'a', kernel: 'u/k', started: '2020-01-01T00:00:00Z', finished: '2020-01-01T01:00:00Z', minutes: 9999, status: 'done' }], 60, false), '');
 });
 t('buildNotebook: embeds jobs, model and caps; valid notebook JSON; no placeholders left', () => {
-  const nb = JSON.parse(k.buildNotebook({ tasks: [{ id: '1', prompt: 'p' }] }, fs.readFileSync(path.join(__dirname, '..', 'skills', 'addons', 'kaggle.worker.py'), 'utf8')));
+  const nb = JSON.parse(k.buildNotebook({ tasks: [{ id: '1', prompt: 'p' }] }, fs.readFileSync(path.join(__dirname, '..', 'skills', 'cloud', 'kaggle', 'kaggle.worker.py'), 'utf8')));
   const src = nb.cells[0].source.join('');
   assert.ok(!/__JOBS_B64__|__MODEL__|__CAPS_JSON__/.test(src));
   assert.ok(src.includes('qwen3-coder:30b'));

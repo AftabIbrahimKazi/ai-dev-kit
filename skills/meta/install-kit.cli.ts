@@ -202,7 +202,7 @@ function archiveRootOf(root: string, manifest: Manifest): string {
 // Categories skill-scope.md says are "never part of Everything/Pick/Auto-detect by default" --
 // excluded from both the Auto-detect default and the Everything preset; still reachable through
 // "Pick individually".
-const OPT_IN_DIR_PREFIXES = ['addons', 'mcp'];
+const OPT_IN_DIR_PREFIXES = ['addons', 'mcp', 'cloud'];
 const OPT_IN_NAMES = new Set(['mod-setup', 'misfire-log']);
 
 // Named shortcuts for the common case of a brand-new project with nothing yet on disk for
@@ -1053,7 +1053,7 @@ function red(s: string): string {
 
 // Matches install-kit.md's nine Pick-mode categories (models/opencode and models/claude both
 // collapse to "models", the top-level grouping the skill scan already uses).
-const CATEGORY_ORDER = ['models', 'workflow', 'standards', 'memory', 'stack', 'libraries', 'meta', 'addons', 'mcp'];
+const CATEGORY_ORDER = ['models', 'workflow', 'standards', 'memory', 'stack', 'libraries', 'meta', 'addons', 'mcp', 'cloud'];
 export function topCategory(dir: string): string {
   return dir.split('/')[0] || '(uncategorized)';
 }

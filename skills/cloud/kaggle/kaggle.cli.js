@@ -141,15 +141,22 @@ function estimate(prompts) {
 }
 // "FILE: path" + fenced block pairs, from the model's answer. Paths are checked: relative, inside the staging folder.
 function parseFiles(answer) {
+    // A "FILE: path" line starts each file. The body is the fenced block after it, or, when the model skipped the fence (seen live), everything up to the next FILE line.
     const out = [];
-    const re = /^\s*\**FILE:\s*`?([^\s`*]+)`?\**\s*\n+\s*```[\w+-]*\n([\s\S]*?)\n```/gim;
+    const head = /^[ \t]*\**FILE:[ \t]*`?([^\s`*]+)`?\**[ \t]*$/gim;
+    const marks = [];
     let m;
-    while ((m = re.exec(answer))) {
-        const p = m[1].replace(/\\/g, '/');
-        if (path.isAbsolute(p) || p.split('/').includes('..'))
-            continue;
-        out.push({ path: p, content: m[2] + '\n' });
-    }
+    while ((m = head.exec(answer)))
+        marks.push({ p: m[1].replace(/\\/g, '/'), start: m.index, end: m.index + m[0].length });
+    marks.forEach((k, i) => {
+        if (path.isAbsolute(k.p) || k.p.split('/').includes('..'))
+            return;
+        let body = answer.slice(k.end, i + 1 < marks.length ? marks[i + 1].start : answer.length).replace(/^\s*\n/, '');
+        const fence = /^\s*```[\w+-]*[ \t]*\n([\s\S]*?)\n[ \t]*```/.exec(body);
+        body = fence ? fence[1] : body.replace(/\n+\s*$/, '');
+        if (body.trim())
+            out.push({ path: k.p, content: body + '\n' });
+    });
     return out;
 }
 // Cheap local gates on staged files: syntax where Node can tell, placeholders everywhere. Findings feed a retry, not a review.
