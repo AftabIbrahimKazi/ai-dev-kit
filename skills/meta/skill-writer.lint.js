@@ -46,7 +46,7 @@ exports.lintKit = lintKit;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 // Style rules from the writer skills that many shipped skills do not follow yet: shown only with --strict.
-exports.ADVISORY = new Set(['sk-desc-open', 'sk-desc-load']);
+exports.ADVISORY = new Set(['sk-desc-open', 'sk-desc-load', 'sc-cloud']);
 const words = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 function frontmatter(text) {
     const m = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(text);
@@ -142,6 +142,9 @@ function lintScript(rel, text) {
         out.push({ file: rel, rule: 'sc-convert', msg: 'bare convert is a Windows system tool; use magick' });
     if (/process\.cwd\(\)\s*\+\s*['"`]\//.test(text))
         out.push({ file: rel, rule: 'sc-path', msg: 'builds a path with "/"; use path.join' });
+    // A script that calls a remote API (not 127.0.0.1) belongs under skills/cloud/ (skills/cloud/README.md). Advisory: shown with --strict.
+    if (!/^skills\/cloud\//.test(rel) && /\bfetch\(\s*[`'"]https?:\/\/(?!127\.0\.0\.1|localhost)/.test(text))
+        out.push({ file: rel, rule: 'sc-cloud', msg: 'calls a remote API; cloud features live under skills/cloud/' });
     return out;
 }
 const walk = (dir, keep, acc = []) => {

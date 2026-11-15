@@ -31,7 +31,7 @@ Context: src/util.js
 Write src/debounce.js exporting debounce(fn, ms) with a cancel() method. No dependencies. ...
 ```
 
-Rules: one or two files per task; the task text stands alone (no "see above"); exact names and signatures; `Context:` lists only files the model must see (it sees nothing else, about 20k tokens at most); a `Check:` that is a command or `none`. No planning, debugging, architecture or repo-wide changes: those stay with Claude.
+Rules: one or two files per task; the task text stands alone (no "see above"); exact names and signatures; `Context:` lists only files the model must see (it sees nothing else, about 20k tokens at most); a `Check:` that is a command or `none`. Name the module style and the exact export form in every task that touches another file ("CommonJS, `module.exports = slugify`"): in the live test a test file written without it used ESM `import { slugify }` against a CommonJS module and failed. The `Check:` line is for Claude: it is run after the staged files are copied into the repo, not by the add-on. No planning, debugging, architecture or repo-wide changes: those stay with Claude.
 
 ## Subcommands
 `setup [--user name]`, `plan <plan.md> [--standards <dir>]`, `run <plan.md> [--force] [--no-wait]`, `fetch`, `retry`, `status`, `stop`, `usage`, `review`. Files from the model land in a staging folder under `~/.ai-dev-kit/kaggle/<project>/staging/`, never in the repo. Local gates (placeholders, JS syntax, JSON, cut-off HTML, missing or extra files) run on them; `retry` re-asks failed tasks with the findings, twice at most, then Claude takes over (two failures, route up).
