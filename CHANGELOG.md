@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-16
+
+### Added
+- `skills/meta/usage-mine.js`: zero-token retry miner over `~/.claude/projects/<project>/*.jsonl` plus the `feature-usage` log. A retry is a prompt that opens with a negative word or repeats 70% of the previous prompt, counted after an assistant turn. First run on 37 local transcripts: 562 prompts, 10 retries, 193 tool errors, only 3 skills loaded through the Skill tool (these sessions are kit authoring, so the data is too thin to flag any skill). Report: `findings/2026-11-16-usage-mine.md`.
+- `skills/meta/ab-gate.js` (per-task A/B gate, no task may get worse) and `tests/skill-hint.triggers.test.js` with `tests/fixtures/skill-triggers.json` (recall 21 of 21, 0 false hints).
+
+### Changed
+- `install-kit.md` is 12.5% smaller (35,254 to 30,855 bytes, about 1,150 tokens by chars/4, nearer 1,700 at the measured 1.5x): four paragraphs describing the installer CLI internals moved unchanged to a new "Terminal fallback internals" section of `install-kit.extras.md`. Saves tokens only on runs that load `install-kit`. No A/B run: no instruction the model acts on was removed.
+
 ## 2026-11-15
 
 ### Added

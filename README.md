@@ -693,6 +693,8 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `skill-scope/auto.js run` | Restores an archived skill, then runs its script; the six commands for archivable skills call it | `/audit`, `/stale`, `/version-bump` and three more |
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
 | `misfire-log/append.js` and `report.js` | Logs a skill or mod that should have fired but did not; ranks repeat offenders | by the skill |
+| `meta/usage-mine.js` | Zero-token retry miner: reads your Claude Code transcripts (and the `feature-usage` log when present) and ranks skills by loads, sessions with a retry after the load, and median session tokens; prints counts only, never prompt text | by you: `node skills/meta/usage-mine.js [--days N] [--out file]` |
+| `meta/ab-gate.js` | Per-task A/B gate: accepts a candidate only if its mean beats the baseline and no single task got worse; pure arithmetic over two score files | by you, before shipping a skill or script change |
 | `project-context/scan.js` and `figma.js` | Tracks which project docs changed; turns exported Figma PNG or SVG files into a design summary | `/ctx`, `/figma` |
 | `install-kit/cli.js` | Installs, updates, uninstalls, archives/unarchives skills and merges git hooks — the mechanical half of the installer; asks a plain numbered-menu question for any flag left out outside Claude Code (no package install needed) | by the installer |
 | `install-kit/verify.js` | Re-checks an install on disk before it is reported done | by the installer |
