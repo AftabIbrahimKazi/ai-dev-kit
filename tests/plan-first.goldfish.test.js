@@ -55,7 +55,7 @@ t('prepare: writes the bundle, the plan-only copy and five stage prompts outside
   assert.strictEqual(p.stageFiles.length, 5);
   const d = gf.dispatchText(p);
   for (const s of gf.STAGES) assert.ok(d.includes(s.name), s.name);
-  assert.ok(/FRESH subagent/.test(d) && /Read, Grep and Glob only/.test(d) && /stop and say so/.test(d));
+  assert.ok(/YOURSELF, inline/.test(d) && /Do NOT start subagents/.test(d) && /not fresh-context/.test(d));
 });
 
 t('comprehension stage gets the plan alone, the others get the bundle; stage 4 waits for 1, 2 and 3', () => {
@@ -103,7 +103,7 @@ t('CLI: prepare prints the dispatch text and exits 0; a bad command or flag exit
   const run = (...a) => spawnSync(process.execPath, [bin, ...a, '--root', root], { encoding: 'utf8', env: { ...process.env, AI_DEV_KIT_HOME: tmp() } });
   const ok = run('prepare', 'docs/plans/p.md');
   assert.strictEqual(ok.status, 0);
-  assert.ok(/goldfish prepare: 2 referenced file/.test(ok.stdout) && /FRESH subagent/.test(ok.stdout));
+  assert.ok(/goldfish prepare: 2 referenced file/.test(ok.stdout) && /Do NOT start subagents/.test(ok.stdout));
   assert.strictEqual(run('bogus', 'docs/plans/p.md').status, 2);
   assert.strictEqual(run('prepare').status, 2);
   assert.strictEqual(run('prepare', 'nope.md').status, 1);
