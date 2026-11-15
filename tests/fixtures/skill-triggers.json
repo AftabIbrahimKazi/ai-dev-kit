@@ -1,0 +1,149 @@
+{
+  "_note": "Labeled prompts for skill-hint matching. 'want' = skills that should be hinted; 'none' = prompts that must hint nothing. Add a row whenever a real miss or false hint shows up in the misfire log. A hint on an overlapping skill is allowed only if listed in want.",
+  "rows": [
+    {
+      "q": "the login test keeps failing after my change",
+      "want": [
+        "debug-protocol"
+      ]
+    },
+    {
+      "q": "app crashes on startup with a stack trace",
+      "want": [
+        "debug-protocol"
+      ]
+    },
+    {
+      "q": "this regression only shows on safari",
+      "want": [
+        "debug-protocol"
+      ]
+    },
+    {
+      "q": "refactor the auth module across all files",
+      "want": [
+        "plan-first",
+        "code-audit"
+      ]
+    },
+    {
+      "q": "migrate the project from webpack to vite",
+      "want": [
+        "plan-first"
+      ]
+    },
+    {
+      "q": "make it better, it looks rough",
+      "want": [
+        "intent-capture"
+      ]
+    },
+    {
+      "q": "clean up the header component",
+      "want": [
+        "intent-capture"
+      ]
+    },
+    {
+      "q": "why is my token usage so high this session",
+      "want": [
+        "session-budget"
+      ]
+    },
+    {
+      "q": "set up playwright e2e tests",
+      "want": [
+        "e2e-scaffold"
+      ]
+    },
+    {
+      "q": "the home page is slow, run lighthouse",
+      "want": [
+        "perf-audit"
+      ]
+    },
+    {
+      "q": "check the layout at mobile breakpoints",
+      "want": [
+        "responsive-check",
+        "ui-design"
+      ]
+    },
+    {
+      "q": "resolve the merge conflict in package.json",
+      "want": [
+        "resolve-conflicts"
+      ]
+    },
+    {
+      "q": "bump the version and update the changelog",
+      "want": [
+        "version-bump"
+      ]
+    },
+    {
+      "q": "audit the project for standards violations",
+      "want": [
+        "code-audit"
+      ]
+    },
+    {
+      "q": "do a security review of the api routes",
+      "want": [
+        "security-audit"
+      ]
+    },
+    {
+      "q": "compress images in the assets folder to webp",
+      "want": [
+        "optimize-assets"
+      ]
+    },
+    {
+      "q": "draw a diagram of the architecture",
+      "want": [
+        "diagram"
+      ]
+    },
+    {
+      "q": "what is staged before i commit",
+      "want": [
+        "pre-commit"
+      ]
+    },
+    {
+      "q": "add a dark mode toggle to the navbar",
+      "none": true
+    },
+    {
+      "q": "rename the getUser function to fetchUser",
+      "none": true
+    },
+    {
+      "q": "write a unit test for the date formatter",
+      "none": true
+    },
+    {
+      "q": "explain how the router works",
+      "none": true
+    },
+    {
+      "q": "add a loading spinner to the submit button",
+      "none": true
+    },
+    {
+      "q": "update the readme with install steps",
+      "want": [
+        "readme-writer"
+      ]
+    },
+    {
+      "q": "what does this regex do",
+      "none": true
+    },
+    {
+      "q": "create a new react component for the footer",
+      "none": true
+    }
+  ]
+}
