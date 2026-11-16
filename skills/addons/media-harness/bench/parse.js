@@ -12,7 +12,7 @@ function parse(text) {
   const recs = text.split(/\r?\n/).filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
   const pick = (test, model) => recs.filter((r) => r.test === test && r.model === model);
   const out = { gpus: (recs.find((r) => r.test === 'env') || {}).gpus || [], models: {}, twoWorkers: null, complete: recs.some((r) => r.test === 'done') };
-  for (const model of ['sdxl', 'sdxl-lightning', 'flux-schnell', 'flux-dev', 'wan22-5b']) {
+  for (const model of ['sdxl', 'sdxl-lightning', 'juggernaut-x-v10', 'juggernaut-x-hyper', 'flux-schnell', 'flux-dev', 'wan22-5b']) {
     const load = pick('model_load', model)[0];
     const imgs = pick('image_1024', model);
     const vid = pick('video_81f_480p', model)[0];
