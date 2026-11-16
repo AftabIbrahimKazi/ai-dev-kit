@@ -135,7 +135,10 @@ if __name__ == "__main__":
     import torch
     log({"test": "env", "gpus": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())], "torch": torch.__version__, "dataset": MODEL_DATASET or None, "ok": True})
     flux("flux-schnell", "black-forest-labs/FLUX.1-schnell", "flux-schnell", steps=4)
-    flux("flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)  # gated repo: needs HF token if not from the Dataset
+    if MODEL_DATASET or os.environ.get("HF_TOKEN"):  # Flux Dev is a gated repo: needs the Dataset or an HF token
+        flux("flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
+    else:
+        log({"test": "model_load", "model": "flux-dev", "ok": False, "seconds": 0, "error": "skipped: no Dataset and no HF_TOKEN (gated repo)"})
     wan("wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
     two_workers()
     log({"test": "done", "ok": True})
