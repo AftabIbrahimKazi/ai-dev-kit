@@ -56,7 +56,7 @@ Each fires on a task-agnostic event or is the mechanism doing the classifying it
 Re-scan trigger: only if the project's actual stack changes — never per-task or per-session.
 
 ### Per-session archivable (user-triggered only: `/next`, `/archive`, `/unarchive`)
-The set and each skill's trigger words live in `skill-scope.triggers.json` (single source; `tests/skill-scope.auto.test.js` fails if this list and the file disagree). `skill-scope.auto.js` archives them all at session start, restores one when a message contains its trigger word, and `/next <task>` does both by hand. The user's explicit word still wins: `--keep a,b` forces skills on.
+The set and each skill's trigger words live in `skill-scope.triggers.json` (single source; `tests/skill-scope.auto.test.js` fails if this list and the file disagree). `skill-scope.auto.js` archives them all at session start, restores one when a message contains its trigger word, and `/next <task>` does both by hand. The user's explicit word still wins: `--keep a,b` forces skills on. `/next` writes files, so run it outside plan mode: in plan mode its shell step failed once with "classifier gave no verdict" and nothing was queued (cause unconfirmed, plan mode was the only difference seen).
 
 `perf-audit`, `code-audit`, `security-audit`, `ui-design`, `ux-theory`, `resolve-conflicts`, `responsive-check`, `optimize-assets`, `version-bump`, `role-session`, `e2e-scaffold`, `memory-gardener`, `skill-ablation`, `skill-writer`, `mod-writer`, `command-writer`, `cli-writer`, `readme-writer`, `implicit-state-audit`
 
