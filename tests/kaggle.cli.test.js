@@ -175,5 +175,30 @@ t('cli run: blocked without token, without user, and while a session is open', (
   assert.strictEqual(cli(['run', 'plan.md', '--no-wait'], p, env).code, 0);
 });
 
+t('lintStandards flags console.* and magic numbers, not named constants or comments', () => {
+  const src = (...l) => l.join(String.fromCharCode(10));
+  assert.deepStrictEqual(k.lintStandards(src('const MAX = 4096;', '// 9999 note', 'export const x = 1;')), []);
+  const hits = k.lintStandards(src('console.log("a");', 'const y = n * 3.14159;'));
+  assert.ok(hits.some((h) => /console/.test(h)) && hits.some((h) => /magic number/.test(h)));
+});
+
+t('runCheck: passing node check is silent, failing one is reported, non-node checks are listed as not run', () => {
+  const dir = tmp();
+  fs.writeFileSync(path.join(dir, 'ok.js'), 'process.exit(0)');
+  fs.writeFileSync(path.join(dir, 'bad.js'), 'throw new Error("boom")');
+  assert.strictEqual(k.runCheck('none', dir), '');
+  assert.strictEqual(k.runCheck('node ok.js', dir), '');
+  assert.ok(/check failed/.test(k.runCheck('node bad.js', dir)));
+  assert.ok(/not run/.test(k.runCheck('npm test', dir)));
+});
+
+t('learnPairs records staged files that differ from the repo copy', () => {
+  process.env.AI_DEV_KIT_HOME = tmp();
+  const root = tmp(), stage = tmp();
+  fs.writeFileSync(path.join(root, 'a.js'), 'fixed'); fs.writeFileSync(path.join(stage, 'a.js'), 'bad');
+  fs.writeFileSync(path.join(root, 'b.js'), 'same'); fs.writeFileSync(path.join(stage, 'b.js'), 'same');
+  assert.strictEqual(k.learnPairs(root, stage), 1);
+});
+
 console.log(failed ? `${failed} FAILED` : 'all ok');
 process.exitCode = failed ? 1 : 0;

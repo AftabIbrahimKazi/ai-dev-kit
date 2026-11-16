@@ -290,3 +290,11 @@ t('pickup with no handover prints NO_HANDOVER_FILE, and works without an install
   assert.strictEqual(r.status, 0, r.stderr);
   assert.ok(r.stdout.includes('NEXT TASK: none recorded') && r.stdout.includes('# H'), r.stdout);
 });
+
+t('plan keeps role-session when a handover/ folder exists, whatever the task words', () => {
+  const root = makeProject(['role-session']);
+  assert.ok(plan('write a css file', [], triggers, ['role-session'], [], root).archive.includes('role-session'));
+  fs.mkdirSync(path.join(root, 'handover'));
+  const p = plan('write a css file', [], triggers, ['role-session'], [], root);
+  assert.ok(!p.archive.includes('role-session') && p.keep.includes('role-session'));
+});

@@ -7,4 +7,4 @@ Kit command lookup:
 
 !`node {{skill-root}}/skill-scope/kit.js $ARGUMENTS`
 
-Relay the result as is. If it printed the table because nothing matched, name the closest row to the user's situation in one line.
+Paste the full result above verbatim in a code block (the user cannot see tool output, only your reply), then add one line. If it printed the table because nothing matched, name the closest row to the user's situation in one line.

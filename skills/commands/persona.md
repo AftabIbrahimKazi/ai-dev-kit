@@ -7,5 +7,5 @@ Personality settings:
 
 !`node {{skill-root}}/personality/inject.js --$ARGUMENTS`
 
-Report the line above in one sentence. Arguments are `set female|male novice|mid|pro`, `off`, `status`, `list`. A new choice applies from the next session.
+Quote the line above verbatim (the user cannot see tool output), then add at most one sentence. Arguments are `set female|male novice|mid|pro`, `off`, `status`, `list`. A new choice applies from the next session.
 Reply in at most 2 lines.
