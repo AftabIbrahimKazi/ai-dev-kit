@@ -14,32 +14,27 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { parse, gates, render } = require('./parse.js');
 
+// Same Kaggle plumbing as the coding-execution add-on (skills/cloud/kaggle): token, CLI, weekly ledger, open-session block, delete-as-stop.
+const { readToken, kaggleCommand, slugFor, budgetCheck, weekMinutes } = require('../../../cloud/kaggle/kaggle.cli.js');
 const home = () => process.env.AI_DEV_KIT_HOME || path.join(os.homedir(), '.ai-dev-kit');
-const stateDir = () => path.join(home(), 'kaggle', 'media-bench');
+const root = path.resolve(__dirname, '..', '..', '..', '..'); // the kit repo: the project this ledger belongs to
+const stateDir = () => path.join(home(), 'kaggle', slugFor(root));
+const benchDir = () => path.join(stateDir(), 'media-bench');
 const SLUG = 'media-bench';
-
-function readToken(env = process.env) {
-  const clean = (v) => (v || '').replace(/[\r"']/g, '').trim();
-  const e = clean(env.KAGGLE_API_TOKEN) || clean(env.KAGGLE_API_KEY);
-  if (e) return e;
-  try {
-    for (const line of fs.readFileSync(path.join(home(), '.env'), 'utf8').replace(/\r/g, '').split('\n')) {
-      const m = /^\s*(?:export\s+)?KAGGLE_API_(?:TOKEN|KEY)\s*=(.*)$/.exec(line);
-      if (m && clean(m[1])) return clean(m[1]);
-    }
-  } catch { /* none */ }
-  return '';
-}
+const EST_MIN = 40; // bench.py ends itself after 45 min; the plan is about 15-40
 
 function kaggle(args, cfgDir) {
-  let cmd, a;
-  if (process.env.KAGGLE_RUNNER) { cmd = process.execPath; a = [process.env.KAGGLE_RUNNER, ...args]; }
-  else if (!spawnSync('kaggle', ['--version'], { encoding: 'utf8' }).error) { cmd = 'kaggle'; a = args; }
-  else { cmd = process.platform === 'win32' ? 'python' : 'python3'; a = ['-m', 'kaggle', ...args]; }
+  const { cmd, args: a } = kaggleCommand(args);
   const r = spawnSync(cmd, a, { encoding: 'utf8', timeout: 300000, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, KAGGLE_API_TOKEN: readToken(), KAGGLE_CONFIG_DIR: cfgDir } });
   if (r.error) return { ok: false, out: r.error.message };
   return { ok: r.status === 0, out: (r.stdout + r.stderr).trim() };
 }
+
+const ledgerFile = () => path.join(stateDir(), 'ledger.jsonl');
+const NL = String.fromCharCode(10);
+const readLedger = () => { try { return fs.readFileSync(ledgerFile(), 'utf8').split(NL).filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; } };
+const writeLedger = (rows) => { fs.mkdirSync(stateDir(), { recursive: true }); fs.writeFileSync(ledgerFile(), rows.map((r) => JSON.stringify(r)).join(NL) + NL); };
+function closeRow(rows, row, status) { row.finished = new Date().toISOString(); row.status = status; row.minutes = Math.ceil((Date.now() - Date.parse(row.started)) / 60000); writeLedger(rows); }
 
 function account() {
   const i = process.argv.indexOf('--user');
@@ -51,17 +46,17 @@ function main() {
   const a = process.argv.slice(2);
   const flag = (f) => a.includes(f);
   const val = (f) => (a.includes(f) ? a[a.indexOf(f) + 1] : undefined);
-  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes'].includes(x));
+  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes', '--force'].includes(x));
   if (bad.length) { console.error('usage: node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <s>] [--rating clearly-better|not-better]'); process.exit(2); }
   const user = account();
   if (!user) { console.error('No Kaggle account name. Pass --user <name> or run: node skills/cloud/kaggle/kaggle.cli.js setup'); process.exit(3); }
-  const cfgDir = path.join(stateDir(), 'cfg');
+  const cfgDir = path.join(home(), 'kaggle', 'cfg');
   fs.mkdirSync(cfgDir, { recursive: true });
   const kernel = `${user}/${SLUG}`;
-  const runDir = path.join(stateDir(), 'runs', 'last');
+  const runDir = path.join(benchDir(), 'runs', 'last');
 
   if (!flag('--fetch')) {
-    const work = path.join(stateDir(), 'push');
+    const work = path.join(benchDir(), 'push');
     fs.rmSync(work, { recursive: true, force: true });
     fs.mkdirSync(work, { recursive: true });
     let py = fs.readFileSync(path.join(__dirname, 'bench.py'), 'utf8');
@@ -70,9 +65,13 @@ function main() {
     fs.writeFileSync(path.join(work, 'kernel-metadata.json'), JSON.stringify({ id: kernel, title: SLUG, code_file: 'bench.py', language: 'python', kernel_type: 'script', is_private: true, enable_gpu: true, enable_internet: true, dataset_sources: [], competition_sources: [], kernel_sources: [], model_sources: [] }, null, 2));
     if (flag('--dry-run')) { console.log(`dry run: would push ${kernel} from ${work} (GPU on, internet on, private). Expect 1-2 GPU hours of the 30 h weekly quota. No network used.`); return; }
     if (!readToken()) { console.error('No Kaggle token (KAGGLE_API_TOKEN, or KAGGLE_API_KEY in ~/.ai-dev-kit/.env).'); process.exit(3); }
+    const rows = readLedger();
+    const block = budgetCheck(rows, EST_MIN, flag('--force'));
+    if (block) { console.error('blocked: ' + block); process.exit(3); }
     const push = kaggle(['kernels', 'push', '-p', work], cfgDir);
     if (!push.ok) { console.error('push failed: ' + push.out.slice(0, 300)); process.exit(1); }
-    fs.writeFileSync(path.join(stateDir(), 'last.json'), JSON.stringify({ kernel, started: new Date().toISOString() }));
+    const row = { id: Math.random().toString(16).slice(2, 8), kernel, started: new Date().toISOString(), status: 'running', tasks: 1 };
+    rows.push(row); writeLedger(rows);
     console.log(`pushed ${kernel}. https://www.kaggle.com/code/${kernel}`);
     if (flag('--no-wait')) { console.log('not waiting. Later: node run.js --fetch'); return; }
     // The GPU quota is 30 h a week: never leave a session running unattended. After --max-minutes (default 75, queue time
@@ -81,10 +80,11 @@ function main() {
     const deadline = Date.now() + Number(val('--max-minutes') ?? 75) * 60000;
     for (;;) {
       const s = kaggle(['kernels', 'status', kernel], cfgDir).out;
-      if (/COMPLETE/.test(s)) break;
-      if (/ERROR|CANCEL/.test(s)) { console.error('kernel ended: ' + s.split('\n').pop() + '. Output may still hold partial results; try --fetch.'); process.exitCode = 1; break; }
+      if (/COMPLETE/.test(s)) { closeRow(rows, row, 'done'); break; }
+      if (/ERROR|CANCEL/.test(s)) { closeRow(rows, row, 'error'); console.error('kernel ended: ' + s.split('\n').pop() + '. Output may still hold partial results; try --fetch.'); process.exitCode = 1; break; }
       if (Date.now() > deadline) {
         const d = kaggle(['kernels', 'delete', kernel, '--yes'], cfgDir);
+        closeRow(rows, row, d.ok ? 'stopped' : 'stop-failed');
         console.error(`stopped: still not finished after the time cap, so the kernel was ${d.ok ? 'deleted to free the GPU' : 'NOT deleted (' + d.out.slice(0, 120) + '); stop it on kaggle.com now'}.`);
         process.exit(1);
       }
@@ -97,6 +97,8 @@ function main() {
   const o = kaggle(['kernels', 'output', kernel, '-p', runDir], cfgDir);
   const file = path.join(runDir, 'bench_results.jsonl');
   if (!o.ok || !fs.existsSync(file)) { console.error('fetch failed (still running?): ' + o.out.slice(0, 200)); process.exit(1); }
+  const lrows = readLedger(); const open = lrows.filter((x) => !x.finished && x.kernel === kernel).pop();
+  if (open) closeRow(lrows, open, 'done'); // a --no-wait push is closed here, like the coding flow's fetch
   const r = parse(fs.readFileSync(file, 'utf8'));
   console.log(render(r, gates(r, val('--rating'))));
   console.log(`\nImages and the raw results are in ${runDir}`);
