@@ -46,6 +46,17 @@ export function readToken(env: NodeJS.ProcessEnv = process.env): string {
   return '';
 }
 
+function hasTokenConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  const hasEnvToken = !!((env.KAGGLE_API_TOKEN || '').trim() || (env.KAGGLE_API_KEY || '').trim());
+  if (hasEnvToken) return true;
+  try {
+    for (const line of fs.readFileSync(path.join(env.AI_DEV_KIT_HOME || home(), '.env'), 'utf8').replace(/\r/g, '').split('\n')) {
+      if (/^\s*(?:export\s+)?KAGGLE_API_(?:TOKEN|KEY)\s*=/.test(line)) return true;
+    }
+  } catch { /* no .env */ }
+  return false;
+}
+
 export interface Config { username?: string }
 function readConfig(): Config { try { return JSON.parse(fs.readFileSync(path.join(stateRoot(), 'config.json'), 'utf8')); } catch { return {}; } }
 function writeConfig(c: Config): void { fs.mkdirSync(stateRoot(), { recursive: true }); fs.writeFileSync(path.join(stateRoot(), 'config.json'), JSON.stringify(c, null, 2)); }
@@ -315,14 +326,14 @@ function main(): void {
   const user = val('--user') || readConfig().username || process.env.KAGGLE_USERNAME || '';
 
   if (sub === 'setup') {
-    const token = readToken();
+    const tokenConfigured = hasTokenConfigured();
     const v = kaggle(['--version'], cfgDir);
     console.log(`kaggle CLI: ${v.ok ? 'found' : 'NOT found. Install it: pip install kaggle'}`);
-    console.log(`token: ${token ? 'found (' + token.length + ' chars)' : 'MISSING. Put KAGGLE_API_TOKEN=<token> in ' + path.join(home(), '.env') + ' (Kaggle, Settings, API)'}`);
+    console.log(`token: ${tokenConfigured ? 'configured' : 'MISSING. Put KAGGLE_API_TOKEN=<token> in ' + path.join(home(), '.env') + ' (Kaggle, Settings, API)'}`);
     if (val('--user')) writeConfig({ ...readConfig(), username: val('--user') });
     console.log(`account name: ${user || 'not set. Run: setup --user <your kaggle username>'}`);
     console.log(`model ${MODEL}, caps ${JSON.stringify(CAPS)}; free quota is about ${LIMITS.weekHours} GPU hours a week.`);
-    if (!v.ok || !token || !user) process.exitCode = 3;
+    if (!v.ok || !tokenConfigured || !user) process.exitCode = 3;
     return;
   }
   if (sub === 'usage') {
