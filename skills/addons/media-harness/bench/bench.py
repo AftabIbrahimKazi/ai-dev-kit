@@ -228,6 +228,25 @@ def wan(name, repo, subdir):
         _gc.collect(); torch.cuda.empty_cache()
 
 
+def rss_gb():
+    """Host RAM of this process: the Wan job was OOM-killed on the host (Killed) on the 2nd clip, so growth is logged per clip."""
+    try:
+        for line in open("/proc/self/status"):
+            if line.startswith("VmRSS:"):
+                return round(int(line.split()[1]) / 1048576, 2)
+    except Exception:
+        return None
+
+
+def free_host():
+    import gc, ctypes
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)  # return freed heap pages to the OS; glibc keeps them otherwise
+    except Exception:
+        pass
+
+
 def wan_job(name, repo, subdir):
     """Chained 33-frame clips: the last frame of clip N is the first frame of clip N+1 (81 frames in one pass is not used)."""
     import torch, gc
@@ -261,15 +280,17 @@ def wan_job(name, repo, subdir):
                 return
             def gen(img=img):
                 holder["frames"] = holder["pipe"](image=img, prompt=prompt, height=480, width=832, num_frames=33, num_inference_steps=4, guidance_scale=1.0, output_type="pil").frames[0]
-            timed("video_33f_480p", name, gen, frames=33, steps=4, shot=i, clip=k)
+            timed("video_33f_480p", name, gen, frames=33, steps=4, shot=i, clip=k, rss_gb=rss_gb())
             frames = holder.pop("frames", None)
             if frames is None:
                 break
             if all(safe(f, name) for f in (frames[0], frames[len(frames) // 2], frames[-1])):
                 n += 1
                 export_to_video(frames, f"/kaggle/working/clip_{n:03d}.mp4", fps=16)
-            img = frames[-1]
-            gc.collect(); torch.cuda.empty_cache()
+            img = frames[-1].copy()  # keep one frame, not the whole list
+            del frames
+            free_host(); torch.cuda.empty_cache()
+            log({"test": "host_ram", "model": name, "ok": True, "shot": i, "clip": k, "rss_gb": rss_gb()})
 
 
 def two_workers():
