@@ -5,6 +5,7 @@
     { "id": "count", "ask": "How many images (or shots)?", "options": ["2", "4", "6", "10"] },
     { "id": "shot_seconds", "ask": "Length of each shot in seconds (video only)?", "options": ["2", "4", "6", "10"] },
     { "id": "quality", "ask": "Image model?", "options": ["Fast draft (DreamShaper Turbo, about 10 s each)", "Better detail (RealVisXL, about 32 s each)"] },
+    { "id": "motion", "ask": "What moves in the clip (video only, one action, camera move)?", "options": [], "freeform": true },
     { "id": "subject", "ask": "One line describing the subject (freeform)?", "options": [], "freeform": true }
   ],
   "custom": "E: Custom / Freeform Override"

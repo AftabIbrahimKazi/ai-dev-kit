@@ -278,7 +278,9 @@ def wan_job(name, repo, subdir):
             if over_budget(200):
                 log({"test": "skipped", "model": name, "ok": False, "error": "budget nearly spent, clips stopped"})
                 return
-            def gen(img=img):
+            mp = (JOB.get("motions") or [""] * len(PROMPTS))[i]
+
+            def gen(img=img, prompt=(prompt + ", " + mp) if mp else prompt):
                 holder["frames"] = holder["pipe"](image=img, prompt=prompt, height=480, width=832, num_frames=33, num_inference_steps=4, guidance_scale=1.0, output_type="pil").frames[0]
             timed("video_33f_480p", name, gen, frames=33, steps=4, shot=i, clip=k, rss_gb=rss_gb())
             frames = holder.pop("frames", None)

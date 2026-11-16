@@ -23,7 +23,7 @@ function applyAnswers(sb, answers) {
 function plan(sb) {
   const e = estimate(sb);
   const shots = [];
-  for (let i = 0; i < e.images; i++) shots.push({ n: i + 1, prompt: [sb.subject, sb.theme].filter(Boolean).join(', '), clips: e.clips ? Math.ceil(e.clips / e.images) : 0 });
+  for (let i = 0; i < e.images; i++) shots.push({ n: i + 1, prompt: [sb.subject, sb.theme].filter(Boolean).join(', '), clips: e.clips ? Math.ceil(e.clips / e.images) : 0, motion: sb.motion || '' });
   return { ...sb, estimate: e, shots };
 }
 async function interview(dir, answersFile) {
@@ -44,7 +44,7 @@ function jobFile(dir, sb) {
   const detail = /RealVis/i.test(sb.quality || '');
   const video = /clip|video/i.test(sb.kind || '');
   const per = sb.shots.map((x) => x.clips);
-  const job = { prompts: sb.shots.map((x) => x.prompt), image_model: detail ? 'realvisxl-v5' : 'dreamshaper-xl-turbo', clips_per_shot: video ? per : per.map(() => 0) };
+  const job = { prompts: sb.shots.map((x) => x.prompt), image_model: detail ? 'realvisxl-v5' : 'dreamshaper-xl-turbo', motions: sb.shots.map((x) => x.motion || ''), clips_per_shot: video ? per : per.map(() => 0) };
   const f = path.join(dir, 'job.json');
   fs.writeFileSync(f, JSON.stringify(job, null, 2));
   return f;
