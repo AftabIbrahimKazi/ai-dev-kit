@@ -40,4 +40,9 @@ t('image gate waits for the rating', () => {
   assert.ok(gates(r, 'not-better').image.startsWith('FAIL'));
 });
 t('plan claim line reports the measured Flux Dev median', () => assert.ok(/measured median 100 s/.test(gates(parse(sample)).planClaim)));
+t('33-frame timing is scaled to an ESTIMATE when 81 frames did not finish', () => {
+  const r = parse([L({ test: 'video_33f_480p', model: 'wan22-5b', seconds: 300, ok: true })].join(String.fromCharCode(10)));
+  assert.strictEqual(r.models['wan22-5b'].videoEstimate81, 736);
+  assert.ok(/ESTIMATE only/.test(gates(r).video) && /under the 20 min/.test(gates(r).video));
+});
 t('empty input does not throw and renders', () => assert.ok(/Media harness/.test(render(parse(''), gates(parse(''))))));

@@ -198,17 +198,31 @@ def wan(name, repo, subdir):
         Image.linear_gradient("L").resize((832, 480)).convert("RGB").save(first)
         log({"test": "note", "model": name, "ok": True, "note": "no Flux keyframe, used a synthetic gradient; timing is valid, quality is not"})
 
-    def gen():
-        img = load_image(first).resize((832, 480))
-        holder["frames"] = holder["pipe"](image=img, prompt=PROMPTS[0], height=480, width=832, num_frames=81, num_inference_steps=4, guidance_scale=1.0).frames[0]
+    # Memory: the first Wan run was OOM-killed on the host (Killed). Tile/slice the VAE, return PIL frames (not float arrays),
+    # and go up in length (33 then 81 frames) so a kill at 81 still leaves the 33-frame timing on disk to extrapolate from.
+    try:
+        holder["pipe"].vae.enable_tiling()
+        holder["pipe"].vae.enable_slicing()
+    except Exception:
+        pass
 
-    timed("video_81f_480p", name, gen, frames=81, steps=4)  # timing covers generation only
-    frames = holder.pop("frames", None)
-    if frames is not None:
-        from PIL import Image as _I
-        picks = [frames[k] for k in (0, len(frames) // 2, len(frames) - 1)]  # first, middle, last frame
-        if all(safe(f if hasattr(f, "convert") else _I.fromarray((f * 255).astype("uint8")), name) for f in picks):
-            export_to_video(frames, f"/kaggle/working/{name}.mp4", fps=16)
+    for nf in (33, 81):
+        def gen():
+            img = load_image(first).resize((832, 480))
+            holder["frames"] = holder["pipe"](image=img, prompt=PROMPTS[0], height=480, width=832, num_frames=nf, num_inference_steps=4, guidance_scale=1.0, output_type="pil").frames[0]
+
+        if over_budget(300):
+            log({"test": "skipped", "model": name, "ok": False, "error": f"skipped {nf} frames: budget nearly spent"})
+            break
+        timed(f"video_{nf}f_480p", name, gen, frames=nf, steps=4)  # timing covers generation only
+        frames = holder.pop("frames", None)
+        if frames is not None:
+            picks = [frames[k] for k in (0, len(frames) // 2, len(frames) - 1)]  # first, middle, last frame
+            if all(safe(f, name) for f in picks):
+                export_to_video(frames, f"/kaggle/working/{name}_{nf}f.mp4", fps=16)
+            del frames
+        import gc as _gc
+        _gc.collect(); torch.cuda.empty_cache()
 
 
 def two_workers():

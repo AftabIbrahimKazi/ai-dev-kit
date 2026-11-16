@@ -15,13 +15,13 @@ function parse(text) {
   for (const model of ['sdxl', 'sdxl-lightning', 'juggernaut-x-v10', 'juggernaut-x-hyper', 'flux-schnell', 'flux-dev', 'wan22-5b']) {
     const load = pick('model_load', model)[0];
     const imgs = pick('image_1024', model);
-    const vid = pick('video_81f_480p', model)[0];
+    const vid = pick('video_81f_480p', model)[0]; const v33 = pick('video_33f_480p', model)[0];
     const okImgs = imgs.filter((r) => r.ok).map((r) => r.seconds);
-    const failures = [load, vid, ...imgs].filter((r) => r && !r.ok).map((r) => `${r.test}: ${r.error}`);
+    const failures = [load, vid, v33, ...imgs].filter((r) => r && !r.ok).map((r) => `${r.test}: ${r.error}`);
     out.models[model] = {
       loadSeconds: load ? load.seconds : null, loadSource: load ? load.source : null, loadOk: load ? load.ok : null,
       imageMedianSeconds: median(okImgs), imageRuns: okImgs.length, imageVramGB: Math.max(0, ...imgs.map((r) => r.vram_gb || 0)) || null,
-      videoSeconds: vid && vid.ok ? vid.seconds : null, videoVramGB: vid ? vid.vram_gb : null, failures,
+      videoSeconds: vid && vid.ok ? vid.seconds : null, videoEstimate81: v33 && v33.ok && !(vid && vid.ok) ? Math.round(v33.seconds * 81 / 33) : null, video33Seconds: v33 && v33.ok ? v33.seconds : null, videoVramGB: vid ? vid.vram_gb : null, failures,
     };
   }
   const one = pick('four_images_one_gpu', 'flux-schnell')[0]; const two = pick('four_images_two_gpus', 'flux-schnell')[0];
@@ -31,10 +31,10 @@ function parse(text) {
 
 function gates(r, rating) {
   const dev = r.models['flux-dev'];
-  const video = r.models['wan22-5b'].videoSeconds;
+  const wm = r.models['wan22-5b']; const video = wm.videoSeconds; const est = wm.videoEstimate81;
   return {
     image: rating === 'clearly-better' ? 'PASS: ship the Kaggle Flux backend' : rating === 'not-better' ? 'FAIL: keep Cloudflare only, skip Stage 6' : 'waiting for your side-by-side rating (--rating clearly-better|not-better)',
-    video: video === null ? 'no 5 s clip measured' : video <= 20 * 60 ? `PASS: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)` : `FAIL: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)`,
+    video: video === null && est !== null ? `ESTIMATE only (33 frames took ${wm.video33Seconds.toFixed(0)} s, scaled to 81): ${(est / 60).toFixed(1)} min, ${est <= 1200 ? 'under' : 'over'} the 20 min limit; the 81-frame run did not finish` : video === null ? 'no 5 s clip measured' : video <= 20 * 60 ? `PASS: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)` : `FAIL: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)`,
     planClaim: dev.imageMedianSeconds === null ? 'Flux Dev not measured (needs an HF token); see the sdxl rows for the ungated option' : `plan claimed 20-30 s per image; measured median ${dev.imageMedianSeconds.toFixed(0)} s`,
   };
 }
@@ -43,7 +43,7 @@ function render(r, g) {
   const f = (v, u = 's') => (v === null || v === undefined ? 'n/a' : `${typeof v === 'number' ? v.toFixed(1) : v} ${u}`);
   const lines = ['Media harness measurements', `GPUs: ${r.gpus.join(', ') || 'unknown'}${r.complete ? '' : '   (run did not finish)'}`, ''];
   for (const [name, m] of Object.entries(r.models)) {
-    lines.push(`${name}: load ${f(m.loadSeconds)} from ${m.loadSource || 'n/a'}; image median ${f(m.imageMedianSeconds)} (${m.imageMedianSeconds ? (60 / m.imageMedianSeconds).toFixed(1) : 'n/a'} img/min) over ${m.imageRuns} runs; video ${f(m.videoSeconds)}; peak VRAM ${f(m.imageVramGB || m.videoVramGB, 'GB')}`);
+    lines.push(`${name}: load ${f(m.loadSeconds)} from ${m.loadSource || 'n/a'}; image median ${f(m.imageMedianSeconds)} (${m.imageMedianSeconds ? (60 / m.imageMedianSeconds).toFixed(1) : 'n/a'} img/min) over ${m.imageRuns} runs; video ${f(m.videoSeconds)}${m.video33Seconds ? ` (33 frames: ${f(m.video33Seconds)})` : ''}; peak VRAM ${f(m.imageVramGB || m.videoVramGB, 'GB')}`);
     for (const x of m.failures) lines.push(`  ! ${x}`);
   }
   lines.push('', r.twoWorkers ? `Two workers: 4 images ${r.twoWorkers.oneGpuSeconds}s on one GPU, ${r.twoWorkers.twoGpuSeconds}s on two (${r.twoWorkers.speedup}x)` : 'Two workers: not measured', '', `Image gate: ${g.image}`, `Video gate: ${g.video}`, `Plan check: ${g.planClaim}`);
