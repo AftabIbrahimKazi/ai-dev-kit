@@ -12,7 +12,7 @@ function parse(text) {
   const recs = text.split(/\r?\n/).filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
   const pick = (test, model) => recs.filter((r) => r.test === test && r.model === model);
   const out = { gpus: (recs.find((r) => r.test === 'env') || {}).gpus || [], models: {}, twoWorkers: null, complete: recs.some((r) => r.test === 'done') };
-  for (const model of ['flux-schnell', 'flux-dev', 'wan22-5b']) {
+  for (const model of ['sdxl', 'sdxl-lightning', 'flux-schnell', 'flux-dev', 'wan22-5b']) {
     const load = pick('model_load', model)[0];
     const imgs = pick('image_1024', model);
     const vid = pick('video_81f_480p', model)[0];
@@ -35,7 +35,7 @@ function gates(r, rating) {
   return {
     image: rating === 'clearly-better' ? 'PASS: ship the Kaggle Flux backend' : rating === 'not-better' ? 'FAIL: keep Cloudflare only, skip Stage 6' : 'waiting for your side-by-side rating (--rating clearly-better|not-better)',
     video: video === null ? 'no 5 s clip measured' : video <= 20 * 60 ? `PASS: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)` : `FAIL: 5 s clip took ${(video / 60).toFixed(1)} min (limit 20)`,
-    planClaim: dev.imageMedianSeconds === null ? 'Flux Dev not measured' : `plan claimed 20-30 s per image; measured median ${dev.imageMedianSeconds.toFixed(0)} s`,
+    planClaim: dev.imageMedianSeconds === null ? 'Flux Dev not measured (needs an HF token); see the sdxl rows for the ungated option' : `plan claimed 20-30 s per image; measured median ${dev.imageMedianSeconds.toFixed(0)} s`,
   };
 }
 
@@ -43,7 +43,7 @@ function render(r, g) {
   const f = (v, u = 's') => (v === null || v === undefined ? 'n/a' : `${typeof v === 'number' ? v.toFixed(1) : v} ${u}`);
   const lines = ['Media harness measurements', `GPUs: ${r.gpus.join(', ') || 'unknown'}${r.complete ? '' : '   (run did not finish)'}`, ''];
   for (const [name, m] of Object.entries(r.models)) {
-    lines.push(`${name}: load ${f(m.loadSeconds)} from ${m.loadSource || 'n/a'}; image median ${f(m.imageMedianSeconds)} over ${m.imageRuns} runs; video ${f(m.videoSeconds)}; peak VRAM ${f(m.imageVramGB || m.videoVramGB, 'GB')}`);
+    lines.push(`${name}: load ${f(m.loadSeconds)} from ${m.loadSource || 'n/a'}; image median ${f(m.imageMedianSeconds)} (${m.imageMedianSeconds ? (60 / m.imageMedianSeconds).toFixed(1) : 'n/a'} img/min) over ${m.imageRuns} runs; video ${f(m.videoSeconds)}; peak VRAM ${f(m.imageVramGB || m.videoVramGB, 'GB')}`);
     for (const x of m.failures) lines.push(`  ! ${x}`);
   }
   lines.push('', r.twoWorkers ? `Two workers: 4 images ${r.twoWorkers.oneGpuSeconds}s on one GPU, ${r.twoWorkers.twoGpuSeconds}s on two (${r.twoWorkers.speedup}x)` : 'Two workers: not measured', '', `Image gate: ${g.image}`, `Video gate: ${g.video}`, `Plan check: ${g.planClaim}`);

@@ -95,6 +95,41 @@ def flux(name, repo, subdir, steps):
     gc.collect(); torch.cuda.empty_cache()
 
 
+def sdxl():
+    """Ungated open image models, no token needed: SDXL base 1.0 (30 steps) and the same base with the
+    SDXL-Lightning 4-step LoRA (ByteDance). fp16 fits a 16 GB T4 without offload."""
+    import gc, torch
+    from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
+    from huggingface_hub import hf_hub_download
+    src, where = source("stabilityai/stable-diffusion-xl-base-1.0", "sdxl-base")
+    holder = {}
+
+    def load():
+        holder["pipe"] = StableDiffusionXLPipeline.from_pretrained(src, torch_dtype=torch.float16, variant="fp16", use_safetensors=True).to("cuda")
+
+    timed("model_load", "sdxl", load, source=where)
+    if "pipe" not in holder:
+        return
+    pipe = holder["pipe"]
+    for i, prompt in enumerate(PROMPTS):
+        def gen():
+            pipe(prompt, height=1024, width=1024, num_inference_steps=30, guidance_scale=7.0).images[0].save(f"/kaggle/working/sdxl_{i}.png")
+        timed("image_1024", "sdxl", gen, steps=30, prompt_index=i)
+
+    def load_fast():
+        pipe.load_lora_weights(hf_hub_download("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_lora.safetensors"))
+        pipe.fuse_lora()
+        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+
+    timed("model_load", "sdxl-lightning", load_fast, source="huggingface")
+    for i, prompt in enumerate(PROMPTS):
+        def gen2():
+            pipe(prompt, height=1024, width=1024, num_inference_steps=4, guidance_scale=0.0).images[0].save(f"/kaggle/working/sdxl-lightning_{i}.png")
+        timed("image_1024", "sdxl-lightning", gen2, steps=4, prompt_index=i)
+    del holder["pipe"], pipe
+    gc.collect(); torch.cuda.empty_cache()
+
+
 def wan(name, repo, subdir):
     import torch
     from diffusers import WanImageToVideoPipeline
@@ -109,8 +144,8 @@ def wan(name, repo, subdir):
     timed("model_load", name, load, source=where)
     if "pipe" not in holder:
         return
-    first = "/kaggle/working/flux-schnell_0.png"
-    if not os.path.exists(first):  # Flux did not run: time Wan on a plain gradient keyframe instead
+    first = next((p for p in ("/kaggle/working/sdxl-lightning_0.png", "/kaggle/working/flux-schnell_0.png") if os.path.exists(p)), "")
+    if not first:  # no image model ran: time Wan on a plain gradient keyframe instead
         from PIL import Image
         first = "/kaggle/working/synthetic_keyframe.png"
         Image.linear_gradient("L").resize((832, 480)).convert("RGB").save(first)
@@ -164,6 +199,7 @@ if __name__ == "__main__":
         stage("flux-dev", 900, flux, "flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
     else:
         log({"test": "skipped", "model": "flux", "ok": False, "error": "skipped: no Dataset and no HF_TOKEN (gated repos); not wasting GPU time on a certain 401"})
+    stage("sdxl", 420, sdxl)  # ungated: always runs, no token
     stage("wan22-5b", 1200, wan, "wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
     if gated_ok:
         stage("two-workers", 300, two_workers)
