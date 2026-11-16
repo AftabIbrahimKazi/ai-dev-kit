@@ -172,6 +172,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/kaggle` | plan, run, fetch and retry GPU coding jobs on Kaggle (uses free GPU quota) | `kaggle` |
 | `/figma-code` | convert an exported Figma SVG to pixel-matched HTML and CSS, gated by a pixel diff | `figma-code` |
 | `/figma` | exported Figma PNG/SVG files into `project-context/design/figma.md`, no MCP | `project-context` |
+| `/device` | read-only machine scan, Have / Missing / Next and a preset (lite, standard, full) | `skill-scope` |
 | `/kit` | cheat sheet, no script | none |
 | `/eta` | restates the active task's time estimate/checkpoint, no script | `plan-first` |
 | `/format` | sets the response shape (table, bullets, oneline, bool), no script | none |
