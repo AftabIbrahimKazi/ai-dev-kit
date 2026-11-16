@@ -395,10 +395,10 @@ function main() {
         const token = readToken();
         const v = kaggle(['--version'], cfgDir);
         console.log(`kaggle CLI: ${v.ok ? 'found' : 'NOT found. Install it: pip install kaggle'}`);
-        console.log(`token: ${token ? 'found (' + token.length + ' chars)' : 'MISSING. Put KAGGLE_API_TOKEN=<token> in ' + path.join(home(), '.env') + ' (Kaggle, Settings, API)'}`);
+        console.log(`token: ${token ? 'found' : 'MISSING. Put KAGGLE_API_TOKEN=<token> in ' + path.join(home(), '.env') + ' (Kaggle, Settings, API)'}`);
         if (val('--user'))
             writeConfig({ ...readConfig(), username: val('--user') });
-        console.log(`account name: ${user || 'not set. Run: setup --user <your kaggle username>'}`);
+        console.log(`account name: ${user ? 'set' : 'not set. Run: setup --user <your kaggle username>'}`);
         console.log(`model ${exports.MODEL}, caps ${JSON.stringify(exports.CAPS)}; free quota is about ${exports.LIMITS.weekHours} GPU hours a week.`);
         if (!v.ok || !token || !user)
             process.exitCode = 3;
@@ -527,7 +527,7 @@ function main() {
         const row = { id: crypto.randomBytes(3).toString('hex'), kernel: `${user}/${slug}`, started: new Date().toISOString(), status: 'running', tasks: jobs.tasks.length };
         rows.push(row);
         writeLedger(root, rows);
-        console.log(`pushed ${row.kernel} with ${jobs.tasks.length} task(s); about ${est.gpuMinutes} GPU min. https://www.kaggle.com/code/${row.kernel}`);
+        console.log(`pushed kernel ${slug} with ${jobs.tasks.length} task(s); about ${est.gpuMinutes} GPU min. Watch it under Code in your Kaggle account.`);
         if (flag('--no-wait')) {
             console.log('not waiting. Later: fetch');
             return;
