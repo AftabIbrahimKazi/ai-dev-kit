@@ -28,9 +28,12 @@ export const COMMANDS_GUIDE: ModuleGuide = {
       rows: [
         { label: "/audit", hl: "name:audit", act: "does", text: "Runs the code-audit script over the whole project and summarizes the worst rules, the worst files and the one fix with the biggest effect. Needs code-audit." },
         { label: "/commit-check", hl: "name:commit-check", act: "does", text: "Mechanical check of the staged change before a commit. A BLOCK finding stops the summary there. Needs pre-commit." },
+        { label: "/goldfish", hl: "name:goldfish", act: "does", text: "Reviews a plan with fresh-context reviewers: prepare runs the stages inline on Claude, local uses a local or Gemini model with no Claude tokens. Reviewers advise; you decide. Needs plan-first." },
         { label: "/githooks", hl: "name:githooks", act: "does", text: "Shows whether the kit's git hooks for secrets, files and commit messages are installed. Installs only after an explicit yes. Needs pre-commit." },
         { label: "/perf", hl: "name:perf", act: "does", text: "Weighs a build's payload and ranks it by bytes: heavy chunks, images, fonts and blocking scripts. Needs perf-audit." },
         { label: "/recon", hl: "name:recon", act: "does", text: "Maps security-relevant locations, not findings: routes, auth, env reads, sinks and secrets. Needs security-audit." },
+        { label: "/state-audit", hl: "name:state-audit", act: "does", text: "Scans UI code for hidden state machines such as scattered boolean flags and prints a table. Edits nothing. Needs implicit-state-audit." },
+        { label: "/modern-web", hl: "name:modern-web", act: "does", text: "Scans for legacy web patterns and lists the modern replacements as candidates, not verdicts. Edits nothing unless you ask. Needs modern-web." },
         { label: "/e2e", hl: "name:e2e", act: "does", text: "Reports Playwright scaffold status, or inits the config, fixtures and a smoke test. Needs e2e-scaffold." },
         { label: "/responsive-check", hl: "name:responsive-check", act: "does", text: "A viewport plan or breakpoint report on the RULE 17 zones, with custom ranges, widths and --detect. Needs responsive-check." },
       ],
@@ -55,6 +58,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
       hl: "group:skills-commands",
       line: "Bump a version, shrink assets, settle a merge, hide a file.",
       rows: [
+        { label: "/dupe", hl: "name:dupe", act: "does", text: "Copies a block marked in one file into other files, swapping per-file values. Add --dry-run to preview. Never edits the source file. Needs plan-first." },
         { label: "/version-bump", hl: "name:version-bump", act: "does", text: "Bumps a package.json version (major, feature, patch, alpha, beta, rc or release) and inserts the matching CHANGELOG.md entry. Needs version-bump." },
         { label: "/optimize-assets", hl: "name:optimize-assets", act: "does", text: "Scans for heavy assets, then converts, compresses or pre-compresses them. Originals are never touched. Needs optimize-assets." },
         { label: "/resolve-conflicts", hl: "name:resolve-conflicts", act: "does", text: "Lists the conflict set and role scope, then guides resolution by mode, pace and role. Needs resolve-conflicts." },
@@ -84,6 +88,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
         { label: "/persona", hl: "name:persona", act: "does", text: "Chooses how replies are phrased: set female or male at novice, mid or pro, off, status, list. Needs personality." },
         { label: "/narration", hl: "name:narration", act: "does", text: "Controls reply narration: play, pause, resume, mode, mute, voice, volume, speed, pitch, alerts and status. Needs narrate." },
         { label: "/figma-code", hl: "name:figma-code", act: "does", text: "Converts an exported Figma SVG to HTML and CSS and gates it with a pixel diff. Give a file path, never an attachment. Needs figma-code." },
+        { label: "/kaggle", hl: "name:kaggle", act: "does", text: "Runs a finished plan's coding tasks on a free Kaggle GPU model, then you review the result. Subcommands: setup, plan, run, fetch, retry, status, stop, usage, review. run and retry use GPU quota, so only you start them. Needs kaggle." },
         { label: "/diagram", hl: "name:diagram", act: "does", text: "Detects, checks or builds a stack or structure diagram from a spec. Logos are downloaded only after you agree. Needs diagram." },
         { label: "/teardown", hl: "name:teardown", act: "does", text: "Detects, scaffolds, checks, builds or photographs a 3D machine simulator, and probes the live page. Needs teardown." },
         { label: "/teardown-film", hl: "name:teardown-film", act: "does", text: "Checks or records a simulator's tour as an MP4. Needs teardown-film and ffmpeg." },

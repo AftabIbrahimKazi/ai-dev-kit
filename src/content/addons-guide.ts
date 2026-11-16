@@ -122,6 +122,38 @@ export const ADDONS_GUIDE: ModuleGuide = {
       ],
     },
     {
+      id: "modern-web",
+      name: "Modern Web",
+      hl: "name:modern-web",
+      line: "Finds legacy web patterns and lists what the platform now does natively.",
+      rows: [
+        { label: "Does", text: "modern-web.cli.js runs Chrome's pinned modern-web-guidance scanner over your folder, drops vendor and minified files, caches the result for 24 hours and prints a short table. Every row is a candidate, not a verdict." },
+        { label: "You", text: "Type /modern-web, or run node cli.js with --changed, --limit, --refresh, --json or --dry-run. Needs Node 22 or newer. The first run downloads the scanner, about 9 MB." },
+        { label: "AI", text: "Relays the table and checks each row's keepWhen note before touching code. It edits only when you ask to modernize. Where the kit's standard disagrees, the kit wins." },
+      ],
+      moreLabel: "Limits",
+      more: [
+        "The scanner covers about 20% of the guidance, so no findings does not mean the code is modern.",
+        "Offline, or with an old Node, the scan is skipped with one line saying why. The scanner is by the Chrome team, is called at run time and is never copied.",
+      ],
+    },
+    {
+      id: "kaggle",
+      name: "Kaggle",
+      hl: "name:kaggle",
+      line: "Claude plans and reviews; a free Kaggle GPU model writes the files.",
+      rows: [
+        { label: "Does", text: "Runs a plan's coding tasks in a private Kaggle notebook with qwen3-coder:30b on two T4 GPUs. Files land in a staging folder, never the repo, and local gates check placeholders, syntax and missing files. Failed tasks retry twice, then Claude takes over." },
+        { label: "You", text: "Make a free Kaggle account with a verified phone, save the API token in .env, then /kaggle setup, /kaggle plan plan.md (free) and /kaggle run plan.md. You start every step." },
+        { label: "AI", text: "Writes the plan in the task format, reviews every staged file, fixes what is left and copies files into the repo only after checking them." },
+      ],
+      moreLabel: "Plan format and quota",
+      more: [
+        "One section per task with Target, Check, Standards and Context lines. Each task is one or two files and stands alone, because the model cannot ask questions.",
+        "GPU quota is about 30 hours a week free. run refuses above 90% use or while a session is open unless forced. It lives under the kit's cloud/ folder, where features that call an internet service go.",
+      ],
+    },
+    {
       id: "teardown",
       name: "Teardown",
       hl: "group:skills-addons",

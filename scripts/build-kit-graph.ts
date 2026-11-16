@@ -72,6 +72,7 @@ const groupOf = (file: string): string => {
   if (/^coding-standards\/(js-and-ts|js|ts)-standards\//.test(file)) return "script-partials";
   if (/^coding-standards\/(css|html)-standards\//.test(file)) return "partials";
   if (/^coding-standards\//.test(file)) return "standards";
+  if (/^skills\/cloud\//.test(file)) return "skills-addons";
   if (/^skills\/([^/]+)\//.test(file)) return `skills-${file.split("/")[1]}`;
   if (/^tests\//.test(file)) return "tests";
   if (/^extensions\//.test(file)) return "extensions";

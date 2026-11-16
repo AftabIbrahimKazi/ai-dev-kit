@@ -143,7 +143,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
         when: "The task touches 3+ files, has ambiguous scope or several deliverables.",
         mode: "auto",
         you: "Redirect the plan, or let it proceed.",
-        ai: "States the plan, then executes without asking again.",
+        ai: "States the plan, then executes without asking again. A big plan can get a /goldfish review first, and /dupe copies a block that must repeat across files.",
       },
       {
         name: "interpretation-checkpoint",
@@ -226,6 +226,14 @@ export const GUIDE_TYPES: readonly GuideType[] = [
         ai: "Creates the scaffold before writing any spec.",
       },
       {
+        name: "readme-writer",
+        does: "Writes or trims a README so the hook comes first and every number, flag and claim is checked against the code. A script audits the claims.",
+        when: "A README.md is written, restructured, trimmed or fact-checked.",
+        mode: "auto",
+        you: "Ask for the README work.",
+        ai: "Runs the audit script, then edits the README to match what the code does.",
+      },
+      {
         name: "untrack",
         does: "Hides files from the Changes tree on your machine only. Nothing is committed.",
         when: "You say don't track X, hide X from git, or track X again.",
@@ -256,6 +264,14 @@ export const GUIDE_TYPES: readonly GuideType[] = [
         mode: "auto",
         you: "Ask for the audit.",
         ai: "Runs the script and reads only the files it flags.",
+      },
+      {
+        name: "implicit-state-audit",
+        does: "Finds hidden state machines: boolean flags that allow impossible combinations, state scattered over classes or data attributes, and timer-sequenced state. A script scans first; a model sees only the flagged files.",
+        when: "UI code keeps state in several flags, classes, data attributes or timers, or a bug only happens in some order.",
+        mode: "auto",
+        you: "Ask for the review, or type /state-audit.",
+        ai: "Names the one state variable that replaces the flags for each failing file.",
       },
       {
         name: "security-audit",
@@ -299,7 +315,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
     skills: [
       {
         name: "install-kit",
-        does: "Installs, updates, uninstalls or archives skills and git hooks, all at once, hand-picked, auto-detected or by stack preset. A script does the copy and a second script verifies it.",
+        does: "Installs, updates, uninstalls or archives skills and git hooks, all at once, hand-picked, auto-detected or by stack preset. A script does the copy and a second script verifies it. Run bare in a terminal it shows arrow-key menus with undo and redo.",
         when: "You ask to install skills or standards, or a project lacks them.",
         mode: "manual",
         you: "Choose what to install.",
