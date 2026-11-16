@@ -17,8 +17,12 @@ START = time.time()
 BUDGET_S = int(os.environ.get("BENCH_BUDGET_S", "2700"))  # 45 min
 
 
+MAX_FAIL = 3  # same as the coding worker: stop after 3 failures in a row rather than burn GPU on a broken setup
+FAILS = 0
+
+
 def over_budget(need_s=0):
-    return time.time() - START + need_s > BUDGET_S
+    return time.time() - START + need_s > BUDGET_S or FAILS >= MAX_FAIL
 OUT = "/kaggle/working/bench_results.jsonl"
 PROMPTS = [  # 6 art/abstract prompts, also rendered through Cloudflare for the side-by-side
     "abstract flowing ribbons of teal and gold light on a dark background, soft depth of field",
@@ -46,11 +50,14 @@ def vram_gb():
 
 
 def timed(test, model, fn, **extra):
+    global FAILS
     t0 = time.time()
     try:
         fn()
+        FAILS = 0
         log({"test": test, "model": model, "seconds": round(time.time() - t0, 1), "ok": True, "vram_gb": vram_gb(), **extra})
     except Exception as e:
+        FAILS += 1
         log({"test": test, "model": model, "seconds": round(time.time() - t0, 1), "ok": False, "error": str(e)[:300], "trace": traceback.format_exc()[-400:], **extra})
 
 
