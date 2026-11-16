@@ -46,7 +46,7 @@ function main() {
   const a = process.argv.slice(2);
   const flag = (f) => a.includes(f);
   const val = (f) => (a.includes(f) ? a[a.indexOf(f) + 1] : undefined);
-  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes', '--force'].includes(x));
+  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes', '--force', '--only'].includes(x));
   if (bad.length) { console.error('usage: node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <s>] [--rating clearly-better|not-better]'); process.exit(2); }
   const user = account();
   if (!user) { console.error('No Kaggle account name. Pass --user <name> or run: node skills/cloud/kaggle/kaggle.cli.js setup'); process.exit(3); }
@@ -60,6 +60,9 @@ function main() {
     fs.rmSync(work, { recursive: true, force: true });
     fs.mkdirSync(work, { recursive: true });
     let py = fs.readFileSync(path.join(__dirname, 'bench.py'), 'utf8');
+    const only = val('--only');
+    if (only) py = py.replace('import json, os, time, traceback', `import json, os, time, traceback
+os.environ["BENCH_ONLY"] = ${JSON.stringify(only)}`);
     if (process.env.HF_TOKEN) py = py.replace('import json, os, time, traceback', `import json, os, time, traceback\nos.environ["HF_TOKEN"] = ${JSON.stringify(process.env.HF_TOKEN)}`); // lives only in the private kernel source
     fs.writeFileSync(path.join(work, 'bench.py'), py);
     fs.writeFileSync(path.join(work, 'kernel-metadata.json'), JSON.stringify({ id: kernel, title: SLUG, code_file: 'bench.py', language: 'python', kernel_type: 'script', is_private: true, enable_gpu: true, enable_internet: true, dataset_sources: [], competition_sources: [], kernel_sources: [], model_sources: [] }, null, 2));
