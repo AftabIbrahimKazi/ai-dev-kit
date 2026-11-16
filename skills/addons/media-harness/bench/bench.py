@@ -17,8 +17,22 @@ START = time.time()
 BUDGET_S = int(os.environ.get("BENCH_BUDGET_S", "2700"))  # 45 min
 
 
+ONLY = {x for x in os.environ.get("BENCH_ONLY", "").split(",") if x}  # empty = run everything; e.g. "lightning,wan"
+
+
+def want(x):
+    return not ONLY or x in ONLY
+
+
 MAX_FAIL = 3  # same as the coding worker: stop after 3 failures in a row rather than burn GPU on a broken setup
 FAILS = 0
+
+
+def ensure_deps():
+    """Kaggle images lag: Wan needs ftfy, and peft needs torchao >= 0.16 to load the Lightning LoRA."""
+    import subprocess, sys
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ftfy", "torchao>=0.16", "peft"], capture_output=True, text=True, timeout=600)
+    log({"test": "deps", "ok": r.returncode == 0, "note": (r.stderr or "")[-200:]})
 
 
 def over_budget(need_s=0):
@@ -111,7 +125,7 @@ def sdxl():
     if "pipe" not in holder:
         return
     pipe = holder["pipe"]
-    for i, prompt in enumerate(PROMPTS):
+    for i, prompt in enumerate(PROMPTS if want("sdxl") else []):
         def gen():
             pipe(prompt, height=1024, width=1024, num_inference_steps=30, guidance_scale=7.0).images[0].save(f"/kaggle/working/sdxl_{i}.png")
         timed("image_1024", "sdxl", gen, steps=30, prompt_index=i)
@@ -120,9 +134,10 @@ def sdxl():
         pipe.load_lora_weights(hf_hub_download("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_lora.safetensors"))
         pipe.fuse_lora()
         pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+        holder["fast"] = True
 
     timed("model_load", "sdxl-lightning", load_fast, source="huggingface")
-    for i, prompt in enumerate(PROMPTS):
+    for i, prompt in enumerate(PROMPTS if holder.get("fast") else []):  # never time a LoRA that did not load
         def gen2():
             pipe(prompt, height=1024, width=1024, num_inference_steps=4, guidance_scale=0.0).images[0].save(f"/kaggle/working/sdxl-lightning_{i}.png")
         timed("image_1024", "sdxl-lightning", gen2, steps=4, prompt_index=i)
@@ -199,6 +214,7 @@ if __name__ == "__main__":
         stage("flux-dev", 900, flux, "flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
     else:
         log({"test": "skipped", "model": "flux", "ok": False, "error": "skipped: no Dataset and no HF_TOKEN (gated repos); not wasting GPU time on a certain 401"})
+    ensure_deps()
     stage("sdxl", 420, sdxl)  # ungated: always runs, no token
     stage("wan22-5b", 1200, wan, "wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
     if gated_ok:
