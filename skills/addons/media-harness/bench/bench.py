@@ -17,7 +17,7 @@ START = time.time()
 BUDGET_S = int(os.environ.get("BENCH_BUDGET_S", "2700"))  # 45 min
 
 
-ONLY = {x for x in os.environ.get("BENCH_ONLY", "").split(",") if x}  # empty = run everything; e.g. "lightning,wan"
+ONLY = {x for x in os.environ.get("BENCH_ONLY", "").split(",") if x}  # empty = run everything; e.g. "juggernaut-x-v10,wan"
 
 
 def want(x):
@@ -31,7 +31,7 @@ FAILS = 0
 def ensure_deps():
     """Kaggle images lag: Wan needs ftfy, and peft needs torchao >= 0.16 to load the Lightning LoRA."""
     import subprocess, sys
-    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ftfy", "torchao>=0.16", "peft"], capture_output=True, text=True, timeout=600)
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-U", "diffusers", "ftfy", "torchao>=0.16", "peft"], capture_output=True, text=True, timeout=600)
     log({"test": "deps", "ok": r.returncode == 0, "note": (r.stderr or "")[-200:]})
 
 
@@ -110,39 +110,36 @@ def flux(name, repo, subdir, steps):
 
 
 def sdxl():
-    """Ungated open image models, no token needed: SDXL base 1.0 (30 steps) and the same base with the
-    SDXL-Lightning 4-step LoRA (ByteDance). fp16 fits a 16 GB T4 without offload."""
+    """Newest commercial-safe SDXL-line checkpoints (verified on the HF API 2026-11-16: ungated, diffusers format,
+    creativeml-openrail-m). Juggernaut XI v11 is cc-by-nc-nd, so it is NOT used. fp16 fits a 16 GB T4 without offload."""
     import gc, torch
-    from diffusers import StableDiffusionXLPipeline, EulerDiscreteScheduler
-    from huggingface_hub import hf_hub_download
-    src, where = source("stabilityai/stable-diffusion-xl-base-1.0", "sdxl-base")
-    holder = {}
+    from diffusers import AutoPipelineForText2Image
+    models = [  # (name, repo, steps, guidance): steps and guidance follow the model cards, unverified here
+        ("juggernaut-x-v10", "RunDiffusion/Juggernaut-X-v10", 30, 5.0),
+        ("juggernaut-x-hyper", "RunDiffusion/Juggernaut-X-Hyper", 6, 2.0),
+    ]
+    for name, repo, steps, cfg in models:
+        if not want(name):
+            continue
+        src, where = source(repo, name)
+        holder = {}
 
-    def load():
-        holder["pipe"] = StableDiffusionXLPipeline.from_pretrained(src, torch_dtype=torch.float16, variant="fp16", use_safetensors=True).to("cuda")
+        def load():
+            try:
+                holder["pipe"] = AutoPipelineForText2Image.from_pretrained(src, torch_dtype=torch.float16, variant="fp16", use_safetensors=True).to("cuda")
+            except Exception:  # no fp16 variant files in this repo
+                holder["pipe"] = AutoPipelineForText2Image.from_pretrained(src, torch_dtype=torch.float16, use_safetensors=True).to("cuda")
 
-    timed("model_load", "sdxl", load, source=where)
-    if "pipe" not in holder:
-        return
-    pipe = holder["pipe"]
-    for i, prompt in enumerate(PROMPTS if want("sdxl") else []):
-        def gen():
-            pipe(prompt, height=1024, width=1024, num_inference_steps=30, guidance_scale=7.0).images[0].save(f"/kaggle/working/sdxl_{i}.png")
-        timed("image_1024", "sdxl", gen, steps=30, prompt_index=i)
-
-    def load_fast():
-        pipe.load_lora_weights(hf_hub_download("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_lora.safetensors"))
-        pipe.fuse_lora()
-        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
-        holder["fast"] = True
-
-    timed("model_load", "sdxl-lightning", load_fast, source="huggingface")
-    for i, prompt in enumerate(PROMPTS if holder.get("fast") else []):  # never time a LoRA that did not load
-        def gen2():
-            pipe(prompt, height=1024, width=1024, num_inference_steps=4, guidance_scale=0.0).images[0].save(f"/kaggle/working/sdxl-lightning_{i}.png")
-        timed("image_1024", "sdxl-lightning", gen2, steps=4, prompt_index=i)
-    del holder["pipe"], pipe
-    gc.collect(); torch.cuda.empty_cache()
+        timed("model_load", name, load, source=where)
+        if "pipe" not in holder:
+            continue
+        pipe = holder["pipe"]
+        for i, prompt in enumerate(PROMPTS):
+            def gen():
+                pipe(prompt, height=1024, width=1024, num_inference_steps=steps, guidance_scale=cfg).images[0].save(f"/kaggle/working/{name}_{i}.png")
+            timed("image_1024", name, gen, steps=steps, prompt_index=i)
+        del holder["pipe"], pipe
+        gc.collect(); torch.cuda.empty_cache()
 
 
 def wan(name, repo, subdir):
@@ -159,7 +156,7 @@ def wan(name, repo, subdir):
     timed("model_load", name, load, source=where)
     if "pipe" not in holder:
         return
-    first = next((p for p in ("/kaggle/working/sdxl-lightning_0.png", "/kaggle/working/flux-schnell_0.png") if os.path.exists(p)), "")
+    first = next((p for p in ("/kaggle/working/juggernaut-x-hyper_0.png", "/kaggle/working/flux-schnell_0.png") if os.path.exists(p)), "")
     if not first:  # no image model ran: time Wan on a plain gradient keyframe instead
         from PIL import Image
         first = "/kaggle/working/synthetic_keyframe.png"
