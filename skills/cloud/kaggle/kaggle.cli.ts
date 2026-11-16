@@ -320,7 +320,7 @@ function main(): void {
     console.log(`kaggle CLI: ${v.ok ? 'found' : 'NOT found. Install it: pip install kaggle'}`);
     console.log(`token: ${token ? 'found (' + token.length + ' chars)' : 'MISSING. Put KAGGLE_API_TOKEN=<token> in ' + path.join(home(), '.env') + ' (Kaggle, Settings, API)'}`);
     if (val('--user')) writeConfig({ ...readConfig(), username: val('--user') });
-    console.log(`account name: ${user || 'not set. Run: setup --user <your kaggle username>'}`);
+    console.log(`account name: ${user ? 'set' : 'not set. Run: setup --user <your kaggle username>'}`);
     console.log(`model ${MODEL}, caps ${JSON.stringify(CAPS)}; free quota is about ${LIMITS.weekHours} GPU hours a week.`);
     if (!v.ok || !token || !user) process.exitCode = 3;
     return;
