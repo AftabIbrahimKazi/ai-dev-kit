@@ -46,7 +46,7 @@ function main() {
   const a = process.argv.slice(2);
   const flag = (f) => a.includes(f);
   const val = (f) => (a.includes(f) ? a[a.indexOf(f) + 1] : undefined);
-  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes', '--force', '--only'].includes(x));
+  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes', '--force', '--only', '--job', '--out'].includes(x));
   if (bad.length) { console.error('usage: node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <s>] [--rating clearly-better|not-better]'); process.exit(2); }
   const user = account();
   if (!user) { console.error('No Kaggle account name. Pass --user <name> or run: node skills/cloud/kaggle/kaggle.cli.js setup'); process.exit(3); }
@@ -62,7 +62,13 @@ function main() {
     let py = fs.readFileSync(path.join(__dirname, 'bench.py'), 'utf8');
     const guard = require('./guard.js'); // content guardrails travel with the kernel; without them bench.py refuses to start
     py = py.replace('"__GUARD_JSON__"', JSON.stringify(JSON.stringify({ negative: guard.NEGATIVE, terms: guard.TERMS })));
-    const only = val('--only');
+    let job = null;
+    if (val('--job')) {
+      job = JSON.parse(fs.readFileSync(val('--job'), 'utf8'));
+      for (const p of job.prompts) { const g = guard.checkPrompt(p); if (!g.ok) { console.error(`blocked (${g.rule}): ${g.why}: ${p.slice(0, 60)}`); process.exit(4); } }
+    }
+    py = py.replace('"__JOB_JSON__"', JSON.stringify(JSON.stringify(job)));
+    const only = job ? job.image_model : val('--only');
     if (only) py = py.replace('import json, os, time, traceback', `import json, os, time, traceback
 os.environ["BENCH_ONLY"] = ${JSON.stringify(only)}`);
     if (process.env.HF_TOKEN) py = py.replace('import json, os, time, traceback', `import json, os, time, traceback\nos.environ["HF_TOKEN"] = ${JSON.stringify(process.env.HF_TOKEN)}`); // lives only in the private kernel source
@@ -104,6 +110,13 @@ os.environ["BENCH_ONLY"] = ${JSON.stringify(only)}`);
   if (!o.ok || !fs.existsSync(file)) { console.error('fetch failed (still running?): ' + o.out.slice(0, 200)); process.exit(1); }
   const lrows = readLedger(); const open = lrows.filter((x) => !x.finished && x.kernel === kernel).pop();
   if (open) closeRow(lrows, open, 'done'); // a --no-wait push is closed here, like the coding flow's fetch
+  if (val('--out')) {
+    const out = path.resolve(val('--out')); fs.mkdirSync(out, { recursive: true });
+    const got = fs.readdirSync(runDir).filter((f) => /\.(png|mp4)$/.test(f));
+    for (const f of got) fs.copyFileSync(path.join(runDir, f), path.join(out, f));
+    console.log(`copied ${got.length} file(s) to ${out}`);
+    return;
+  }
   const r = parse(fs.readFileSync(file, 'utf8'));
   console.log(render(r, gates(r, val('--rating'))));
   console.log(`\nImages and the raw results are in ${runDir}`);

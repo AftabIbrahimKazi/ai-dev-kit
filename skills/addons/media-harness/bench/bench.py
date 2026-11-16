@@ -46,6 +46,9 @@ PROMPTS = [  # 6 art/abstract prompts, also rendered through Cloudflare for the 
     "ink drawing of a heron over a pale moon, wide margins, textured paper",
     "neon wireframe tunnel receding into darkness, subtle bloom",
 ]
+JOB = json.loads("__JOB_JSON__")  # a harness job (prompts, model, clips per shot) or None for the plain bench
+if JOB:
+    PROMPTS = JOB["prompts"]
 
 
 # ---- content guardrails (rules live in guard.js; run.js injects them here; an unreplaced placeholder refuses to run) ----
@@ -225,6 +228,50 @@ def wan(name, repo, subdir):
         _gc.collect(); torch.cuda.empty_cache()
 
 
+def wan_job(name, repo, subdir):
+    """Chained 33-frame clips: the last frame of clip N is the first frame of clip N+1 (81 frames in one pass is not used)."""
+    import torch, gc
+    from diffusers import WanImageToVideoPipeline
+    from diffusers.utils import export_to_video, load_image
+    src, where = source(repo, subdir)
+    holder = {}
+
+    def load():
+        holder["pipe"] = WanImageToVideoPipeline.from_pretrained(src, torch_dtype=torch.float16)
+        holder["pipe"].enable_model_cpu_offload()
+
+    timed("model_load", name, load, source=where)
+    if "pipe" not in holder:
+        return
+    try:
+        holder["pipe"].vae.enable_tiling()
+        holder["pipe"].vae.enable_slicing()
+    except Exception:
+        pass
+    n = 0
+    for i, prompt in enumerate(PROMPTS):
+        cur = f"/kaggle/working/{JOB['image_model']}_{i}.png"
+        if not os.path.exists(cur):
+            log({"test": "skipped", "model": name, "ok": False, "error": f"no keyframe for shot {i} (dropped by the screen or not generated)"})
+            continue
+        img = load_image(cur).resize((832, 480))
+        for k in range(JOB["clips_per_shot"][i]):
+            if over_budget(200):
+                log({"test": "skipped", "model": name, "ok": False, "error": "budget nearly spent, clips stopped"})
+                return
+            def gen(img=img):
+                holder["frames"] = holder["pipe"](image=img, prompt=prompt, height=480, width=832, num_frames=33, num_inference_steps=4, guidance_scale=1.0, output_type="pil").frames[0]
+            timed("video_33f_480p", name, gen, frames=33, steps=4, shot=i, clip=k)
+            frames = holder.pop("frames", None)
+            if frames is None:
+                break
+            if all(safe(f, name) for f in (frames[0], frames[len(frames) // 2], frames[-1])):
+                n += 1
+                export_to_video(frames, f"/kaggle/working/clip_{n:03d}.mp4", fps=16)
+            img = frames[-1]
+            gc.collect(); torch.cuda.empty_cache()
+
+
 def two_workers():
     """Same 6 images on one GPU vs split across two processes. Needs Schnell weights available."""
     import subprocess, sys
@@ -263,6 +310,13 @@ if __name__ == "__main__":
             return
         fn(*a, **k)
 
+    if JOB:  # a harness job: images with the chosen SDXL model, then chained clips if any; no Flux, no two-workers
+        ensure_deps()
+        stage("sdxl", 420, sdxl)
+        if any(JOB["clips_per_shot"]):
+            stage("wan22-5b", 1200, wan_job, "wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
+        log({"test": "done", "ok": True, "elapsed_s": round(time.time() - START)})
+        raise SystemExit(0)
     # Both Flux repos are gated on Hugging Face: accept their terms with your account, then set HF_TOKEN.
     gated_ok = bool(MODEL_DATASET or os.environ.get("HF_TOKEN"))
     if gated_ok:

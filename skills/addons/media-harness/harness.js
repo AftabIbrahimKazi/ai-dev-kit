@@ -40,6 +40,19 @@ async function interview(dir, answersFile) {
   }
   rl.close(); save(dir, sb); return sb;
 }
+function jobFile(dir, sb) {
+  const detail = /RealVis/i.test(sb.quality || '');
+  const video = /clip|video/i.test(sb.kind || '');
+  const per = sb.shots.map((x) => x.clips);
+  const job = { prompts: sb.shots.map((x) => x.prompt), image_model: detail ? 'realvisxl-v5' : 'dreamshaper-xl-turbo', clips_per_shot: video ? per : per.map(() => 0) };
+  const f = path.join(dir, 'job.json');
+  fs.writeFileSync(f, JSON.stringify(job, null, 2));
+  return f;
+}
+function runBench(args) {
+  const r = cp.spawnSync(process.execPath, [path.join(__dirname, 'bench', 'run.js'), ...args], { stdio: 'inherit' });
+  return r.status === null ? 1 : r.status;
+}
 function stitch(dir, out) {
   const clips = fs.readdirSync(dir).filter((f) => /^clip_\d+\.mp4$/.test(f)).sort();
   if (!clips.length) throw new Error('no clip_NNN.mp4 files in ' + dir);
@@ -59,8 +72,9 @@ async function main() {
   else if (sub === 'plan') { const sb = load(dir); if (!sb) { console.error('run init and interview first'); process.exitCode = 2; return; } const p = plan(sb); save(dir, p); console.log(`${p.estimate.images} image(s), ${p.estimate.clips} clip(s), about ${p.estimate.gpuMinutes} GPU min (${p.estimate.fitsOneSession ? 'fits one session' : 'needs several sessions'}). ${p.estimate.note}`); }
   else if (sub === 'status') { const sb = load(dir); console.log(sb ? JSON.stringify(sb.estimate || sb, null, 2) : 'no storyboard'); }
   else if (sub === 'stitch') { console.log('wrote ' + stitch(dir, path.join(dir, val('--out') || 'out.mp4'))); }
-  else if (sub === 'submit' || sub === 'fetch') { console.error(sub + ' is not built yet: generation needs the media notebook (Stage 4b). Use bench/run.js for measurements.'); process.exitCode = 3; }
-  else { console.error('usage: harness.js init|interview [--answers f.json]|plan|status|stitch [--out x.mp4] [dir]'); process.exitCode = 2; }
+  else if (sub === 'submit') { const sb = load(dir); if (!sb || !sb.shots) { console.error('run plan first'); process.exitCode = 2; return; } process.exitCode = runBench(['--no-wait', '--job', jobFile(dir, sb), ...(a.includes('--dry-run') ? ['--dry-run'] : [])]); }
+  else if (sub === 'fetch') { process.exitCode = runBench(['--fetch', '--out', dir]); }
+  else { console.error('usage: harness.js init|interview [--answers f.json]|plan|submit [--dry-run]|fetch|status|stitch [--out x.mp4] [dir]'); process.exitCode = 2; }
 }
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exitCode = 1; });
 module.exports = { applyAnswers, plan, tree };
