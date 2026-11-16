@@ -1,7 +1,7 @@
 const assert = require('node:assert');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const script = path.join(__dirname, '..', 'skills', 'meta', 'device-check.js');
+const script = path.join(__dirname, '..', 'skills', 'meta', 'skill-scope.device.js');
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
 
 const base = {

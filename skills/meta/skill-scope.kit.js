@@ -52,6 +52,7 @@ exports.ROWS = [
     { situation: 'Read answers aloud, mute or tune the voice', use: '`/narration mute|unmute|voice male|volume 80|speed 1.2|pitch 2` (opt-in `narrate` add-on)', keys: ['read aloud', 'narration', 'voice', 'mute', 'unmute', 'speak', 'volume', 'tts'] },
     { situation: 'Change how answers are worded for your skill level', use: '`/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on)', keys: ['persona', 'wording', 'skill level', 'novice', 'tone', 'personality'] },
     { situation: 'Change how answers are shaped', use: '`/format table|bullets|oneline|bool` (`/format reset` for the default)', keys: ['format', 'answer shape', 'as a table', 'bullets', 'one line', 'shorter answers'] },
+    { situation: 'Will the local models and media add-ons run on this machine', use: '`/device` (optional: `--preset lite|standard|full`, `--json`); read-only, downloads nothing', keys: ['device', 'my machine', 'hardware', 'gpu check', 'ram', 'disk space', 'what can i install', 'preset', 'first run'] },
     { situation: 'Set up or update a project', use: 'run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean', keys: ['install', 'set up the kit', 'setup', 'update the kit', 'install-kit', 'new project'] },
 ];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

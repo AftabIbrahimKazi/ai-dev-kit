@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// device-check: read-only scan of this machine, then a Have / Missing / Next report and a preset.
-// Usage: node device-check.js [--json] [--preset lite|standard|full]
+// device (skill-scope companion, /device): read-only scan of this machine, then a Have / Missing / Next report and a preset.
+// Usage: node device.js [--json] [--preset lite|standard|full]
 // Installs nothing, downloads nothing, never reads or prints secrets (Kaggle credentials: presence only).
 // Test hook: DEVICE_FAKE_HW='<json>' replaces every probe (see tests/device-check.test.js).
 import childProcess = require('child_process');

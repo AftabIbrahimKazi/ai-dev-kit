@@ -519,6 +519,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/figma <folder>` | Turns exported Figma PNG/SVG files into `project-context/design/figma.md`: frame sizes, colors, fonts, type sizes, text. No MCP, no Figma account tokens, no connector cost | a folder or files of exports, optional `--link <figma url>`, `--write` to save | `project-context` |
 | `/narration <setting>` | Controls reply narration without opening a file | `mute`, `unmute`, `stop`, `replay`, `status`, `voice male|female`, `volume 0-100`, `speed 0.5-2`, `pitch -12..12`, `maxSeconds 30-1800` | `narrate` |
 | `/persona <setting>` | Chooses how replies are worded; applies from the next session | `set female|male novice|mid|pro`, `off`, `status`, `list` | `personality` |
+| `/device` | Scans RAM, disk, GPU, Python, ffmpeg, Laya, local-vision, Ollama and Kaggle; prints Have / Missing / Next and a `lite`, `standard` or `full` preset. Read-only, downloads nothing | `--json`, `--preset lite\|standard\|full` | none |
 | `/kit` | This cheat sheet | optional: describe your situation | none |
 | `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |
 | `/format <name>` | Sets the response shape for the session, no script | `table`, `bullets`, `oneline`, `bool`, `reset` | none |
@@ -689,6 +690,7 @@ Scripts are plain Node (no packages) that do the mechanical work so the agent do
 | `skill-scope/auto.js pickup` | Prints the queued task with what its mode means, the handover verbatim and the archived-skills report; `apply --require-task` also writes the `## Next task` and `## Skills` lines | `/pickup`, `/next` |
 | `handover/draft.js` | The mechanical half of a handover: header line, commits since the last one, uncommitted files, existing next task, size check, optional session-journal facts | `/wrap-up` |
 | `session-budget/usage.js` | Feature-usage switch and report: `on`, `off`, `notify on\|off`, `status`, `report [--days N] [--all-projects]`, `reset --yes`; reads the log the `feature-usage` mod writes and lists installed features never used | `/kit-usage` |
+| `skill-scope/device.js` | Read-only machine scan: RAM, disk, GPU, Python, ffmpeg, Laya, local-vision, Ollama, Kaggle (presence only, never reads credentials); Have / Missing / Next table and a preset with download sizes | `/device`, `install-kit` last step |
 | `skill-scope/kit.js` | Keyword scorer over the command table: prints the single best command for a situation, or the whole table | `/kit` |
 | `skill-scope/auto.js run` | Restores an archived skill, then runs its script; the six commands for archivable skills call it | `/audit`, `/stale`, `/version-bump` and three more |
 | `memory-gardener/stale.js` | Lists memory and handover bullets that name deleted files (report only) | `/stale` |
