@@ -11,7 +11,7 @@ const runner = path.join(tmp, 'fake-kaggle.js');
 fs.writeFileSync(runner, `
 const fs=require('fs'),path=require('path');const a=process.argv.slice(2);
 fs.appendFileSync(path.join(${JSON.stringify(tmp)},'calls.log'),a.join(' ')+'\\n');
-if(a[1]==='status'){console.log('status: COMPLETE');}
+if(a[1]==='status'){console.log(process.env.FAKE_STUCK?'status: RUNNING':'status: COMPLETE');}
 if(a[1]==='output'){const d=a[a.indexOf('-p')+1];fs.writeFileSync(path.join(d,'bench_results.jsonl'),[
  JSON.stringify({test:'env',gpus:['Tesla T4'],ok:true}),
  JSON.stringify({test:'model_load',model:'flux-schnell',seconds:30,ok:true,source:'huggingface'}),
@@ -46,6 +46,13 @@ t('HF_TOKEN goes into the pushed kernel only, not into stdout', () => {
   const r = spawnSync(process.execPath, [run, '--dry-run'], { encoding: 'utf8', env: { ...env, HF_TOKEN: 'hf_secret123' } });
   assert.ok(!r.stdout.includes('hf_secret123'));
   assert.ok(fs.readFileSync(path.join(tmp, 'kaggle', 'media-bench', 'push', 'bench.py'), 'utf8').includes('hf_secret123'));
+});
+t('a stuck kernel is deleted at the time cap, never left running', () => {
+  fs.rmSync(path.join(tmp, 'calls.log'), { force: true });
+  const r = spawnSync(process.execPath, [run, '--poll', '0', '--max-minutes', '0'], { encoding: 'utf8', env: { ...env, FAKE_STUCK: '1' } });
+  assert.strictEqual(r.status, 1);
+  assert.ok(/kernels delete someone\/media-bench --yes/.test(fs.readFileSync(path.join(tmp, 'calls.log'), 'utf8')));
+  assert.ok(/deleted to free the GPU/.test(r.stderr));
 });
 t('unknown flag exits 2', () => assert.strictEqual(spawnSync(process.execPath, [run, '--nope'], { encoding: 'utf8', env }).status, 2));
 fs.rmSync(tmp, { recursive: true, force: true });

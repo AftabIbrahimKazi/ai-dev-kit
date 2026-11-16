@@ -11,6 +11,14 @@
 import json, os, time, traceback
 
 MODEL_DATASET = os.environ.get("MODEL_DATASET", "")
+# GPU quota is 30 h a week, so the session must never idle or hang: every stage checks this budget first,
+# and the script exits (which ends the Kaggle session) as soon as the work is done or the budget is spent.
+START = time.time()
+BUDGET_S = int(os.environ.get("BENCH_BUDGET_S", "2700"))  # 45 min
+
+
+def over_budget(need_s=0):
+    return time.time() - START + need_s > BUDGET_S
 OUT = "/kaggle/working/bench_results.jsonl"
 PROMPTS = [  # 6 art/abstract prompts, also rendered through Cloudflare for the side-by-side
     "abstract flowing ribbons of teal and gold light on a dark background, soft depth of field",
@@ -122,12 +130,12 @@ def two_workers():
     src, _ = source("black-forest-labs/FLUX.1-schnell", "flux-schnell")
 
     def one():
-        subprocess.run([sys.executable, script, "0", "4", src], check=True)
+        subprocess.run([sys.executable, script, "0", "4", src], check=True, timeout=600)
 
     def two():
         ps = [subprocess.Popen([sys.executable, script, g, "2", src]) for g in ("0", "1")]
         for p in ps:
-            assert p.wait() == 0
+            assert p.wait(timeout=600) == 0
 
     timed("four_images_one_gpu", "flux-schnell", one)
     timed("four_images_two_gpus", "flux-schnell", two)
@@ -136,12 +144,21 @@ def two_workers():
 if __name__ == "__main__":
     import torch
     log({"test": "env", "gpus": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())], "torch": torch.__version__, "dataset": MODEL_DATASET or None, "ok": True})
+    def stage(label, need_s, fn, *a, **k):
+        if over_budget(need_s):
+            log({"test": "skipped", "model": label, "ok": False, "error": f"skipped: {need_s}s needed, budget {BUDGET_S}s nearly spent"})
+            return
+        fn(*a, **k)
+
     # Both Flux repos are gated on Hugging Face: accept their terms with your account, then set HF_TOKEN.
-    flux("flux-schnell", "black-forest-labs/FLUX.1-schnell", "flux-schnell", steps=4)
-    if MODEL_DATASET or os.environ.get("HF_TOKEN"):  # Flux Dev is a gated repo: needs the Dataset or an HF token
-        flux("flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
+    gated_ok = bool(MODEL_DATASET or os.environ.get("HF_TOKEN"))
+    if gated_ok:
+        stage("flux-schnell", 300, flux, "flux-schnell", "black-forest-labs/FLUX.1-schnell", "flux-schnell", steps=4)
+        stage("flux-dev", 900, flux, "flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
     else:
-        log({"test": "model_load", "model": "flux-dev", "ok": False, "seconds": 0, "error": "skipped: no Dataset and no HF_TOKEN (gated repo)"})
-    wan("wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
-    two_workers()
-    log({"test": "done", "ok": True})
+        log({"test": "skipped", "model": "flux", "ok": False, "error": "skipped: no Dataset and no HF_TOKEN (gated repos); not wasting GPU time on a certain 401"})
+    stage("wan22-5b", 1200, wan, "wan22-5b", "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "wan22-5b")
+    if gated_ok:
+        stage("two-workers", 300, two_workers)
+    log({"test": "done", "ok": True, "elapsed_s": round(time.time() - START)})
+    # script ends here: the Kaggle session stops, no idle GPU time is left

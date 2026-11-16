@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Runs the Stage 5 measurement on Kaggle for you: pushes bench.py as a private GPU script kernel, waits, downloads the
 // output, prints the numbers. Uses your Kaggle token (KAGGLE_API_TOKEN or ~/.ai-dev-kit/.env) and spends free GPU quota.
-//   node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <seconds>] [--rating clearly-better|not-better]
+//   node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <seconds>] [--max-minutes N] [--rating clearly-better|not-better]
 //   --dry-run  write the kernel folder and print what would be pushed; no network, no quota
 //   --no-wait  push and stop; later run with --fetch
 //   --fetch    download the output of the last push and print the numbers
@@ -51,7 +51,7 @@ function main() {
   const a = process.argv.slice(2);
   const flag = (f) => a.includes(f);
   const val = (f) => (a.includes(f) ? a[a.indexOf(f) + 1] : undefined);
-  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating'].includes(x));
+  const bad = a.filter((x) => x.startsWith('--') && !['--dry-run', '--no-wait', '--fetch', '--user', '--poll', '--rating', '--max-minutes'].includes(x));
   if (bad.length) { console.error('usage: node run.js [--dry-run] [--no-wait] [--fetch] [--user <name>] [--poll <s>] [--rating clearly-better|not-better]'); process.exit(2); }
   const user = account();
   if (!user) { console.error('No Kaggle account name. Pass --user <name> or run: node skills/cloud/kaggle/kaggle.cli.js setup'); process.exit(3); }
@@ -75,11 +75,19 @@ function main() {
     fs.writeFileSync(path.join(stateDir(), 'last.json'), JSON.stringify({ kernel, started: new Date().toISOString() }));
     console.log(`pushed ${kernel}. https://www.kaggle.com/code/${kernel}`);
     if (flag('--no-wait')) { console.log('not waiting. Later: node run.js --fetch'); return; }
+    // The GPU quota is 30 h a week: never leave a session running unattended. After --max-minutes (default 75, queue time
+    // included) the kernel is stopped. bench.py also ends itself when its own 45 min budget is spent.
     const poll = Number(val('--poll') ?? 60);
-    for (let i = 0; i < 400; i++) {
+    const deadline = Date.now() + Number(val('--max-minutes') ?? 75) * 60000;
+    for (;;) {
       const s = kaggle(['kernels', 'status', kernel], cfgDir).out;
       if (/COMPLETE/.test(s)) break;
-      if (/ERROR|CANCEL/.test(s)) { console.error('kernel ended with an error: ' + s.split('\n').pop() + '. Output may still hold partial results; try --fetch.'); process.exitCode = 1; break; }
+      if (/ERROR|CANCEL/.test(s)) { console.error('kernel ended: ' + s.split('\n').pop() + '. Output may still hold partial results; try --fetch.'); process.exitCode = 1; break; }
+      if (Date.now() > deadline) {
+        const d = kaggle(['kernels', 'delete', kernel, '--yes'], cfgDir);
+        console.error(`stopped: still not finished after the time cap, so the kernel was ${d.ok ? 'deleted to free the GPU' : 'NOT deleted (' + d.out.slice(0, 120) + '); stop it on kaggle.com now'}.`);
+        process.exit(1);
+      }
       spawnSync(process.execPath, ['-e', `setTimeout(()=>{},${poll * 1000})`]);
     }
   }
