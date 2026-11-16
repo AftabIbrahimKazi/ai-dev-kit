@@ -13,3 +13,8 @@ Video gate: accepted on the estimate (user decision 2026-11-17), well under the 
 Image gate: waiting for the user's side-by-side rating against Cloudflare.
 Not measured: two workers, Dataset-vs-HF load, Flux (gated, no HF token), Wan 2.2 5B native fps (exported at 16).
 Dropped: Juggernaut-X (single-file NSFW-tuned checkpoint, not diffusers weights).
+
+## Quality test 2026-11-17 (FAILED for commercial use)
+- Job mode ran clean: 2 images + 4 chained clips in 763 s; 1 image + 3 clips in 633 s (clips 68-81 s); host RAM flat at 25.5 GB.
+- Output quality: abstract test unusable (user); human test (keyframe fine) melts by clip 2-3: hands and cup dissolve, face drifts. Chaining from the last frame compounds it. Humans are a no on this setup.
+- Next: re-anchor each clip to a fresh keyframe, single short clips, more steps or the 14B model, 720p. See handover.md Next steps 0.
