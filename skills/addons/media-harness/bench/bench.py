@@ -17,7 +17,7 @@ START = time.time()
 BUDGET_S = int(os.environ.get("BENCH_BUDGET_S", "2700"))  # 45 min
 
 
-ONLY = {x for x in os.environ.get("BENCH_ONLY", "").split(",") if x}  # empty = run everything; e.g. "juggernaut-x-v10,wan"
+ONLY = {x for x in os.environ.get("BENCH_ONLY", "").split(",") if x}  # empty = run everything; e.g. "realvisxl-v5,wan"
 
 
 def want(x):
@@ -142,13 +142,13 @@ def flux(name, repo, subdir, steps):
 
 
 def sdxl():
-    """Newest commercial-safe SDXL-line checkpoints (verified on the HF API 2026-11-16: ungated, diffusers format,
-    creativeml-openrail-m). Juggernaut XI v11 is cc-by-nc-nd, so it is NOT used. fp16 fits a 16 GB T4 without offload."""
+    """SDXL-line checkpoints (verified on the HF API 2026-11-17: ungated, diffusers format, openrail++). Juggernaut was
+    dropped: its repos ship one single-file checkpoint, not diffusers weights. fp16 fits a 16 GB T4 without offload."""
     import gc, torch
     from diffusers import AutoPipelineForText2Image
     models = [  # (name, repo, steps, guidance): steps and guidance follow the model cards, unverified here
-        ("juggernaut-x-v10", "RunDiffusion/Juggernaut-X-v10", 30, 5.0),
-        ("juggernaut-x-hyper", "RunDiffusion/Juggernaut-X-Hyper", 6, 2.0),
+        ("realvisxl-v5", "SG161222/RealVisXL_V5.0", 30, 5.0),
+        ("dreamshaper-xl-turbo", "Lykon/dreamshaper-xl-v2-turbo", 6, 2.0),
     ]
     for name, repo, steps, cfg in models:
         if not want(name):
@@ -191,7 +191,7 @@ def wan(name, repo, subdir):
     timed("model_load", name, load, source=where)
     if "pipe" not in holder:
         return
-    first = next((p for p in ("/kaggle/working/juggernaut-x-hyper_0.png", "/kaggle/working/flux-schnell_0.png") if os.path.exists(p)), "")
+    first = next((p for p in ("/kaggle/working/dreamshaper-xl-turbo_0.png", "/kaggle/working/flux-schnell_0.png") if os.path.exists(p)), "")
     if not first:  # no image model ran: time Wan on a plain gradient keyframe instead
         from PIL import Image
         first = "/kaggle/working/synthetic_keyframe.png"
