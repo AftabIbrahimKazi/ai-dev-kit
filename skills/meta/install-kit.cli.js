@@ -618,6 +618,18 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
     }
     return result;
 }
+const USAGE_MOD = 'feature-usage';
+// True when the feature-usage mod is enabled in the user's Claude settings (any scope key naming it).
+function usageModEnabled() {
+    const dir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+    try {
+        const j = JSON.parse(fs.readFileSync(path.join(dir, 'settings.json'), 'utf8'));
+        return Object.entries(j.enabledPlugins || {}).some(([k, v]) => k.startsWith(USAGE_MOD + '@') && v !== false);
+    }
+    catch {
+        return false;
+    }
+}
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
 function setUsageTracking(track, notify) {
@@ -696,6 +708,8 @@ function doInstall(args) {
         ? company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults })
         : undefined;
     const usageResult = setUsageTracking(args.usage, args.usageNotify);
+    if (usageResult?.warning)
+        console.error(usageResult.warning);
     // The hidden-state reviewer choice lives in one small file the state-audit mod and plan-first/reviewer.js read.
     // Only written when a choice was made; delete .claude/state-audit.json to go back to "static" (no model, no network).
     if (args.reviewer && Object.keys(manifest.skills).includes('implicit-state-audit')) {

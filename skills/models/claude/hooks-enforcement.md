@@ -74,6 +74,19 @@ Archiving and restoring skills is deliberately not a hook: a session-start archi
 }
 ```
 
+## Optional `Stop` hook: catch a missing `[CX]` after notifications and tool results
+The `UserPromptSubmit` reminder fires only on user messages, so a reply that follows a background-task notification or a tool result gets none, and `[CX]` drops there. This `Stop` hook reads the transcript and, when the last assistant text does not open with `[CX`, blocks once (exit 2) so the model restates it. It only checks a proxy (the token is present, not honest), fails open on any read error, and never loops (`stop_hook_active`). Opt-in: not one of the `<!-- hook:core -->` blocks, so `merge-hooks` never adds it:
+```json
+{
+  "hooks": {
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node .claude/skills/hooks-enforcement/cx-check.js" }] }
+    ]
+  }
+}
+```
+The AI-02 declaration cannot be checked this way (it is a prose list, not a token); the `SessionStart` reminder and the `PreToolUse` marker gate above are its only hooks. AI-01's "every response" means the first text block of each turn, including turns started by a notification.
+
 **Merge these into the target's `.claude/settings.json` — never overwrite an existing one. Mechanical merge, run it instead of hand-editing:**
 ```
 node <library>/skills/meta/install-kit.cli.js merge-hooks --library <library> --root <target>

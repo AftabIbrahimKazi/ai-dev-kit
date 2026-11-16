@@ -9,10 +9,12 @@
 //   node cli.js fetch                               pull the last run's output (after --no-wait) and gate it
 //   node cli.js retry                               build a follow-up job from the failed tasks (max 2 rounds), then run it
 //   node cli.js status | stop | usage | review
+//   node cli.js learn                               append (staged, repo) differences to a local dataset of (bad, fixed) pairs
 //
 // Plan format (the "executor-ready" schema): one `## Task <n>: <title>` section per task with the lines `Target: <path>` (one
 // or two, comma separated), `Check: <command or "none">`, optional `Standards: <rule ids or file names>` and `Context: <paths>`,
 // then the task text, which must stand alone (no "see above"). Answers go to a staging folder, never straight into the repo.
+// Standards: --standards <dir> defaults to <project>/coding-standards when that folder exists; a Standards id that is not a file in it fails the plan.
 // Env: KAGGLE_RUNNER (a node script used instead of the kaggle CLI: tests), AI_DEV_KIT_HOME (state and .env location).
 // Token: KAGGLE_API_TOKEN or KAGGLE_API_KEY in the environment or in ~/.ai-dev-kit/.env (spaces and quotes are trimmed).
 // Exit codes: 0 done, 1 error, 2 bad usage, 3 blocked (budget, active session, missing prerequisite).
@@ -129,6 +131,20 @@ export function parseFiles(answer: string): { path: string; content: string }[] 
   return out;
 }
 
+const MAGIC_NUMBER = /(?<![\w.$'"`-])(\d+\.\d+|\d{3,})(?![\w.'"`])/;
+const CONST_LINE = /^\s*(export\s+)?const\s+[A-Z][A-Z0-9_]*\s*=|^\s*(\/\/|\*|\/\*)/;
+
+// Deterministic standards hits a model cannot see in its own output: console.*, and bare numeric literals outside a NAMED_CONSTANT line.
+export function lintStandards(content: string): string[] {
+  const out: string[] = [];
+  const lines = content.split(/\r?\n/);
+  const con = lines.findIndex((l) => /\bconsole\.(log|error|warn|info|debug)\(/.test(l) && !CONST_LINE.test(l));
+  if (con >= 0) out.push(`standards: console.* call on line ${con + 1}; use the project's logger or throw`);
+  const mag = lines.findIndex((l) => !CONST_LINE.test(l) && MAGIC_NUMBER.test(l.replace(/(['"`]).*?\1/g, '""')));
+  if (mag >= 0) out.push(`standards: magic number on line ${mag + 1} (${(MAGIC_NUMBER.exec(lines[mag]) || [''])[0]}); name it as a const`);
+  return out;
+}
+
 // Cheap local gates on staged files: syntax where Node can tell, placeholders everywhere. Findings feed a retry, not a review.
 export function gateFile(file: string, content: string): string[] {
   const f: string[] = [];
@@ -141,6 +157,7 @@ export function gateFile(file: string, content: string): string[] {
     fs.rmSync(tmp, { force: true });
     if (r.status !== 0) f.push('syntax error: ' + (r.stderr.split('\n').find((l) => /Error/.test(l)) || 'node --check failed').slice(0, 100));
   }
+  if (/\.(c|m)?js$/i.test(file) && !/(^|[\/])(tests?|__tests__)[\/]|\.(test|spec)\./i.test(file)) f.push(...lintStandards(content));
   if (/\.html?$/i.test(file) && !/<\/html>\s*$/i.test(content.trim())) f.push('HTML does not end with </html> (cut off?)');
   if (!content.trim()) f.push('empty file');
   return f;
@@ -204,6 +221,11 @@ function workerSource(): string {
 function planJobs(planFile: string, root: string, standardsDir?: string): { jobs: { tasks: { id: string; prompt: string }[] }; lint: Linted; notes: string[]; tasks: Task[] } {
   const lint = parsePlan(fs.readFileSync(planFile, 'utf8'));
   const notes: string[] = [];
+  if (standardsDir) {
+    for (const t of lint.tasks) for (const sid of t.standards) {
+      if (![path.join(standardsDir, sid), path.join(standardsDir, sid + '.md')].some((x) => fs.existsSync(x) && fs.statSync(x).isFile())) lint.problems.push(`task ${t.id}: Standards "${sid}" is not a file in ${standardsDir}; it would be dropped. Use a real file name.`);
+    }
+  }
   const jobs = { tasks: lint.tasks.map((t) => { const b = buildPrompt(t, root, standardsDir); notes.push(...b.notes.map((n) => `task ${t.id}: ${n}`)); return { id: t.id, prompt: b.prompt }; }) };
   return { jobs, lint, notes, tasks: lint.tasks };
 }
@@ -224,10 +246,48 @@ export function stageResults(outDir: string, tasks: Task[], stage: string): { ta
       row.files.push(x.path);
       for (const g of gateFile(x.path, x.content)) row.findings.push(`${x.path}: ${g}`);
     }
+    if (!row.findings.length) { const c = runCheck(t.check, stage); if (c) row.findings.push(c); }
     for (const tg of t.targets) if (!row.files.includes(tg.replace(/\\/g, '/'))) row.findings.push(`missing Target ${tg}`);
     rows.push(row);
   }
   return rows;
+}
+
+const CHECK_TIMEOUT_MS = 120000;
+const CHECK_TAIL = 160;
+
+// A task's Check line, run inside staging so import and test failures reach the retry, not Claude. Only `node ...` checks run (the staged code is model output);
+// anything else is listed as not run. A missing module outside staging means the check needs repo files: noted, not failed.
+export function runCheck(check: string, stage: string): string {
+  const c = check.trim();
+  if (!c || /^none$/i.test(c)) return '';
+  if (!/^node\s/.test(c)) return `check not run (only "node ..." checks run in staging): ${c}`;
+  const r = spawnSync(c, { cwd: stage, shell: true, encoding: 'utf8', timeout: CHECK_TIMEOUT_MS });
+  if (r.status === 0) return '';
+  const out = ((r.stderr || '') + (r.stdout || '')).trim();
+  if (/Cannot find (module|package)|ERR_MODULE_NOT_FOUND/.test(out)) return `check not run to the end (needs repo files not in staging): ${c}`;
+  return `check failed (${c}): ${out.split(/\r?\n/).filter((l) => /Error|not ok|fail/i.test(l)).slice(0, 2).join(' | ').slice(0, CHECK_TAIL) || 'exit ' + r.status}`;
+}
+
+export function learnPairs(root: string, stage: string): number {
+  const file = path.join(stateDir(root), 'pairs.jsonl');
+  let n = 0;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const walk = (dir: string): void => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) { walk(p); continue; }
+      const rel = path.relative(stage, p).replace(/\\/g, '/');
+      const repoFile = path.join(root, rel);
+      if (!fs.existsSync(repoFile)) continue;
+      const bad = fs.readFileSync(p, 'utf8'); const fixed = fs.readFileSync(repoFile, 'utf8');
+      if (bad === fixed) continue;
+      fs.appendFileSync(file, JSON.stringify({ file: rel, bad, fixed, t: new Date().toISOString() }) + '\n');
+      n++;
+    }
+  };
+  if (fs.existsSync(stage)) walk(stage);
+  return n;
 }
 
 function report(rows: { task: string; files: string[]; findings: string[] }[], stage: string, results: { tasks?: { id: string; gen_tokens?: number; truncated?: boolean }[]; elapsed_s?: number } | null): string {
@@ -236,6 +296,8 @@ function report(rows: { task: string; files: string[]; findings: string[] }[], s
   if (results && results.elapsed_s) lines.push(`GPU session about ${Math.ceil(results.elapsed_s / 60)} min`);
   for (const r of bad) lines.push(`  FAIL ${r.task}: ${r.findings.join('; ')}`);
   for (const t of results?.tasks || []) if (t.truncated) lines.push(`  note ${t.id}: answer hit the output cap (${CAPS.num_predict} tokens); split the task`);
+  const web = fs.existsSync(stage) && fs.readdirSync(stage, { recursive: true }).some((x) => /\.(html?|css)$/i.test(String(x)));
+  if (web) lines.push(`web files staged: run /modern-web ${stage} (report only) before copy-in`);
   lines.push(bad.length ? 'Next: "retry" re-asks the failed tasks with these findings (2 rounds at most), then Claude fixes what is left. Copy staged files into the repo only after review.' : 'Next: review the diff, copy the staged files into the repo, run the project tests and the pre-commit check.');
   return lines.join('\n');
 }
@@ -246,8 +308,8 @@ function main(): void {
   const flag = (n: string): boolean => a.includes(n);
   const val = (n: string): string | undefined => { const i = a.indexOf(n); return i >= 0 ? a[i + 1] : undefined; };
   const root = process.cwd();
-  const usage = 'usage: kaggle cli.js setup|plan <plan.md>|run <plan.md>|fetch|retry|status|stop|usage|review  (see the header of cli.js)';
-  if (!sub || !['setup', 'plan', 'run', 'fetch', 'retry', 'status', 'stop', 'usage', 'review'].includes(sub)) { console.error(usage); process.exitCode = 2; return; }
+  const usage = 'usage: kaggle cli.js setup|plan <plan.md>|run <plan.md>|fetch|retry|status|stop|usage|review|learn  (see the header of cli.js)';
+  if (!sub || !['setup', 'plan', 'run', 'fetch', 'retry', 'status', 'stop', 'usage', 'review', 'learn'].includes(sub)) { console.error(usage); process.exitCode = 2; return; }
   const cfgDir = path.join(stateRoot(), 'cfg');
   fs.mkdirSync(cfgDir, { recursive: true });
   const user = val('--user') || readConfig().username || process.env.KAGGLE_USERNAME || '';
@@ -279,6 +341,11 @@ function main(): void {
     console.log(r.ok ? `stopped ${last.kernel} (the notebook is deleted; Kaggle has no cancel)` : `stop failed: ${r.out.slice(0, 200)}. Stop it on the Kaggle site.`);
     return;
   }
+  if (sub === 'learn') {
+    const n = learnPairs(root, path.join(stateDir(root), 'staging'));
+    console.log(n ? `learned ${n} (bad, fixed) pair(s) into ${path.join(stateDir(root), 'pairs.jsonl')}. Run it after copy-in and review, before the next run overwrites staging.` : 'no staged file differs from its repo copy: nothing to learn');
+    return;
+  }
   if (sub === 'review') {
     const f = path.join(stateDir(root), 'last-report.txt');
     console.log(fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : 'no report yet: run "run <plan.md>" first');
@@ -291,7 +358,9 @@ function main(): void {
   const lastPlan = path.join(stateDir(root), 'last-plan.txt');
   if ((sub === 'fetch' || sub === 'retry') && !planPath) { try { planPath = fs.readFileSync(lastPlan, 'utf8').trim(); } catch { /* none */ } }
   if (!planPath || !fs.existsSync(planPath)) { console.error(sub === 'plan' || sub === 'run' ? `error: pass a plan file. ${usage}` : 'error: no earlier run for this project. Run "run <plan.md>" first.'); process.exitCode = sub === 'plan' || sub === 'run' ? 2 : 1; return; }
-  const pj = planJobs(planPath, root, standards ? path.resolve(standards) : undefined);
+  const defaultStandards = path.join(root, 'coding-standards');
+  const standardsDir = standards ? path.resolve(standards) : fs.existsSync(defaultStandards) && fs.statSync(defaultStandards).isDirectory() ? defaultStandards : undefined;
+  const pj = planJobs(planPath, root, standardsDir);
 
   if (sub === 'plan') {
     const est = estimate(pj.jobs.tasks.map((t) => t.prompt));

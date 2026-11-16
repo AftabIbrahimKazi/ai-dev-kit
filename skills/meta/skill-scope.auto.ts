@@ -77,6 +77,8 @@ export function matchSkills(task: string, triggers: Triggers, root?: string): st
 // Pure: decides what moves, given what is installed and archived right now.
 export function plan(task: string, forced: string[], triggers: Triggers, installed: string[], archived: string[], root?: string): Plan {
   const wanted = new Set([...matchSkills(task, triggers, root), ...forced]);
+  // role-session owns handover/board.md and locks: keep it whenever that folder exists, whatever the task words say.
+  if (root && fs.existsSync(path.join(root, 'handover'))) wanted.add('role-session');
   const set = Object.keys(triggers.skills);
   return {
     archive: set.filter((n) => installed.includes(n) && !wanted.has(n)),
