@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('assert');
+const { estimate, clipsFor } = require('../skills/addons/media-harness/estimate');
+const { applyAnswers, plan } = require('../skills/addons/media-harness/harness');
+const t = (n, f) => { f(); console.log('ok   ' + n); };
+t('letters map to options and freeform text is kept', () => { const sb = applyAnswers({}, { kind: 'B', subject: 'a red fox' }); assert.match(sb.kind, /looping/); assert.strictEqual(sb.subject, 'a red fox'); });
+t('10 s shot is 5 chained 33-frame clips', () => assert.strictEqual(clipsFor(10), 5));
+t('images only has no clips and no video load', () => { const e = estimate({ kind: 'Images only', count: 4, quality: 'Fast draft' }); assert.strictEqual(e.clips, 0); assert.ok(e.gpuMinutes <= 2); });
+t('video estimate includes the 290 s load', () => { const e = estimate({ kind: 'One looping hero clip', count: 1, shot_seconds: 2, quality: 'Fast draft' }); assert.ok(e.gpuMinutes >= 6); });
+t('plan writes one shot per count', () => assert.strictEqual(plan({ kind: 'Images only', count: 3, subject: 'x' }).shots.length, 3));
+console.log('all ok');
