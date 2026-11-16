@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-17
+
+### Fixed
+- Kaggle CLI no longer prints env-derived values (token length, username, kernel URL); closes code scanning alerts 11, 12, 13.
+- Media bench: Juggernaut-X dropped (single-file checkpoint, not diffusers); RealVisXL V5.0 and DreamShaper XL v2 Turbo measured instead.
+
+### Added
+- `skills/addons/media-harness/bench/FINDINGS.md`: Stage 5 numbers (SDXL 10-32 s per image, Wan 33 frames about 77 s, 81-frame estimate 3.0-3.3 min). Video gate accepted on the estimate.
+
 ## 2026-11-16
 
 ### Fixed
