@@ -470,7 +470,7 @@ Free and local tools for any MCP-capable agent (Claude Code, OpenCode, others): 
 
 ## Slash commands
 
-Slash commands are shortcuts **you** type; the agent never runs them on its own. Anything typed after the name is passed to the command (`/audit src/components`). Most of the kit needs no command: the mods and git hooks fire by themselves, and skills load when the agent recognises their trigger. Reach for a command at the moments below. Type `/kit` in a session for this table.
+Slash commands are shortcuts **you** type; the agent never runs them on its own. Anything typed after the name is passed to the command (`/audit src/components`). Most of the kit needs no command: the mods and git hooks fire by themselves, and skills load when the agent recognises their trigger. Reach for a command at the moments below. Type `/kit` in a session for this table. New machine? [`docs/first-run.md`](docs/first-run.md) shows what to install, if anything.
 
 ### Most useful commands
 
