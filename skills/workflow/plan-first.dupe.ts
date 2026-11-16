@@ -25,10 +25,12 @@ export interface DupeArgs { from?: string; block?: string; lines?: string; to: s
 export interface DupeResult { file: string; action: 'inserted' | 'replaced' | 'unchanged'; replaced: number; note?: string }
 
 const EOL = (s: string): string => (s.includes('\r\n') ? '\r\n' : '\n');
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function extractBlock(text: string, name?: string, lines?: string): { block: string; wrapped: boolean } {
   if (name) {
-    const re = new RegExp(`[ \\t]*<!--\\s*dupe:${name}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${name}\\s*-->`);
+    const safeName = escapeRegExp(name);
+    const re = new RegExp(`[ \\t]*<!--\\s*dupe:${safeName}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${safeName}\\s*-->`);
     const m = re.exec(text);
     if (!m) throw new Error(`no block named "${name}": wrap it in <!-- dupe:${name} --> ... <!-- /dupe:${name} --> or use --lines`);
     return { block: m[0], wrapped: true };
@@ -57,9 +59,10 @@ export function place(target: string, block: string, name: string | undefined, o
   const eol = EOL(target);
   const body = block.replace(/\r?\n/g, eol);
   if (name) {
-    const here = new RegExp(`[ \\t]*<!--\\s*dupe-here:${name}\\s*-->`);
+    const safeName = escapeRegExp(name);
+    const here = new RegExp(`[ \\t]*<!--\\s*dupe-here:${safeName}\\s*-->`);
     if (here.test(target)) return { text: target.replace(here, () => body), action: 'inserted' };
-    const prior = new RegExp(`[ \\t]*<!--\\s*dupe:${name}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${name}\\s*-->`);
+    const prior = new RegExp(`[ \\t]*<!--\\s*dupe:${safeName}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${safeName}\\s*-->`);
     if (prior.test(target)) return { text: target.replace(prior, () => body), action: 'replaced' };
   }
   const anchor = o.after ?? o.before;
