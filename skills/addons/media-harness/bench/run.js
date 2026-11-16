@@ -60,6 +60,8 @@ function main() {
     fs.rmSync(work, { recursive: true, force: true });
     fs.mkdirSync(work, { recursive: true });
     let py = fs.readFileSync(path.join(__dirname, 'bench.py'), 'utf8');
+    const guard = require('./guard.js'); // content guardrails travel with the kernel; without them bench.py refuses to start
+    py = py.replace('"__GUARD_JSON__"', JSON.stringify(JSON.stringify({ negative: guard.NEGATIVE, terms: guard.TERMS })));
     const only = val('--only');
     if (only) py = py.replace('import json, os, time, traceback', `import json, os, time, traceback
 os.environ["BENCH_ONLY"] = ${JSON.stringify(only)}`);

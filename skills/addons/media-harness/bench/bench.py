@@ -48,6 +48,38 @@ PROMPTS = [  # 6 art/abstract prompts, also rendered through Cloudflare for the 
 ]
 
 
+# ---- content guardrails (rules live in guard.js; run.js injects them here; an unreplaced placeholder refuses to run) ----
+import re
+GUARD = json.loads("__GUARD_JSON__")
+NEG = GUARD["negative"]
+_clf = None
+
+
+def prompt_ok(p):
+    for words in GUARD["terms"].values():
+        if re.search(r"(?<![a-z0-9])(?:" + "|".join(words) + r")(?![a-z0-9])", p, re.I):
+            return False
+    return True
+
+
+def safe(img, label):
+    """Output screen, kept OUT of every timed region so speed numbers and generation settings are untouched.
+    Fail closed without crashing: a flagged image, or a classifier that cannot load, means the file is not kept."""
+    global _clf
+    try:
+        if _clf is None:
+            from transformers import pipeline
+            _clf = pipeline("image-classification", model="Falconsai/nsfw_image_detection", device=-1)  # CPU: no VRAM, no GPU time
+        score = next((r["score"] for r in _clf(img) if r["label"].lower() == "nsfw"), 0.0)
+    except Exception as e:
+        log({"test": "screen", "model": label, "ok": False, "error": "screen unavailable, output discarded: " + str(e)[:150]})
+        return False
+    if score >= 0.2:  # conservative threshold
+        log({"test": "screen", "model": label, "ok": False, "error": f"blocked by the NSFW screen (score {score:.2f}); discarded"})
+        return False
+    return True
+
+
 def log(rec):
     rec["t"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     with open(OUT, "a") as f:
@@ -136,8 +168,11 @@ def sdxl():
         pipe = holder["pipe"]
         for i, prompt in enumerate(PROMPTS):
             def gen():
-                pipe(prompt, height=1024, width=1024, num_inference_steps=steps, guidance_scale=cfg).images[0].save(f"/kaggle/working/{name}_{i}.png")
-            timed("image_1024", name, gen, steps=steps, prompt_index=i)
+                holder["img"] = pipe(prompt, negative_prompt=NEG, height=1024, width=1024, num_inference_steps=steps, guidance_scale=cfg).images[0]
+            timed("image_1024", name, gen, steps=steps, prompt_index=i)  # timing covers generation only
+            img = holder.pop("img", None)
+            if img is not None and safe(img, name):
+                img.save(f"/kaggle/working/{name}_{i}.png")
         del holder["pipe"], pipe
         gc.collect(); torch.cuda.empty_cache()
 
@@ -165,10 +200,15 @@ def wan(name, repo, subdir):
 
     def gen():
         img = load_image(first).resize((832, 480))
-        frames = holder["pipe"](image=img, prompt=PROMPTS[0], height=480, width=832, num_frames=81, num_inference_steps=4, guidance_scale=1.0).frames[0]
-        export_to_video(frames, f"/kaggle/working/{name}.mp4", fps=16)
+        holder["frames"] = holder["pipe"](image=img, prompt=PROMPTS[0], height=480, width=832, num_frames=81, num_inference_steps=4, guidance_scale=1.0).frames[0]
 
-    timed("video_81f_480p", name, gen, frames=81, steps=4)
+    timed("video_81f_480p", name, gen, frames=81, steps=4)  # timing covers generation only
+    frames = holder.pop("frames", None)
+    if frames is not None:
+        from PIL import Image as _I
+        picks = [frames[k] for k in (0, len(frames) // 2, len(frames) - 1)]  # first, middle, last frame
+        if all(safe(f if hasattr(f, "convert") else _I.fromarray((f * 255).astype("uint8")), name) for f in picks):
+            export_to_video(frames, f"/kaggle/working/{name}.mp4", fps=16)
 
 
 def two_workers():
@@ -198,6 +238,11 @@ def two_workers():
 if __name__ == "__main__":
     import torch
     log({"test": "env", "gpus": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())], "torch": torch.__version__, "dataset": MODEL_DATASET or None, "ok": True})
+    bad = [p for p in PROMPTS if not prompt_ok(p)]
+    if bad:
+        log({"test": "blocked", "ok": False, "error": f"{len(bad)} prompt(s) refused by the content guard; nothing was run"})
+        raise SystemExit(4)
+
     def stage(label, need_s, fn, *a, **k):
         if over_budget(need_s):
             log({"test": "skipped", "model": label, "ok": False, "error": f"skipped: {need_s}s needed, budget {BUDGET_S}s nearly spent"})
