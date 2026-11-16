@@ -95,9 +95,11 @@ def wan(name, repo, subdir):
     if "pipe" not in holder:
         return
     first = "/kaggle/working/flux-schnell_0.png"
-    if not os.path.exists(first):
-        log({"test": "video_81f_480p", "model": name, "ok": False, "error": "no keyframe: Flux Schnell must run first"})
-        return
+    if not os.path.exists(first):  # Flux did not run: time Wan on a plain gradient keyframe instead
+        from PIL import Image
+        first = "/kaggle/working/synthetic_keyframe.png"
+        Image.linear_gradient("L").resize((832, 480)).convert("RGB").save(first)
+        log({"test": "note", "model": name, "ok": True, "note": "no Flux keyframe, used a synthetic gradient; timing is valid, quality is not"})
 
     def gen():
         img = load_image(first).resize((832, 480))
@@ -134,6 +136,7 @@ def two_workers():
 if __name__ == "__main__":
     import torch
     log({"test": "env", "gpus": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())], "torch": torch.__version__, "dataset": MODEL_DATASET or None, "ok": True})
+    # Both Flux repos are gated on Hugging Face: accept their terms with your account, then set HF_TOKEN.
     flux("flux-schnell", "black-forest-labs/FLUX.1-schnell", "flux-schnell", steps=4)
     if MODEL_DATASET or os.environ.get("HF_TOKEN"):  # Flux Dev is a gated repo: needs the Dataset or an HF token
         flux("flux-dev", "black-forest-labs/FLUX.1-dev", "flux-dev", steps=20)
