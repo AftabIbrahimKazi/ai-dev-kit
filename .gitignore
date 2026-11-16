@@ -18,3 +18,12 @@ kit-feedback.md
 .kit-feedback-deny
 
 /site
+
+# secrets: never commit env files, keys or tokens
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kaggle.json
+.npmrc
