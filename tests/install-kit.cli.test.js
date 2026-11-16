@@ -666,8 +666,8 @@ t('install copies commands whose skill is installed, renders {{skill-root}}, and
   const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'narrate'] });
   assert.deepStrictEqual(res.commands.added.sort(), ['kit', 'next']);
   const nextBody = fs.readFileSync(cmdFile(target, 'next'), 'utf8');
-  assert.ok(nextBody.includes('node "$(git rev-parse --show-toplevel 2>/dev/null || echo .)/.claude/skills/skill-scope/auto.js" apply'), 'script path anchored to the git root');
-  assert.ok(/allowed-tools:.*Bash\(git rev-parse:\*\)/.test(nextBody) || !/allowed-tools:/.test(nextBody), 'git rev-parse allowed when the template lists tools');
+  assert.ok(nextBody.includes(`node "$(node -p "let d=process.cwd();const f='.claude/skills/skill-scope/auto.js';`) && nextBody.includes(`d+'/'+f")" apply`), 'script path found by walking up to the install');
+  assert.ok(!nextBody.includes('git rev-parse'), 'no git-root anchor');
   assert.ok(!fs.existsSync(cmdFile(target, 'audit')));
   assert.ok(!fs.existsSync(cmdFile(target, 'narration')));
   assert.deepStrictEqual(Object.keys(readManifest(target).commands).sort(), ['kit', 'next']);
