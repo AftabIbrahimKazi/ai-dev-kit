@@ -553,6 +553,8 @@ code {
 }
 
 .rk-badge {
+  align-items: center;
+  column-gap: var(--space-xs);
   background-color: #fff;
   border: 1px solid #e5e5e5;
   color: #000;
@@ -569,6 +571,22 @@ code {
   background-color: #000;
   border-color: #333;
   color: #fff;
+}
+
+.rk-badge-strip {
+  display: none;
+  padding-inline: var(--space-sm);
+  padding-block: var(--space-xxs);
+}
+
+@media (min-width: 1100px) {
+  .rk-badge-strip {
+    display: inline-flex;
+  }
+
+  .rk-badge-drawer {
+    display: none;
+  }
 }
 
 .rk-badge-logo {

@@ -47,7 +47,7 @@ export default function SiteFooter() {
                 <p className="rk-accent rk-footer-brand fs-[var(--font-size-xl)] fw-[var(--font-weight-black)]">AI Dev Kit</p>
                 <p className="fs-[var(--font-size-sm)] max-w-[var(--measure-text)] text-[var(--color-text-muted)]">{FOOTER_BLURB}</p>
                 <p className="fs-[var(--font-size-xs)] text-[var(--color-text-muted)]">{FOOTER_SUPPORT}</p>
-                <a href={BADGE_URL} target="_blank" rel="noopener" className="rk-badge d-inline-flex align-items-center column-gap-[var(--space-xs)] rounded-[var(--radius-md)]">
+                <a href={BADGE_URL} target="_blank" rel="noopener" className="rk-badge rk-badge-drawer d-inline-flex align-items-center column-gap-[var(--space-xs)] rounded-[var(--radius-md)]">
                   <span className="rk-badge-logo" aria-hidden="true" />
                   <span className="d-flex flex-column">
                     <span className="rk-badge-kicker fs-[var(--font-size-xs)]">Featured on</span>
@@ -79,6 +79,10 @@ export default function SiteFooter() {
               </a>
             ))}
           </nav>
+          <a href={BADGE_URL} target="_blank" rel="noopener" className="rk-badge rk-badge-strip align-items-center column-gap-[var(--space-xs)] rounded-[var(--radius-pill)] fs-[var(--font-size-xs)]">
+            <span className="rk-badge-logo" aria-hidden="true" />
+            <span>Featured on <b className="fw-[var(--font-weight-bold)]">Three.js Resources</b></span>
+          </a>
           <a href={REPO_URL} className="btn btn-primary rk-lamp rk-footer-github fs-[var(--font-size-sm)] rounded-[var(--radius-pill)]">
             <GithubIcon />
             GitHub
