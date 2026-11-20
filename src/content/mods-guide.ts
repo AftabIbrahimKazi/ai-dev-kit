@@ -26,7 +26,7 @@ export const MODS_GUIDE: ModuleGuide = {
       more: [
         "The mod-setup skill checks your Claude Code version, lets you pick mods, validates each one and shows what it can touch. You say yes per mod.",
         "Add the kit marketplace once with claude plugin marketplace add <path-to-ai-dev-kit>/mods, then install by name with claude plugin install <name>@ai-dev-kit-mods.",
-        "Four mods run a script that ships with a skill. A mod whose skill is missing loads fine but does nothing, by design.",
+        "Several mods run a script that ships with a skill. A mod whose skill is missing loads fine but does nothing, by design.",
         "For a new user the order is budget-ledger first, because it measures the rest. Turn one off in /plugin, or start with --safe-mode to turn them all off for a session.",
       ],
     },
@@ -53,7 +53,8 @@ export const MODS_GUIDE: ModuleGuide = {
       rows: [
         { label: "edit-check", hl: "name:edit-check", act: "does", text: "After each Edit or Write, runs the pre-merge-gate skill's edit-check.js and shows the model only the problems: syntax, ESLint, Stylelint and coding-standards rules." },
         { label: "output-compact", hl: "name:output-compact", act: "does", text: "Runs session-budget's compact.js on every Bash or PowerShell result before the model reads it. Drops noise, keeps every failure line." },
-        { label: "prefilter-rank", hl: "name:prefilter-rank", act: "does", text: "Ranks Grep and Glob results of 5 to 40 files by relevance to the task, using the local Laya prefilter. Calls 127.0.0.1 only. Does nothing if Laya is not set up." },
+        { label: "prefilter-rank", hl: "name:prefilter-rank", act: "does", text: "Ranks Grep and Glob results of 5 to 24 files by relevance to the task, using the local Laya prefilter. Each file is scored by its path plus a purpose line (first comment block, or the description or first heading of a markdown file). Stays silent when fewer than half the files have a purpose line or after a keyword Grep where every file matches. Calls 127.0.0.1 only. Does nothing if Laya is not set up." },
+        { label: "batch", hl: "name:batch", act: "does", text: "Adds one read-only tool, mcp__batch__run, that runs up to 25 Read, Glob and Grep lookups in one call and trims each result inside the tool before the model sees it. It cannot edit or run commands. Keeps a per-session savings count (/batch-stats). Measured on 3 read-only tasks: total tokens 28% lower on Haiku 5.5 and 34% lower on Sonnet 5.5, correctness equal or better. Install it with install-kit --batch on." },
       ],
     },
     {

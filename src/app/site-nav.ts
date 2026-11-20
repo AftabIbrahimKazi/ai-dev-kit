@@ -44,3 +44,5 @@ export const FOOTER_LINKS: readonly SiteLink[] = [
 ];
 
 export const FOOTER_SUPPORT = "Built for Claude Code, OpenCode, Codex and any agent that reads markdown." as const;
+
+export const BADGE_URL = "https://threejsresources.com/showcase/ai-dev-kit-docs-site?ref=badge" as const;

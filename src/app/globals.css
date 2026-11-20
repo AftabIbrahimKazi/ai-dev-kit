@@ -552,6 +552,48 @@ code {
   width: fit-content;
 }
 
+.rk-badge {
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  color: #000;
+  max-width: 100%;
+  padding: var(--space-xxs) var(--space-sm);
+  text-decoration: none;
+  transition:
+    transform var(--duration-default) cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow var(--duration-default) ease;
+  width: fit-content;
+}
+
+:root[data-st-theme="dark"] .rk-badge {
+  background-color: #000;
+  border-color: #333;
+  color: #fff;
+}
+
+.rk-badge-logo {
+  background-color: currentcolor;
+  block-size: 1.25rem;
+  flex: none;
+  inline-size: 1.25rem;
+  mask: url("/threejsresources-logo.svg") center / contain no-repeat;
+}
+
+.rk-badge-kicker {
+  line-height: 1.1;
+  opacity: 0.8;
+}
+
+.rk-badge:hover,
+.rk-badge:focus-visible {
+  box-shadow: 0 var(--space-xxs) var(--space-xs) rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.rk-badge:active {
+  transform: none;
+}
+
 .rk-footer-icon {
   color: var(--color-lamp);
   opacity: var(--opacity-dim);
@@ -1570,6 +1612,7 @@ code {
   .rk-nav-link,
   .rk-nav-link::after,
   .rk-scrollthumb-ts::after,
+  .rk-badge,
   .rk-footer-link,
   .rk-footer-icon,
   .rk-more::details-content,

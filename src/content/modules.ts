@@ -29,7 +29,7 @@ export const KIT_MODULES: readonly KitModule[] = [
     metaDescription: "Slash commands you type to run an AI Dev Kit action, such as archiving skills or picking up a handover. Each command is listed with what it does.",
     source: "kit repository skills/commands/ folder",
     parts: [
-      "archive", "audit", "commit-check", "ctx", "diagram", "dupe", "e2e", "eta", "figma", "figma-code", "format", "githooks", "goldfish", "kaggle", "kit", "modern-web", "narration", "next",
+      "archive", "audit", "commit-check", "ctx", "diagram", "device", "dupe", "e2e", "eta", "figma", "figma-code", "format", "githooks", "goldfish", "kaggle", "kit", "modern-web", "narration", "next",
       "optimize-assets", "perf", "persona", "pickup", "quiet", "recon", "resolve-conflicts", "responsive-check", "stale", "state-audit", "teardown", "teardown-film",
       "teardown-sound", "unarchive", "untrack", "version-bump", "wrap-up",
     ],
@@ -41,7 +41,7 @@ export const KIT_MODULES: readonly KitModule[] = [
     metaDescription: "Hook-based plugins in the AI Dev Kit that run in code on tool calls and can block an action. See what each mod does and how to enable it.",
     source: "kit repository mods/ folder",
     parts: [
-      "aiignore-guard", "budget-ledger", "debug-nudge", "design-audit-offer", "edit-check", "eta-nudge", "feature-usage", "guard",
+      "aiignore-guard", "batch", "budget-ledger", "debug-nudge", "design-audit-offer", "edit-check", "eta-nudge", "feature-usage", "guard",
       "gap-log", "learnings-inject", "marker-guard", "output-compact", "precommit-gate", "prefilter-rank", "session-journal", "skill-hint", "standards-chain", "state-audit",
     ],
   },
@@ -68,10 +68,10 @@ export const KIT_MODULES: readonly KitModule[] = [
   {
     slug: "add-ons",
     name: "Add-ons",
-    summary: "Opt-in extras: reply personas, read-aloud, project docs, the prefilter, diagrams, a legacy-web scan, a Kaggle GPU executor and 3D simulators.",
+    summary: "Opt-in extras: reply personas, read-aloud, project docs, the prefilter, diagrams, a legacy-web scan, a Kaggle GPU executor, a media job planner and 3D simulators.",
     metaDescription: "Opt-in AI Dev Kit extras: reply personas, read-aloud, project docs, the prefilter, diagrams and 3D simulators. Install only the ones you need.",
     source: "kit repository skills/addons/ and extensions/ folders",
-    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "figma-code", "modern-web", "kaggle", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
+    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "figma-code", "modern-web", "kaggle", "media-harness", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
   },
   {
     slug: "libraries",

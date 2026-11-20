@@ -6,7 +6,7 @@ import FooterMascot from "./footer-mascot";
 import GithubIcon from "./github-icon";
 import NavLink from "./nav-link";
 import ScrollTop from "./scroll-top";
-import { FOOTER_BLURB, FOOTER_COLUMNS, FOOTER_LINKS, FOOTER_SUPPORT, REPO_URL } from "./site-nav";
+import { BADGE_URL, FOOTER_BLURB, FOOTER_COLUMNS, FOOTER_LINKS, FOOTER_SUPPORT, REPO_URL } from "./site-nav";
 
 const ESCAPE_KEY = "Escape" as const;
 
@@ -47,6 +47,13 @@ export default function SiteFooter() {
                 <p className="rk-accent rk-footer-brand fs-[var(--font-size-xl)] fw-[var(--font-weight-black)]">AI Dev Kit</p>
                 <p className="fs-[var(--font-size-sm)] max-w-[var(--measure-text)] text-[var(--color-text-muted)]">{FOOTER_BLURB}</p>
                 <p className="fs-[var(--font-size-xs)] text-[var(--color-text-muted)]">{FOOTER_SUPPORT}</p>
+                <a href={BADGE_URL} target="_blank" rel="noopener" className="rk-badge d-inline-flex align-items-center column-gap-[var(--space-xs)] rounded-[var(--radius-md)]">
+                  <span className="rk-badge-logo" aria-hidden="true" />
+                  <span className="d-flex flex-column">
+                    <span className="rk-badge-kicker fs-[var(--font-size-xs)]">Featured on</span>
+                    <span className="fs-[var(--font-size-sm)] fw-[var(--font-weight-bold)]">Three.js Resources</span>
+                  </span>
+                </a>
               </div>
               {FOOTER_COLUMNS.map((column) => (
                 <nav key={column.title} aria-label={column.title} className="d-flex flex-column row-gap-[var(--space-xxs)]">

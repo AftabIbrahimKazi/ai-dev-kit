@@ -84,6 +84,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
       rows: [
         { label: "/quiet", hl: "name:quiet", act: "does", text: "Runs a noisy command with shortened output and keeps the failure lines. Needs session-budget." },
         { label: "/format", hl: "name:format", act: "does", text: "Sets the response shape for the session: table, bullets, oneline, bool or reset. No script." },
+        { label: "/device", hl: "name:device", act: "does", text: "Read-only scan of this machine: a Have / Missing / Next table plus a lite, standard or full preset with download sizes. Installs nothing; each Next command is yours to run. Needs skill-scope." },
         { label: "/kit", hl: "name:kit", act: "does", text: "A cheat sheet that names the command that fits your situation. No script." },
         { label: "/persona", hl: "name:persona", act: "does", text: "Chooses how replies are phrased: set female or male at novice, mid or pro, off, status, list. Needs personality." },
         { label: "/narration", hl: "name:narration", act: "does", text: "Controls reply narration: play, pause, resume, mode, mute, voice, volume, speed, pitch, alerts and status. Needs narrate." },

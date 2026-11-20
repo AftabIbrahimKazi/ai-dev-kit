@@ -154,6 +154,22 @@ export const ADDONS_GUIDE: ModuleGuide = {
       ],
     },
     {
+      id: "media-harness",
+      name: "Media harness",
+      hl: "name:harness",
+      line: "Plan an image or video job on your own machine, then run it on a free Kaggle GPU.",
+      rows: [
+        { label: "Does", text: "harness.js sets up a job folder, interviews you about the shots, and prints a GPU-minute estimate from measured numbers. Video is built from 33-frame clips of about 2 s chained end to end, then stitched with ffmpeg so every frame is a keyframe for scroll-scrub." },
+        { label: "You", text: "Run harness.js init, interview and plan in an empty folder, then submit with --dry-run first, fetch the results and stitch. The Kaggle steps reuse the kaggle add-on's account and quota." },
+        { label: "AI", text: "Reads the plan and the measured numbers, and states the estimate before any GPU time is spent." },
+      ],
+      moreLabel: "Measured, and what failed",
+      more: [
+        "On a Kaggle T4: SDXL 10 to 32 s per 1024px image depending on the model, Wan 2.2 5B 33 frames in about 77 s. An 81-frame clip is an estimate of 3.0 to 3.3 minutes; the host killed it twice, so it was never measured.",
+        "A quality test failed for commercial use: an abstract test was unusable and a human test melted by the second or third clip, because chaining from the last frame compounds the error. Humans are a no on this setup. Submit and fetch have only been dry-run, not run live.",
+      ],
+    },
+    {
       id: "teardown",
       name: "Teardown",
       hl: "group:skills-addons",
