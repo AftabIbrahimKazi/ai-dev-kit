@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-20
+
+### Added
+- `batch` mod 0.4.0 (`mods/batch/`): one read-only tool, `mcp__batch__run`, that runs up to 25 Read/Glob/Grep lookups (plus a `Map` op: path, line count and purpose per file) in one call and trims each result inside the tool before the model sees it (`only`, `maxLines`, `count`, `header`, `symbols`, `headings`; an `only` that matches nothing falls back to the file's header). Allowlist fixed in code: it cannot edit or run commands, because calls made from inside a mod skip permission prompts and deny rules. Keeps a per-session savings count (`/batch-stats`, one small file per session under `~/.ai-dev-kit/batch-ledger/`). Evidence in `findings/2026-11-20-batch-ab.md`: 3 tasks, 2 runs per cell, headless; total tokens 28% lower on Haiku 5.5 and 34% lower on Sonnet 5.5 than with no mod, correctness equal or better. Not covered: one repo, three read-only tasks, no editing task.
+- `install-kit.cli.js` wires the `batch` mod: an install that includes `session-budget` reports whether the mod is enabled (user or project settings) and how to install it, warns when it is enabled without `session-budget`, and `--batch on|off` (or the new `mods --root <project>` command) runs `claude plugin install|uninstall batch@ai-dev-kit-mods --scope project`; a failed plugin command never fails the install. 11 new tests in `tests/install-kit.batch.test.js` (a fake claude command stands in for the real one); the existing install-kit, usage, verify, select, signature, company and naming tests still pass. Checked with other mods: `aiignore-guard` still denies an ignored file read inside a batch call, and `budget-ledger` records the batch calls (its per-tool sizes also list the inner reads the model never saw).
+
+### Changed
+- `prefilter-rank` 0.3.0: Laya now scores each candidate with its path plus a purpose line (first comment block, or the description or first heading of a markdown file) instead of the path alone, the read-first cutoff is relative (a third of the best score, floor 0.2) instead of an absolute 0.5, and it ranks at most 24 files (was 40) and stays silent when fewer than half the candidates have a purpose line. Measured on 10 tasks over 36 scripts with CPU Laya: the right file was in the read-first set 10 of 10 times (average set 10.6 of 36), against 2 of 10 for the old rule, which also stayed silent in 6 of 10. Cost: about 0.58 s per candidate. Limit: the gain is on broad, mixed candidate sets. After a keyword Grep every file matches, so Laya scores them alike (13 files for "archive|restore": 10 to 13 of 13 in the read-first set) and the mod stays silent, by design, because there is nothing to narrow; in 4 end-to-end runs of that kind no reminder was delivered. Nested ranking (folders first, then files) did not beat flat ranking on this size of corpus: best variant 4 of 10 first and 6 of 10 in the top 7, at the same time cost.
+- `session-budget`: two lines in "Reading discipline" (rank unknown file sets with a plain Grep/Glob, never inside a batch call; batch lookups with reducers when `mcp__batch__run` exists).
+
 ## 2026-11-16
 
 ### Fixed

@@ -18,6 +18,7 @@ exports.pruneSkillTriggers = pruneSkillTriggers;
 exports.removeParallelSessionSection = removeParallelSessionSection;
 exports.applyActiveStandards = applyActiveStandards;
 exports.installStandards = installStandards;
+exports.batchMod = batchMod;
 exports.setUsageTracking = setUsageTracking;
 exports.doInstall = doInstall;
 exports.parseChangelog = parseChangelog;
@@ -54,6 +55,9 @@ exports.setMenuIO = setMenuIO;
 //                                      [--company-defaults keep|drop|auto] [--force] [--dry-run] [--purge]   (install also takes the company flags)
 //   node install-kit.cli.js signature <set <alias>|remove|show> --root <target> [--dry-run]   (install takes --signature <alias|none>)
 //   install also takes --usage on|off and --usage-notify on|off: the feature-usage switch (which skills, commands and scripts get used, kept by a script)
+//   node install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off]   (install also takes --batch)
+//     the batch mod (one read-only tool, mcp__batch__run): reports whether it is enabled (user or project settings), offers the install,
+//     warns when it is enabled without the session-budget skill; --batch on|off runs claude plugin install|uninstall batch@ai-dev-kit-mods --scope project
 //
 // Testing the prompts: AI_DEV_KIT_INTERACTIVE=1 forces them on piped input (one answer per line; a closed input means Enter).
 //
@@ -74,6 +78,7 @@ const crypto = require("node:crypto");
 const os = require("node:os");
 const path = require("node:path");
 const readline = require("node:readline");
+const childProcess = require("node:child_process");
 const verifyModule = require("./install-kit.verify");
 const select = require("./install-kit.select");
 const company = require("./install-kit.company");
@@ -618,6 +623,44 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
     }
     return result;
 }
+const BATCH_ID = 'batch@ai-dev-kit-mods';
+// A mod is enabled when settings.enabledPlugins names it: project scope in <root>/.claude, user scope in the Claude config folder.
+function modScope(name, root) {
+    const userDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+    const enabledIn = (file) => {
+        try {
+            return Object.entries(JSON.parse(fs.readFileSync(file, 'utf8')).enabledPlugins || {}).some(([k, v]) => k.startsWith(name + '@') && v !== false);
+        }
+        catch {
+            return false;
+        }
+    };
+    if (enabledIn(path.join(root, '.claude', 'settings.json')) || enabledIn(path.join(root, '.claude', 'settings.local.json')))
+        return 'project';
+    return enabledIn(path.join(userDir, 'settings.json')) ? 'user' : undefined;
+}
+function batchMod(root, library, paired, want) {
+    const r = { enabled: false, paired };
+    const market = library ? path.join(library, 'mods') : '<ai-dev-kit>/mods';
+    if (want) {
+        r.action = want === 'on' ? 'install' : 'uninstall';
+        // AI_DEV_KIT_CLAUDE_BIN replaces the claude command (tests); a .js file is run with node. The arguments are constants.
+        const bin = process.env.AI_DEV_KIT_CLAUDE_BIN || 'claude';
+        const viaNode = bin.endsWith('.js');
+        const args = ['plugin', r.action, BATCH_ID, '--scope', 'project'];
+        const out = childProcess.spawnSync(viaNode ? process.execPath : bin, viaNode ? [bin, ...args] : args, { cwd: root, encoding: 'utf8', timeout: 120000, shell: !viaNode && !process.env.AI_DEV_KIT_CLAUDE_BIN && process.platform === 'win32' });
+        r.ok = out.status === 0;
+        if (!r.ok)
+            r.error = String(out.error?.message || out.stderr || out.stdout || `claude plugin ${r.action} failed`).trim().split('\n')[0];
+    }
+    r.scope = modScope('batch', root);
+    r.enabled = r.scope !== undefined;
+    if (!r.enabled && paired)
+        r.hint = `Optional batch mod (read-heavy tasks used about 28-34% fewer tokens in the kit's test): run claude plugin marketplace add "${market}" once, then claude plugin install ${BATCH_ID} --scope project, or re-run this command with --batch on.`;
+    if (r.enabled && !paired)
+        r.warning = 'the batch mod is enabled but the session-budget skill is not installed, so nothing tells the model when to use mcp__batch__run. Install session-budget.';
+    return r;
+}
 const USAGE_MOD = 'feature-usage';
 // True when the feature-usage mod is enabled in the user's Claude settings (any scope key naming it).
 function usageModEnabled() {
@@ -710,6 +753,10 @@ function doInstall(args) {
     const usageResult = setUsageTracking(args.usage, args.usageNotify);
     if (usageResult?.warning)
         console.error(usageResult.warning);
+    const batchPaired = Object.keys(manifest.skills).includes('session-budget');
+    const batchResult = args.batch !== undefined || batchPaired ? batchMod(args.root, args.library, batchPaired, args.batch) : undefined;
+    if (batchResult?.warning)
+        console.error(batchResult.warning);
     // The hidden-state reviewer choice lives in one small file the state-audit mod and plan-first/reviewer.js read.
     // Only written when a choice was made; delete .claude/state-audit.json to go back to "static" (no model, no network).
     if (args.reviewer && Object.keys(manifest.skills).includes('implicit-state-audit')) {
@@ -720,7 +767,7 @@ function doInstall(args) {
         }
     }
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult };
+    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -1807,6 +1854,14 @@ function parseArgs(argv) {
             else
                 a.usageNotify = v;
         }
+        else if (k === '--batch') {
+            const v = argv[++i];
+            if (v !== 'on' && v !== 'off') {
+                console.error(red('error: --batch must be on or off'));
+                process.exit(2);
+            }
+            a.batch = v;
+        }
         else if (k === '--purge-company' || k === '--purge')
             a.purgeCompany = true;
         else if (k === '--dry-run')
@@ -1893,6 +1948,14 @@ async function main() {
             if (isInteractive() && !args.json && action === 'sync')
                 printCompany(res);
         }
+        else if (cmd === 'mods') {
+            if (!args.root) {
+                console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off]'));
+                process.exit(2);
+                return;
+            }
+            res = { batch: batchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).includes('session-budget'), args.batch) };
+        }
         else if (cmd === 'list')
             res = listSkills(args.library);
         else if (cmd === 'install')
@@ -1908,7 +1971,7 @@ async function main() {
         else if (cmd === 'merge-hooks')
             res = doMergeHooks(args);
         else {
-            console.error(red('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks|company|signature> [options]'));
+            console.error(red('usage: install-kit.cli.js <list|install|update|uninstall|archive|unarchive|merge-hooks|company|signature|mods> [options]'));
             process.exit(2);
             return;
         }
