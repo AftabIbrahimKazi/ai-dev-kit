@@ -17,6 +17,8 @@ The model skills pick the gear; this skill drives it. Every rule targets the act
 - **Never re-derive established facts.** If it's in the conversation, the handover, or a memory, use it.
 - **One targeted read beats three speculative ones.** Form a hypothesis about where the code lives before opening files.
 - Docs/config: read the section, not the document.
+- **Unknown file set: Grep/Glob first, then read the top-ranked.** With the `prefilter-rank` mod or `mcp__prefilter__prefilter`, a Grep/Glob of 5-24 files returns a "read first" ranking when the files differ in relevance (it stays silent when they all score alike, as after a keyword Grep): read those, skip the rest. Run it as a plain Grep/Glob, not inside `mcp__batch__run` (nested calls lose the ranking). Never use it for security, auth or payment checks.
+- **If `mcp__batch__run` exists:** put 3+ independent lookups in one call and shape each with a reducer (`header`, `symbols`, `headings`, `only`, `maxLines`, `count`, or a `Map` op). To edit a file, use a plain Read.
 
 ## Output discipline (output tokens — 5× the price of input)
 - **Never restate code back to the user** — reference `file:line` instead of quoting.

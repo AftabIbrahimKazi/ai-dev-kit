@@ -1,0 +1,6 @@
+{
+  "name": "batch",
+  "version": "0.4.0",
+  "description": "Adds the tool mcp__batch__run: up to 25 read-only lookups (Read, Glob, Grep, plus a Map op that returns path, line count and purpose for every file a glob matches) in one call, each result shaped inside the tool before it enters context by reducers (only regex, maxLines, count; Read only: header, symbols, headings), then capped at 6000 chars per result and 40000 per digest. Allows only Read, Glob, Grep and Map; refuses everything else, so it cannot edit or run commands. Calls made inside it run through the session's other hooks but not its permission prompts or deny rules, which is why the allowlist is fixed in code. Other mods' notes on those inner results (such as prefilter-rank's ranking) are not passed on, so rank with a plain Grep/Glob. Fails closed with a message telling the model to use plain Read/Glob/Grep. Keeps a per-session count of chars read against chars returned, writes it to one small file per session under ~/.ai-dev-kit/batch-ledger/ and shows it with /batch-stats; adds no model-visible text; a ledger failure never affects a lookup. Disable it in /plugin. No network. Reads env: USERPROFILE, HOME.",
+  "author": { "name": "Aftab Ibrahim Kazi" }
+}
