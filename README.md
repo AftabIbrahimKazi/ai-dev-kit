@@ -875,6 +875,8 @@ npm run dev
 
 **To change the kit's content and refresh the site**, commit the kit change on `main`, then re-run those two scripts inside the site worktree and commit the result on the `site` branch. The site's own README, on that branch, has the full steps and the Vercel setup.
 
+**Featured on Three.js Resources.** The docs site is listed on [Three.js Resources](https://threejsresources.com/showcase/ai-dev-kit-docs-site). The site's footer carries their badge as a backlink; it exists only on the `site` branch, so nothing about it ships in a clone of the kit.
+
 ## Recent additions
 
 - **Skills load only when the task needs them, automatically.** `skill-scope/auto.js` archives the per-session skills at session start (hook), restores one when a message names its trigger word (hook), and `/next <task>` does both by hand. Trigger words live in one file, `skill-scope.triggers.json`. Commands for archivable skills (`/audit`, `/stale`, `/version-bump` and three more) call `auto.js run`, which restores the skill before running its script. Measured on the full kit with headless Haiku: 40,782 tokens a turn before, 40,155 after. A restored skill is not in the session's skill list until the next session, so the hook names the `SKILL.md` to read.
