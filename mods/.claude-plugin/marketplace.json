@@ -41,9 +41,14 @@
       "description": "Runs the session-budget skill's compact.js on every Bash/PowerShell result before the model reads it: drops noise, keeps every failure line, no-ops below its own savings floor or when the engine is missing."
     },
     {
+      "name": "batch",
+      "source": "./batch",
+      "description": "Adds a read-only batch tool: many Read/Glob/Grep lookups and a Map op (path, lines, purpose per file) in one call, with reducers that trim each result before the model sees it. Measured 28-34% fewer total tokens on a 3-task test; cannot edit or run commands; no network."
+    },
+    {
       "name": "prefilter-rank",
       "source": "./prefilter-rank",
-      "description": "Ranks Grep/Glob results (5-40 files) by relevance to the task using the local Laya prefilter (system1-prefilter addon); calls 127.0.0.1 only, checked in code. No-ops if the addon isn't configured for local Laya, if a hosted provider's key is set instead, or if Laya isn't reachable within a short timeout."
+      "description": "Ranks Grep/Glob results (5-24 files) by relevance to the task using the local Laya prefilter (system1-prefilter addon), scoring each file's path plus a purpose line; calls 127.0.0.1 only, checked in code. No-ops if the addon isn't configured for local Laya, if a hosted provider's key is set instead, or if Laya isn't reachable within a short timeout."
     },
     {
       "name": "learnings-inject",
