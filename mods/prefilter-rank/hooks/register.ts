@@ -8,10 +8,17 @@ import type { Register } from 'claude-code'
 // once it is up. Fails open on anything unexpected: a slow or absent Laya costs nothing beyond its own
 // short timeout, never blocks the Grep/Glob call itself.
 const MIN_CANDIDATES = 5
-const MAX_CANDIDATES = 40 // Laya's own batch cap (system1-prefilter.prefilter-mcp.js)
+// Measured 2026-11-20 (10 tasks, 36 scripts, CPU Laya): path + purpose line with a cutoff of top/3 (floor 0.2) put the right file
+// in the read-first set 10 of 10 times (average set 10.6 of 36); path only with an absolute 0.5 cutoff did so 2 of 10 times and
+// stayed silent in 6 of 10. About 0.58 s per candidate with the purpose line, so the cap is 24 files (about 14 s).
+const MAX_RANKED = 24
 const HEALTH_TIMEOUT_MS = 800
-const RANK_TIMEOUT_MS = 20000 // CPU Laya scores about 3 candidates a second (measured 17 in 5.4-6.3 s); a 40-candidate batch fits
-const CONFIDENCE_FLOOR = 0.7
+const RANK_TIMEOUT_MS = 20000
+const CUT_FLOOR = 0.2
+const CUT_SHARE = 1 / 3
+const SCAN_LINES = 200
+const PURPOSE_CHARS = 260
+const COMMENT = /^\s*(\/\/(?![#@])|\/\*|\*)/
 const RESTART_AFTER_MS = 5 * 60 * 1000 // do not respawn a start that is still loading or failed
 let lastStartAt = 0
 
@@ -66,16 +73,15 @@ async function isUp($: any, base: string): Promise<boolean> {
 
 // Mirrors ladder.js's fromLaya()+resolveBoolean() inline -- the hooks module has no Node, so ladder.js
 // cannot be required; this is the same handful of comparisons, not new logic.
+// Laya's yes-probabilities run low even for the right file, so the cutoff is relative to the best score: read what scores at
+// least a third of the top (floor 0.2); a candidate between half that cutoff and the cutoff is borderline, check it directly.
 function rank(ids: string[], results: { answers: { q: { noul: number } } }[]) {
-  const toRead: string[] = []
-  const toReVerify: string[] = []
-  ids.forEach((id, i) => {
-    const noul = results[i]?.answers?.q?.noul
-    if (typeof noul !== 'number') return
-    const confidence = Math.max(noul, 1 - noul)
-    if (noul >= 0.5) toRead.push(id)
-    if (confidence < CONFIDENCE_FLOOR) toReVerify.push(id)
-  })
+  const scores = ids.map((_, i) => results[i]?.answers?.q?.noul)
+  const known = scores.filter((s): s is number => typeof s === 'number')
+  if (known.length !== ids.length) return { toRead: [] as string[], toReVerify: [] as string[] }
+  const cut = Math.max(CUT_FLOOR, Math.max(...known) * CUT_SHARE)
+  const toRead = ids.filter((_, i) => (scores[i] as number) >= cut)
+  const toReVerify = ids.filter((_, i) => (scores[i] as number) < cut && (scores[i] as number) >= cut / 2)
   return { toRead, toReVerify }
 }
 
@@ -100,8 +106,29 @@ async function withoutIgnored($: any, ids: string[]): Promise<string[]> {
   } catch { return ids }
 }
 
-async function rankCandidates($: any, base: string, task: string, ids: string[]) {
-  const states = ids.map((id) => `Task: ${task}. Candidate file: ${id}`)
+// The first comment block of a code file, or the description or first heading of a markdown file: a small chunk that says what
+// the file is for. A file Laya sees only by name ranks far worse than one it sees with this line.
+async function purposeOf($: any, id: string): Promise<string> {
+  try {
+    const lines = String(await $.fs.read(id)).split('\n').slice(0, SCAN_LINES)
+    if (/\.mdx?$/i.test(id)) {
+      const line = lines.find((l) => /^description:/.test(l)) ?? lines.find((l) => /^#\s/.test(l)) ?? ''
+      return line.replace(/^(description:|#)\s*/, '').trim().slice(0, PURPOSE_CHARS)
+    }
+    let first: string[] = []
+    for (let i = 0; i < lines.length; i++) {
+      if (!COMMENT.test(lines[i] ?? '')) continue
+      const block: string[] = []
+      while (i < lines.length && COMMENT.test(lines[i] ?? '')) block.push(lines[i++] ?? '')
+      if (block.length >= 2) { first = block; break }
+      if (first.length === 0) first = block
+    }
+    return first.slice(0, 3).map((l) => l.replace(/^\s*(\/\/+|\/\*+|\*+)\s?/, '').trim()).filter(Boolean).join(' ').slice(0, PURPOSE_CHARS)
+  } catch { return '' }
+}
+
+async function rankCandidates($: any, base: string, task: string, ids: string[], purposes: string[]) {
+  const states = ids.map((id, i) => `Task: ${task}. Candidate file: ${id}${purposes[i] ? ` - ${purposes[i]}` : ''}`)
   const questions = { q: { type: 'noul', instructions: 'Does the candidate file need to be read or changed to complete the task?' } }
   const r: any = await Promise.race([
     $.http.fetch(`${base}/v1/systemone/batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ states, questions }) }),
@@ -130,7 +157,7 @@ export const register: Register = (on) => {
       const result = 'result' in ran ? (ran.result as any) : null
       const all: string[] | undefined = result?.filenames
       const ids = Array.isArray(all) ? await withoutIgnored($, all) : all
-      if (!Array.isArray(ids) || ids.length < MIN_CANDIDATES || ids.length > MAX_CANDIDATES) return ran
+      if (!Array.isArray(ids) || ids.length < MIN_CANDIDATES || ids.length > MAX_RANKED) return ran
 
       const base = await loopbackBase($)
       if (!base) return ran
@@ -142,7 +169,9 @@ export const register: Register = (on) => {
       const task = await lastUserTask($)
       if (!task) return ran
 
-      const results = await rankCandidates($, base, task, ids)
+      const purposes = await Promise.all(ids.map((id) => purposeOf($, id)))
+      if (purposes.filter(Boolean).length * 2 < ids.length) return ran // names alone rank too poorly to tell the model to skip anything
+      const results = await rankCandidates($, base, task, ids, purposes)
       if (!results || results.length !== ids.length) return ran
 
       const { toRead, toReVerify } = rank(ids, results)

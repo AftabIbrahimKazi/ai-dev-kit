@@ -3,9 +3,11 @@ import { expect, test } from 'claude-code/testing'
 // A noul answer's "yes" probability per candidate; built in the same order as `ids`.
 function world(on: any, opts: {
   baseUrl?: string | null; apiKey?: string | null; up?: boolean; nouls?: number[]; httpFails?: boolean;
-  lastUserText?: string | null; result?: any; setUp?: boolean; aiignore?: string;
+  lastUserText?: string | null; result?: any; setUp?: boolean; aiignore?: string; files?: Record<string, string>;
 } = {}) {
   const calls: string[] = []
+  const states: string[] = []
+  ;(calls as any).states = states
   on('env.get', (_$: any, e: any) => {
     if (e.name === 'SYSTEM1_API_KEY') return { value: opts.apiKey ?? undefined }
     if (e.name === 'SYSTEM1_BASE_URL') return { value: opts.baseUrl === undefined ? 'http://127.0.0.1:8000' : (opts.baseUrl ?? undefined) }
@@ -17,6 +19,7 @@ function world(on: any, opts: {
     if (e.url.endsWith('/health')) return { value: { ok: opts.up !== false, status: 200, headers: {}, text: '' } }
     if (e.url.endsWith('/v1/systemone/batch')) {
       const body = JSON.parse(e.init.body)
+      states.push(...body.states)
       const results = body.states.map((_: string, i: number) => ({ answers: { q: { noul: (opts.nouls ?? [])[i] ?? 0 } } }))
       return { value: { ok: true, status: 200, headers: {}, text: JSON.stringify({ results }) } }
     }
@@ -25,7 +28,14 @@ function world(on: any, opts: {
   const started: string[][] = []
   ;(calls as any).started = started
   on('fs.exists', (_$: any, e: any) => { const p = String(e.path).split(String.fromCharCode(92)).join('/'); return { value: (opts.aiignore !== undefined && p.endsWith('/.aiignore')) || (!!opts.setUp && (p.endsWith('/venv') || p.endsWith('laya-ctl.js'))) } })
-  on('fs.read', () => ({ value: opts.aiignore ?? '' }))
+  on('fs.read', (_$: any, e: any) => {
+    const p = String(e.path)
+    if (p.endsWith('.aiignore')) return { value: opts.aiignore ?? '' }
+    if (!opts.files) return { value: '// Purpose one.\n// Purpose two.\n' }
+    const norm = p.split(String.fromCharCode(92)).join('/')
+    const key = Object.keys(opts.files).find((k) => norm.endsWith(k))
+    return { value: key ? opts.files[key] : '' }
+  })
   on('process.run', (_$: any, e: any) => { started.push(e.argv); return { value: { exitCode: 0, stdout: '', stderr: '' } } })
   on('session.messages', () => ({ value: opts.lastUserText === null ? [] : [{ role: 'user', text: opts.lastUserText ?? 'find the auth bug' }] }))
   on('tool.call', () => opts.result ?? { result: { filenames: ['a.js', 'b.js', 'c.js', 'd.js', 'e.js'] }, text: '5 files' })
@@ -51,7 +61,7 @@ test('Glob is ranked the same way as Grep', async ($, on) => {
 })
 
 test('low-confidence candidates are flagged for direct re-verification, not trusted either way', async ($, on) => {
-  world(on, { nouls: [0.9, 0.55, 0.1, 0.05, 0.95] }) // b.js: noul 0.55 -> confidence 0.55, below the 0.7 floor
+  world(on, { nouls: [0.9, 0.2, 0.1, 0.05, 0.95] }) // top 0.95 -> cutoff 0.317; b.js at 0.2 is between half the cutoff and the cutoff
   const r: any = await grep($)
   expect(r.context[0]).toContain("don't trust this ranking")
   expect(r.context[0]).toContain('b.js')
@@ -159,4 +169,39 @@ test('files .aiignore hides are never ranked or named in the reminder', async ($
   const r: any = await grep($)
   expect(r.context[0]).toContain('a.js')
   expect(r.context[0]).not.toContain('b.js')
+})
+
+test('each candidate is sent with its purpose line: a comment block for code, the description for markdown', async ($, on) => {
+  const calls = world(on, {
+    nouls: [0.9, 0.1, 0.1, 0.1, 0.1],
+    result: { result: { filenames: ['a.js', 'x.md', 'c.js', 'd.js', 'e.js'] }, text: '5 files' },
+    files: { 'a.js': '"use strict";\n// Alpha does one thing.\n// More.\ncode', 'x.md': '---\nname: x\ndescription: Does X\n---\n# X', 'c.js': '// C.\n// C2.', 'd.js': '// D.\n// D2.', 'e.js': '// E.\n// E2.' },
+  })
+  await grep($)
+  const states = (calls as any).states as string[]
+  expect(states[0]).toContain('Candidate file: a.js - Alpha does one thing. More.')
+  expect(states[1]).toContain('Candidate file: x.md - Does X')
+})
+
+test('a relative cutoff reads what scores near the top even when nothing reaches 0.5', async ($, on) => {
+  world(on, { nouls: [0.4, 0.35, 0.3, 0.1, 0.05] })
+  const r: any = await grep($)
+  expect(r.context).toBeTruthy()
+  expect(r.context[0]).toContain('a.js, b.js, c.js')
+  expect(r.context[0]).toContain('2 others ranked lower')
+})
+
+test('more than 24 candidates: not ranked (too slow, and names alone are unreliable)', async ($, on) => {
+  const filenames = Array.from({ length: 25 }, (_, i) => `f${i}.js`)
+  const calls = world(on, { result: { result: { filenames }, text: '25 files' } })
+  const r: any = await grep($)
+  expect(r.context).toBeUndefined()
+  expect(calls.length).toBe(0)
+})
+
+test('most candidates without a purpose line: Laya is not asked, nothing is added', async ($, on) => {
+  const calls = world(on, { nouls: [0.9, 0.1, 0.1, 0.1, 0.1], files: {} })
+  const r: any = await grep($)
+  expect(r.context).toBeUndefined()
+  expect(calls.some((c) => c.endsWith('/v1/systemone/batch'))).toBe(false)
 })
