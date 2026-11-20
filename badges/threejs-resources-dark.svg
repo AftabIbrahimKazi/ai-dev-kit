@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="48" viewBox="0 0 200 48" role="img" aria-label="Featured on Three.js Resources">
+<rect x="0.5" y="0.5" width="199" height="47" rx="8" fill="#000000" stroke="#333333"/>
+<g transform="translate(14 14) scale(0.0533)"><path d="M170.466 296.144L39.1112 370.654C21.5755 380.602 -0.152712 367.836 0.000808949 347.676L1.12386 200.085L170.466 296.144ZM180.657 290.362L180.6 290.395L1.55354 188.832L179.091 84.5215L180.657 290.362ZM319.234 166.591C336.617 176.804 336.425 202.004 318.889 211.951L190.615 284.714L189.134 90.1504L319.234 166.591ZM2.44905 26.0293C2.60262 5.86952 24.5214 -6.56507 41.9041 3.6475L169.452 78.587L1.29671 177.385L2.44905 26.0293Z" fill="#ffffff"/></g>
+<text x="44" y="19" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#ffffff" fill-opacity="0.8">Featured on</text>
+<text x="44" y="36" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Three.js Resources</text>
+</svg>

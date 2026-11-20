@@ -58,7 +58,14 @@ There is no production domain yet, so the site sets no `metadataBase`, sitemap, 
 
 ## Badges and backlinks
 
-The site is featured on [Three.js Resources](https://threejsresources.com/showcase/ai-dev-kit-docs-site), and the footer carries their badge as a backlink.
+<a href="https://threejsresources.com/showcase/ai-dev-kit-docs-site?ref=badge">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="badges/threejs-resources-dark.svg">
+    <img src="badges/threejs-resources-light.svg" alt="Featured on Three.js Resources" width="200" height="48">
+  </picture>
+</a>
+
+The site is featured on [Three.js Resources](https://threejsresources.com/showcase/ai-dev-kit-docs-site), and the footer carries their badge as a backlink. The badge above is a static copy for this README (`badges/`); it switches to the dark version on GitHub's dark theme.
 
 - **Where:** `src/app/site-footer.tsx`. At 1100px and wider a compact pill sits in the always-visible footer strip. Below that it moves into the expanded footer drawer so it never crowds the strip or overlaps content.
 - **Theme:** white in the light theme, black in the dark theme (`.rk-badge` in `src/app/globals.css`).
