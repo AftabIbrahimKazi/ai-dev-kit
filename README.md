@@ -56,6 +56,16 @@ node --experimental-strip-types scripts/build-map-links.ts
 
 There is no production domain yet, so the site sets no `metadataBase`, sitemap, `robots` file or Open Graph image. Add them once a domain exists.
 
+## Badges and backlinks
+
+The site is featured on [Three.js Resources](https://threejsresources.com/showcase/ai-dev-kit-docs-site), and the footer carries their badge as a backlink.
+
+- **Where:** `src/app/site-footer.tsx`. At 1100px and wider a compact pill sits in the always-visible footer strip. Below that it moves into the expanded footer drawer so it never crowds the strip or overlaps content.
+- **Theme:** white in the light theme, black in the dark theme (`.rk-badge` in `src/app/globals.css`).
+- **Logo:** self-hosted at `public/threejsresources-logo.svg` and drawn as a CSS mask, so there is no third-party request.
+- **URL:** `BADGE_URL` in `src/app/site-nav.ts`. Keep the `?ref=badge` query, since it is how the listing counts the backlink.
+- **Branch:** this exists only on `site`. Do not merge `site` into `main`.
+
 ## Conventions
 
 - Every class and id starts with `rk-`, every data attribute with `data-rk-`, and shared components with `Rk`. Names that come from a package or framework are left alone.
