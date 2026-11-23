@@ -329,8 +329,12 @@ t('a V8 is exact: cross-plane throws, every rod keeps its length in the world fr
 	assert.ok(kin.charts.length === 3 && Math.abs(kin.charts[0].f(0) - (kin.R + kin.L - kin.pistonX(kin.localAngle(0, 0)))) < 1e-9);
 });
 
+// A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless the run reached its end.
+let finished = false;
+process.on('exit', () => { if (!finished) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
 (async () => {
 	for (const [name, fn] of tests) {
 		try { await fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; }
 	}
+	finished = true;
 })();
