@@ -36,5 +36,11 @@
 	"skills/meta/install-kit.cli.js:87:true to false",
 	"skills/meta/install-kit.cli.js:670:+ to -",
 	"skills/meta/install-kit.cli.js:718:true to false",
-	"skills/meta/install-kit.cli.js:1121:+ to -"
+	"skills/meta/install-kit.cli.js:1121:+ to -",
+	"skills/meta/usage-mine.js:22:< to <=",
+	"skills/addons/invariants.cli.js:146:< to <=",
+	"skills/addons/invariants.cli.js:175:< to <=",
+	"skills/meta/install-kit.company.js:415:true to false",
+	"skills/meta/install-kit.company.js:662:true to false",
+	"skills/addons/project-context.figma.js:200:&& to ||"
 ]

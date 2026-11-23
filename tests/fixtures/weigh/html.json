@@ -1,0 +1,102 @@
+{
+ "3 images 2 eager": [
+  {
+   "file": "p.html",
+   "kind": "eager-images",
+   "detail": "2 of 3 <img> without loading=\"lazy\""
+  },
+  {
+   "file": "p.html",
+   "kind": "no-lcp-priority",
+   "detail": "no fetchpriority=\"high\" image and no image preload"
+  },
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "3 <img> without width and height (layout shift)"
+  }
+ ],
+ "3 images 1 eager": [
+  {
+   "file": "p.html",
+   "kind": "no-lcp-priority",
+   "detail": "no fetchpriority=\"high\" image and no image preload"
+  },
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "3 <img> without width and height (layout shift)"
+  }
+ ],
+ "2 images 2 eager": [
+  {
+   "file": "p.html",
+   "kind": "no-lcp-priority",
+   "detail": "no fetchpriority=\"high\" image and no image preload"
+  },
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "2 <img> without width and height (layout shift)"
+  }
+ ],
+ "4 images 3 eager": [
+  {
+   "file": "p.html",
+   "kind": "eager-images",
+   "detail": "3 of 4 <img> without loading=\"lazy\""
+  },
+  {
+   "file": "p.html",
+   "kind": "no-lcp-priority",
+   "detail": "no fetchpriority=\"high\" image and no image preload"
+  },
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "4 <img> without width and height (layout shift)"
+  }
+ ],
+ "fetchpriority present": [
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "1 <img> without width and height (layout shift)"
+  }
+ ],
+ "blocking head script": [
+  {
+   "file": "p.html",
+   "kind": "blocking-script",
+   "detail": "a.js"
+  }
+ ],
+ "async and module scripts": [],
+ "third party": [
+  {
+   "file": "p.html",
+   "kind": "third-party-sync",
+   "detail": "cdn.x.com"
+  },
+  {
+   "file": "p.html",
+   "kind": "third-party-sync",
+   "detail": "other.com"
+  }
+ ],
+ "commented out": [],
+ "nested comment trick": [],
+ "empty": [],
+ "no head": [
+  {
+   "file": "p.html",
+   "kind": "no-lcp-priority",
+   "detail": "no fetchpriority=\"high\" image and no image preload"
+  },
+  {
+   "file": "p.html",
+   "kind": "img-no-dimensions",
+   "detail": "1 <img> without width and height (layout shift)"
+  }
+ ]
+}

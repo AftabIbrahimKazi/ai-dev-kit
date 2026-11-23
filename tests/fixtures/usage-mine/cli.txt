@@ -1,0 +1,54 @@
+$ --project <proj> --usage <usage> (exit 0)
+# Usage mine report
+
+3 session(s), 7 prompt(s), 2 retry(ies), 2 tool error(s). feature-usage logs: merged.
+
+| skill | loads | sessions with retry after load | retry rate | median session tokens |
+|---|---:|---:|---:|---:|
+| code-audit | 2 | 2 | 100% | 43 |
+| pre-commit | 1 | 1 | 100% | 36 |
+| ui-design | 1 | 1 | 100% | 36 |
+| extra-skill | 1 | 0 | 0% | 100 |
+
+Reading it: a retry follows a negative reply or a repeated prompt after the skill loaded. It is a hint, not proof the skill caused it. Low loads with zero retries make an unpin candidate only after an ablation run (skills/meta/ab-gate.js).
+
+$ --project <proj> --usage <usage> --days 30 (exit 0)
+# Usage mine report
+
+2 session(s), 5 prompt(s), 1 retry(ies), 2 tool error(s). feature-usage logs: merged.
+
+| skill | loads | sessions with retry after load | retry rate | median session tokens |
+|---|---:|---:|---:|---:|
+| code-audit | 1 | 1 | 100% | 36 |
+| pre-commit | 1 | 1 | 100% | 36 |
+| ui-design | 1 | 1 | 100% | 36 |
+| extra-skill | 1 | 0 | 0% | 100 |
+
+Reading it: a retry follows a negative reply or a repeated prompt after the skill loaded. It is a hint, not proof the skill caused it. Low loads with zero retries make an unpin candidate only after an ablation run (skills/meta/ab-gate.js).
+
+$ --project <proj> --usage <usage> --json (exit 0)
+{"sessions":3,"rows":[{"skill":"code-audit","loads":2,"sessions":2,"retrySessions":2,"retryRate":1,"medianTokens":43},{"skill":"pre-commit","loads":1,"sessions":1,"retrySessions":1,"retryRate":1,"medianTokens":36},{"skill":"ui-design","loads":1,"sessions":1,"retrySessions":1,"retryRate":1,"medianTokens":36},{"skill":"extra-skill","loads":1,"sessions":1,"retrySessions":0,"retryRate":0,"medianTokens":100}]}
+
+$ --project <proj> --usage <usage>\missing (exit 0)
+# Usage mine report
+
+3 session(s), 7 prompt(s), 2 retry(ies), 2 tool error(s). feature-usage logs: none found (transcripts only).
+
+| skill | loads | sessions with retry after load | retry rate | median session tokens |
+|---|---:|---:|---:|---:|
+| code-audit | 2 | 2 | 100% | 43 |
+| pre-commit | 1 | 1 | 100% | 36 |
+| ui-design | 1 | 1 | 100% | 36 |
+
+Reading it: a retry follows a negative reply or a repeated prompt after the skill loaded. It is a hint, not proof the skill caused it. Low loads with zero retries make an unpin candidate only after an ablation run (skills/meta/ab-gate.js).
+
+$ --project <proj> --usage <usage> --out <out>\report.md (exit 0)
+wrote <out>\report.md
+
+$ --project <proj>\nowhere --usage <usage>\missing (exit 0)
+# Usage mine report
+
+0 session(s), 0 prompt(s), 0 retry(ies), 0 tool error(s). feature-usage logs: none found (transcripts only).
+
+No skill loads found.
+

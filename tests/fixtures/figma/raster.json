@@ -1,0 +1,57 @@
+{
+ "png 33 bytes": [
+  1440,
+  900
+ ],
+ "png 25 bytes": [
+  7,
+  9
+ ],
+ "png 24 bytes": null,
+ "png wrong signature": null,
+ "webp VP8X": [
+  640,
+  480
+ ],
+ "webp VP8 with scale bits": [
+  800,
+  600
+ ],
+ "webp VP8L": [
+  100,
+  50
+ ],
+ "webp unknown kind": null,
+ "webp not riff": null,
+ "jpg app0 then sof0": [
+  1024,
+  768
+ ],
+ "jpeg ext, progressive sof2": [
+  300,
+  200
+ ],
+ "jpg skips dht, dac and ext markers": [
+  50,
+  60
+ ],
+ "jpg marker c0 lower bound": [
+  11,
+  12
+ ],
+ "jpg marker cf upper bound": [
+  21,
+  22
+ ],
+ "jpg marker d0 is not a frame": null,
+ "jpg sof at the very end": [
+  640,
+  480
+ ],
+ "jpg sof cut one byte short of the scan limit": [
+  5,
+  6
+ ],
+ "jpg no marker": null,
+ "unknown extension": null
+}

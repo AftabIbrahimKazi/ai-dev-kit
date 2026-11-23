@@ -129,3 +129,78 @@ t('--summary with no build folder says to ask about building; a clean build says
   write(c, 'dist/index.html', '<html><head></head><body></body></html>');
   assert.match(run(c, '--summary').stdout, /No static findings/);
 });
+
+// ---- gaps found by `invariants probe` on perf-audit.weigh.js ----
+// Regenerate the golden on purpose with UPDATE_GOLDEN=1 node tests/perf-audit.weigh.test.js, then read the diff.
+const CRW = String.fromCharCode(13);
+const noise = (n, seed = 1) => { const b = Buffer.alloc(n); let x = seed; for (let i = 0; i < n; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; b[i] = x >> 16; } return b; };
+const KBW = 1024;
+const goldW = (name, text) => {
+	const file = path.join(__dirname, 'fixtures', 'weigh', name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CRW).join(''));
+};
+const bigSite = () => {
+	const d = proj();
+	write(d, 'dist/index.html', '<html><head><script src="/assets/vendor.js"></script><script src="https://cdn.example.com/a.js"></script><script src="/assets/app.abc123def.js" defer></script></head><body><img src="a.png"><img src="b.png"><img src="c.png" loading="lazy"><!-- <img src="x.png"> --></body></html>');
+	write(d, 'dist/about.html', '<html><head></head><body><img src="a.png" fetchpriority="high"><img src="b.png" loading="lazy"></body></html>');
+	write(d, 'dist/assets/app.abc123def.js', noise(170 * KBW, 1)); write(d, 'dist/assets/vendor.js', noise(30 * KBW, 2)); write(d, 'dist/assets/small.0a1b2c3d.mjs', 'export const a = 1;\n'.repeat(40)); write(d, 'dist/assets/app.abc123def.js.map', noise(5 * KBW, 3));
+	write(d, 'dist/assets/app.abc123def.css', noise(160 * KBW, 4)); write(d, 'dist/assets/site.css', 'body{margin:0}'.repeat(50));
+	write(d, 'dist/img/hero.png', noise(300 * KBW, 5)); write(d, 'dist/img/banner.jpg', noise(250 * KBW, 6)); write(d, 'dist/img/wide.jpeg', noise(220 * KBW, 7));
+	write(d, 'dist/img/exact.png', noise(200 * KBW, 8)); write(d, 'dist/img/over.png', noise(200 * KBW + 1, 9));
+	write(d, 'dist/img/logo.png', noise(40 * KBW, 10)); write(d, 'dist/img/logo.webp', noise(8 * KBW, 11)); write(d, 'dist/img/photo.jpg', noise(30 * KBW, 12)); write(d, 'dist/img/small.png', noise(20 * KBW, 13)); write(d, 'dist/img/edge.png', noise(20 * KBW + 1, 14)); write(d, 'dist/img/icon.svg', '<svg/>');
+	for (let i = 0; i < 5; i++) write(d, 'dist/fonts/f' + i + '.woff2', noise(20 * KBW, 20 + i));
+	write(d, 'dist/media/clip.mp4', noise(500 * KBW, 30)); write(d, 'dist/media/loop.webm', noise(700 * KBW, 31));
+	write(d, 'dist/assets/fonts.css', '@font-face{font-family:A;src:url(a.woff2);font-display:swap}@font-face{font-family:B;src:url(b.woff2)}');
+	write(d, 'node_modules/x/ignored.js', noise(400 * KBW, 40));
+	return d;
+};
+const fontsProject = (css) => { const d = proj(); write(d, 'dist/index.html', '<html></html>'); if (css !== null) write(d, 'dist/a.css', css); for (let i = 0; i < 4; i++) write(d, 'dist/f' + i + '.woff2', noise(KBW, i)); return d; };
+
+t('golden: a big build weighed as JSON, table, summary, with --top and from the source fallback', () => {
+	const d = bigSite();
+	const W = require('../skills/workflow/perf-audit.weigh.js');
+	const r = W.weigh(d);
+	const out = { report: r, table: W.render(r), summary: W.summary || null, summarize: W.summarize(r), summarize3: W.summarize(r, 3), top2: W.weigh(d, { top: 2 }), fmt: [W.fmt(1023), W.fmt(1024), W.fmt(KBW * KBW - 1), W.fmt(KBW * KBW), W.fmt(KBW * KBW * 2.5)] };
+	const src = proj(); write(src, 'src/app.js', 'x'.repeat(100)); write(src, 'src/pic.png', noise(30 * KBW, 50)); write(src, 'src/index.html', '<html><head></head></html>');
+	out.srcFallback = W.weigh(src); out.srcExplicit = W.weigh(src, { src: 'src' });
+	out.cliJson = JSON.parse(run(d, '--json').stdout); out.cliSummary = run(d, '--summary').stdout; out.cliTable = run(d).stdout;
+	const clean = (txt) => txt.split(CRW).join('');
+	goldW('weigh.json', clean(JSON.stringify(out, null, 1)) + '\n');
+});
+
+t('golden: font-display states and the font-file limit', () => {
+	const W = require('../skills/workflow/perf-audit.weigh.js');
+	const face = (disp) => '@font-face{font-family:X;src:url(x.woff2)' + (disp ? ';font-display:' + disp : '') + '}';
+	const cases = { 'no css': null, 'css without faces': 'body{margin:0}', 'all swap': face('swap') + face('swap'), 'swap and optional': face('swap') + face('optional'), 'one block': face('swap') + face('block'),
+		'all block': face('block') + face('fallback'), 'one missing': face('swap') + face(''), 'all missing': face('') + face(''), 'missing and block': face('') + face('block'), 'uppercase swap': face('SWAP') };
+	const out = {};
+	for (const [k, css] of Object.entries(cases)) { const r = W.weigh(fontsProject(css)); out[k] = { display: r.fonts.display, files: r.fonts.files.length, summary: W.summarize(r) }; }
+	const five = fontsProject(face('swap')); write(five, 'dist/f4.woff2', noise(KBW, 9)); const r5 = W.weigh(five); out['five fonts'] = { files: r5.fonts.files.length, summary: W.summarize(r5), table: W.render(r5) };
+	goldW('fonts.json', JSON.stringify(out, null, 1).split(CRW).join('') + '\n');
+});
+
+t('golden: checkHtml findings and the three-image eager rule', () => {
+	const W = require('../skills/workflow/perf-audit.weigh.js');
+	const img = (extra) => '<img src="x.png"' + (extra ? ' ' + extra : '') + '>';
+	const pages = {
+		'3 images 2 eager': '<html><head></head><body>' + img() + img() + img('loading="lazy"') + '</body></html>', '3 images 1 eager': '<html><head></head><body>' + img() + img('loading="lazy"') + img('loading="lazy"') + '</body></html>',
+		'2 images 2 eager': '<html><head></head><body>' + img() + img() + '</body></html>', '4 images 3 eager': '<html><head></head><body>' + img() + img() + img() + img('loading="lazy"') + '</body></html>',
+		'fetchpriority present': '<html><head></head><body>' + img('fetchpriority="high"') + '</body></html>', 'blocking head script': '<html><head><script src="a.js"></script></head><body></body></html>',
+		'async and module scripts': '<html><head><script src="a.js" async></script><script src="b.js" defer></script><script type="module" src="c.js"></script></head><body></body></html>',
+		'third party': '<html><head></head><body><script src="https://cdn.x.com/a.js"></script><script src="//other.com/b.js"></script></body></html>',
+		'commented out': '<html><head><!-- <script src="a.js"></script> --></head><body></body></html>', 'nested comment trick': '<html><head><!-<!-- x -->- <script src="a.js"></script> --></head></html>',
+		'empty': '', 'no head': '<body>' + img() + '</body>',
+	};
+	const out = {};
+	for (const [k, h] of Object.entries(pages)) out[k] = W.checkHtml('p.html', h, 'p.html');
+	goldW('html.json', JSON.stringify(out, null, 1).split(CRW).join('') + '\n');
+});
+
+t('CLI usage errors: a zero or negative or non-numeric --top and an empty --dist or --src exit 2', () => {
+	const d = bigSite();
+	for (const bad of [['--top', '0'], ['--top', '-3'], ['--top', 'abc'], ['--dist', ''], ['--src', '']]) assert.strictEqual(run(d, ...bad).status, 2, bad.join(' '));
+	assert.strictEqual(run(d, '--top', '1').status, 0);
+	assert.strictEqual(run(d, '--dist', 'nowhere').status, 1);
+});

@@ -1,0 +1,442 @@
+{
+ "report": {
+  "dist": "dist",
+  "totals": {
+   "js": 205600,
+   "jsGzip": 29619,
+   "css": 164642,
+   "cssGzip": 16950,
+   "images": 1318920,
+   "fonts": 102400,
+   "video": 1228800,
+   "files": 27
+  },
+  "heavyChunks": [],
+  "heavyImages": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   },
+   {
+    "file": "dist/img/wide.jpeg",
+    "size": 225280
+   },
+   {
+    "file": "dist/img/over.png",
+    "size": 204801
+   }
+  ],
+  "legacyRasters": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   },
+   {
+    "file": "dist/img/wide.jpeg",
+    "size": 225280
+   },
+   {
+    "file": "dist/img/over.png",
+    "size": 204801
+   },
+   {
+    "file": "dist/img/exact.png",
+    "size": 204800
+   },
+   {
+    "file": "dist/img/photo.jpg",
+    "size": 30720
+   },
+   {
+    "file": "dist/img/edge.png",
+    "size": 20481
+   }
+  ],
+  "video": [
+   {
+    "file": "dist/media/loop.webm",
+    "size": 716800
+   },
+   {
+    "file": "dist/media/clip.mp4",
+    "size": 512000
+   }
+  ],
+  "fonts": {
+   "files": [
+    {
+     "file": "dist/fonts/f0.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f1.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f2.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f3.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f4.woff2",
+     "size": 20480
+    }
+   ],
+   "display": "missing"
+  },
+  "html": [
+   {
+    "file": "dist/about.html",
+    "kind": "img-no-dimensions",
+    "detail": "2 <img> without width and height (layout shift)"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "/assets/vendor.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "https://cdn.example.com/a.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "third-party-sync",
+    "detail": "cdn.example.com"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "eager-images",
+    "detail": "2 of 3 <img> without loading=\"lazy\""
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "no-lcp-priority",
+    "detail": "no fetchpriority=\"high\" image and no image preload"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "img-no-dimensions",
+    "detail": "3 <img> without width and height (layout shift)"
+   }
+  ],
+  "unhashed": 3,
+  "notes": []
+ },
+ "table": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB      29 KB\n  CSS         161 KB      17 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n20 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+ "summary": null,
+ "summarize": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+7 smaller findings; rerun without --summary)",
+ "summarize3": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n(+11 smaller findings; rerun without --summary)",
+ "top2": {
+  "dist": "dist",
+  "totals": {
+   "js": 205600,
+   "jsGzip": 29619,
+   "css": 164642,
+   "cssGzip": 16950,
+   "images": 1318920,
+   "fonts": 102400,
+   "video": 1228800,
+   "files": 27
+  },
+  "heavyChunks": [],
+  "heavyImages": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   }
+  ],
+  "legacyRasters": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   }
+  ],
+  "video": [
+   {
+    "file": "dist/media/loop.webm",
+    "size": 716800
+   },
+   {
+    "file": "dist/media/clip.mp4",
+    "size": 512000
+   }
+  ],
+  "fonts": {
+   "files": [
+    {
+     "file": "dist/fonts/f0.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f1.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f2.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f3.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f4.woff2",
+     "size": 20480
+    }
+   ],
+   "display": "missing"
+  },
+  "html": [
+   {
+    "file": "dist/about.html",
+    "kind": "img-no-dimensions",
+    "detail": "2 <img> without width and height (layout shift)"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "/assets/vendor.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "https://cdn.example.com/a.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "third-party-sync",
+    "detail": "cdn.example.com"
+   }
+  ],
+  "unhashed": 3,
+  "notes": []
+ },
+ "fmt": [
+  "1 KB",
+  "1 KB",
+  "1024 KB",
+  "1.0 MB",
+  "2.5 MB"
+ ],
+ "srcFallback": {
+  "dist": null,
+  "totals": {
+   "js": 100,
+   "jsGzip": 24,
+   "css": 0,
+   "cssGzip": 0,
+   "images": 30720,
+   "fonts": 0,
+   "video": 0,
+   "files": 3
+  },
+  "heavyChunks": [],
+  "heavyImages": [],
+  "legacyRasters": [
+   {
+    "file": "src/pic.png",
+    "size": 30720
+   }
+  ],
+  "video": [],
+  "fonts": {
+   "files": [],
+   "display": "no-css"
+  },
+  "html": [],
+  "unhashed": 0,
+  "notes": [
+   "no production build folder found; weighed source under src (build first for real chunk sizes)"
+  ]
+ },
+ "srcExplicit": {
+  "dist": null,
+  "totals": {
+   "js": 100,
+   "jsGzip": 24,
+   "css": 0,
+   "cssGzip": 0,
+   "images": 30720,
+   "fonts": 0,
+   "video": 0,
+   "files": 3
+  },
+  "heavyChunks": [],
+  "heavyImages": [],
+  "legacyRasters": [
+   {
+    "file": "src/pic.png",
+    "size": 30720
+   }
+  ],
+  "video": [],
+  "fonts": {
+   "files": [],
+   "display": "no-css"
+  },
+  "html": [],
+  "unhashed": 0,
+  "notes": [
+   "no production build folder found; weighed source under src (build first for real chunk sizes)"
+  ]
+ },
+ "cliJson": {
+  "dist": "dist",
+  "totals": {
+   "js": 205600,
+   "jsGzip": 29619,
+   "css": 164642,
+   "cssGzip": 16950,
+   "images": 1318920,
+   "fonts": 102400,
+   "video": 1228800,
+   "files": 27
+  },
+  "heavyChunks": [],
+  "heavyImages": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   },
+   {
+    "file": "dist/img/wide.jpeg",
+    "size": 225280
+   },
+   {
+    "file": "dist/img/over.png",
+    "size": 204801
+   }
+  ],
+  "legacyRasters": [
+   {
+    "file": "dist/img/hero.png",
+    "size": 307200
+   },
+   {
+    "file": "dist/img/banner.jpg",
+    "size": 256000
+   },
+   {
+    "file": "dist/img/wide.jpeg",
+    "size": 225280
+   },
+   {
+    "file": "dist/img/over.png",
+    "size": 204801
+   },
+   {
+    "file": "dist/img/exact.png",
+    "size": 204800
+   },
+   {
+    "file": "dist/img/photo.jpg",
+    "size": 30720
+   },
+   {
+    "file": "dist/img/edge.png",
+    "size": 20481
+   }
+  ],
+  "video": [
+   {
+    "file": "dist/media/loop.webm",
+    "size": 716800
+   },
+   {
+    "file": "dist/media/clip.mp4",
+    "size": 512000
+   }
+  ],
+  "fonts": {
+   "files": [
+    {
+     "file": "dist/fonts/f0.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f1.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f2.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f3.woff2",
+     "size": 20480
+    },
+    {
+     "file": "dist/fonts/f4.woff2",
+     "size": 20480
+    }
+   ],
+   "display": "missing"
+  },
+  "html": [
+   {
+    "file": "dist/about.html",
+    "kind": "img-no-dimensions",
+    "detail": "2 <img> without width and height (layout shift)"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "/assets/vendor.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "blocking-script",
+    "detail": "https://cdn.example.com/a.js"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "third-party-sync",
+    "detail": "cdn.example.com"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "eager-images",
+    "detail": "2 of 3 <img> without loading=\"lazy\""
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "no-lcp-priority",
+    "detail": "no fetchpriority=\"high\" image and no image preload"
+   },
+   {
+    "file": "dist/index.html",
+    "kind": "img-no-dimensions",
+    "detail": "3 <img> without width and height (layout shift)"
+   }
+  ],
+  "unhashed": 3,
+  "notes": []
+ },
+ "cliSummary": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+7 smaller findings; rerun without --summary)\n",
+ "cliTable": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB      29 KB\n  CSS         161 KB      17 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n20 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.\n"
+}

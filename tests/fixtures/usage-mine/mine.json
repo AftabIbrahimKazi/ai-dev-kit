@@ -1,0 +1,77 @@
+{
+ "stats": [
+  {
+   "sid": "sa",
+   "prompts": 3,
+   "retries": 1,
+   "toolErrors": 2,
+   "tokens": 36,
+   "skills": [
+    "pre-commit",
+    "code-audit",
+    "ui-design"
+   ],
+   "retryAfterLoad": [
+    "pre-commit",
+    "code-audit",
+    "ui-design"
+   ]
+  },
+  {
+   "sid": "sb",
+   "prompts": 2,
+   "retries": 0,
+   "toolErrors": 0,
+   "tokens": 100,
+   "skills": [],
+   "retryAfterLoad": []
+  },
+  {
+   "sid": "sc",
+   "prompts": 2,
+   "retries": 1,
+   "toolErrors": 0,
+   "tokens": 50,
+   "skills": [
+    "code-audit"
+   ],
+   "retryAfterLoad": [
+    "code-audit"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "skill": "code-audit",
+   "loads": 3,
+   "sessions": 3,
+   "retrySessions": 2,
+   "retryRate": 0.67,
+   "medianTokens": 50
+  },
+  {
+   "skill": "pre-commit",
+   "loads": 1,
+   "sessions": 1,
+   "retrySessions": 1,
+   "retryRate": 1,
+   "medianTokens": 36
+  },
+  {
+   "skill": "ui-design",
+   "loads": 1,
+   "sessions": 1,
+   "retrySessions": 1,
+   "retryRate": 1,
+   "medianTokens": 36
+  },
+  {
+   "skill": "extra-skill",
+   "loads": 1,
+   "sessions": 1,
+   "retrySessions": 0,
+   "retryRate": 0,
+   "medianTokens": 100
+  }
+ ]
+}

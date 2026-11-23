@@ -1,0 +1,174 @@
+{
+ "width and height": {
+  "size": [
+   10,
+   20
+  ],
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "width only with viewBox": {
+  "size": [
+   100,
+   200
+  ],
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "width only no viewBox": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "viewBox only": {
+  "size": [
+   100.5,
+   200
+  ],
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "viewBox commas": {
+  "size": [
+   30,
+   40
+  ],
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "viewBox of three numbers": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "viewBox with text": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "percent width": {
+  "size": [
+   8,
+   9
+  ],
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "no svg element": {
+  "size": null,
+  "colors": [
+   "#aabbcc"
+  ],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "colors": {
+  "size": null,
+  "colors": [
+   "#ffffff",
+   "#ffffff",
+   "#1a2b3c",
+   "#010203",
+   "#ff0000",
+   "#ffffff",
+   "#000000"
+  ],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ },
+ "fonts and sizes": {
+  "size": null,
+  "colors": [],
+  "fonts": [
+   "Inter",
+   "Poppins"
+  ],
+  "sizes": [
+   16,
+   24.5,
+   12
+  ],
+  "texts": [
+   "Hello",
+   "there"
+  ],
+  "hasImage": false,
+  "outlined": false
+ },
+ "image and outlines": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": true,
+  "outlined": true
+ },
+ "outlined only": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": true
+ },
+ "text and path": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [
+   "Hi"
+  ],
+  "hasImage": false,
+  "outlined": false
+ },
+ "empty": {
+  "size": null,
+  "colors": [],
+  "fonts": [],
+  "sizes": [],
+  "texts": [],
+  "hasImage": false,
+  "outlined": false
+ }
+}

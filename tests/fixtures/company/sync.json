@@ -1,0 +1,1075 @@
+{
+ "scan": {
+  "docs": [
+   {
+    "rel": "a11y-checks.md",
+    "title": "A11y checks",
+    "summary": "WCAG checks.",
+    "tokens": 7,
+    "headings": []
+   },
+   {
+    "rel": "accessibility.md",
+    "title": "Accessibility",
+    "summary": "WCAG and ARIA.",
+    "tokens": 8,
+    "headings": []
+   },
+   {
+    "rel": "AI-INSTRUCTIONS.md",
+    "title": "AI Instructions",
+    "summary": "",
+    "tokens": 32,
+    "headings": []
+   },
+   {
+    "rel": "components/button.md",
+    "title": "Button",
+    "summary": "A component. Use data-ct-role and data-ct-kind. See CtButton and CtIcon.",
+    "tokens": 21,
+    "headings": []
+   },
+   {
+    "rel": "components/input.md",
+    "title": "Input component",
+    "summary": "Use data-ct-field. CtInput wraps it.",
+    "tokens": 14,
+    "headings": []
+   },
+   {
+    "rel": "components/modal.md",
+    "title": "Modal component",
+    "summary": "Use data-ct-open. CtModal.",
+    "tokens": 12,
+    "headings": []
+   },
+   {
+    "rel": "css-naming.md",
+    "title": "CSS naming",
+    "summary": "Stylesheet selectors.",
+    "tokens": 9,
+    "headings": []
+   },
+   {
+    "rel": "css.md",
+    "title": "CSS rules",
+    "summary": "Selectors, specificity and BEM names.",
+    "tokens": 13,
+    "headings": []
+   },
+   {
+    "rel": "foundations/tokens.md",
+    "title": "Design tokens",
+    "summary": "Theming tokens.",
+    "tokens": 9,
+    "headings": []
+   },
+   {
+    "rel": "git-flow.md",
+    "title": "Git flow",
+    "summary": "Branch and commit rules.",
+    "tokens": 10,
+    "headings": []
+   },
+   {
+    "rel": "git-review.md",
+    "title": "Git review",
+    "summary": "Pull request rules.",
+    "tokens": 9,
+    "headings": []
+   },
+   {
+    "rel": "html-forms.md",
+    "title": "HTML forms",
+    "summary": "Markup for forms.",
+    "tokens": 8,
+    "headings": []
+   },
+   {
+    "rel": "html.md",
+    "title": "HTML rules",
+    "summary": "Semantic element use and markup.",
+    "tokens": 12,
+    "headings": []
+   },
+   {
+    "rel": "layout/header.md",
+    "title": "Header layout",
+    "summary": "App header.",
+    "tokens": 8,
+    "headings": []
+   },
+   {
+    "rel": "notes.md",
+    "title": "Notes",
+    "summary": "Plain notes.",
+    "tokens": 6,
+    "headings": []
+   },
+   {
+    "rel": "patterns/filter-bar.md",
+    "title": "Filter bar pattern",
+    "summary": "Navigation filters.",
+    "tokens": 11,
+    "headings": []
+   },
+   {
+    "rel": "patterns/forms.md",
+    "title": "Forms pattern",
+    "summary": "Layout of a form.",
+    "tokens": 9,
+    "headings": []
+   },
+   {
+    "rel": "qa/checklist.md",
+    "title": "QA checklist",
+    "summary": "Definition of done and test plan.",
+    "tokens": 13,
+    "headings": []
+   },
+   {
+    "rel": "qa/e2e.md",
+    "title": "E2E",
+    "summary": "E2E QA tests.",
+    "tokens": 6,
+    "headings": []
+   },
+   {
+    "rel": "seo.md",
+    "title": "SEO",
+    "summary": "Sitemap only.",
+    "tokens": 6,
+    "headings": []
+   }
+  ],
+  "other": 1
+ },
+ "routes": [
+  {
+   "trigger": "ANY button",
+   "rel": "components/button.md"
+  },
+  {
+   "trigger": "ANY form",
+   "rel": "patterns/forms.md"
+  }
+ ],
+ "overlap": [
+  {
+   "key": "css",
+   "label": "CSS standard",
+   "verdict": "covered",
+   "files": 2,
+   "droppable": true,
+   "drop": true,
+   "reason": "company has 2 related files, 2 dedicated to it: default removed"
+  },
+  {
+   "key": "html",
+   "label": "HTML standard",
+   "verdict": "covered",
+   "files": 2,
+   "droppable": true,
+   "drop": true,
+   "reason": "company has 2 related files, 2 dedicated to it: default removed"
+  },
+  {
+   "key": "script",
+   "label": "Script standard",
+   "verdict": "none",
+   "files": 0,
+   "droppable": true,
+   "drop": false,
+   "reason": "no company coverage: default kept"
+  },
+  {
+   "key": "ui",
+   "label": "UI standard",
+   "verdict": "covered",
+   "files": 7,
+   "droppable": true,
+   "drop": true,
+   "reason": "company has 7 related files, 1 dedicated to it: default removed"
+  },
+  {
+   "key": "design",
+   "label": "Design standard",
+   "verdict": "covered",
+   "files": 7,
+   "droppable": true,
+   "drop": true,
+   "reason": "company has 7 related files, 1 dedicated to it: default removed"
+  },
+  {
+   "key": "seo",
+   "label": "SEO standard",
+   "verdict": "partial",
+   "files": 1,
+   "droppable": true,
+   "drop": false,
+   "reason": "only 1 related file, not a full replacement: default kept"
+  },
+  {
+   "key": "performance",
+   "label": "Performance standard",
+   "verdict": "none",
+   "files": 0,
+   "droppable": true,
+   "drop": false,
+   "reason": "no company coverage: default kept"
+  },
+  {
+   "key": "ai",
+   "label": "AI standard",
+   "verdict": "none",
+   "files": 0,
+   "droppable": true,
+   "drop": false,
+   "reason": "no company coverage: default kept"
+  },
+  {
+   "key": "accessibility",
+   "label": "Accessibility standard",
+   "verdict": "covered",
+   "files": 2,
+   "droppable": false,
+   "drop": false,
+   "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+  },
+  {
+   "key": "qa",
+   "label": "QA standard",
+   "verdict": "covered",
+   "files": 2,
+   "droppable": false,
+   "drop": false,
+   "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+  },
+  {
+   "key": "git",
+   "label": "Git standard",
+   "verdict": "covered",
+   "files": 2,
+   "droppable": false,
+   "drop": false,
+   "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+  },
+  {
+   "key": "versioning",
+   "label": "Versioning standard",
+   "verdict": "none",
+   "files": 0,
+   "droppable": false,
+   "drop": false,
+   "reason": "no company coverage: default kept"
+  }
+ ],
+ "signature": {
+  "alias": "ct",
+  "attrs": 4,
+  "components": 4
+ },
+ "omitted": [
+  true,
+  false,
+  true
+ ],
+ "modes": {
+  "keep": {
+   "dry": {
+    "mode": "keep",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [],
+    "written": [],
+    "notes": [
+     "dry run: nothing was written",
+     "the company docs use the prefix \"ct\"; the project signature is your choice (signature set ct, another alias, or none)"
+    ]
+   },
+   "dryWrote": [],
+   "sync": {
+    "mode": "keep",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "copied 21 files from <co>/docs",
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ]
+   },
+   "refreshed": {
+    "mode": "keep",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ]
+   },
+   "status": {
+    "installed": true,
+    "mode": "keep",
+    "files": 20,
+    "indexed": 20,
+    "stale": false,
+    "dropped": []
+   },
+   "files": {
+    "standards": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "company/AI-INSTRUCTIONS.md",
+     "company/INDEX.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md",
+     "css-standards.md",
+     "css-standards/token-files.md",
+     "design-standards.md",
+     "html-standards.md",
+     "index.md"
+    ],
+    "index": "<!-- ai-dev-kit:company-index -->\n# Company standards index\n\nGenerated by install-kit from 20 files (~223 tokens in all). Do not edit; run `company sync` after changing the folder. Paths are relative to `coding-standards/company/`.\n\n**Precedence.** Where a company rule and a kit default disagree, the company rule wins. Kit defaults still apply where the company docs are silent. A missing rule is a gap: write \"STANDARDS GAP:\" and ask; never invent.\n\n## Read first, once per session\n- `AI-INSTRUCTIONS.md` — AI Instructions (~32 tokens)\n\n## Routes: read the file for each thing you build or change\n| If you build or change | Read |\n|---|---|\n| ANY button | `components/button.md` (~21) |\n| ANY form | `patterns/forms.md` (~9) |\n\n## Other files\n| File | Covers | ~tokens |\n|---|---|---|\n| `a11y-checks.md` | A11y checks: WCAG checks. | 7 |\n| `accessibility.md` | Accessibility: WCAG and ARIA. | 8 |\n| `components/input.md` | Input component: Use data-ct-field. CtInput wraps it. | 14 |\n| `components/modal.md` | Modal component: Use data-ct-open. CtModal. | 12 |\n| `css-naming.md` | CSS naming: Stylesheet selectors. | 9 |\n| `css.md` | CSS rules: Selectors, specificity and BEM names. | 13 |\n| `foundations/tokens.md` | Design tokens: Theming tokens. | 9 |\n| `git-flow.md` | Git flow: Branch and commit rules. | 10 |\n| `git-review.md` | Git review: Pull request rules. | 9 |\n| `html-forms.md` | HTML forms: Markup for forms. | 8 |\n| `html.md` | HTML rules: Semantic element use and markup. | 12 |\n| `layout/header.md` | Header layout: App header. | 8 |\n| `notes.md` | Notes: Plain notes. | 6 |\n| `patterns/filter-bar.md` | Filter bar pattern: Navigation filters. | 11 |\n| `qa/checklist.md` | QA checklist: Definition of done and test plan. | 13 |\n| `qa/e2e.md` | E2E: E2E QA tests. | 6 |\n| `seo.md` | SEO: Sitemap only. | 6 |\n\n1 non-markdown file in the folder (tokens, fonts, scripts) are kept but not indexed.\n",
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n| CSS standard | `coding-standards/css-standards.md` |\n| HTML standard | `coding-standards/html-standards.md` |\n| Accessibility standard | `coding-standards/accessibility-standards.md` |\n| Design standard | `coding-standards/design-standards.md` |\n| AI standard | `coding-standards/ai-standards.md` |\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n\n<!-- ai-dev-kit:company-standards:start -->\n## Company Standards\n\nThis project follows company standards in `coding-standards/company/`. Before editing code or UI they cover, read `coding-standards/company/INDEX.md` once per session, then only the files it routes to. Where a company rule and a kit default disagree, the company rule wins. Kit defaults still apply where the company docs are silent. A missing rule is a gap: write `STANDARDS GAP:` and ask; never invent.\n<!-- ai-dev-kit:company-standards:end -->\n"
+   },
+   "removed": {
+    "removed": [
+     "CLAUDE.md (Company Standards block)",
+     ".claude/skills/company-standards",
+     "coding-standards/company/INDEX.md"
+    ],
+    "restored": [],
+    "kept": [
+     "coding-standards/company/ left in place: your files (add --purge to delete them)"
+    ]
+   },
+   "after": {
+    "standards": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "company/AI-INSTRUCTIONS.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md",
+     "css-standards.md",
+     "css-standards/token-files.md",
+     "design-standards.md",
+     "html-standards.md",
+     "index.md"
+    ],
+    "status": {
+     "installed": false
+    },
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n| CSS standard | `coding-standards/css-standards.md` |\n| HTML standard | `coding-standards/html-standards.md` |\n| Accessibility standard | `coding-standards/accessibility-standards.md` |\n| Design standard | `coding-standards/design-standards.md` |\n| AI standard | `coding-standards/ai-standards.md` |\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n"
+   }
+  },
+  "drop": {
+   "dry": {
+    "mode": "drop",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [
+     "*"
+    ],
+    "written": [],
+    "notes": [
+     "dry run: nothing was written",
+     "the company docs use the prefix \"ct\"; the project signature is your choice (signature set ct, another alias, or none)",
+     "would remove 7 installed default standards files (put back by \"company remove\")"
+    ]
+   },
+   "dryWrote": [],
+   "sync": {
+    "mode": "drop",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [
+     "*"
+    ],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "copied 21 files from <co>/docs",
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ]
+   },
+   "refreshed": {
+    "mode": "drop",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "dropped": [
+     "*"
+    ],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ]
+   },
+   "status": {
+    "installed": true,
+    "mode": "drop",
+    "files": 20,
+    "indexed": 20,
+    "stale": false,
+    "dropped": [
+     "*"
+    ]
+   },
+   "files": {
+    "standards": [
+     "company/AI-INSTRUCTIONS.md",
+     "company/INDEX.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md"
+    ],
+    "index": "<!-- ai-dev-kit:company-index -->\n# Company standards index\n\nGenerated by install-kit from 20 files (~223 tokens in all). Do not edit; run `company sync` after changing the folder. Paths are relative to `coding-standards/company/`.\n\n**Precedence.** Company rules are the only standards here; the kit defaults are not installed. A missing rule is a gap: write \"STANDARDS GAP:\" and ask; never invent.\n\n## Read first, once per session\n- `AI-INSTRUCTIONS.md` — AI Instructions (~32 tokens)\n\n## Routes: read the file for each thing you build or change\n| If you build or change | Read |\n|---|---|\n| ANY button | `components/button.md` (~21) |\n| ANY form | `patterns/forms.md` (~9) |\n\n## Other files\n| File | Covers | ~tokens |\n|---|---|---|\n| `a11y-checks.md` | A11y checks: WCAG checks. | 7 |\n| `accessibility.md` | Accessibility: WCAG and ARIA. | 8 |\n| `components/input.md` | Input component: Use data-ct-field. CtInput wraps it. | 14 |\n| `components/modal.md` | Modal component: Use data-ct-open. CtModal. | 12 |\n| `css-naming.md` | CSS naming: Stylesheet selectors. | 9 |\n| `css.md` | CSS rules: Selectors, specificity and BEM names. | 13 |\n| `foundations/tokens.md` | Design tokens: Theming tokens. | 9 |\n| `git-flow.md` | Git flow: Branch and commit rules. | 10 |\n| `git-review.md` | Git review: Pull request rules. | 9 |\n| `html-forms.md` | HTML forms: Markup for forms. | 8 |\n| `html.md` | HTML rules: Semantic element use and markup. | 12 |\n| `layout/header.md` | Header layout: App header. | 8 |\n| `notes.md` | Notes: Plain notes. | 6 |\n| `patterns/filter-bar.md` | Filter bar pattern: Navigation filters. | 11 |\n| `qa/checklist.md` | QA checklist: Definition of done and test plan. | 13 |\n| `qa/e2e.md` | E2E: E2E QA tests. | 6 |\n| `seo.md` | SEO: Sitemap only. | 6 |\n\n1 non-markdown file in the folder (tokens, fonts, scripts) are kept but not indexed.\n",
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n\n<!-- ai-dev-kit:company-standards:start -->\n## Company Standards\n\nThis project follows company standards in `coding-standards/company/`. Before editing code or UI they cover, read `coding-standards/company/INDEX.md` once per session, then only the files it routes to. Company rules are the only standards here; the kit defaults are not installed. A missing rule is a gap: write `STANDARDS GAP:` and ask; never invent.\n<!-- ai-dev-kit:company-standards:end -->\n"
+   },
+   "removed": {
+    "removed": [
+     "CLAUDE.md (Company Standards block)",
+     ".claude/skills/company-standards",
+     "coding-standards/company/INDEX.md"
+    ],
+    "restored": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "css-standards/token-files.md",
+     "css-standards.md",
+     "design-standards.md",
+     "html-standards.md",
+     "index.md",
+     "5 Active Standards rows"
+    ],
+    "kept": [
+     "coding-standards/company/ left in place: your files (add --purge to delete them)"
+    ]
+   },
+   "after": {
+    "standards": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "company/AI-INSTRUCTIONS.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md",
+     "css-standards.md",
+     "css-standards/token-files.md",
+     "design-standards.md",
+     "html-standards.md",
+     "index.md"
+    ],
+    "status": {
+     "installed": false
+    },
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n| CSS standard | `coding-standards/css-standards.md` |\n| HTML standard | `coding-standards/html-standards.md` |\n| Accessibility standard | `coding-standards/accessibility-standards.md` |\n| Design standard | `coding-standards/design-standards.md` |\n| AI standard | `coding-standards/ai-standards.md` |\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n"
+   }
+  },
+  "auto": {
+   "dry": {
+    "mode": "auto",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "findings": [
+     {
+      "key": "css",
+      "label": "CSS standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "html",
+      "label": "HTML standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "script",
+      "label": "Script standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ui",
+      "label": "UI standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "design",
+      "label": "Design standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "seo",
+      "label": "SEO standard",
+      "verdict": "partial",
+      "files": 1,
+      "droppable": true,
+      "drop": false,
+      "reason": "only 1 related file, not a full replacement: default kept"
+     },
+     {
+      "key": "performance",
+      "label": "Performance standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ai",
+      "label": "AI standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "accessibility",
+      "label": "Accessibility standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "qa",
+      "label": "QA standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "git",
+      "label": "Git standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "versioning",
+      "label": "Versioning standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": false,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     }
+    ],
+    "dropped": [
+     "css",
+     "html",
+     "ui",
+     "design"
+    ],
+    "written": [],
+    "notes": [
+     "dry run: nothing was written",
+     "the company docs use the prefix \"ct\"; the project signature is your choice (signature set ct, another alias, or none)",
+     "would remove 4 installed default standards files (put back by \"company remove\")"
+    ],
+    "disclaimer": [
+     "Auto-detect is a guess from file names, titles and headings. It does not read your rule text.",
+     "It removes a default standard only when your company has a file dedicated to that subject and at least one more related file.",
+     "It never removes the accessibility, QA, git or versioning defaults. A wrong \"covered\" would silently drop a rule you needed, so partial overlap keeps the default.",
+     "Review the table below. Nothing is lost: removed defaults come back with `company remove`, and you can override with --company-defaults keep or drop."
+    ]
+   },
+   "dryWrote": [],
+   "sync": {
+    "mode": "auto",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "findings": [
+     {
+      "key": "css",
+      "label": "CSS standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "html",
+      "label": "HTML standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "script",
+      "label": "Script standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ui",
+      "label": "UI standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "design",
+      "label": "Design standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "seo",
+      "label": "SEO standard",
+      "verdict": "partial",
+      "files": 1,
+      "droppable": true,
+      "drop": false,
+      "reason": "only 1 related file, not a full replacement: default kept"
+     },
+     {
+      "key": "performance",
+      "label": "Performance standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ai",
+      "label": "AI standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "accessibility",
+      "label": "Accessibility standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "qa",
+      "label": "QA standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "git",
+      "label": "Git standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "versioning",
+      "label": "Versioning standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": false,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     }
+    ],
+    "dropped": [
+     "css",
+     "html",
+     "ui",
+     "design"
+    ],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "copied 21 files from <co>/docs",
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ],
+    "disclaimer": [
+     "Auto-detect is a guess from file names, titles and headings. It does not read your rule text.",
+     "It removes a default standard only when your company has a file dedicated to that subject and at least one more related file.",
+     "It never removes the accessibility, QA, git or versioning defaults. A wrong \"covered\" would silently drop a rule you needed, so partial overlap keeps the default.",
+     "Review the table below. Nothing is lost: removed defaults come back with `company remove`, and you can override with --company-defaults keep or drop."
+    ]
+   },
+   "refreshed": {
+    "mode": "auto",
+    "files": 20,
+    "routes": 2,
+    "tokens": 223,
+    "findings": [
+     {
+      "key": "css",
+      "label": "CSS standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "html",
+      "label": "HTML standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 2 related files, 2 dedicated to it: default removed"
+     },
+     {
+      "key": "script",
+      "label": "Script standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ui",
+      "label": "UI standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "design",
+      "label": "Design standard",
+      "verdict": "covered",
+      "files": 7,
+      "droppable": true,
+      "drop": true,
+      "reason": "company has 7 related files, 1 dedicated to it: default removed"
+     },
+     {
+      "key": "seo",
+      "label": "SEO standard",
+      "verdict": "partial",
+      "files": 1,
+      "droppable": true,
+      "drop": false,
+      "reason": "only 1 related file, not a full replacement: default kept"
+     },
+     {
+      "key": "performance",
+      "label": "Performance standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "ai",
+      "label": "AI standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": true,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     },
+     {
+      "key": "accessibility",
+      "label": "Accessibility standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "qa",
+      "label": "QA standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "git",
+      "label": "Git standard",
+      "verdict": "covered",
+      "files": 2,
+      "droppable": false,
+      "drop": false,
+      "reason": "company covers it, but this one is never auto-removed (safety floor): default kept"
+     },
+     {
+      "key": "versioning",
+      "label": "Versioning standard",
+      "verdict": "none",
+      "files": 0,
+      "droppable": false,
+      "drop": false,
+      "reason": "no company coverage: default kept"
+     }
+    ],
+    "dropped": [
+     "css",
+     "html",
+     "ui",
+     "design"
+    ],
+    "written": [
+     "coding-standards/company/INDEX.md",
+     ".claude/skills/company-standards/SKILL.md",
+     "CLAUDE.md (marked \"Company Standards\" block)"
+    ],
+    "notes": [
+     "the company docs use the prefix \"ct\" (4 data attributes, 4 components). The project signature is your choice: run `signature set ct` to use it, or pick another alias, or none."
+    ],
+    "disclaimer": [
+     "Auto-detect is a guess from file names, titles and headings. It does not read your rule text.",
+     "It removes a default standard only when your company has a file dedicated to that subject and at least one more related file.",
+     "It never removes the accessibility, QA, git or versioning defaults. A wrong \"covered\" would silently drop a rule you needed, so partial overlap keeps the default.",
+     "Review the table below. Nothing is lost: removed defaults come back with `company remove`, and you can override with --company-defaults keep or drop."
+    ]
+   },
+   "status": {
+    "installed": true,
+    "mode": "auto",
+    "files": 20,
+    "indexed": 20,
+    "stale": false,
+    "dropped": [
+     "css",
+     "html",
+     "ui",
+     "design"
+    ]
+   },
+   "files": {
+    "standards": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "company/AI-INSTRUCTIONS.md",
+     "company/INDEX.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md",
+     "index.md"
+    ],
+    "index": "<!-- ai-dev-kit:company-index -->\n# Company standards index\n\nGenerated by install-kit from 20 files (~223 tokens in all). Do not edit; run `company sync` after changing the folder. Paths are relative to `coding-standards/company/`.\n\n**Precedence.** Where a company rule and a kit default disagree, the company rule wins. Kit defaults still apply where the company docs are silent. Removed because the company covers them: css, html, ui, design. A missing rule is a gap: write \"STANDARDS GAP:\" and ask; never invent.\n\n## Read first, once per session\n- `AI-INSTRUCTIONS.md` — AI Instructions (~32 tokens)\n\n## Routes: read the file for each thing you build or change\n| If you build or change | Read |\n|---|---|\n| ANY button | `components/button.md` (~21) |\n| ANY form | `patterns/forms.md` (~9) |\n\n## Other files\n| File | Covers | ~tokens |\n|---|---|---|\n| `a11y-checks.md` | A11y checks: WCAG checks. | 7 |\n| `accessibility.md` | Accessibility: WCAG and ARIA. | 8 |\n| `components/input.md` | Input component: Use data-ct-field. CtInput wraps it. | 14 |\n| `components/modal.md` | Modal component: Use data-ct-open. CtModal. | 12 |\n| `css-naming.md` | CSS naming: Stylesheet selectors. | 9 |\n| `css.md` | CSS rules: Selectors, specificity and BEM names. | 13 |\n| `foundations/tokens.md` | Design tokens: Theming tokens. | 9 |\n| `git-flow.md` | Git flow: Branch and commit rules. | 10 |\n| `git-review.md` | Git review: Pull request rules. | 9 |\n| `html-forms.md` | HTML forms: Markup for forms. | 8 |\n| `html.md` | HTML rules: Semantic element use and markup. | 12 |\n| `layout/header.md` | Header layout: App header. | 8 |\n| `notes.md` | Notes: Plain notes. | 6 |\n| `patterns/filter-bar.md` | Filter bar pattern: Navigation filters. | 11 |\n| `qa/checklist.md` | QA checklist: Definition of done and test plan. | 13 |\n| `qa/e2e.md` | E2E: E2E QA tests. | 6 |\n| `seo.md` | SEO: Sitemap only. | 6 |\n\n1 non-markdown file in the folder (tokens, fonts, scripts) are kept but not indexed.\n",
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n| Accessibility standard | `coding-standards/accessibility-standards.md` |\n| AI standard | `coding-standards/ai-standards.md` |\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n\n<!-- ai-dev-kit:company-standards:start -->\n## Company Standards\n\nThis project follows company standards in `coding-standards/company/`. Before editing code or UI they cover, read `coding-standards/company/INDEX.md` once per session, then only the files it routes to. Where a company rule and a kit default disagree, the company rule wins. Kit defaults still apply where the company docs are silent. Removed because the company covers them: css, html, ui, design. A missing rule is a gap: write `STANDARDS GAP:` and ask; never invent.\n<!-- ai-dev-kit:company-standards:end -->\n"
+   },
+   "removed": {
+    "removed": [
+     "CLAUDE.md (Company Standards block)",
+     ".claude/skills/company-standards",
+     "coding-standards/company/INDEX.md"
+    ],
+    "restored": [
+     "css-standards/token-files.md",
+     "css-standards.md",
+     "html-standards.md",
+     "design-standards.md",
+     "3 Active Standards rows"
+    ],
+    "kept": [
+     "coding-standards/company/ left in place: your files (add --purge to delete them)"
+    ]
+   },
+   "after": {
+    "standards": [
+     "accessibility-standards.md",
+     "ai-standards.md",
+     "company/AI-INSTRUCTIONS.md",
+     "company/README.md",
+     "company/a11y-checks.md",
+     "company/accessibility.md",
+     "company/components/button.md",
+     "company/components/input.md",
+     "company/components/modal.md",
+     "company/css-naming.md",
+     "company/css.md",
+     "company/foundations/tokens.md",
+     "company/git-flow.md",
+     "company/git-review.md",
+     "company/html-forms.md",
+     "company/html.md",
+     "company/layout/header.md",
+     "company/notes.md",
+     "company/patterns/filter-bar.md",
+     "company/patterns/forms.md",
+     "company/qa/checklist.md",
+     "company/qa/e2e.md",
+     "company/readme-sample.txt",
+     "company/seo.md",
+     "css-standards.md",
+     "css-standards/token-files.md",
+     "design-standards.md",
+     "html-standards.md",
+     "index.md"
+    ],
+    "status": {
+     "installed": false
+    },
+    "protocol": "# [CLAUDE.md | AGENTS.md] -- [Project]\n\n## Active Standards\n\n| Standard | Active |\n|---|---|\n| Accessibility standard | `coding-standards/accessibility-standards.md` |\n| AI standard | `coding-standards/ai-standards.md` |\n| CSS standard | `coding-standards/css-standards.md` |\n| HTML standard | `coding-standards/html-standards.md` |\n| Design standard | `coding-standards/design-standards.md` |\n\n## Project-Specific Context\n\n| Property | Value |\n|---|---|\n| Selector signature | [e.g. `ex-` / `ct-` / `my-`] |\n[CX]\n"
+   }
+  }
+ }
+}

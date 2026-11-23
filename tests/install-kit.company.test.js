@@ -247,3 +247,151 @@ t('the generated skill description stays within the 40-word cap', () => {
   assert.ok(desc.split(/\s+/).length <= 40, desc.split(/\s+/).length + ' words');
   assert.match(read(root, '.claude/skills/company-standards/SKILL.md'), /## Self-improvement/);
 });
+
+// ---- gaps found by `invariants probe` on install-kit.company.js ----
+// Regenerate the golden on purpose with UPDATE_GOLDEN=1 node tests/install-kit.company.test.js, then read the diff.
+const BSL = String.fromCharCode(92), CRL = String.fromCharCode(13);
+const cleanJson = (v, roots) => {
+	let out = JSON.stringify(v, null, 1).split(BSL + BSL).join('/').split(CRL).join('');
+	for (const [r, name] of roots) out = out.split(r.split(BSL).join('/')).join(name);
+	return out;
+};
+const listDir = (root, rel) => { const abs = path.join(root, rel); const acc = []; const go = (d) => { if (!fs.existsSync(d)) return; for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); e.isDirectory() ? go(p) : acc.push(path.relative(abs, p).split(BSL).join('/')); } }; go(abs); return acc.sort(); };
+
+// A company set that overlaps many disciplines: dedicated css, html, accessibility, git and qa docs, plus a design system
+// big enough to count as a replacement, and a data-ct- signature used in several files.
+function makeRichCompany() {
+	const co = tmp();
+	write(co, 'docs/AI-INSTRUCTIONS.md', '# AI Instructions\n\n| If you build | Read |\n|---|---|\n| ANY button | `components/button.md` |\n| ANY form | `patterns/forms.md` |\n');
+	for (const [rel, body] of Object.entries({
+		'components/button.md': '# Button\n\nA component. Use data-ct-role and data-ct-kind. See CtButton and CtIcon.\n',
+		'components/input.md': '# Input component\n\nUse data-ct-field. CtInput wraps it.\n',
+		'components/modal.md': '# Modal component\n\nUse data-ct-open. CtModal.\n',
+		'patterns/forms.md': '# Forms pattern\n\nLayout of a form.\n', 'patterns/filter-bar.md': '# Filter bar pattern\n\nNavigation filters.\n',
+		'layout/header.md': '# Header layout\n\nApp header.\n', 'foundations/tokens.md': '# Design tokens\n\nTheming tokens.\n',
+		'css.md': '# CSS rules\n\nSelectors, specificity and BEM names.\n', 'css-naming.md': '# CSS naming\n\nStylesheet selectors.\n',
+		'html.md': '# HTML rules\n\nSemantic element use and markup.\n', 'html-forms.md': '# HTML forms\n\nMarkup for forms.\n',
+		'accessibility.md': '# Accessibility\n\nWCAG and ARIA.\n', 'a11y-checks.md': '# A11y checks\n\nWCAG checks.\n',
+		'git-flow.md': '# Git flow\n\nBranch and commit rules.\n', 'git-review.md': '# Git review\n\nPull request rules.\n',
+		'qa/checklist.md': '# QA checklist\n\nDefinition of done and test plan.\n', 'qa/e2e.md': '# E2E\n\nE2E QA tests.\n',
+		'seo.md': '# SEO\n\nSitemap only.\n', 'notes.md': '# Notes\n\nPlain notes.\n', 'readme-sample.txt': 'not markdown',
+	})) write(co, 'docs/' + rel, body);
+	write(co, 'node_modules/x/readme.md', '# ignored\n');
+	return co;
+}
+
+t('golden: company scan, routes, overlap, signature and sync in each defaults mode', () => {
+	const co = makeRichCompany();
+	const dir = path.join(co, 'docs');
+	const scan = c.scanCompany(dir);
+	const out = { scan, routes: c.importRoutes(scan.docs, dir), overlap: c.detectOverlap(scan.docs), signature: c.detectSignature(scan.docs, dir), omitted: [c.isOmitted('css-standards.md', ['css-standards.md']), c.isOmitted('x.md', ['css-standards.md']), c.isOmitted('css-standards/a.md', ['css-standards/'])] };
+	out.modes = {};
+	for (const mode of ['keep', 'drop', 'auto']) {
+		const lib = makeLibrary(); const root = tmp();
+		doInstall({ library: lib, root, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'none' });
+		const roots = [[root, '<root>'], [co, '<co>'], [lib, '<lib>']];
+		const dry = c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: dir, companyDefaults: mode, dryRun: true });
+		const dryWrote = listDir(root, 'coding-standards/company');
+		const sync = c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: dir, companyDefaults: mode });
+		const refreshed = c.doCompanySync({ library: lib, root, tool: 'claude' });
+		const status = c.companyStatus(root);
+		const files = { standards: listDir(root, 'coding-standards'), index: fs.existsSync(path.join(root, 'coding-standards/company/INDEX.md')) ? read(root, 'coding-standards/company/INDEX.md') : null, protocol: read(root, 'CLAUDE.md') };
+		const removed = c.doCompanyRemove({ library: lib, root, tool: 'claude' });
+		const after = { standards: listDir(root, 'coding-standards'), status: c.companyStatus(root), protocol: read(root, 'CLAUDE.md') };
+		out.modes[mode] = JSON.parse(cleanJson({ dry, dryWrote, sync, refreshed, status, files, removed, after }, roots));
+	}
+	const file = path.join(__dirname, 'fixtures', 'company', 'sync.json');
+	const text = JSON.stringify(out, null, 1) + '\n';
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CRL).join(''));
+});
+
+t('company remove with --purge deletes the company folder; without it the folder stays', () => {
+	const co = makeRichCompany(); const dir = path.join(co, 'docs');
+	for (const purge of [false, true]) {
+		const lib = makeLibrary(); const root = tmp();
+		doInstall({ library: lib, root, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'none' });
+		c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: dir, companyDefaults: 'auto' });
+		c.doCompanyRemove({ library: lib, root, tool: 'claude', purge });
+		assert.strictEqual(fs.existsSync(path.join(root, 'coding-standards', 'company')), !purge, 'purge ' + purge);
+	}
+});
+
+// ---- second round: the survivors left after the golden ----
+const docsOf = (files) => { const d = tmp(); for (const [rel, body] of Object.entries(files)) write(d, rel, body); return { d, scan: c.scanCompany(d) }; };
+
+t('doc titles come from the first top-level heading; summaries and route triggers are clipped at their limits', () => {
+	const sum110 = 'a'.repeat(110), sum111 = 'b'.repeat(111);
+	const { scan } = docsOf({ 'sub-first.md': '## Sub heading\n\n# Real title\n\nbody text here\n', 'two-h1.md': '# First\n\n# Second\n\ntext\n', 's110.md': '# S\n\n' + sum110 + '\n', 's111.md': '# S\n\n' + sum111 + '\n' });
+	const by = Object.fromEntries(scan.docs.map((d) => [d.rel, d]));
+	assert.strictEqual(by['sub-first.md'].title, 'Real title');
+	assert.strictEqual(by['two-h1.md'].title, 'First');
+	assert.strictEqual(by['s110.md'].summary, sum110);
+	assert.strictEqual(by['s111.md'].summary, 'b'.repeat(109) + '\u2026');
+	const t100 = 'x'.repeat(100), t101 = 'y'.repeat(101);
+	const r = docsOf({ 'components/a.md': '# A\n', 'components/b.md': '# B\n', 'AI.md': '| If you build | Read |\n|---|---|\n| ' + t100 + ' | components/a.md |\n| ' + t101 + ' | components/b.md |\n' });
+	const routes = c.importRoutes(r.scan.docs, r.d);
+	assert.deepStrictEqual(routes.map((x) => x.trigger), [t100, 'y'.repeat(99) + '\u2026']);
+});
+
+t('route table paths match a document by full path, by suffix, or by a longer prefixed path, and only when unique', () => {
+	const { d, scan } = docsOf({ 'AI.md': '| If you build | Read |\n|---|---|\n| a modal | modal.md |\n| an input | docs/components/input.md |\n| a button | components/button.md |\n| a clash | notes.md |\n', 'components/modal.md': '# Modal\n', 'components/input.md': '# Input\n', 'components/button.md': '# Button\n', 'a/notes.md': '# N1\n', 'b/notes.md': '# N2\n' });
+	const routes = c.importRoutes(scan.docs, d);
+	assert.deepStrictEqual(routes.map((x) => x.trigger + ' -> ' + x.rel).sort(), ['a button -> components/button.md', 'a modal -> components/modal.md', 'an input -> components/input.md']);
+});
+
+t('the project signature needs three uses in two files', () => {
+	const sig = (files) => { const { d, scan } = docsOf(files); return c.detectSignature(scan.docs, d); };
+	assert.deepStrictEqual(sig({ 'a.md': 'data-ct-a data-ct-b', 'b.md': 'data-ct-c' }), { alias: 'ct', attrs: 3, components: 0 });
+	assert.strictEqual(sig({ 'a.md': 'data-ct-a', 'b.md': 'data-ct-b' }), null);
+	assert.strictEqual(sig({ 'a.md': 'data-ct-a data-ct-b data-ct-c' }), null);
+});
+
+t('ensureCxBlock adds the block once, reports a change only when it wrote, and leaves a template placeholder alone', () => {
+	const root = tmp();
+	assert.strictEqual(c.ensureCxBlock(root, 'CLAUDE.md', 'ab'), true, 'creates the protocol file with the block');
+	assert.ok(read(root, 'CLAUDE.md').includes('ai-dev-kit:cx:start'));
+	assert.strictEqual(c.ensureCxBlock(root, 'CLAUDE.md', 'ab'), false, 'second call changes nothing');
+	assert.strictEqual(c.ensureCxBlock(root, 'CLAUDE.md', 'cd'), true, 'a new code rewrites it');
+	const tpl = tmp(); write(tpl, 'CLAUDE.md', '# T\n\n| Context code | [CX] |\n');
+	assert.strictEqual(c.ensureCxBlock(tpl, 'CLAUDE.md', 'ab'), false);
+	assert.ok(!read(tpl, 'CLAUDE.md').includes('ai-dev-kit:cx:start'));
+});
+
+t('company standards follow a protocol file other than CLAUDE.md, and a missing Active Standards table is survived', () => {
+	const co = makeRichCompany(); const dir = path.join(co, 'docs');
+	const lib = makeLibrary(); const root = tmp();
+	doInstall({ library: lib, root, tool: 'codex', skills: ['handover'], standards: true, contextCode: 'none' });
+	const proto = readManifest(root).protocolFile;
+	assert.strictEqual(proto, 'AGENTS.md');
+	c.doCompanySync({ library: lib, root, tool: 'codex', companyFrom: dir, companyDefaults: 'auto' });
+	assert.ok(read(root, 'AGENTS.md').includes('## Company Standards'), 'block written to AGENTS.md');
+	assert.ok(!has(root, 'CLAUDE.md'), 'no CLAUDE.md invented');
+	const body = read(root, 'AGENTS.md');
+	fs.writeFileSync(path.join(root, 'AGENTS.md'), body.replace(/## Active Standards[\s\S]*?(?=\n## )/, ''));
+	assert.doesNotThrow(() => c.doCompanyRemove({ library: lib, root, tool: 'codex' }));
+	assert.ok(!read(root, 'AGENTS.md').includes('## Company Standards'), 'block removed from AGENTS.md');
+});
+
+t('company remove with nothing installed does nothing; with a record but a deleted folder it still cleans up', () => {
+	const lib = makeLibrary(); const root = tmp();
+	doInstall({ library: lib, root, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'none' });
+	const before = read(root, 'CLAUDE.md');
+	const none = c.doCompanyRemove({ library: lib, root, tool: 'claude' });
+	assert.deepStrictEqual([none.removed, none.restored], [[], []]);
+	assert.strictEqual(read(root, 'CLAUDE.md'), before);
+	const co = makeRichCompany();
+	c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: path.join(co, 'docs'), companyDefaults: 'auto' });
+	fs.rmSync(path.join(root, 'coding-standards', 'company'), { recursive: true });
+	const r = c.doCompanyRemove({ library: lib, root, tool: 'claude' });
+	assert.ok(r.removed.length > 0, JSON.stringify(r));
+	assert.ok(!read(root, 'CLAUDE.md').includes('## Company Standards'));
+});
+
+t('the generated company README names the sync command and the project placeholder', () => {
+	const co = makeRichCompany(); const lib = makeLibrary(); const root = tmp();
+	doInstall({ library: lib, root, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'none' });
+	c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: path.join(co, 'docs'), companyDefaults: 'keep' });
+	assert.ok(read(root, 'coding-standards/company/README.md').includes('company sync --root <your-project>'));
+});

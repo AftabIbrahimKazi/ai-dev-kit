@@ -1,0 +1,57 @@
+{
+ "no css": {
+  "display": "no-css",
+  "files": 4,
+  "summary": "Build folder: dist\nNo static findings over the thresholds; the next step is the runtime half (browser trace)."
+ },
+ "css without faces": {
+  "display": "no-css",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: 1 unhashed JS/CSS names\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "all swap": {
+  "display": "swap",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: 1 unhashed JS/CSS names\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "swap and optional": {
+  "display": "swap",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: 1 unhashed JS/CSS names\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "one block": {
+  "display": "other",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "all block": {
+  "display": "other",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "one missing": {
+  "display": "missing",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "all missing": {
+  "display": "missing",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "missing and block": {
+  "display": "missing",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "uppercase swap": {
+  "display": "swap",
+  "files": 4,
+  "summary": "Build folder: dist\nHeaviest: 1 unhashed JS/CSS names\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+ },
+ "five fonts": {
+  "files": 5,
+  "summary": "Build folder: dist\nHeaviest: 5 font files (5 KB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 5 font files | 5 KB | subset and keep at most 4 files | M |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |",
+  "table": "Build folder: dist (7 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         5 KB  (5 files, font-display: swap)\n\nFonts (5 files, limit 4):\n      1 KB  dist/f0.woff2\n      1 KB  dist/f1.woff2\n      1 KB  dist/f2.woff2\n      1 KB  dist/f3.woff2\n      1 KB  dist/f4.woff2\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n2 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser."
+ }
+}
