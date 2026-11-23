@@ -1,0 +1,140 @@
+{
+ "gear ok": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear 1 part": [
+  "error: a gear train needs at least 2 parts",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear 2 parts": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear 8 parts": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear 9 parts": [
+  "error: 9 parts; the limit is 8",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear no module": [
+  "error: module_mm must be above 0",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear no width": [
+  "error: width_mm must be above 0",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "gear no torque": [
+  "error: input.torque_nm must be a number above 0",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine ok": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine spacing exact": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine spacing under": [
+  "warning: cylinder_spacing_mm under 1.05 x the bore: neighbouring cylinders will touch",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine rod equals radius": [
+  "error: rod_length_mm must be longer than crank_radius_mm, or the mechanism cannot turn",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine rod 1.4": [
+  "warning: a rod under 1.5 x the crank radius is unusual; check the dimensions",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine rod 1.5": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine rod below radius": [
+  "error: rod_length_mm must be longer than crank_radius_mm, or the mechanism cannot turn",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine cylinders 0": [
+  "error: cylinders must be a whole number from 1 to 12",
+  "error: a V needs at least 2 cylinders",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine cylinders 13": [
+  "error: cylinders must be a whole number from 1 to 12",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine cylinders 2.5": [
+  "error: cylinders must be a whole number from 1 to 12",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine bank 0": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine bank 179": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine bank 180": [
+  "error: bank_angle_deg must be 0 (inline) or an angle below 180",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "engine bank -1": [
+  "error: bank_angle_deg must be 0 (inline) or an angle below 180",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "V with one cylinder": [
+  "error: a V needs at least 2 cylinders",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "phases right": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "phases wrong": [
+  "error: crank_phases_deg needs 4 numbers, one per crank throw",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "inline phases": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "custom ok": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "custom bare": [
+  "warning: no model and no parts: the page shows three placeholder blocks",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "custom model only": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "custom parts only": [
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "duplicate part ids": [
+  "error: duplicate part id \"a\"",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "part without label": [
+  "error: every part needs id and label",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "no title": [
+  "error: title is missing (it names the page)",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "no description": [
+  "error: description is missing (one sentence of what the page shows)",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "bad kind": [
+  "error: kind must be one of gears, crank, custom",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "no rpm": [
+  "error: input.rpm must be a number above 0",
+  "warning: no reference. A machine built from a sentence comes out generic; add a photo or drawing path"
+ ],
+ "not an object": [
+  "error: spec is not an object"
+ ],
+ "a string": [
+  "error: spec is not an object"
+ ]
+}

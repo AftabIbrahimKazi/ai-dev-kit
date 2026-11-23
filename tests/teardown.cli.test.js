@@ -329,6 +329,88 @@ t('a V8 is exact: cross-plane throws, every rod keeps its length in the world fr
 	assert.ok(kin.charts.length === 3 && Math.abs(kin.charts[0].f(0) - (kin.R + kin.L - kin.pistonX(kin.localAngle(0, 0)))) < 1e-9);
 });
 
+// ---- gaps found by `invariants probe` on teardown.cli.js ----
+// Regenerate the golden on purpose with UPDATE_GOLDEN=1 node tests/teardown.cli.test.js, then read the diff.
+const GOLD = path.join(__dirname, 'fixtures', 'teardown');
+const CRC = String.fromCharCode(13);
+const golden = (name, actual) => {
+	const file = path.join(GOLD, name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(GOLD, { recursive: true }); fs.writeFileSync(file, actual); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(actual, fs.readFileSync(file, 'utf8').split(CRC).join(''), name + ' changed; if intended regenerate with UPDATE_GOLDEN=1 and read the diff');
+};
+
+t('golden: draftSpec reads cylinders, banks, teeth and parts the same way across many descriptions', () => {
+	const cases = [
+		['v8', 'a V8 engine, 86 mm bore, 90 mm stroke, rod 150 mm, 3000 rpm'], ['inline 4', 'an inline 4 engine, 3000 rpm'], ['six', 'a 6 cylinders engine'],
+		['v6 bank', 'a V6 engine with a 60 degree bank angle'], ['v twin', 'a v-twin motorcycle engine'], ['single', 'a single cylinder engine'],
+		['twelve', 'a 12 cylinders engine'], ['thirteen', 'a 13 cylinders engine'], ['zero', 'a 0 cylinders engine'], ['one', 'a 1 cylinder engine, 40 mm bore'],
+		['gearbox', 'a gearbox'], ['reducer', 'a reducer with 12, 36 and 18 teeth, 1500 rpm, 8 N*m, module 2.5'],
+		['vending', 'a vending machine. parts: coin slot, motor and spiral'], ['bare custom', 'a vending machine'], ['walker', 'Theo Jansen walker linkage'],
+		['with model', 'my robot arm', 'arm.glb'], ['stroke words', 'an engine with a 70 mm stroke and a 60 mm bore'],
+	];
+	const out = {};
+	for (const [name, about, model] of cases) out[name] = T.draftSpec(about, 'demo', model);
+	golden('draft-spec.json', JSON.stringify(out, null, 1) + '\n');
+});
+
+t('golden: validateSpec reports the same problems for gear, crank and custom specs at their limits', () => {
+	const gear = () => T.draftSpec('a reducer with 12, 36 and 18 teeth, 1500 rpm, 8 N*m, module 2.5', 'g').spec;
+	const eng = () => T.draftSpec('a V8 engine, 86 mm bore, 90 mm stroke, rod 150 mm, 3000 rpm', 'e').spec;
+	const cus = () => T.draftSpec('a vending machine. parts: coin slot, motor and spiral', 'v').spec;
+	const nParts = (n) => { const g = gear(); g.parts = Array.from({ length: n }, (_, i) => ({ id: 'p' + i, label: 'P' + i, teeth: 20 })); return g; };
+	const cases = {
+		'gear ok': gear(), 'gear 1 part': nParts(1), 'gear 2 parts': nParts(2), 'gear 8 parts': nParts(8), 'gear 9 parts': nParts(9),
+		'gear no module': { ...gear(), module_mm: 0 }, 'gear no width': { ...gear(), width_mm: 0 }, 'gear no torque': { ...gear(), input: { rpm: 100 } },
+		'engine ok': eng(), 'engine spacing exact': { ...eng(), cylinder_spacing_mm: eng().bore_mm * 1.05 }, 'engine spacing under': { ...eng(), cylinder_spacing_mm: eng().bore_mm * 1.05 - 0.01 },
+		'engine rod equals radius': { ...eng(), rod_length_mm: eng().crank_radius_mm }, 'engine rod 1.4': { ...eng(), rod_length_mm: eng().crank_radius_mm * 1.4 },
+		'engine rod 1.5': { ...eng(), rod_length_mm: eng().crank_radius_mm * 1.5 }, 'engine rod below radius': { ...eng(), rod_length_mm: eng().crank_radius_mm - 1 },
+		'engine cylinders 0': { ...eng(), cylinders: 0 }, 'engine cylinders 13': { ...eng(), cylinders: 13 }, 'engine cylinders 2.5': { ...eng(), cylinders: 2.5 },
+		'engine bank 0': { ...eng(), bank_angle_deg: 0 }, 'engine bank 179': { ...eng(), bank_angle_deg: 179 }, 'engine bank 180': { ...eng(), bank_angle_deg: 180 }, 'engine bank -1': { ...eng(), bank_angle_deg: -1 },
+		'V with one cylinder': { ...eng(), cylinders: 1, bank_angle_deg: 60 }, 'phases right': { ...eng(), crank_phases_deg: [0, 90, 180, 270] }, 'phases wrong': { ...eng(), crank_phases_deg: [0, 90] },
+		'inline phases': { ...eng(), cylinders: 4, bank_angle_deg: 0, crank_phases_deg: [0, 180, 180, 0] },
+		'custom ok': cus(), 'custom bare': { ...cus(), parts: [], model: undefined }, 'custom model only': { ...cus(), parts: [], model: 'a.glb' },
+		'custom parts only': { ...cus(), model: undefined }, 'duplicate part ids': { ...cus(), parts: [{ id: 'a', label: 'A' }, { id: 'a', label: 'B' }] },
+		'part without label': { ...cus(), parts: [{ id: 'a' }] }, 'no title': { ...cus(), title: '' }, 'no description': { ...cus(), description: '' },
+		'bad kind': { ...cus(), kind: 'rocket' }, 'no rpm': { ...eng(), input: {} }, 'not an object': null, 'a string': 'x',
+	};
+	const out = {};
+	for (const [name, spec] of Object.entries(cases)) out[name] = T.validateSpec(spec).map((x) => x.level + ': ' + x.msg);
+	golden('validate-spec.json', JSON.stringify(out, null, 1) + '\n');
+});
+
+t('build --dry-run writes no dist folder; a wildcard package export maps to the right file', () => {
+	const d = scaffolded();
+	assert.strictEqual(cli(d, 'build', 'teardown/red', '--dry-run').status, 0);
+	assert.ok(!fs.existsSync(path.join(d, 'teardown', 'red', 'dist')), 'dry run wrote a dist folder');
+	fs.mkdirSync(path.join(d, 'node_modules', 'fakelib', 'src'), { recursive: true });
+	fs.writeFileSync(path.join(d, 'node_modules', 'fakelib', 'package.json'), JSON.stringify({ name: 'fakelib', version: '1.0.0', type: 'module', exports: { './util': './src/util.js', './*': './src/*.js' } }));
+	for (const n of ['util', 'utility']) fs.writeFileSync(path.join(d, 'node_modules', 'fakelib', 'src', n + '.js'), 'export const n = "' + n + '";\n');
+	fs.appendFileSync(path.join(d, 'teardown', 'red', 'main.js'), "\nimport('fakelib/utility');\nimport('fakelib/util');\n");
+	const r = cli(d, 'build', 'teardown/red', '--json');
+	assert.strictEqual(r.status, 0, r.stderr);
+	const j = JSON.parse(r.stdout);
+	assert.strictEqual(j.imports['fakelib/utility'], './vendor/fakelib/src/utility.js');
+	assert.strictEqual(j.imports['fakelib/util'], './vendor/fakelib/src/util.js');
+	assert.ok(fs.existsSync(path.join(d, 'teardown', 'red', 'dist', 'vendor', 'fakelib', 'src', 'utility.js')));
+});
+
+t('findModels looks four folders deep, skips vendored folders and caps the list', () => {
+	const d = proj({ 'a.glb': 'x', 'l1/l2/l3/l4/deep4.glb': 'x', 'l1/l2/l3/l4/l5/deep5.glb': 'x', 'node_modules/p/hidden.glb': 'x', 'dist/out.glb': 'x', 'vendor/v.gltf': 'x' });
+	const found = T.findModels(d).slice().sort();
+	assert.deepStrictEqual(found, ['a.glb', 'l1/l2/l3/l4/deep4.glb']);
+	const many = proj(Object.fromEntries(Array.from({ length: 25 }, (_, i) => ['m' + i + '.glb', 'x'])));
+	assert.strictEqual(T.findModels(many).length, 20);
+});
+
+t('init on a spec.json that is not valid JSON says so, with the parser message', () => {
+	const d = scaffolded();
+	fs.writeFileSync(path.join(d, 'teardown', 'red', 'spec.json'), '{ not json');
+	const r = cli(d, 'init', 'red');
+	assert.notStrictEqual(r.status, 0);
+	assert.ok(r.stderr.includes('spec.json is not valid JSON: ') && !r.stderr.includes('NaN'), r.stderr);
+});
+
 // A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless the run reached its end.
 let finished = false;
 process.on('exit', () => { if (!finished) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });

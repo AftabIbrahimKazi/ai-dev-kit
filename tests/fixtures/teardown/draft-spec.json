@@ -1,0 +1,878 @@
+{
+ "v8": {
+  "spec": {
+   "title": "A V8 engine, 86 mm bore, 90 mm stroke, rod 150 mm, 3000 rpm",
+   "description": "An interactive 3D model of a V8 engine, 86 mm bore, 90 mm stroke, rod 150 mm, 3000 rpm that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 8,
+   "bank_angle_deg": 90,
+   "cylinder_spacing_mm": 112,
+   "crank_radius_mm": 45,
+   "rod_length_mm": 150,
+   "bore_mm": 86,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 3000,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    },
+    {
+     "id": "cyl3",
+     "label": "Cylinder 3"
+    },
+    {
+     "id": "cyl4",
+     "label": "Cylinder 4"
+    },
+    {
+     "id": "cyl5",
+     "label": "Cylinder 5"
+    },
+    {
+     "id": "cyl6",
+     "label": "Cylinder 6"
+    },
+    {
+     "id": "cyl7",
+     "label": "Cylinder 7"
+    },
+    {
+     "id": "cyl8",
+     "label": "Cylinder 8"
+    }
+   ]
+  },
+  "open": [
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "inline 4": {
+  "spec": {
+   "title": "An inline 4 engine, 3000 rpm",
+   "description": "An interactive 3D model of an inline 4 engine, 3000 rpm that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 4,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 3000,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    },
+    {
+     "id": "cyl3",
+     "label": "Cylinder 3"
+    },
+    {
+     "id": "cyl4",
+     "label": "Cylinder 4"
+    }
+   ]
+  },
+  "open": [
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "six": {
+  "spec": {
+   "title": "A 6 cylinders engine",
+   "description": "An interactive 3D model of a 6 cylinders engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 6,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    },
+    {
+     "id": "cyl3",
+     "label": "Cylinder 3"
+    },
+    {
+     "id": "cyl4",
+     "label": "Cylinder 4"
+    },
+    {
+     "id": "cyl5",
+     "label": "Cylinder 5"
+    },
+    {
+     "id": "cyl6",
+     "label": "Cylinder 6"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "v6 bank": {
+  "spec": {
+   "title": "A V6 engine with a 60 degree bank angle",
+   "description": "An interactive 3D model of a V6 engine with a 60 degree bank angle that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 6,
+   "bank_angle_deg": 60,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    },
+    {
+     "id": "cyl3",
+     "label": "Cylinder 3"
+    },
+    {
+     "id": "cyl4",
+     "label": "Cylinder 4"
+    },
+    {
+     "id": "cyl5",
+     "label": "Cylinder 5"
+    },
+    {
+     "id": "cyl6",
+     "label": "Cylinder 6"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Crank throw angles for the V6 are spread evenly; set \"crank_phases_deg\" (one number per throw) if the real shaft differs.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "v twin": {
+  "spec": {
+   "title": "A v-twin motorcycle engine",
+   "description": "An interactive 3D model of a v-twin motorcycle engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 2,
+   "bank_angle_deg": 60,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Crank throw angles for the V2 are spread evenly; set \"crank_phases_deg\" (one number per throw) if the real shaft differs.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "single": {
+  "spec": {
+   "title": "A single cylinder engine",
+   "description": "An interactive 3D model of a single cylinder engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 1,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "rod",
+     "label": "Connecting rod"
+    },
+    {
+     "id": "piston",
+     "label": "Piston"
+    },
+    {
+     "id": "cylinder",
+     "label": "Cylinder"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "How many cylinders, and inline or V? Say \"V8\", \"inline 4\" or \"6 cylinders\". (guessed one cylinder)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "twelve": {
+  "spec": {
+   "title": "A 12 cylinders engine",
+   "description": "An interactive 3D model of a 12 cylinders engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 12,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "cyl1",
+     "label": "Cylinder 1"
+    },
+    {
+     "id": "cyl2",
+     "label": "Cylinder 2"
+    },
+    {
+     "id": "cyl3",
+     "label": "Cylinder 3"
+    },
+    {
+     "id": "cyl4",
+     "label": "Cylinder 4"
+    },
+    {
+     "id": "cyl5",
+     "label": "Cylinder 5"
+    },
+    {
+     "id": "cyl6",
+     "label": "Cylinder 6"
+    },
+    {
+     "id": "cyl7",
+     "label": "Cylinder 7"
+    },
+    {
+     "id": "cyl8",
+     "label": "Cylinder 8"
+    },
+    {
+     "id": "cyl9",
+     "label": "Cylinder 9"
+    },
+    {
+     "id": "cyl10",
+     "label": "Cylinder 10"
+    },
+    {
+     "id": "cyl11",
+     "label": "Cylinder 11"
+    },
+    {
+     "id": "cyl12",
+     "label": "Cylinder 12"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "thirteen": {
+  "spec": {
+   "title": "A 13 cylinders engine",
+   "description": "An interactive 3D model of a 13 cylinders engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 1,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "rod",
+     "label": "Connecting rod"
+    },
+    {
+     "id": "piston",
+     "label": "Piston"
+    },
+    {
+     "id": "cylinder",
+     "label": "Cylinder"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "How many cylinders, and inline or V? Say \"V8\", \"inline 4\" or \"6 cylinders\". (guessed one cylinder)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "zero": {
+  "spec": {
+   "title": "A 0 cylinders engine",
+   "description": "An interactive 3D model of a 0 cylinders engine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 1,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 104,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 80,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "rod",
+     "label": "Connecting rod"
+    },
+    {
+     "id": "piston",
+     "label": "Piston"
+    },
+    {
+     "id": "cylinder",
+     "label": "Cylinder"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the bore in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "How many cylinders, and inline or V? Say \"V8\", \"inline 4\" or \"6 cylinders\". (guessed one cylinder)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "one": {
+  "spec": {
+   "title": "A 1 cylinder engine, 40 mm bore",
+   "description": "An interactive 3D model of a 1 cylinder engine, 40 mm bore that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 1,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 52,
+   "crank_radius_mm": 40,
+   "rod_length_mm": 180,
+   "bore_mm": 40,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "rod",
+     "label": "Connecting rod"
+    },
+    {
+     "id": "piston",
+     "label": "Piston"
+    },
+    {
+     "id": "cylinder",
+     "label": "Cylinder"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the stroke in mm? (guessed 80)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "gearbox": {
+  "spec": {
+   "title": "A gearbox",
+   "description": "An interactive 3D model of a gearbox that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "gears",
+   "family": "gears",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "module_mm": 3,
+   "width_mm": 20,
+   "input": {
+    "name": "input shaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "g1",
+     "label": "Input gear",
+     "teeth": 14
+    },
+    {
+     "id": "g2",
+     "label": "Gear 2",
+     "teeth": 28
+    },
+    {
+     "id": "g3",
+     "label": "Output gear",
+     "teeth": 20
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "How many gears, and how many teeth on each? (guessed 14, 28, 20)",
+   "What is the input torque in N·m? (guessed 10)",
+   "What is the gear module in mm? (guessed 3)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "reducer": {
+  "spec": {
+   "title": "A reducer with 12, 36 and 18 teeth, 1500 rpm, 8 N*m, module ",
+   "description": "An interactive 3D model of a reducer with 12, 36 and 18 teeth, 1500 rpm, 8 N*m, module  that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "gears",
+   "family": "gears",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "module_mm": 2.5,
+   "width_mm": 20,
+   "input": {
+    "name": "input shaft",
+    "rpm": 1500,
+    "torque_nm": 8
+   },
+   "parts": [
+    {
+     "id": "g1",
+     "label": "Input gear",
+     "teeth": 12
+    },
+    {
+     "id": "g2",
+     "label": "Gear 2",
+     "teeth": 36
+    },
+    {
+     "id": "g3",
+     "label": "Output gear",
+     "teeth": 18
+    }
+   ]
+  },
+  "open": [
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "vending": {
+  "spec": {
+   "title": "A vending machine. parts: coin slot, motor and spiral",
+   "description": "An interactive 3D model of a vending machine. parts: coin slot, motor and spiral that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "custom",
+   "family": "other",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "input": {
+    "name": "input",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "coin-slot",
+     "label": "Coin slot"
+    },
+    {
+     "id": "motor",
+     "label": "Motor"
+    },
+    {
+     "id": "spiral",
+     "label": "Spiral"
+    }
+   ]
+  },
+  "open": [
+   "Give the machine as a .glb or .gltf file (\"model\"), or list its parts in \"parts\" and replace the placeholder blocks in machine.js with real geometry built from the reference.",
+   "Real dimensions and the one input that drives it (angle, stroke or speed) go in kin.js. Without them the page shows the model and its parts but no readouts.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "bare custom": {
+  "spec": {
+   "title": "A vending machine",
+   "description": "An interactive 3D model of a vending machine that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "custom",
+   "family": "other",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "input": {
+    "name": "input",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": []
+  },
+  "open": [
+   "Give the machine as a .glb or .gltf file (\"model\"), or list its parts in \"parts\" and replace the placeholder blocks in machine.js with real geometry built from the reference.",
+   "What are the parts? (guessed Part 1, Part 2, Part 3)",
+   "Real dimensions and the one input that drives it (angle, stroke or speed) go in kin.js. Without them the page shows the model and its parts but no readouts.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "walker": {
+  "spec": {
+   "title": "Theo Jansen walker linkage",
+   "description": "An interactive 3D model of Theo Jansen walker linkage that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "custom",
+   "family": "linkage",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/curve-core",
+    "@triforge/animation-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "input": {
+    "name": "input",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": []
+  },
+  "open": [
+   "Give the machine as a .glb or .gltf file (\"model\"), or list its parts in \"parts\" and replace the placeholder blocks in machine.js with real geometry built from the reference.",
+   "What are the parts? (guessed Part 1, Part 2, Part 3)",
+   "Real dimensions and the one input that drives it (angle, stroke or speed) go in kin.js. Without them the page shows the model and its parts but no readouts.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "with model": {
+  "spec": {
+   "title": "My robot arm",
+   "description": "An interactive 3D model of my robot arm that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "custom",
+   "family": "other",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core"
+   ],
+   "generated_by": "teardown add-on",
+   "model": "arm.glb",
+   "input": {
+    "name": "input",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": []
+  },
+  "open": [
+   "Model arm.glb: parts are its top-level nodes. List part names in \"parts\" (id = the node's name) to choose and label them.",
+   "Real dimensions and the one input that drives it (angle, stroke or speed) go in kin.js. Without them the page shows the model and its parts but no readouts.",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ },
+ "stroke words": {
+  "spec": {
+   "title": "An engine with a 70 mm stroke and a 60 mm bore",
+   "description": "An interactive 3D model of an engine with a 70 mm stroke and a 60 mm bore that you can take apart, with live readouts from the same math that moves the parts.",
+   "kind": "crank",
+   "family": "engine",
+   "units": "mm",
+   "reference": "",
+   "packages": [
+    "@triforge/modifier-core",
+    "@triforge/keyframe",
+    "@triforge/render-budget-core",
+    "@triforge/compositor-core"
+   ],
+   "generated_by": "teardown add-on",
+   "cylinders": 1,
+   "bank_angle_deg": 0,
+   "cylinder_spacing_mm": 78,
+   "crank_radius_mm": 35,
+   "rod_length_mm": 160,
+   "bore_mm": 60,
+   "input": {
+    "name": "crankshaft",
+    "rpm": 1200,
+    "torque_nm": 10
+   },
+   "parts": [
+    {
+     "id": "crank",
+     "label": "Crankshaft"
+    },
+    {
+     "id": "rod",
+     "label": "Connecting rod"
+    },
+    {
+     "id": "piston",
+     "label": "Piston"
+    },
+    {
+     "id": "cylinder",
+     "label": "Cylinder"
+    }
+   ]
+  },
+  "open": [
+   "What is the input speed in rpm? (guessed 1200)",
+   "What is the connecting-rod length in mm, centre to centre? (guessed 2 x stroke + 20)",
+   "How many cylinders, and inline or V? Say \"V8\", \"inline 4\" or \"6 cylinders\". (guessed one cylinder)",
+   "Is there a reference: a photo, a cutaway drawing from a manual, a clip? Put its path in \"reference\". Without one the machine comes out generic."
+  ]
+ }
+}
