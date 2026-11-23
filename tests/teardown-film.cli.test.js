@@ -87,3 +87,56 @@ t('bad usage exits 2 with a usage line', () => {
 	const d = proj();
 	for (const a of [[], ['bogus'], ['film', '--fps']]) { const r = cli(d, a); assert.strictEqual(r.status, 2, a.join(' ')); assert.ok(/usage:/.test(r.stderr)); }
 });
+
+// ---- round 4: plan and args golden (found by the kit-wide probe) ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/teardown-film.cli.test.js, then read the diff.
+const CR5 = String.fromCharCode(13);
+const gold5 = (name, text) => {
+	const file = path.join(__dirname, 'fixtures', 'film', name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CR5).join(''));
+};
+t('golden: planFilm and the ffmpeg arguments over many flag combinations', () => {
+	const d = proj({ score: true }); const noScore = proj({});
+	const dir = path.join(d, 'teardown', 'm'), dir2 = path.join(noScore, 'teardown', 'm');
+	const norm = (v, root) => JSON.parse(JSON.stringify(v).split(String.fromCharCode(92) + String.fromCharCode(92)).join('/').split(root.split(String.fromCharCode(92)).join('/')).join('<root>'));
+	const flags = {
+		defaults: {}, preview: { preview: true }, size: { size: '800x600' }, 'bad size': { size: '800' }, 'bad size letters': { size: 'axb' }, 'size with preview': { size: '320x200', preview: true },
+		fps: { fps: '24' }, 'fps zero': { fps: '0' }, from: { from: '5' }, 'from negative': { from: '-3' }, to: { to: '8' }, 'to beyond': { to: '99' }, 'from and to': { from: '2.5', to: '4' }, 'from after to': { from: '9', to: '3' }, 'from equals to': { from: '5', to: '5' },
+		out: { out: 'movies/a.mp4' }, 'sound none': { sound: 'none' }, 'sound file': { sound: 'audio/x.wav' }, 'preview out default': { preview: true, from: '1', to: '2' },
+	};
+	const out = { plans: {}, noScorePlans: {}, args: {} };
+	for (const [k, f] of Object.entries(flags)) { const p = F.planFilm(dir, d, f, 20); out.plans[k] = norm(p, d); out.args[k] = norm(F.ffmpegArgs(p), d); out.noScorePlans[k] = norm(F.planFilm(dir2, noScore, f, 20), noScore); }
+	out.crf = { full: F.planFilm(dir, d, {}, 20).crf, preview: F.planFilm(dir, d, { preview: true }, 20).crf };
+	out.bin = [F.ffmpegBin(), (() => { const prev = process.env.FFMPEG; process.env.FFMPEG = 'x-ffmpeg'; const b = F.ffmpegBin(); if (prev === undefined) delete process.env.FFMPEG; else process.env.FFMPEG = prev; return b; })()];
+	out.versionOfMissing = F.ffmpegVersion(path.join(d, 'no-such-bin'));
+	gold5('plan.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+t('the film CLI: usage errors, a missing folder or timeline, and the dry-run plan as JSON and text', () => {
+	if (!hasFfmpeg || !require('../skills/addons/teardown.cli.js').findChrome()) { console.log('     (skipped: needs ffmpeg and Chrome on this machine)'); return; }
+	const d = proj();
+	const out = {};
+	const clean = (s) => s.split(CR5).join('').split(d).join('<d>').split(d.split(String.fromCharCode(92)).join('/')).join('<d>');
+	const rec = (label, r) => { out[label] = { status: r.status, stdout: clean(r.stdout), stderr: clean(r.stderr) }; };
+	rec('no command', cli(d, []));
+	rec('unknown command', cli(d, ['play']));
+	rec('flag without a value', cli(d, ['film', 'teardown/m', '--fps']));
+	rec('film without a folder', cli(d, ['film']));
+	rec('folder that does not exist', cli(d, ['film', 'teardown/nope', '--dry-run']));
+	const noTl = proj({ timeline: false });
+	rec('no timeline', cli(noTl, ['film', 'teardown/m', '--dry-run']));
+	rec('fps zero', cli(d, ['film', 'teardown/m', '--dry-run', '--fps', '0']));
+	rec('empty range', cli(d, ['film', 'teardown/m', '--dry-run', '--from', '5', '--to', '5']));
+	rec('dry run json', cli(d, ['film', 'teardown/m', '--dry-run', '--json']));
+	rec('dry run text preview', cli(d, ['film', 'teardown/m', '--dry-run', '--preview']));
+	rec('status', cli(d, ['status', 'teardown/m', '--json']));
+	rec('status text', cli(d, ['status', 'teardown/m']));
+	rec('no ffmpeg', cli(d, ['film', 'teardown/m', '--dry-run'], { FFMPEG: path.join(d, 'no-such-ffmpeg') }));
+	// Machine-specific parts (ffmpeg and Chrome versions) are removed so the golden is the same everywhere.
+	for (const v of Object.values(out)) { v.stdout = v.stdout.replace(/ffmpeg version [^"\n,]*/g, 'ffmpeg <version>').replace(/"chrome":("[^"]*"|null)/g, '"chrome":"<chrome>"').replace(/"ffmpeg":("[^"]*"|null)/g, '"ffmpeg":"<ff>"').replace(/^Browser: .*$/gm, 'Browser: <chrome>').replace(/^ffmpeg: .*$/gm, 'ffmpeg: <ff>'); }
+	for (const v of Object.values(out)) if (v.status === 3 && /ffmpeg|Chrome|Edge/.test(v.stderr)) v.stderr = v.stderr.replace(/^error: .*$/m, 'error: <preflight>');
+	let js5 = JSON.stringify(out, null, 1); const BS5 = String.fromCharCode(92); for (const form of [d, d.split(BS5).join(BS5 + BS5), d.split(BS5).join('/'), d.split(BS5).join(BS5 + BS5 + BS5 + BS5)]) js5 = js5.split(form).join('<d>');
+	gold5('cli.json', js5 + String.fromCharCode(10));
+});

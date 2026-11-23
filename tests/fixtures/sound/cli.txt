@@ -1,0 +1,61 @@
+## dry run json (exit 0)
+{"ok":true,"dryRun":true,"file":"teardown-out/m/score.wav","seconds":12,"hum_hz":300}
+
+
+## dry run text (exit 0)
+would write teardown-out/m/score.wav: 12 s, 4 beats, hum 300 Hz
+
+
+## sound json (exit 0)
+{"ok":true,"file":"teardown-out/m/score.wav","seconds":12,"hum_hz":300,"lufs":-14.1,"peak_dbfs":-2}
+
+
+wav bytes sha a5ec543972b010d0
+## sound again, seed 6, text (exit 0)
+wrote teardown-out/m/score.wav: 12 s, -14.1 LUFS, peak -2 dBFS, hum 300 Hz
+
+
+wav bytes sha seed 6 cf0bb132e4b612b6
+## sound to --out (exit 0)
+wrote x/y/z.wav: 12 s, -14.1 LUFS, peak -2 dBFS, hum 300 Hz
+
+
+out file exists true
+## measure json (exit 0)
+{"ok":true,"seconds":12,"lufs":-14.1,"peak_dbfs":-2}
+
+
+## measure text (exit 0)
+12 s, -14.1 LUFS, peak -2 dBFS
+
+
+## measure missing file (exit 1)
+
+error: ENOENT: no such file or directory, open '<d>\nope.wav'
+
+## sound without a timeline (exit 1)
+
+error: teardown-out/m/timeline.json not found. Run: teardown sheet teardown/m once; it writes the timeline the score follows.
+
+## sound no folder (exit 2)
+
+error: sound needs a machine folder.
+usage: teardown-sound <sound|measure> ...  (sound <dir> [--out FILE] [--seed N], measure <file.wav>)
+
+## sound a flag with no value (exit 2)
+
+error: --seed needs a value
+usage: teardown-sound <sound|measure> ...  (sound <dir> [--out FILE] [--seed N], measure <file.wav>)
+
+## no command (exit 2)
+
+error: usage: teardown-sound <sound|measure> ...  (sound <dir> [--out FILE] [--seed N], measure <file.wav>)
+
+## unknown command (exit 2)
+
+error: usage: teardown-sound <sound|measure> ...  (sound <dir> [--out FILE] [--seed N], measure <file.wav>)
+
+## sound with a broken spec (exit 1)
+
+error: cannot read the spec or timeline: Expected property name or '}' in JSON at position 2 (line 1 column 3)
+

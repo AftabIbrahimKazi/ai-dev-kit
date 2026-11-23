@@ -1,0 +1,369 @@
+{
+ "kit": {
+  "all": [
+   {
+    "file": "skills/workflow/noname0.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname1.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname2.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname3.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname4.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname5.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname6.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname7.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname8.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname9.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/tool.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   },
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-dmi",
+    "msg": "disable-model-invocation: true is mandatory"
+   },
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-tools",
+    "msg": "allowed-tools must name one scoped pattern, never Bash(*)"
+   },
+   {
+    "file": "skills/commands/README.md",
+    "rule": "cmd-fm",
+    "msg": "no frontmatter"
+   },
+   {
+    "file": "mods/m1/hooks/register.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter ['Bash'] names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "strict": [
+   {
+    "file": "skills/workflow/noname0.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname1.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname2.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname3.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname4.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname5.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname6.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname7.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname8.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname9.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/opens-badly.md",
+    "rule": "sk-desc-open",
+    "msg": "description does not open with a situation (\"Use whenever …\")"
+   },
+   {
+    "file": "skills/workflow/remote.ts",
+    "rule": "sc-cloud",
+    "msg": "calls a remote API; cloud features live under skills/cloud/"
+   },
+   {
+    "file": "skills/workflow/tool.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   },
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-dmi",
+    "msg": "disable-model-invocation: true is mandatory"
+   },
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-tools",
+    "msg": "allowed-tools must name one scoped pattern, never Bash(*)"
+   },
+   {
+    "file": "skills/commands/README.md",
+    "rule": "cmd-fm",
+    "msg": "no frontmatter"
+   },
+   {
+    "file": "mods/m1/hooks/register.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter ['Bash'] names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "skills": [
+   {
+    "file": "skills/workflow/noname0.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname1.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname2.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname3.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname4.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname5.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname6.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname7.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname8.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname9.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/tool.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "skills strict": [
+   {
+    "file": "skills/workflow/noname0.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname1.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname2.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname3.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname4.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname5.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname6.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname7.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname8.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/noname9.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "skills/workflow/opens-badly.md",
+    "rule": "sk-desc-open",
+    "msg": "description does not open with a situation (\"Use whenever …\")"
+   },
+   {
+    "file": "skills/workflow/remote.ts",
+    "rule": "sc-cloud",
+    "msg": "calls a remote API; cloud features live under skills/cloud/"
+   },
+   {
+    "file": "skills/workflow/tool.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "commands": [
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-dmi",
+    "msg": "disable-model-invocation: true is mandatory"
+   },
+   {
+    "file": "skills/commands/c1.md",
+    "rule": "cmd-tools",
+    "msg": "allowed-tools must name one scoped pattern, never Bash(*)"
+   },
+   {
+    "file": "skills/commands/README.md",
+    "rule": "cmd-fm",
+    "msg": "no frontmatter"
+   }
+  ],
+  "mods": [
+   {
+    "file": "mods/m1/hooks/register.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter ['Bash'] names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "unknown only": []
+ },
+ "cli": {
+  "text": {
+   "status": 1,
+   "stdout": "sk-name (10)\n  skills/workflow/noname0.md: frontmatter has no name\n  skills/workflow/noname1.md: frontmatter has no name\n  skills/workflow/noname2.md: frontmatter has no name\n  skills/workflow/noname3.md: frontmatter has no name\n  skills/workflow/noname4.md: frontmatter has no name\n  skills/workflow/noname5.md: frontmatter has no name\n  skills/workflow/noname6.md: frontmatter has no name\n  skills/workflow/noname7.md: frontmatter has no name\n  … 2 more\nsc-exec (1)\n  skills/workflow/tool.ts: runs a shell string; use execFile with an argument array\ncmd-dmi (1)\n  skills/commands/c1.md: disable-model-invocation: true is mandatory\ncmd-tools (1)\n  skills/commands/c1.md: allowed-tools must name one scoped pattern, never Bash(*)\ncmd-fm (1)\n  skills/commands/README.md: no frontmatter\nmod-shell (1)\n  mods/m1/hooks/register.ts: tool filter ['Bash'] names only one shell; match both Bash and PowerShell\nkit-lint: 15 findings\n",
+   "stderr": ""
+  },
+  "strict": {
+   "status": 1,
+   "stdout": "sk-name (10)\n  skills/workflow/noname0.md: frontmatter has no name\n  skills/workflow/noname1.md: frontmatter has no name\n  skills/workflow/noname2.md: frontmatter has no name\n  skills/workflow/noname3.md: frontmatter has no name\n  skills/workflow/noname4.md: frontmatter has no name\n  skills/workflow/noname5.md: frontmatter has no name\n  skills/workflow/noname6.md: frontmatter has no name\n  skills/workflow/noname7.md: frontmatter has no name\n  … 2 more\nsk-desc-open (1)\n  skills/workflow/opens-badly.md: description does not open with a situation (\"Use whenever …\")\nsc-cloud (1)\n  skills/workflow/remote.ts: calls a remote API; cloud features live under skills/cloud/\nsc-exec (1)\n  skills/workflow/tool.ts: runs a shell string; use execFile with an argument array\ncmd-dmi (1)\n  skills/commands/c1.md: disable-model-invocation: true is mandatory\ncmd-tools (1)\n  skills/commands/c1.md: allowed-tools must name one scoped pattern, never Bash(*)\ncmd-fm (1)\n  skills/commands/README.md: no frontmatter\nmod-shell (1)\n  mods/m1/hooks/register.ts: tool filter ['Bash'] names only one shell; match both Bash and PowerShell\nkit-lint: 17 findings\n",
+   "stderr": ""
+  },
+  "json": {
+   "status": 1,
+   "stdout": "[\n  {\n    \"file\": \"skills/workflow/noname0.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname1.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname2.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname3.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname4.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname5.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname6.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname7.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname8.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/noname9.md\",\n    \"rule\": \"sk-name\",\n    \"msg\": \"frontmatter has no name\"\n  },\n  {\n    \"file\": \"skills/workflow/tool.ts\",\n    \"rule\": \"sc-exec\",\n    \"msg\": \"runs a shell string; use execFile with an argument array\"\n  },\n  {\n    \"file\": \"skills/commands/c1.md\",\n    \"rule\": \"cmd-dmi\",\n    \"msg\": \"disable-model-invocation: true is mandatory\"\n  },\n  {\n    \"file\": \"skills/commands/c1.md\",\n    \"rule\": \"cmd-tools\",\n    \"msg\": \"allowed-tools must name one scoped pattern, never Bash(*)\"\n  },\n  {\n    \"file\": \"skills/commands/README.md\",\n    \"rule\": \"cmd-fm\",\n    \"msg\": \"no frontmatter\"\n  },\n  {\n    \"file\": \"mods/m1/hooks/register.ts\",\n    \"rule\": \"mod-shell\",\n    \"msg\": \"tool filter ['Bash'] names only one shell; match both Bash and PowerShell\"\n  }\n]\n",
+   "stderr": ""
+  },
+  "only": {
+   "status": 1,
+   "stdout": "cmd-dmi (1)\n  skills/commands/c1.md: disable-model-invocation: true is mandatory\ncmd-tools (1)\n  skills/commands/c1.md: allowed-tools must name one scoped pattern, never Bash(*)\ncmd-fm (1)\n  skills/commands/README.md: no frontmatter\nkit-lint: 3 findings\n",
+   "stderr": ""
+  },
+  "onlyMods": {
+   "status": 1,
+   "stdout": "[\n  {\n    \"file\": \"mods/m1/hooks/register.ts\",\n    \"rule\": \"mod-shell\",\n    \"msg\": \"tool filter ['Bash'] names only one shell; match both Bash and PowerShell\"\n  }\n]\n",
+   "stderr": ""
+  },
+  "clean": {
+   "status": 0,
+   "stdout": "kit-lint: clean\n",
+   "stderr": ""
+  },
+  "cleanJson": {
+   "status": 0,
+   "stdout": "[]\n",
+   "stderr": ""
+  },
+  "single": {
+   "status": 1,
+   "stdout": "sk-name (1)\n  skills/g.md: frontmatter has no name\nkit-lint: 1 finding\n",
+   "stderr": ""
+  },
+  "nine": {
+   "status": 1,
+   "stdout": "sk-name (9)\n  skills/n0.md: frontmatter has no name\n  skills/n1.md: frontmatter has no name\n  skills/n2.md: frontmatter has no name\n  skills/n3.md: frontmatter has no name\n  skills/n4.md: frontmatter has no name\n  skills/n5.md: frontmatter has no name\n  skills/n6.md: frontmatter has no name\n  skills/n7.md: frontmatter has no name\n  … 1 more\nkit-lint: 9 findings\n",
+   "stderr": ""
+  },
+  "eight": {
+   "status": 1,
+   "stdout": "sk-name (8)\n  skills/n0.md: frontmatter has no name\n  skills/n1.md: frontmatter has no name\n  skills/n2.md: frontmatter has no name\n  skills/n3.md: frontmatter has no name\n  skills/n4.md: frontmatter has no name\n  skills/n5.md: frontmatter has no name\n  skills/n6.md: frontmatter has no name\n  skills/n7.md: frontmatter has no name\nkit-lint: 8 findings\n",
+   "stderr": ""
+  }
+ }
+}

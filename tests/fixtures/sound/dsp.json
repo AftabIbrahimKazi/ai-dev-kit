@@ -1,0 +1,277 @@
+{
+ "rng": {
+  "seed 0": [
+   0.266429209,
+   0.000329746,
+   0.223272027,
+   0.146202148,
+   0.467327823,
+   0.545049083
+  ],
+  "seed 1": [
+   0.627073941,
+   0.002735721,
+   0.52744704,
+   0.981050967,
+   0.968377898,
+   0.281103503
+  ],
+  "seed 7": [
+   0.011704753,
+   0.061958258,
+   0.976907633,
+   0.699028706,
+   0.521445269,
+   0.405521688
+  ],
+  "seed 12345": [
+   0.979728268,
+   0.306752264,
+   0.484205422,
+   0.817934413,
+   0.509428369,
+   0.34747186
+  ]
+ },
+ "synth": {
+  "gears / one cut": {
+   "length": 288000,
+   "peak": -5.4705,
+   "lufs": -22.0138,
+   "nonzero": 287999
+  },
+  "gears / parts and focus": {
+   "length": 288000,
+   "peak": -5.208,
+   "lufs": -21.4661,
+   "nonzero": 287999
+  },
+  "gears / late cut": {
+   "length": 288000,
+   "peak": -10.0632,
+   "lufs": -25.2411,
+   "nonzero": 287999
+  },
+  "gears / no beats": {
+   "length": 288000,
+   "peak": -13.5085,
+   "lufs": -25.5257,
+   "nonzero": 287999
+  },
+  "gears / beat at the very end": {
+   "length": 288000,
+   "peak": -13.5085,
+   "lufs": -25.5981,
+   "nonzero": 287999
+  },
+  "crank / one cut": {
+   "length": 288000,
+   "peak": -5.5095,
+   "lufs": -21.9563,
+   "nonzero": 287999
+  },
+  "crank / parts and focus": {
+   "length": 288000,
+   "peak": -5.3977,
+   "lufs": -21.4147,
+   "nonzero": 287999
+  },
+  "crank / late cut": {
+   "length": 288000,
+   "peak": -9.9004,
+   "lufs": -25.3237,
+   "nonzero": 287999
+  },
+  "crank / no beats": {
+   "length": 288000,
+   "peak": -13.4529,
+   "lufs": -25.6139,
+   "nonzero": 287999
+  },
+  "crank / beat at the very end": {
+   "length": 288000,
+   "peak": -13.4529,
+   "lufs": -25.6864,
+   "nonzero": 287999
+  },
+  "custom / one cut": {
+   "length": 288000,
+   "peak": -6.6244,
+   "lufs": -22.666,
+   "nonzero": 287999
+  },
+  "custom / parts and focus": {
+   "length": 288000,
+   "peak": -6.413,
+   "lufs": -21.9662,
+   "nonzero": 287999
+  },
+  "custom / late cut": {
+   "length": 288000,
+   "peak": -10.6835,
+   "lufs": -27.9447,
+   "nonzero": 287999
+  },
+  "custom / no beats": {
+   "length": 288000,
+   "peak": -17.5003,
+   "lufs": -28.4991,
+   "nonzero": 287999
+  },
+  "custom / beat at the very end": {
+   "length": 288000,
+   "peak": -17.5003,
+   "lufs": -28.4991,
+   "nonzero": 287999
+  }
+ },
+ "master": {
+  "gears / one cut": {
+   "lufs": -14.089,
+   "peak": -2.0005,
+   "gainDb": 8.0138,
+   "length": 288000
+  },
+  "gears / parts and focus": {
+   "lufs": -14.0606,
+   "peak": -2.0008,
+   "gainDb": 7.4661,
+   "length": 288000
+  },
+  "gears / late cut": {
+   "lufs": -14.0286,
+   "peak": -2.0057,
+   "gainDb": 11.2411,
+   "length": 288000
+  },
+  "gears / no beats": {
+   "lufs": -14.0061,
+   "peak": -2.4168,
+   "gainDb": 11.5257,
+   "length": 288000
+  },
+  "gears / beat at the very end": {
+   "lufs": -14.0071,
+   "peak": -2.3863,
+   "gainDb": 11.5981,
+   "length": 288000
+  },
+  "crank / one cut": {
+   "lufs": -14.1624,
+   "peak": -2.0006,
+   "gainDb": 7.9563,
+   "length": 288000
+  },
+  "crank / parts and focus": {
+   "lufs": -14.1319,
+   "peak": -2.0013,
+   "gainDb": 7.4147,
+   "length": 288000
+  },
+  "crank / late cut": {
+   "lufs": -14.0302,
+   "peak": -2.0037,
+   "gainDb": 11.3237,
+   "length": 288000
+  },
+  "crank / no beats": {
+   "lufs": -14.0075,
+   "peak": -2.3579,
+   "gainDb": 11.6139,
+   "length": 288000
+  },
+  "crank / beat at the very end": {
+   "lufs": -14.0086,
+   "peak": -2.3308,
+   "gainDb": 11.6864,
+   "length": 288000
+  },
+  "custom / one cut": {
+   "lufs": -14.0952,
+   "peak": -2.0013,
+   "gainDb": 8.666,
+   "length": 288000
+  },
+  "custom / parts and focus": {
+   "lufs": -14.0558,
+   "peak": -2.003,
+   "gainDb": 7.9662,
+   "length": 288000
+  },
+  "custom / late cut": {
+   "lufs": -14.0114,
+   "peak": -2.0001,
+   "gainDb": 14.1742,
+   "length": 288000
+  },
+  "custom / no beats": {
+   "lufs": -14.0012,
+   "peak": -3.0581,
+   "gainDb": 14.4991,
+   "length": 288000
+  },
+  "custom / beat at the very end": {
+   "lufs": -14.0012,
+   "peak": -3.0581,
+   "gainDb": 14.4991,
+   "length": 288000
+  }
+ },
+ "wav": {
+  "gears / one cut": "b6fcd1978b150971",
+  "gears / parts and focus": "8a6f0855e583633c",
+  "gears / late cut": "30e0a8863053cf69",
+  "gears / no beats": "cf7f4d111babd699",
+  "gears / beat at the very end": "a61bb5c476297e16",
+  "crank / one cut": "e992fc2406e63633",
+  "crank / parts and focus": "a77b08c9a5ca0950",
+  "crank / late cut": "85b192f730113035",
+  "crank / no beats": "10be8c124bb5bf9a",
+  "crank / beat at the very end": "701794464321b53a",
+  "custom / one cut": "c0a6f4035ccc0870",
+  "custom / parts and focus": "0f277aeaee490c52",
+  "custom / late cut": "5bdc551cf41dc69f",
+  "custom / no beats": "fa8cc6c6cb125e53",
+  "custom / beat at the very end": "fa8cc6c6cb125e53"
+ },
+ "loudness": {
+  "quiet 1k": {
+   "in": -43.0036,
+   "out": -14,
+   "peak": -10.9964,
+   "gain": 29.0036
+  },
+  "loud 1k": {
+   "in": -3.9188,
+   "out": -14,
+   "peak": -10.9964,
+   "gain": -10.0812
+  },
+  "low 100": {
+   "in": -15.294,
+   "out": -14,
+   "peak": -9.1636,
+   "gain": 1.294
+  }
+ },
+ "humHz": {
+  "gears 1500/12": 300,
+  "gears slow": 128,
+  "gears fast": 292.96875,
+  "crank 1": 160,
+  "crank 8": 200,
+  "crank fast": 281.25,
+  "custom": null,
+  "gears no teeth": null,
+  "crank no cyl": 133.33333333333334
+ },
+ "synthSeeds": [
+  "c595e1b5af58bbff",
+  "4e101dd461bea49c",
+  "7d43ff8a08706401"
+ ],
+ "roundTrip": {
+  "length": 48000,
+  "rms": 0.197
+ }
+}

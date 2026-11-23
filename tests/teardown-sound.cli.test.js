@@ -90,3 +90,67 @@ t('bad usage exits 2 with a usage line; a bad WAV is an error, not a crash', () 
 	assert.strictEqual(r.status, 1);
 	assert.ok(/not a WAV/.test(r.stderr));
 });
+
+// ---- round 4: golden DSP and CLI (found by the kit-wide probe) ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/teardown-sound.cli.test.js, then read the diff.
+const crypto4 = require('node:crypto');
+const CR4 = String.fromCharCode(13);
+const gold4 = (name, text) => {
+	const file = path.join(__dirname, 'fixtures', 'sound', name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CR4).join(''));
+};
+const sha = (buf) => crypto4.createHash('sha1').update(buf).digest('hex').slice(0, 16);
+const r4 = (n) => Math.round(n * 10000) / 10000;
+
+t('golden: the seeded generator, the score for several timelines, the mastering and the WAV bytes', () => {
+	const out = { rng: {}, synth: {}, master: {}, wav: {}, loudness: {}, humHz: {} };
+	for (const seed of [0, 1, 7, 12345]) { const g = S.rng(seed); out.rng['seed ' + seed] = Array.from({ length: 6 }, () => Math.round(g() * 1e9) / 1e9); }
+	const specs = { gears: { kind: 'gears', rpm: 1500, teeth0: 12 }, crank: { kind: 'crank', rpm: 3000, cylinders: 8 }, custom: { kind: 'custom', rpm: 1200 } };
+	const timelines = {
+		'one cut': [{ t: 0, name: 'assembled' }, { t: 2, name: 'cut open' }],
+		'parts and focus': [{ t: 0, name: 'assembled' }, { t: 1, name: 'cut open' }, { t: 2.5, name: 'part 1' }, { t: 3.2, name: 'part 2' }, { t: 4, name: 'part 7' }, { t: 5.5, name: 'focus' }],
+		'late cut': [{ t: 0, name: 'assembled' }, { t: 5.2, name: 'cut open' }], 'no beats': [], 'beat at the very end': [{ t: 6, name: 'part 1' }, { t: 5.99, name: 'cut open' }],
+	};
+	for (const [sn, spec] of Object.entries(specs)) for (const [tn, beats] of Object.entries(timelines)) {
+		const x = S.synth(6, beats, spec, 3);
+		const m = S.master(x);
+		const k = sn + ' / ' + tn;
+		out.synth[k] = { length: x.length, peak: r4(S.peakDb(x)), lufs: r4(S.loudness(x)), nonzero: x.reduce((n, v) => n + (v !== 0 ? 1 : 0), 0) };
+		out.master[k] = { lufs: r4(m.lufs), peak: r4(m.peak), gainDb: r4(m.gainDb), length: m.y.length };
+		out.wav[k] = sha(S.wavBytes(m.y));
+	}
+	out.synthSeeds = [1, 2, 99].map((seed) => sha(S.wavBytes(S.master(S.synth(3, timelines['parts and focus'], specs.gears, seed)).y)));
+	for (const [name, amp, hz] of [['quiet 1k', 0.01, 1000], ['loud 1k', 0.9, 1000], ['low 100', 0.3, 100]]) { const x = new Float32Array(S.RATE * 2); for (let i = 0; i < x.length; i++) x[i] = amp * Math.sin((2 * Math.PI * hz * i) / S.RATE); const m = S.master(x); out.loudness[name] = { in: r4(S.loudness(x)), out: r4(m.lufs), peak: r4(m.peak), gain: r4(m.gainDb) }; }
+	for (const [k, sp] of Object.entries({ 'gears 1500/12': specs.gears, 'gears slow': { kind: 'gears', rpm: 30, teeth0: 8 }, 'gears fast': { kind: 'gears', rpm: 90000, teeth0: 50 }, 'crank 1': { kind: 'crank', rpm: 600, cylinders: 1 }, 'crank 8': specs.crank, 'crank fast': { kind: 'crank', rpm: 90000, cylinders: 12 }, custom: specs.custom, 'gears no teeth': { kind: 'gears', rpm: 1000 }, 'crank no cyl': { kind: 'crank', rpm: 1000 } })) out.humHz[k] = S.humHz(sp);
+	const back = S.readWav(S.wavBytes(S.master(S.synth(1, [], specs.gears, 1)).y));
+	out.roundTrip = { length: back.length, rms: r4(Math.sqrt(back.reduce((a, v) => a + v * v, 0) / back.length)) };
+	gold4('dsp.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+t('golden: the CLI sound and measure commands, dry runs, seeds and errors', () => {
+	const lines = [];
+	const run = (label, d, ...a) => { const r = cli(d, ...a); lines.push('## ' + label + ' (exit ' + r.status + ')'); lines.push(r.stdout.split(CR4).join('').split(d).join('<d>').split(d.split(String.fromCharCode(92)).join('/')).join('<d>')); lines.push(r.stderr.split(CR4).join('').split(d).join('<d>').split(d.split(String.fromCharCode(92)).join('/')).join('<d>')); return r; };
+	const d = proj();
+	run('dry run json', d, 'sound', 'teardown/m', '--dry-run', '--json');
+	run('dry run text', d, 'sound', 'teardown/m', '--dry-run');
+	run('sound json', d, 'sound', 'teardown/m', '--json', '--seed', '5');
+	const wav = path.join(d, 'teardown-out', 'm', 'score.wav');
+	lines.push('wav bytes sha ' + sha(fs.readFileSync(wav)));
+	run('sound again, seed 6, text', d, 'sound', 'teardown/m', '--seed', '6');
+	lines.push('wav bytes sha seed 6 ' + sha(fs.readFileSync(wav)));
+	run('sound to --out', d, 'sound', 'teardown/m', '--out', 'x/y/z.wav', '--seed', 'abc');
+	lines.push('out file exists ' + fs.existsSync(path.join(d, 'x', 'y', 'z.wav')));
+	run('measure json', d, 'measure', 'teardown-out/m/score.wav', '--json');
+	run('measure text', d, 'measure', 'teardown-out/m/score.wav');
+	run('measure missing file', d, 'measure', 'nope.wav');
+	run('sound without a timeline', proj(undefined, null), 'sound', 'teardown/m');
+	run('sound no folder', d, 'sound');
+	run('sound a flag with no value', d, 'sound', 'teardown/m', '--seed');
+	run('no command', d);
+	run('unknown command', d, 'play');
+	const bad = proj(); fs.writeFileSync(path.join(bad, 'teardown', 'm', 'spec.json'), '{ not json');
+	run('sound with a broken spec', bad, 'sound', 'teardown/m');
+	gold4('cli.txt', lines.join(String.fromCharCode(10)) + String.fromCharCode(10));
+});

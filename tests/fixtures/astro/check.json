@@ -1,0 +1,254 @@
+{
+ "withConv": {
+  "src/styles/new.css": [
+   {
+    "file": "src/styles/new.css",
+    "line": 1,
+    "kind": "hardcoded-colour",
+    "detail": ".ex-ok{color:#fff;border:1px solid #abcdef} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 3,
+    "kind": "hardcoded-colour",
+    "detail": ":root{--ex-new:#123456} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 4,
+    "kind": "hardcoded-colour",
+    "detail": ".zz-x{background:rgb(1,2,3)} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 8,
+    "kind": "hardcoded-colour",
+    "detail": ".oklch-user{color:oklch(0.5 0.1 100)} (tokens in src/styles/tokens.css)"
+   }
+  ],
+  "src/pages/new.astro": [
+   {
+    "file": "src/pages/new.astro",
+    "line": 3,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   },
+   {
+    "file": "src/pages/new.astro",
+    "line": 4,
+    "kind": "hardcoded-colour",
+    "detail": "<div style=\"color:#fff\">x</div> (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/pages/new.astro",
+    "line": 6,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/plain.astro": [
+   {
+    "file": "src/pages/plain.astro",
+    "line": 2,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   }
+  ],
+  "src/pages/inline.astro": [],
+  "src/pages/srcscript.astro": [
+   {
+    "file": "src/pages/srcscript.astro",
+    "line": 1,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/two.astro": [
+   {
+    "file": "src/pages/two.astro",
+    "line": 3,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/foreign.astro": [
+   {
+    "file": "src/pages/foreign.astro",
+    "line": 2,
+    "kind": "foreign-token",
+    "detail": ".a{color:var(--zz-space-1)}"
+   },
+   {
+    "file": "src/pages/foreign.astro",
+    "line": 4,
+    "kind": "foreign-token",
+    "detail": ".c{margin:var(--nope)}"
+   }
+  ],
+  "src/components/Plain.tsx": [],
+  "src/pages/crlf.astro": [
+   {
+    "file": "src/pages/crlf.astro",
+    "line": 2,
+    "kind": "hardcoded-colour",
+    "detail": ".a{color:#fff} (tokens in src/styles/tokens.css)"
+   }
+  ]
+ },
+ "noTokens": {
+  "src/styles/new.css": [],
+  "src/pages/new.astro": [
+   {
+    "file": "src/pages/new.astro",
+    "line": 3,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   },
+   {
+    "file": "src/pages/new.astro",
+    "line": 6,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/plain.astro": [
+   {
+    "file": "src/pages/plain.astro",
+    "line": 2,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   }
+  ],
+  "src/pages/inline.astro": [],
+  "src/pages/srcscript.astro": [
+   {
+    "file": "src/pages/srcscript.astro",
+    "line": 1,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/two.astro": [
+   {
+    "file": "src/pages/two.astro",
+    "line": 3,
+    "kind": "inline-script",
+    "detail": "siblings use <page>-entry.ts"
+   }
+  ],
+  "src/pages/foreign.astro": [
+   {
+    "file": "src/pages/foreign.astro",
+    "line": 2,
+    "kind": "foreign-token",
+    "detail": ".a{color:var(--zz-space-1)}"
+   },
+   {
+    "file": "src/pages/foreign.astro",
+    "line": 4,
+    "kind": "foreign-token",
+    "detail": ".c{margin:var(--nope)}"
+   }
+  ],
+  "src/components/Plain.tsx": [],
+  "src/pages/crlf.astro": []
+ },
+ "noPrefix": {
+  "src/styles/new.css": [
+   {
+    "file": "src/styles/new.css",
+    "line": 1,
+    "kind": "hardcoded-colour",
+    "detail": ".ex-ok{color:#fff;border:1px solid #abcdef} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 3,
+    "kind": "hardcoded-colour",
+    "detail": ":root{--ex-new:#123456} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 4,
+    "kind": "hardcoded-colour",
+    "detail": ".zz-x{background:rgb(1,2,3)} (tokens in src/styles/tokens.css)"
+   },
+   {
+    "file": "src/styles/new.css",
+    "line": 8,
+    "kind": "hardcoded-colour",
+    "detail": ".oklch-user{color:oklch(0.5 0.1 100)} (tokens in src/styles/tokens.css)"
+   }
+  ],
+  "src/pages/new.astro": [
+   {
+    "file": "src/pages/new.astro",
+    "line": 3,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   },
+   {
+    "file": "src/pages/new.astro",
+    "line": 4,
+    "kind": "hardcoded-colour",
+    "detail": "<div style=\"color:#fff\">x</div> (tokens in src/styles/tokens.css)"
+   }
+  ],
+  "src/pages/plain.astro": [
+   {
+    "file": "src/pages/plain.astro",
+    "line": 2,
+    "kind": "client-load",
+    "detail": "prefer client:visible unless above the fold"
+   }
+  ],
+  "src/pages/inline.astro": [],
+  "src/pages/srcscript.astro": [],
+  "src/pages/two.astro": [],
+  "src/pages/foreign.astro": [],
+  "src/components/Plain.tsx": [],
+  "src/pages/crlf.astro": [
+   {
+    "file": "src/pages/crlf.astro",
+    "line": 2,
+    "kind": "hardcoded-colour",
+    "detail": ".a{color:#fff} (tokens in src/styles/tokens.css)"
+   }
+  ]
+ },
+ "missing": [
+  {
+   "file": "src/nope.css",
+   "line": 0,
+   "kind": "missing",
+   "detail": "file not found"
+  },
+  {
+   "file": "src/pages/new.astro",
+   "line": 3,
+   "kind": "client-load",
+   "detail": "prefer client:visible unless above the fold"
+  },
+  {
+   "file": "src/pages/new.astro",
+   "line": 4,
+   "kind": "hardcoded-colour",
+   "detail": "<div style=\"color:#fff\">x</div> (tokens in src/styles/tokens.css)"
+  },
+  {
+   "file": "src/pages/new.astro",
+   "line": 6,
+   "kind": "inline-script",
+   "detail": "siblings use <page>-entry.ts"
+  }
+ ],
+ "bareConv": [
+  {
+   "file": "src/pages/new.astro",
+   "line": 3,
+   "kind": "client-load",
+   "detail": "prefer client:visible unless above the fold"
+  }
+ ],
+ "manyAtOnce": 13
+}

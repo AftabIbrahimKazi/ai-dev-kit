@@ -142,3 +142,71 @@ t('cli: the full output is kept under AI_DEV_KIT_HOME/raw by default; --no-save-
 
 console.log('\nreduction on real logs (lines, chars):');
 for (const [f, l0, l1, c0, c1] of table) console.log(`  ${f.padEnd(22)} ${String(l0).padStart(4)} -> ${String(l1).padStart(4)} lines   ${String(c0).padStart(6)} -> ${String(c1).padStart(6)} chars  (${(100 - (100 * c1) / c0).toFixed(0)}% smaller)`);
+
+// ---- round 4: golden compaction (found by the kit-wide probe) ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/session-budget.compact.test.js, then read the diff.
+const C = { compact, finish, quoteArg };
+const CR6 = String.fromCharCode(13), ESC6 = String.fromCharCode(27);
+const gold6 = (name, text) => {
+	const file = path.join(__dirname, 'fixtures', 'compact', name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CR6).join(''));
+};
+const noisyLog = () => {
+	const L = ['> project@1.0.0 test', '> vitest run', ''];
+	for (let i = 0; i < 40; i++) L.push(String.fromCharCode(0x2713) + ' suite ' + i + ' passes in ' + (i % 9) + ' ms');
+	L.push('', '', '', ' 12%', ' 45% building', '====>   ', ESC6 + '[32mcompiled' + ESC6 + '[0m ok', 'step one' + CR6 + 'step two' + CR6 + 'step three');
+	for (let i = 0; i < 6; i++) L.push('retrying the connection');
+	L.push('Error: boom at line 12', '    at run (/app/src/a.ts:12:3)', '    at Module._compile (node:internal/modules/cjs/loader:1:1)', '    at x (/app/node_modules/dep/index.js:3:4)', '    at <anonymous>');
+	for (let i = 0; i < 30; i++) L.push('plain output line number ' + i + ' with some text');
+	L.push('FAIL src/a.test.ts', 'expected 1 received 2', '');
+	for (let i = 0; i < 60; i++) L.push('more plain output ' + i);
+	L.push('', 'Tests: 1 failed, 40 passed', '');
+	return L.join(String.fromCharCode(10));
+};
+const longLog = (n, failAt) => Array.from({ length: n }, (_, i) => (failAt.includes(i) ? 'TS2345: type problem on item ' + i : 'unique line ' + i + ' of the log')).join(String.fromCharCode(10));
+
+t('golden: compact over noisy, long and short logs at many budgets', () => {
+	const out = { cases: {} };
+	const cases = { noisy: noisyLog(), long300: longLog(300, [40, 150, 260]), long120: longLog(120, [5, 119]), long41: longLog(41, []), short39: longLog(39, [3]), failuresEverywhere: longLog(200, Array.from({ length: 100 }, (_, i) => i * 2)) };
+	for (const [name, text] of Object.entries(cases)) for (const max of [10, 40, 60, 100, 150]) { const r = C.compact(text, { max }); out.cases[name + ' max ' + max] = { changed: r.changed, stats: r.stats, from: r.from, to: r.to, text: r.text }; }
+	for (const max of [299, 300, 301]) { const r = C.compact(longLog(300, []), { max }); out.cases['long300 plain max ' + max] = { changed: r.changed, lines: r.text.split(String.fromCharCode(10)).length, stats: r.stats }; }
+	const dups = Array.from({ length: 60 }, (_, i) => 'same line ' + Math.floor(i / 6)).join(String.fromCharCode(10)) + String.fromCharCode(10) + String.fromCharCode(10) + String.fromCharCode(10) + 'tail';
+	const rd = C.compact(dups); out.dups = { changed: rd.changed, stats: rd.stats, text: rd.text };
+	const blanks = Array.from({ length: 50 }, (_, i) => (i % 3 === 0 ? '' : 'row ' + i)).concat(['', '', '', '']).join(String.fromCharCode(10));
+	const rb = C.compact(blanks); out.blanks = { changed: rb.changed, stats: rb.stats, text: rb.text };
+	const flip = []; for (let k = 0; k <= 30; k++) { const text = Array.from({ length: 45 }, (_, i) => (i < k ? String.fromCharCode(0x2713) + ' passing ' + i : 'content line number ' + i + ' xxxxxxxxxx')).join(String.fromCharCode(10)); flip.push(C.compact(text).changed); }
+	out.savingFlip = { firstChangedAt: flip.indexOf(true), flags: flip.map((b) => (b ? 1 : 0)).join('') };
+	out.quote = {};
+	for (const a of ['plain', 'with space', 'it' + String.fromCharCode(39) + 's', 'say "hi"', 'back' + String.fromCharCode(92) + 'slash' + String.fromCharCode(92), 'path' + String.fromCharCode(92) + String.fromCharCode(34) + 'q', '', 'a&b', 'x=1,y:2/z.-@%+']) out.quote[JSON.stringify(a)] = { win: C.quoteArg(a, true), posix: C.quoteArg(a, false) };
+	gold6('compact.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+t('golden: finish keeps the full output in a raw folder, prunes to 20, and the CLI compacts stdin and commands', () => {
+	const out = {};
+	const raw = fs.mkdtempSync(path.join(os.tmpdir(), 'cp raw-'));
+	const text = noisyLog();
+	const clean = (s) => s.split(CR6).join('').split(raw).join('<raw>').split(raw.split(String.fromCharCode(92)).join('/')).join('<raw>').replace(/<raw>[\\/][0-9TZ-]+\.txt/g, '<raw>/<stamp>.txt');
+	out.finish = clean(C.finish(text, { max: 30, saveRaw: raw }));
+	out.finishNoRaw = clean(C.finish(text, { max: 30, saveRaw: null }));
+	out.finishUnchanged = C.finish('short', { max: 30, saveRaw: raw });
+	out.rawFiles = fs.readdirSync(raw).length;
+	for (let i = 0; i < 22; i++) fs.writeFileSync(path.join(raw, '2000-01-' + String(i + 1).padStart(2, '0') + 'T00-00-00-000Z.txt'), 'old' + i);
+	C.finish(text, { max: 30, saveRaw: raw });
+	out.afterPrune = fs.readdirSync(raw).filter((f) => f.endsWith('.txt')).length;
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), 'cp home-'));
+	const SCR = path.join(__dirname, '../skills/workflow/session-budget.compact.js');
+	const sp = (args, input) => { const r = require('node:child_process').spawnSync(process.execPath, [SCR, ...args], { encoding: 'utf8', input, env: { ...process.env, AI_DEV_KIT_HOME: home } }); return { status: r.status, stdout: clean(r.stdout), stderr: clean(r.stderr).split(home).join('<home>') }; };
+	out.cliStdin = sp(['--max', '30', '--no-save-raw'], text);
+	out.cliStdinDefault = sp([], text);
+	out.cliSaved = sp(['--max', '30'], text); out.cliSaved.rawDirFiles = fs.existsSync(path.join(home, 'raw')) ? fs.readdirSync(path.join(home, 'raw')).length : 0;
+	out.cliSaveRawDir = sp(['--max', '30', '--save-raw', path.join(raw, 'sub')], text);
+	out.cmdExit = sp(['--no-save-raw', '--', process.execPath, '-e', 'console.log("out");console.error("err");process.exit(3)']);
+	out.cmdReport = sp(['--no-save-raw', '--report-exit', '--', process.execPath, '-e', 'process.exit(4)']);
+	out.cmdWhole = sp(['--no-save-raw', '--', process.execPath + ' -e "console.log(7*6)"']);
+	out.cmdMissing = sp(['--no-save-raw', '--', 'definitely-not-a-command-xyz']);
+	out.noCmd = sp(['--']);
+	let js6 = JSON.stringify(out, null, 1); const BS6 = String.fromCharCode(92); for (const [base, name] of [[raw, '<raw>'], [home, '<home>']]) for (const form of [base, base.split(BS6).join(BS6 + BS6), base.split(BS6).join('/')]) js6 = js6.split(form).join(name);
+	gold6('finish.json', js6.replace(/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9-]+Z/g, '<stamp>') + String.fromCharCode(10));
+});

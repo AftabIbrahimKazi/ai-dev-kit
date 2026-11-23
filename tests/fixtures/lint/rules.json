@@ -1,0 +1,282 @@
+{
+ "commands": {
+  "good": [],
+  "no frontmatter": [
+   {
+    "file": "c/no frontmatter.md",
+    "rule": "cmd-fm",
+    "msg": "no frontmatter"
+   }
+  ],
+  "no description": [
+   {
+    "file": "c/no description.md",
+    "rule": "cmd-desc",
+    "msg": "no description"
+   }
+  ],
+  "dmi missing": [
+   {
+    "file": "c/dmi missing.md",
+    "rule": "cmd-dmi",
+    "msg": "disable-model-invocation: true is mandatory"
+   }
+  ],
+  "dmi false": [
+   {
+    "file": "c/dmi false.md",
+    "rule": "cmd-dmi",
+    "msg": "disable-model-invocation: true is mandatory"
+   }
+  ],
+  "bash star": [
+   {
+    "file": "c/bash star.md",
+    "rule": "cmd-tools",
+    "msg": "allowed-tools must name one scoped pattern, never Bash(*)"
+   }
+  ],
+  "star only": [
+   {
+    "file": "c/star only.md",
+    "rule": "cmd-tools",
+    "msg": "allowed-tools must name one scoped pattern, never Bash(*)"
+   }
+  ],
+  "write tool": [
+   {
+    "file": "c/write tool.md",
+    "rule": "cmd-tools",
+    "msg": "a command takes no write tool"
+   }
+  ],
+  "edit tool": [
+   {
+    "file": "c/edit tool.md",
+    "rule": "cmd-tools",
+    "msg": "a command takes no write tool"
+   }
+  ],
+  "notebook": [
+   {
+    "file": "c/notebook.md",
+    "rule": "cmd-tools",
+    "msg": "a command takes no write tool"
+   }
+  ],
+  "writer word inside": [],
+  "claude path": [],
+  "claude path with root": [],
+  "bang with sh": [
+   {
+    "file": "c/bang with sh.md",
+    "rule": "cmd-portable",
+    "msg": "the ! line must call node, never sh, grep, cat, awk or sed"
+   }
+  ],
+  "bang with grep": [
+   {
+    "file": "c/bang with grep.md",
+    "rule": "cmd-portable",
+    "msg": "the ! line must call node, never sh, grep, cat, awk or sed"
+   }
+  ],
+  "bang with cat in skill-root": [],
+  "bang with bash awk sed": [
+   {
+    "file": "c/bang with bash awk sed.md",
+    "rule": "cmd-portable",
+    "msg": "the ! line must call node, never sh, grep, cat, awk or sed"
+   }
+  ],
+  "bang not at line start": [],
+  "no length cap": [
+   {
+    "file": "c/no length cap.md",
+    "rule": "cmd-cap",
+    "msg": "no stated output cap (a number of lines or items)"
+   }
+  ],
+  "cap: at most": [],
+  "cap: three lines or fewer": [],
+  "cap: worst first 5": [],
+  "cap: word number": [],
+  "cap: 7 lines": [
+   {
+    "file": "c/cap: 7 lines.md",
+    "rule": "cmd-cap",
+    "msg": "no stated output cap (a number of lines or items)"
+   }
+  ],
+  "git commit unguarded": [
+   {
+    "file": "c/git commit unguarded.md",
+    "rule": "cmd-writes",
+    "msg": "mentions commit, push or tag without a stated limit"
+   }
+  ],
+  "git push guarded never": [],
+  "git tag only when": [],
+  "git commit unless": [],
+  "git word only": []
+ },
+ "mods": {
+  "both shells": [],
+  "bash only array": [
+   {
+    "file": "m/bash only array.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter ['Bash'] names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "powershell only string": [
+   {
+    "file": "m/powershell only string.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter 'PowerShell' names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "bash only double quotes": [
+   {
+    "file": "m/bash only double quotes.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter \"Bash\" names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "other tool": [],
+  "two filters one bad": [
+   {
+    "file": "m/two filters one bad.ts",
+    "rule": "mod-shell",
+    "msg": "tool filter ['Bash'] names only one shell; match both Bash and PowerShell"
+   }
+  ],
+  "destructure dollar": [
+   {
+    "file": "m/destructure dollar.ts",
+    "rule": "mod-destructure",
+    "msg": "never destructure $; write each call in full"
+   }
+  ],
+  "destructure in params": [],
+  "fine dollar": [],
+  "write handover": [
+   {
+    "file": "m/write handover.ts",
+    "rule": "mod-handover",
+    "msg": "never write under handover/"
+   }
+  ],
+  "append handover": [
+   {
+    "file": "m/append handover.ts",
+    "rule": "mod-handover",
+    "msg": "never write under handover/"
+   }
+  ],
+  "read handover": [],
+  "locks mention": [
+   {
+    "file": "m/locks mention.ts",
+    "rule": "mod-locks",
+    "msg": "reads handover/locks.d/"
+   }
+  ],
+  "locks guarded": [],
+  "locks skip": [],
+  "locks must not": []
+ },
+ "scripts": {
+  "exec string": [
+   {
+    "file": "skills/x/exec string.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "exec bare": [
+   {
+    "file": "skills/x/exec bare.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "execSync": [
+   {
+    "file": "skills/x/execSync.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "child_process.exec": [
+   {
+    "file": "skills/x/child_process.exec.ts",
+    "rule": "sc-exec",
+    "msg": "runs a shell string; use execFile with an argument array"
+   }
+  ],
+  "exec with execFile": [],
+  "execFile only": [],
+  "convert spawn": [
+   {
+    "file": "skills/x/convert spawn.ts",
+    "rule": "sc-convert",
+    "msg": "bare convert is a Windows system tool; use magick"
+   }
+  ],
+  "convert execFile": [
+   {
+    "file": "skills/x/convert execFile.ts",
+    "rule": "sc-convert",
+    "msg": "bare convert is a Windows system tool; use magick"
+   }
+  ],
+  "magick": [],
+  "convert in a string": [],
+  "cwd slash": [
+   {
+    "file": "skills/x/cwd slash.ts",
+    "rule": "sc-path",
+    "msg": "builds a path with \"/\"; use path.join"
+   }
+  ],
+  "cwd join": [],
+  "cwd double quote": [
+   {
+    "file": "skills/x/cwd double quote.ts",
+    "rule": "sc-path",
+    "msg": "builds a path with \"/\"; use path.join"
+   }
+  ],
+  "fetch remote": [
+   {
+    "file": "skills/x/fetch remote.ts",
+    "rule": "sc-cloud",
+    "msg": "calls a remote API; cloud features live under skills/cloud/"
+   }
+  ],
+  "fetch local ip": [],
+  "fetch localhost": [],
+  "fetch relative": [],
+  "fetch backtick": [
+   {
+    "file": "skills/x/fetch backtick.ts",
+    "rule": "sc-cloud",
+    "msg": "calls a remote API; cloud features live under skills/cloud/"
+   }
+  ],
+  "fetch remote under cloud": [],
+  "fetch remote near cloud": [
+   {
+    "file": "skills/cloudy/a.ts",
+    "rule": "sc-cloud",
+    "msg": "calls a remote API; cloud features live under skills/cloud/"
+   }
+  ]
+ },
+ "advisory": [
+  "sc-cloud",
+  "sk-desc-load",
+  "sk-desc-open"
+ ]
+}

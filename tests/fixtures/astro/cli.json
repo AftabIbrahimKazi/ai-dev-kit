@@ -1,0 +1,57 @@
+{
+ "scan json": {
+  "status": 0,
+  "stdout": "{\"astro\":true,\"tokenPrefix\":\"--ex-\",\"tokenFile\":\"src/styles/tokens.css\",\"tokenCount\":4,\"selectorPrefix\":null,\"pagesDir\":\"src/pages\",\"componentsDir\":\"src/components\",\"layoutsDir\":\"src/layouts\",\"stylesDir\":\"src/styles\",\"scriptsDir\":\"src/scripts\",\"entryPattern\":\"<page>-entry.ts\",\"entryExamples\":[\"public/js/main.js\",\"src/scripts/home-entry.ts\"],\"clientDirectives\":{\"visible\":2,\"load\":1,\"idle\":1,\"media\":1,\"only\":1},\"assetPath\":\"both\",\"scopedStyles\":1,\"externalStyles\":0,\"transitions\":[\"astro view transitions\",\"astro:after-swap\",\"astro:page-load\"],\"siblings\":{\"pages\":[\"src/pages/about.md\",\"src/pages/bad.astro\",\"src/pages/good.astro\",\"src/pages/index.astro\"],\"components\":[\"src/components/Box.svelte\",\"src/components/Card.tsx\",\"src/components/ui/Button.astro\"]}}\n",
+  "stderr": ""
+ },
+ "scan text": {
+  "status": 0,
+  "stdout": "Astro project\ntokens:      4 in src/styles/tokens.css, prefix --ex-\nselectors:   prefix (none dominant)\npages:       src/pages    components: src/components    layouts: src/layouts\nstyles:      src/styles (1 components with <style>, 0 linking stylesheets)\nscripts:     src/scripts, entry pattern <page>-entry.ts e.g. public/js/main.js, src/scripts/home-entry.ts\nclient:*     visible 2, load 1, idle 1, media 1, only 1\nassets:      both\nlifecycle:   astro view transitions, astro:after-swap, astro:page-load (new pages must hook the same)\nsibling pages: src/pages/about.md, src/pages/bad.astro, src/pages/good.astro, src/pages/index.astro\nsibling components: src/components/Box.svelte, src/components/Card.tsx, src/components/ui/Button.astro\nMirror the nearest sibling; grep it before inventing a location.\n",
+  "stderr": ""
+ },
+ "check clean json": {
+  "status": 0,
+  "stdout": "{\"ok\":true,\"findings\":[]}\n",
+  "stderr": ""
+ },
+ "check clean text": {
+  "status": 0,
+  "stdout": "clean: src/pages/good.astro\n",
+  "stderr": ""
+ },
+ "check findings json": {
+  "status": 1,
+  "stdout": "{\"ok\":false,\"findings\":[{\"file\":\"src/pages/bad.astro\",\"line\":1,\"kind\":\"client-load\",\"detail\":\"prefer client:visible unless above the fold\"},{\"file\":\"src/pages/bad.astro\",\"line\":2,\"kind\":\"inline-script\",\"detail\":\"siblings use <page>-entry.ts\"}]}\n",
+  "stderr": ""
+ },
+ "check findings text": {
+  "status": 1,
+  "stdout": "src/pages/bad.astro:1 client-load: prefer client:visible unless above the fold\nsrc/pages/bad.astro:2 inline-script: siblings use <page>-entry.ts\n2 findings\n",
+  "stderr": ""
+ },
+ "check several": {
+  "status": 1,
+  "stdout": "src/pages/bad.astro:1 client-load: prefer client:visible unless above the fold\nsrc/pages/bad.astro:2 inline-script: siblings use <page>-entry.ts\nsrc/nope.astro:0 missing: file not found\n3 findings\n",
+  "stderr": ""
+ },
+ "check no files": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "usage: conventions.js scan [--cwd D] [--json] | check <file>... [--cwd D] [--json]\n"
+ },
+ "no command": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "usage: conventions.js scan [--cwd D] [--json] | check <file>... [--cwd D] [--json]\n"
+ },
+ "unknown command": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "usage: conventions.js scan [--cwd D] [--json] | check <file>... [--cwd D] [--json]\n"
+ },
+ "cwd elsewhere": {
+  "status": 0,
+  "stdout": "{\"astro\":false,\"tokenPrefix\":null,\"tokenFile\":null,\"tokenCount\":0,\"selectorPrefix\":null,\"pagesDir\":null,\"componentsDir\":null,\"layoutsDir\":null,\"stylesDir\":null,\"scriptsDir\":null,\"entryPattern\":null,\"entryExamples\":[],\"clientDirectives\":{},\"assetPath\":\"none\",\"scopedStyles\":0,\"externalStyles\":0,\"transitions\":[],\"siblings\":{\"pages\":[],\"components\":[]}}\n",
+  "stderr": ""
+ }
+}

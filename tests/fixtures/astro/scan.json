@@ -1,0 +1,172 @@
+{
+ "rich": {
+  "astro": true,
+  "tokenPrefix": "--ex-",
+  "tokenFile": "src/styles/tokens.css",
+  "tokenCount": 4,
+  "selectorPrefix": null,
+  "pagesDir": "a/pages",
+  "componentsDir": "src/components",
+  "layoutsDir": "src/layouts",
+  "stylesDir": "src/styles",
+  "scriptsDir": "src/scripts",
+  "entryPattern": "<page>-entry.ts",
+  "entryExamples": [
+   "public/js/main.js",
+   "src/scripts/home-entry.ts"
+  ],
+  "clientDirectives": {
+   "visible": 2,
+   "idle": 1,
+   "media": 1,
+   "only": 1
+  },
+  "assetPath": "both",
+  "scopedStyles": 1,
+  "externalStyles": 0,
+  "transitions": [
+   "astro view transitions",
+   "astro:after-swap",
+   "astro:page-load"
+  ],
+  "siblings": {
+   "pages": [
+    "a/pages/c.mdx",
+    "a/pages/d.astro"
+   ],
+   "components": [
+    "src/components/Box.svelte",
+    "src/components/Card.tsx",
+    "src/components/ui/Button.astro"
+   ]
+  }
+ },
+ "richText": "Astro project\ntokens:      4 in src/styles/tokens.css, prefix --ex-\nselectors:   prefix (none dominant)\npages:       a/pages    components: src/components    layouts: src/layouts\nstyles:      src/styles (1 components with <style>, 0 linking stylesheets)\nscripts:     src/scripts, entry pattern <page>-entry.ts e.g. public/js/main.js, src/scripts/home-entry.ts\nclient:*     visible 2, idle 1, media 1, only 1\nassets:      both\nlifecycle:   astro view transitions, astro:after-swap, astro:page-load (new pages must hook the same)\nsibling pages: a/pages/c.mdx, a/pages/d.astro\nsibling components: src/components/Box.svelte, src/components/Card.tsx, src/components/ui/Button.astro\nMirror the nearest sibling; grep it before inventing a location.",
+ "bare": {
+  "astro": false,
+  "tokenPrefix": null,
+  "tokenFile": null,
+  "tokenCount": 0,
+  "selectorPrefix": null,
+  "pagesDir": null,
+  "componentsDir": null,
+  "layoutsDir": null,
+  "stylesDir": null,
+  "scriptsDir": null,
+  "entryPattern": null,
+  "entryExamples": [],
+  "clientDirectives": {},
+  "assetPath": "none",
+  "scopedStyles": 0,
+  "externalStyles": 0,
+  "transitions": [],
+  "siblings": {
+   "pages": [],
+   "components": []
+  }
+ },
+ "bareText": "no astro.config found (conventions still scanned)\ntokens:      none found\nselectors:   prefix (none dominant)\npages:       -    components: -    layouts: -\nstyles:      - (0 components with <style>, 0 linking stylesheets)\nscripts:     -, entry pattern none\nclient:*     none (static islands)\nassets:      none\nMirror the nearest sibling; grep it before inventing a location.",
+ "single": {
+  "astro": true,
+  "tokenPrefix": "--aa-",
+  "tokenFile": "src/styles/a.css",
+  "tokenCount": 1,
+  "selectorPrefix": null,
+  "pagesDir": "src/pages",
+  "componentsDir": null,
+  "layoutsDir": null,
+  "stylesDir": "src/styles",
+  "scriptsDir": "src/scripts",
+  "entryPattern": "single main.ts",
+  "entryExamples": [
+   "src/scripts/main.ts"
+  ],
+  "clientDirectives": {},
+  "assetPath": "none",
+  "scopedStyles": 0,
+  "externalStyles": 1,
+  "transitions": [],
+  "siblings": {
+   "pages": [
+    "src/pages/p.astro"
+   ],
+   "components": []
+  }
+ },
+ "exactHalf": {
+  "astro": true,
+  "tokenPrefix": "--ex-",
+  "tokenFile": "src/styles/t.css",
+  "tokenCount": 4,
+  "selectorPrefix": "ex-",
+  "pagesDir": null,
+  "componentsDir": null,
+  "layoutsDir": null,
+  "stylesDir": "src/styles",
+  "scriptsDir": null,
+  "entryPattern": null,
+  "entryExamples": [],
+  "clientDirectives": {},
+  "assetPath": "none",
+  "scopedStyles": 0,
+  "externalStyles": 0,
+  "transitions": [],
+  "siblings": {
+   "pages": [],
+   "components": []
+  }
+ },
+ "noMajority": {
+  "astro": false,
+  "tokenPrefix": null,
+  "tokenFile": "src/styles/t.css",
+  "tokenCount": 3,
+  "selectorPrefix": null,
+  "pagesDir": "src/pages",
+  "componentsDir": null,
+  "layoutsDir": null,
+  "stylesDir": "src/styles",
+  "scriptsDir": null,
+  "entryPattern": null,
+  "entryExamples": [],
+  "clientDirectives": {},
+  "assetPath": "none",
+  "scopedStyles": 0,
+  "externalStyles": 0,
+  "transitions": [],
+  "siblings": {
+   "pages": [
+    "src/pages/i.astro"
+   ],
+   "components": []
+  }
+ },
+ "cssOnly": {
+  "astro": false,
+  "tokenPrefix": null,
+  "tokenFile": null,
+  "tokenCount": 0,
+  "selectorPrefix": "ex-",
+  "pagesDir": "src/pages",
+  "componentsDir": "src/components",
+  "layoutsDir": "src/layouts",
+  "stylesDir": "src/styles",
+  "scriptsDir": null,
+  "entryPattern": null,
+  "entryExamples": [],
+  "clientDirectives": {},
+  "assetPath": "none",
+  "scopedStyles": 0,
+  "externalStyles": 0,
+  "transitions": [],
+  "siblings": {
+   "pages": [
+    "src/pages/i.astro"
+   ],
+   "components": [
+    "src/components/A.vue",
+    "src/components/b/B.jsx"
+   ]
+  }
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "no command": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "error: usage: teardown-film <status|film> ...  (status [<dir>], film <dir> [--preview] [--size 1920x1080] [--fps 30] [--from S] [--to S] [--out FILE] [--sound FILE|none])\n"
+ },
+ "unknown command": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "error: usage: teardown-film <status|film> ...  (status [<dir>], film <dir> [--preview] [--size 1920x1080] [--fps 30] [--from S] [--to S] [--out FILE] [--sound FILE|none])\n"
+ },
+ "flag without a value": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "error: --fps needs a value\nusage: teardown-film <status|film> ...  (status [<dir>], film <dir> [--preview] [--size 1920x1080] [--fps 30] [--from S] [--to S] [--out FILE] [--sound FILE|none])\n"
+ },
+ "film without a folder": {
+  "status": 2,
+  "stdout": "",
+  "stderr": "error: film needs a machine folder.\nusage: teardown-film <status|film> ...  (status [<dir>], film <dir> [--preview] [--size 1920x1080] [--fps 30] [--from S] [--to S] [--out FILE] [--sound FILE|none])\n"
+ },
+ "folder that does not exist": {
+  "status": 1,
+  "stdout": "",
+  "stderr": "error: <d>\\teardown\\nope does not exist\n"
+ },
+ "no timeline": {
+  "status": 1,
+  "stdout": "",
+  "stderr": "error: teardown-out/m/timeline.json not found. Run: teardown sheet teardown/m once; it writes the timeline.\n"
+ },
+ "fps zero": {
+  "status": 1,
+  "stdout": "",
+  "stderr": "error: nothing to record: check --fps, --from and --to\n"
+ },
+ "empty range": {
+  "status": 1,
+  "stdout": "",
+  "stderr": "error: nothing to record: check --fps, --from and --to\n"
+ },
+ "dry run json": {
+  "status": 0,
+  "stdout": "{\"ok\":true,\"dryRun\":true,\"plan\":{\"w\":1920,\"h\":1080,\"fps\":30,\"from\":0,\"to\":20,\"frames\":600,\"out\":\"<d>\\\\teardown-out\\\\m\\\\m.mp4\",\"sound\":null,\"crf\":18}}\n",
+  "stderr": ""
+ },
+ "dry run text preview": {
+  "status": 0,
+  "stdout": "would record 240 frames (0 to 20 s at 12 fps, 640x360) to teardown-out/m/m.preview.mp4, silent\n",
+  "stderr": ""
+ },
+ "status": {
+  "status": 0,
+  "stdout": "{\"ok\":true,\"ffmpeg\":\"<ff>\",\"chrome\":\"<chrome>\",\"machine\":\"m\",\"built\":true,\"timeline\":true,\"duration\":20,\"score\":false}\n",
+  "stderr": ""
+ },
+ "status text": {
+  "status": 0,
+  "stdout": "ffmpeg: <ff>\nBrowser: <chrome>\nMachine m: page built, timeline 20 s, score none (silent video; see teardown-sound)\n",
+  "stderr": ""
+ },
+ "no ffmpeg": {
+  "status": 3,
+  "stdout": "",
+  "stderr": "error: <preflight>\n"
+ }
+}

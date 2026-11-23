@@ -1,0 +1,459 @@
+{
+ "cases": {
+  "noisy max 10": {
+   "changed": true,
+   "stats": {
+    "pass": 40,
+    "noise": 3,
+    "frames": 3,
+    "dup": 5,
+    "blank": 3,
+    "omitted": 59
+   },
+   "from": 157,
+   "to": 46,
+   "text": "> project@1.0.0 test\n> vitest run\n\ncompiled ok\nstep three\nretrying the connection  (x6)\nError: boom at line 12\n    at run (/app/src/a.ts:12:3)\nplain output line number 0 with some text\nplain output line number 1 with some text\nplain output line number 2 with some text\n[... 25 lines omitted ...]\nplain output line number 28 with some text\nplain output line number 29 with some text\nFAIL src/a.test.ts\nexpected 1 received 2\n\nmore plain output 0\nmore plain output 1\nmore plain output 2\n[... 34 lines omitted ...]\nmore plain output 37\nmore plain output 38\nmore plain output 39\nmore plain output 40\nmore plain output 41\nmore plain output 42\nmore plain output 43\nmore plain output 44\nmore plain output 45\nmore plain output 46\nmore plain output 47\nmore plain output 48\nmore plain output 49\nmore plain output 50\nmore plain output 51\nmore plain output 52\nmore plain output 53\nmore plain output 54\nmore plain output 55\nmore plain output 56\nmore plain output 57\nmore plain output 58\nmore plain output 59\n\nTests: 1 failed, 40 passed"
+  },
+  "noisy max 40": {
+   "changed": true,
+   "stats": {
+    "pass": 40,
+    "noise": 3,
+    "frames": 3,
+    "dup": 5,
+    "blank": 3,
+    "omitted": 59
+   },
+   "from": 157,
+   "to": 46,
+   "text": "> project@1.0.0 test\n> vitest run\n\ncompiled ok\nstep three\nretrying the connection  (x6)\nError: boom at line 12\n    at run (/app/src/a.ts:12:3)\nplain output line number 0 with some text\nplain output line number 1 with some text\nplain output line number 2 with some text\n[... 25 lines omitted ...]\nplain output line number 28 with some text\nplain output line number 29 with some text\nFAIL src/a.test.ts\nexpected 1 received 2\n\nmore plain output 0\nmore plain output 1\nmore plain output 2\n[... 34 lines omitted ...]\nmore plain output 37\nmore plain output 38\nmore plain output 39\nmore plain output 40\nmore plain output 41\nmore plain output 42\nmore plain output 43\nmore plain output 44\nmore plain output 45\nmore plain output 46\nmore plain output 47\nmore plain output 48\nmore plain output 49\nmore plain output 50\nmore plain output 51\nmore plain output 52\nmore plain output 53\nmore plain output 54\nmore plain output 55\nmore plain output 56\nmore plain output 57\nmore plain output 58\nmore plain output 59\n\nTests: 1 failed, 40 passed"
+  },
+  "noisy max 60": {
+   "changed": true,
+   "stats": {
+    "pass": 40,
+    "noise": 3,
+    "frames": 3,
+    "dup": 5,
+    "blank": 3,
+    "omitted": 43
+   },
+   "from": 157,
+   "to": 62,
+   "text": "> project@1.0.0 test\n> vitest run\n\ncompiled ok\nstep three\nretrying the connection  (x6)\nError: boom at line 12\n    at run (/app/src/a.ts:12:3)\nplain output line number 0 with some text\nplain output line number 1 with some text\nplain output line number 2 with some text\nplain output line number 3 with some text\nplain output line number 4 with some text\nplain output line number 5 with some text\nplain output line number 6 with some text\nplain output line number 7 with some text\nplain output line number 8 with some text\nplain output line number 9 with some text\nplain output line number 10 with some text\nplain output line number 11 with some text\nplain output line number 12 with some text\nplain output line number 13 with some text\nplain output line number 14 with some text\nplain output line number 15 with some text\nplain output line number 16 with some text\nplain output line number 17 with some text\nplain output line number 18 with some text\n[... 9 lines omitted ...]\nplain output line number 28 with some text\nplain output line number 29 with some text\nFAIL src/a.test.ts\nexpected 1 received 2\n\nmore plain output 0\nmore plain output 1\nmore plain output 2\n[... 34 lines omitted ...]\nmore plain output 37\nmore plain output 38\nmore plain output 39\nmore plain output 40\nmore plain output 41\nmore plain output 42\nmore plain output 43\nmore plain output 44\nmore plain output 45\nmore plain output 46\nmore plain output 47\nmore plain output 48\nmore plain output 49\nmore plain output 50\nmore plain output 51\nmore plain output 52\nmore plain output 53\nmore plain output 54\nmore plain output 55\nmore plain output 56\nmore plain output 57\nmore plain output 58\nmore plain output 59\n\nTests: 1 failed, 40 passed"
+  },
+  "noisy max 100": {
+   "changed": true,
+   "stats": {
+    "pass": 40,
+    "noise": 3,
+    "frames": 3,
+    "dup": 5,
+    "blank": 3,
+    "omitted": 3
+   },
+   "from": 157,
+   "to": 101,
+   "text": "> project@1.0.0 test\n> vitest run\n\ncompiled ok\nstep three\nretrying the connection  (x6)\nError: boom at line 12\n    at run (/app/src/a.ts:12:3)\nplain output line number 0 with some text\nplain output line number 1 with some text\nplain output line number 2 with some text\nplain output line number 3 with some text\nplain output line number 4 with some text\nplain output line number 5 with some text\nplain output line number 6 with some text\nplain output line number 7 with some text\nplain output line number 8 with some text\nplain output line number 9 with some text\nplain output line number 10 with some text\nplain output line number 11 with some text\nplain output line number 12 with some text\nplain output line number 13 with some text\nplain output line number 14 with some text\nplain output line number 15 with some text\nplain output line number 16 with some text\nplain output line number 17 with some text\nplain output line number 18 with some text\nplain output line number 19 with some text\nplain output line number 20 with some text\nplain output line number 21 with some text\nplain output line number 22 with some text\nplain output line number 23 with some text\nplain output line number 24 with some text\nplain output line number 25 with some text\nplain output line number 26 with some text\nplain output line number 27 with some text\nplain output line number 28 with some text\nplain output line number 29 with some text\nFAIL src/a.test.ts\nexpected 1 received 2\n\nmore plain output 0\nmore plain output 1\nmore plain output 2\nmore plain output 3\nmore plain output 4\nmore plain output 5\nmore plain output 6\nmore plain output 7\nmore plain output 8\nmore plain output 9\nmore plain output 10\nmore plain output 11\nmore plain output 12\nmore plain output 13\nmore plain output 14\nmore plain output 15\nmore plain output 16\nmore plain output 17\nmore plain output 18\nmore plain output 19\nmore plain output 20\nmore plain output 21\nmore plain output 22\nmore plain output 23\nmore plain output 24\nmore plain output 25\nmore plain output 26\nmore plain output 27\nmore plain output 28\nmore plain output 29\nmore plain output 30\nmore plain output 31\nmore plain output 32\nmore plain output 33\n[... 3 lines omitted ...]\nmore plain output 37\nmore plain output 38\nmore plain output 39\nmore plain output 40\nmore plain output 41\nmore plain output 42\nmore plain output 43\nmore plain output 44\nmore plain output 45\nmore plain output 46\nmore plain output 47\nmore plain output 48\nmore plain output 49\nmore plain output 50\nmore plain output 51\nmore plain output 52\nmore plain output 53\nmore plain output 54\nmore plain output 55\nmore plain output 56\nmore plain output 57\nmore plain output 58\nmore plain output 59\n\nTests: 1 failed, 40 passed"
+  },
+  "noisy max 150": {
+   "changed": true,
+   "stats": {
+    "pass": 40,
+    "noise": 3,
+    "frames": 3,
+    "dup": 5,
+    "blank": 3,
+    "omitted": 0
+   },
+   "from": 157,
+   "to": 103,
+   "text": "> project@1.0.0 test\n> vitest run\n\ncompiled ok\nstep three\nretrying the connection  (x6)\nError: boom at line 12\n    at run (/app/src/a.ts:12:3)\nplain output line number 0 with some text\nplain output line number 1 with some text\nplain output line number 2 with some text\nplain output line number 3 with some text\nplain output line number 4 with some text\nplain output line number 5 with some text\nplain output line number 6 with some text\nplain output line number 7 with some text\nplain output line number 8 with some text\nplain output line number 9 with some text\nplain output line number 10 with some text\nplain output line number 11 with some text\nplain output line number 12 with some text\nplain output line number 13 with some text\nplain output line number 14 with some text\nplain output line number 15 with some text\nplain output line number 16 with some text\nplain output line number 17 with some text\nplain output line number 18 with some text\nplain output line number 19 with some text\nplain output line number 20 with some text\nplain output line number 21 with some text\nplain output line number 22 with some text\nplain output line number 23 with some text\nplain output line number 24 with some text\nplain output line number 25 with some text\nplain output line number 26 with some text\nplain output line number 27 with some text\nplain output line number 28 with some text\nplain output line number 29 with some text\nFAIL src/a.test.ts\nexpected 1 received 2\n\nmore plain output 0\nmore plain output 1\nmore plain output 2\nmore plain output 3\nmore plain output 4\nmore plain output 5\nmore plain output 6\nmore plain output 7\nmore plain output 8\nmore plain output 9\nmore plain output 10\nmore plain output 11\nmore plain output 12\nmore plain output 13\nmore plain output 14\nmore plain output 15\nmore plain output 16\nmore plain output 17\nmore plain output 18\nmore plain output 19\nmore plain output 20\nmore plain output 21\nmore plain output 22\nmore plain output 23\nmore plain output 24\nmore plain output 25\nmore plain output 26\nmore plain output 27\nmore plain output 28\nmore plain output 29\nmore plain output 30\nmore plain output 31\nmore plain output 32\nmore plain output 33\nmore plain output 34\nmore plain output 35\nmore plain output 36\nmore plain output 37\nmore plain output 38\nmore plain output 39\nmore plain output 40\nmore plain output 41\nmore plain output 42\nmore plain output 43\nmore plain output 44\nmore plain output 45\nmore plain output 46\nmore plain output 47\nmore plain output 48\nmore plain output 49\nmore plain output 50\nmore plain output 51\nmore plain output 52\nmore plain output 53\nmore plain output 54\nmore plain output 55\nmore plain output 56\nmore plain output 57\nmore plain output 58\nmore plain output 59\n\nTests: 1 failed, 40 passed"
+  },
+  "long300 max 10": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 244
+   },
+   "from": 300,
+   "to": 60,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\n[... 28 lines omitted ...]\nunique line 38 of the log\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\n[... 103 lines omitted ...]\nunique line 148 of the log\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nunique line 152 of the log\nunique line 153 of the log\nunique line 154 of the log\n[... 103 lines omitted ...]\nunique line 258 of the log\nunique line 259 of the log\nTS2345: type problem on item 260\nunique line 261 of the log\nunique line 262 of the log\nunique line 263 of the log\nunique line 264 of the log\n[... 10 lines omitted ...]\nunique line 275 of the log\nunique line 276 of the log\nunique line 277 of the log\nunique line 278 of the log\nunique line 279 of the log\nunique line 280 of the log\nunique line 281 of the log\nunique line 282 of the log\nunique line 283 of the log\nunique line 284 of the log\nunique line 285 of the log\nunique line 286 of the log\nunique line 287 of the log\nunique line 288 of the log\nunique line 289 of the log\nunique line 290 of the log\nunique line 291 of the log\nunique line 292 of the log\nunique line 293 of the log\nunique line 294 of the log\nunique line 295 of the log\nunique line 296 of the log\nunique line 297 of the log\nunique line 298 of the log\nunique line 299 of the log"
+  },
+  "long300 max 40": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 244
+   },
+   "from": 300,
+   "to": 60,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\n[... 28 lines omitted ...]\nunique line 38 of the log\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\n[... 103 lines omitted ...]\nunique line 148 of the log\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nunique line 152 of the log\nunique line 153 of the log\nunique line 154 of the log\n[... 103 lines omitted ...]\nunique line 258 of the log\nunique line 259 of the log\nTS2345: type problem on item 260\nunique line 261 of the log\nunique line 262 of the log\nunique line 263 of the log\nunique line 264 of the log\n[... 10 lines omitted ...]\nunique line 275 of the log\nunique line 276 of the log\nunique line 277 of the log\nunique line 278 of the log\nunique line 279 of the log\nunique line 280 of the log\nunique line 281 of the log\nunique line 282 of the log\nunique line 283 of the log\nunique line 284 of the log\nunique line 285 of the log\nunique line 286 of the log\nunique line 287 of the log\nunique line 288 of the log\nunique line 289 of the log\nunique line 290 of the log\nunique line 291 of the log\nunique line 292 of the log\nunique line 293 of the log\nunique line 294 of the log\nunique line 295 of the log\nunique line 296 of the log\nunique line 297 of the log\nunique line 298 of the log\nunique line 299 of the log"
+  },
+  "long300 max 60": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 240
+   },
+   "from": 300,
+   "to": 64,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\n[... 24 lines omitted ...]\nunique line 38 of the log\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\n[... 103 lines omitted ...]\nunique line 148 of the log\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nunique line 152 of the log\nunique line 153 of the log\nunique line 154 of the log\n[... 103 lines omitted ...]\nunique line 258 of the log\nunique line 259 of the log\nTS2345: type problem on item 260\nunique line 261 of the log\nunique line 262 of the log\nunique line 263 of the log\nunique line 264 of the log\n[... 10 lines omitted ...]\nunique line 275 of the log\nunique line 276 of the log\nunique line 277 of the log\nunique line 278 of the log\nunique line 279 of the log\nunique line 280 of the log\nunique line 281 of the log\nunique line 282 of the log\nunique line 283 of the log\nunique line 284 of the log\nunique line 285 of the log\nunique line 286 of the log\nunique line 287 of the log\nunique line 288 of the log\nunique line 289 of the log\nunique line 290 of the log\nunique line 291 of the log\nunique line 292 of the log\nunique line 293 of the log\nunique line 294 of the log\nunique line 295 of the log\nunique line 296 of the log\nunique line 297 of the log\nunique line 298 of the log\nunique line 299 of the log"
+  },
+  "long300 max 100": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 200
+   },
+   "from": 300,
+   "to": 103,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\nunique line 45 of the log\nunique line 46 of the log\nunique line 47 of the log\nunique line 48 of the log\nunique line 49 of the log\nunique line 50 of the log\nunique line 51 of the log\nunique line 52 of the log\nunique line 53 of the log\nunique line 54 of the log\nunique line 55 of the log\nunique line 56 of the log\nunique line 57 of the log\nunique line 58 of the log\nunique line 59 of the log\nunique line 60 of the log\n[... 87 lines omitted ...]\nunique line 148 of the log\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nunique line 152 of the log\nunique line 153 of the log\nunique line 154 of the log\n[... 103 lines omitted ...]\nunique line 258 of the log\nunique line 259 of the log\nTS2345: type problem on item 260\nunique line 261 of the log\nunique line 262 of the log\nunique line 263 of the log\nunique line 264 of the log\n[... 10 lines omitted ...]\nunique line 275 of the log\nunique line 276 of the log\nunique line 277 of the log\nunique line 278 of the log\nunique line 279 of the log\nunique line 280 of the log\nunique line 281 of the log\nunique line 282 of the log\nunique line 283 of the log\nunique line 284 of the log\nunique line 285 of the log\nunique line 286 of the log\nunique line 287 of the log\nunique line 288 of the log\nunique line 289 of the log\nunique line 290 of the log\nunique line 291 of the log\nunique line 292 of the log\nunique line 293 of the log\nunique line 294 of the log\nunique line 295 of the log\nunique line 296 of the log\nunique line 297 of the log\nunique line 298 of the log\nunique line 299 of the log"
+  },
+  "long300 max 150": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 150
+   },
+   "from": 300,
+   "to": 153,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\nunique line 45 of the log\nunique line 46 of the log\nunique line 47 of the log\nunique line 48 of the log\nunique line 49 of the log\nunique line 50 of the log\nunique line 51 of the log\nunique line 52 of the log\nunique line 53 of the log\nunique line 54 of the log\nunique line 55 of the log\nunique line 56 of the log\nunique line 57 of the log\nunique line 58 of the log\nunique line 59 of the log\nunique line 60 of the log\nunique line 61 of the log\nunique line 62 of the log\nunique line 63 of the log\nunique line 64 of the log\nunique line 65 of the log\nunique line 66 of the log\nunique line 67 of the log\nunique line 68 of the log\nunique line 69 of the log\nunique line 70 of the log\nunique line 71 of the log\nunique line 72 of the log\nunique line 73 of the log\nunique line 74 of the log\nunique line 75 of the log\nunique line 76 of the log\nunique line 77 of the log\nunique line 78 of the log\nunique line 79 of the log\nunique line 80 of the log\nunique line 81 of the log\nunique line 82 of the log\nunique line 83 of the log\nunique line 84 of the log\nunique line 85 of the log\nunique line 86 of the log\nunique line 87 of the log\nunique line 88 of the log\nunique line 89 of the log\nunique line 90 of the log\nunique line 91 of the log\nunique line 92 of the log\nunique line 93 of the log\nunique line 94 of the log\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\n[... 37 lines omitted ...]\nunique line 148 of the log\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nunique line 152 of the log\nunique line 153 of the log\nunique line 154 of the log\n[... 103 lines omitted ...]\nunique line 258 of the log\nunique line 259 of the log\nTS2345: type problem on item 260\nunique line 261 of the log\nunique line 262 of the log\nunique line 263 of the log\nunique line 264 of the log\n[... 10 lines omitted ...]\nunique line 275 of the log\nunique line 276 of the log\nunique line 277 of the log\nunique line 278 of the log\nunique line 279 of the log\nunique line 280 of the log\nunique line 281 of the log\nunique line 282 of the log\nunique line 283 of the log\nunique line 284 of the log\nunique line 285 of the log\nunique line 286 of the log\nunique line 287 of the log\nunique line 288 of the log\nunique line 289 of the log\nunique line 290 of the log\nunique line 291 of the log\nunique line 292 of the log\nunique line 293 of the log\nunique line 294 of the log\nunique line 295 of the log\nunique line 296 of the log\nunique line 297 of the log\nunique line 298 of the log\nunique line 299 of the log"
+  },
+  "long120 max 10": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 85
+   },
+   "from": 120,
+   "to": 36,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nTS2345: type problem on item 5\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\n[... 85 lines omitted ...]\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\nunique line 111 of the log\nunique line 112 of the log\nunique line 113 of the log\nunique line 114 of the log\nunique line 115 of the log\nunique line 116 of the log\nunique line 117 of the log\nunique line 118 of the log\nTS2345: type problem on item 119"
+  },
+  "long120 max 40": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 80
+   },
+   "from": 120,
+   "to": 41,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nTS2345: type problem on item 5\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\n[... 80 lines omitted ...]\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\nunique line 111 of the log\nunique line 112 of the log\nunique line 113 of the log\nunique line 114 of the log\nunique line 115 of the log\nunique line 116 of the log\nunique line 117 of the log\nunique line 118 of the log\nTS2345: type problem on item 119"
+  },
+  "long120 max 60": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 60
+   },
+   "from": 120,
+   "to": 61,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nTS2345: type problem on item 5\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\n[... 60 lines omitted ...]\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\nunique line 111 of the log\nunique line 112 of the log\nunique line 113 of the log\nunique line 114 of the log\nunique line 115 of the log\nunique line 116 of the log\nunique line 117 of the log\nunique line 118 of the log\nTS2345: type problem on item 119"
+  },
+  "long120 max 100": {
+   "changed": true,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 20
+   },
+   "from": 120,
+   "to": 101,
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nTS2345: type problem on item 5\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\nunique line 45 of the log\nunique line 46 of the log\nunique line 47 of the log\nunique line 48 of the log\nunique line 49 of the log\nunique line 50 of the log\nunique line 51 of the log\nunique line 52 of the log\nunique line 53 of the log\nunique line 54 of the log\nunique line 55 of the log\nunique line 56 of the log\nunique line 57 of the log\nunique line 58 of the log\nunique line 59 of the log\nunique line 60 of the log\nunique line 61 of the log\nunique line 62 of the log\nunique line 63 of the log\nunique line 64 of the log\nunique line 65 of the log\nunique line 66 of the log\nunique line 67 of the log\nunique line 68 of the log\nunique line 69 of the log\nunique line 70 of the log\nunique line 71 of the log\nunique line 72 of the log\nunique line 73 of the log\nunique line 74 of the log\n[... 20 lines omitted ...]\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\nunique line 111 of the log\nunique line 112 of the log\nunique line 113 of the log\nunique line 114 of the log\nunique line 115 of the log\nunique line 116 of the log\nunique line 117 of the log\nunique line 118 of the log\nTS2345: type problem on item 119"
+  },
+  "long120 max 150": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nTS2345: type problem on item 5\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log\nunique line 41 of the log\nunique line 42 of the log\nunique line 43 of the log\nunique line 44 of the log\nunique line 45 of the log\nunique line 46 of the log\nunique line 47 of the log\nunique line 48 of the log\nunique line 49 of the log\nunique line 50 of the log\nunique line 51 of the log\nunique line 52 of the log\nunique line 53 of the log\nunique line 54 of the log\nunique line 55 of the log\nunique line 56 of the log\nunique line 57 of the log\nunique line 58 of the log\nunique line 59 of the log\nunique line 60 of the log\nunique line 61 of the log\nunique line 62 of the log\nunique line 63 of the log\nunique line 64 of the log\nunique line 65 of the log\nunique line 66 of the log\nunique line 67 of the log\nunique line 68 of the log\nunique line 69 of the log\nunique line 70 of the log\nunique line 71 of the log\nunique line 72 of the log\nunique line 73 of the log\nunique line 74 of the log\nunique line 75 of the log\nunique line 76 of the log\nunique line 77 of the log\nunique line 78 of the log\nunique line 79 of the log\nunique line 80 of the log\nunique line 81 of the log\nunique line 82 of the log\nunique line 83 of the log\nunique line 84 of the log\nunique line 85 of the log\nunique line 86 of the log\nunique line 87 of the log\nunique line 88 of the log\nunique line 89 of the log\nunique line 90 of the log\nunique line 91 of the log\nunique line 92 of the log\nunique line 93 of the log\nunique line 94 of the log\nunique line 95 of the log\nunique line 96 of the log\nunique line 97 of the log\nunique line 98 of the log\nunique line 99 of the log\nunique line 100 of the log\nunique line 101 of the log\nunique line 102 of the log\nunique line 103 of the log\nunique line 104 of the log\nunique line 105 of the log\nunique line 106 of the log\nunique line 107 of the log\nunique line 108 of the log\nunique line 109 of the log\nunique line 110 of the log\nunique line 111 of the log\nunique line 112 of the log\nunique line 113 of the log\nunique line 114 of the log\nunique line 115 of the log\nunique line 116 of the log\nunique line 117 of the log\nunique line 118 of the log\nTS2345: type problem on item 119"
+  },
+  "long41 max 10": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 6
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log"
+  },
+  "long41 max 40": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 1
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log"
+  },
+  "long41 max 60": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log"
+  },
+  "long41 max 100": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log"
+  },
+  "long41 max 150": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nunique line 3 of the log\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log\nunique line 39 of the log\nunique line 40 of the log"
+  },
+  "short39 max 10": {
+   "changed": false,
+   "stats": {},
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nTS2345: type problem on item 3\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log"
+  },
+  "short39 max 40": {
+   "changed": false,
+   "stats": {},
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nTS2345: type problem on item 3\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log"
+  },
+  "short39 max 60": {
+   "changed": false,
+   "stats": {},
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nTS2345: type problem on item 3\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log"
+  },
+  "short39 max 100": {
+   "changed": false,
+   "stats": {},
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nTS2345: type problem on item 3\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log"
+  },
+  "short39 max 150": {
+   "changed": false,
+   "stats": {},
+   "text": "unique line 0 of the log\nunique line 1 of the log\nunique line 2 of the log\nTS2345: type problem on item 3\nunique line 4 of the log\nunique line 5 of the log\nunique line 6 of the log\nunique line 7 of the log\nunique line 8 of the log\nunique line 9 of the log\nunique line 10 of the log\nunique line 11 of the log\nunique line 12 of the log\nunique line 13 of the log\nunique line 14 of the log\nunique line 15 of the log\nunique line 16 of the log\nunique line 17 of the log\nunique line 18 of the log\nunique line 19 of the log\nunique line 20 of the log\nunique line 21 of the log\nunique line 22 of the log\nunique line 23 of the log\nunique line 24 of the log\nunique line 25 of the log\nunique line 26 of the log\nunique line 27 of the log\nunique line 28 of the log\nunique line 29 of the log\nunique line 30 of the log\nunique line 31 of the log\nunique line 32 of the log\nunique line 33 of the log\nunique line 34 of the log\nunique line 35 of the log\nunique line 36 of the log\nunique line 37 of the log\nunique line 38 of the log"
+  },
+  "failuresEverywhere max 10": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "TS2345: type problem on item 0\nunique line 1 of the log\nTS2345: type problem on item 2\nunique line 3 of the log\nTS2345: type problem on item 4\nunique line 5 of the log\nTS2345: type problem on item 6\nunique line 7 of the log\nTS2345: type problem on item 8\nunique line 9 of the log\nTS2345: type problem on item 10\nunique line 11 of the log\nTS2345: type problem on item 12\nunique line 13 of the log\nTS2345: type problem on item 14\nunique line 15 of the log\nTS2345: type problem on item 16\nunique line 17 of the log\nTS2345: type problem on item 18\nunique line 19 of the log\nTS2345: type problem on item 20\nunique line 21 of the log\nTS2345: type problem on item 22\nunique line 23 of the log\nTS2345: type problem on item 24\nunique line 25 of the log\nTS2345: type problem on item 26\nunique line 27 of the log\nTS2345: type problem on item 28\nunique line 29 of the log\nTS2345: type problem on item 30\nunique line 31 of the log\nTS2345: type problem on item 32\nunique line 33 of the log\nTS2345: type problem on item 34\nunique line 35 of the log\nTS2345: type problem on item 36\nunique line 37 of the log\nTS2345: type problem on item 38\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nTS2345: type problem on item 42\nunique line 43 of the log\nTS2345: type problem on item 44\nunique line 45 of the log\nTS2345: type problem on item 46\nunique line 47 of the log\nTS2345: type problem on item 48\nunique line 49 of the log\nTS2345: type problem on item 50\nunique line 51 of the log\nTS2345: type problem on item 52\nunique line 53 of the log\nTS2345: type problem on item 54\nunique line 55 of the log\nTS2345: type problem on item 56\nunique line 57 of the log\nTS2345: type problem on item 58\nunique line 59 of the log\nTS2345: type problem on item 60\nunique line 61 of the log\nTS2345: type problem on item 62\nunique line 63 of the log\nTS2345: type problem on item 64\nunique line 65 of the log\nTS2345: type problem on item 66\nunique line 67 of the log\nTS2345: type problem on item 68\nunique line 69 of the log\nTS2345: type problem on item 70\nunique line 71 of the log\nTS2345: type problem on item 72\nunique line 73 of the log\nTS2345: type problem on item 74\nunique line 75 of the log\nTS2345: type problem on item 76\nunique line 77 of the log\nTS2345: type problem on item 78\nunique line 79 of the log\nTS2345: type problem on item 80\nunique line 81 of the log\nTS2345: type problem on item 82\nunique line 83 of the log\nTS2345: type problem on item 84\nunique line 85 of the log\nTS2345: type problem on item 86\nunique line 87 of the log\nTS2345: type problem on item 88\nunique line 89 of the log\nTS2345: type problem on item 90\nunique line 91 of the log\nTS2345: type problem on item 92\nunique line 93 of the log\nTS2345: type problem on item 94\nunique line 95 of the log\nTS2345: type problem on item 96\nunique line 97 of the log\nTS2345: type problem on item 98\nunique line 99 of the log\nTS2345: type problem on item 100\nunique line 101 of the log\nTS2345: type problem on item 102\nunique line 103 of the log\nTS2345: type problem on item 104\nunique line 105 of the log\nTS2345: type problem on item 106\nunique line 107 of the log\nTS2345: type problem on item 108\nunique line 109 of the log\nTS2345: type problem on item 110\nunique line 111 of the log\nTS2345: type problem on item 112\nunique line 113 of the log\nTS2345: type problem on item 114\nunique line 115 of the log\nTS2345: type problem on item 116\nunique line 117 of the log\nTS2345: type problem on item 118\nunique line 119 of the log\nTS2345: type problem on item 120\nunique line 121 of the log\nTS2345: type problem on item 122\nunique line 123 of the log\nTS2345: type problem on item 124\nunique line 125 of the log\nTS2345: type problem on item 126\nunique line 127 of the log\nTS2345: type problem on item 128\nunique line 129 of the log\nTS2345: type problem on item 130\nunique line 131 of the log\nTS2345: type problem on item 132\nunique line 133 of the log\nTS2345: type problem on item 134\nunique line 135 of the log\nTS2345: type problem on item 136\nunique line 137 of the log\nTS2345: type problem on item 138\nunique line 139 of the log\nTS2345: type problem on item 140\nunique line 141 of the log\nTS2345: type problem on item 142\nunique line 143 of the log\nTS2345: type problem on item 144\nunique line 145 of the log\nTS2345: type problem on item 146\nunique line 147 of the log\nTS2345: type problem on item 148\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nTS2345: type problem on item 152\nunique line 153 of the log\nTS2345: type problem on item 154\nunique line 155 of the log\nTS2345: type problem on item 156\nunique line 157 of the log\nTS2345: type problem on item 158\nunique line 159 of the log\nTS2345: type problem on item 160\nunique line 161 of the log\nTS2345: type problem on item 162\nunique line 163 of the log\nTS2345: type problem on item 164\nunique line 165 of the log\nTS2345: type problem on item 166\nunique line 167 of the log\nTS2345: type problem on item 168\nunique line 169 of the log\nTS2345: type problem on item 170\nunique line 171 of the log\nTS2345: type problem on item 172\nunique line 173 of the log\nTS2345: type problem on item 174\nunique line 175 of the log\nTS2345: type problem on item 176\nunique line 177 of the log\nTS2345: type problem on item 178\nunique line 179 of the log\nTS2345: type problem on item 180\nunique line 181 of the log\nTS2345: type problem on item 182\nunique line 183 of the log\nTS2345: type problem on item 184\nunique line 185 of the log\nTS2345: type problem on item 186\nunique line 187 of the log\nTS2345: type problem on item 188\nunique line 189 of the log\nTS2345: type problem on item 190\nunique line 191 of the log\nTS2345: type problem on item 192\nunique line 193 of the log\nTS2345: type problem on item 194\nunique line 195 of the log\nTS2345: type problem on item 196\nunique line 197 of the log\nTS2345: type problem on item 198\nunique line 199 of the log"
+  },
+  "failuresEverywhere max 40": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "TS2345: type problem on item 0\nunique line 1 of the log\nTS2345: type problem on item 2\nunique line 3 of the log\nTS2345: type problem on item 4\nunique line 5 of the log\nTS2345: type problem on item 6\nunique line 7 of the log\nTS2345: type problem on item 8\nunique line 9 of the log\nTS2345: type problem on item 10\nunique line 11 of the log\nTS2345: type problem on item 12\nunique line 13 of the log\nTS2345: type problem on item 14\nunique line 15 of the log\nTS2345: type problem on item 16\nunique line 17 of the log\nTS2345: type problem on item 18\nunique line 19 of the log\nTS2345: type problem on item 20\nunique line 21 of the log\nTS2345: type problem on item 22\nunique line 23 of the log\nTS2345: type problem on item 24\nunique line 25 of the log\nTS2345: type problem on item 26\nunique line 27 of the log\nTS2345: type problem on item 28\nunique line 29 of the log\nTS2345: type problem on item 30\nunique line 31 of the log\nTS2345: type problem on item 32\nunique line 33 of the log\nTS2345: type problem on item 34\nunique line 35 of the log\nTS2345: type problem on item 36\nunique line 37 of the log\nTS2345: type problem on item 38\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nTS2345: type problem on item 42\nunique line 43 of the log\nTS2345: type problem on item 44\nunique line 45 of the log\nTS2345: type problem on item 46\nunique line 47 of the log\nTS2345: type problem on item 48\nunique line 49 of the log\nTS2345: type problem on item 50\nunique line 51 of the log\nTS2345: type problem on item 52\nunique line 53 of the log\nTS2345: type problem on item 54\nunique line 55 of the log\nTS2345: type problem on item 56\nunique line 57 of the log\nTS2345: type problem on item 58\nunique line 59 of the log\nTS2345: type problem on item 60\nunique line 61 of the log\nTS2345: type problem on item 62\nunique line 63 of the log\nTS2345: type problem on item 64\nunique line 65 of the log\nTS2345: type problem on item 66\nunique line 67 of the log\nTS2345: type problem on item 68\nunique line 69 of the log\nTS2345: type problem on item 70\nunique line 71 of the log\nTS2345: type problem on item 72\nunique line 73 of the log\nTS2345: type problem on item 74\nunique line 75 of the log\nTS2345: type problem on item 76\nunique line 77 of the log\nTS2345: type problem on item 78\nunique line 79 of the log\nTS2345: type problem on item 80\nunique line 81 of the log\nTS2345: type problem on item 82\nunique line 83 of the log\nTS2345: type problem on item 84\nunique line 85 of the log\nTS2345: type problem on item 86\nunique line 87 of the log\nTS2345: type problem on item 88\nunique line 89 of the log\nTS2345: type problem on item 90\nunique line 91 of the log\nTS2345: type problem on item 92\nunique line 93 of the log\nTS2345: type problem on item 94\nunique line 95 of the log\nTS2345: type problem on item 96\nunique line 97 of the log\nTS2345: type problem on item 98\nunique line 99 of the log\nTS2345: type problem on item 100\nunique line 101 of the log\nTS2345: type problem on item 102\nunique line 103 of the log\nTS2345: type problem on item 104\nunique line 105 of the log\nTS2345: type problem on item 106\nunique line 107 of the log\nTS2345: type problem on item 108\nunique line 109 of the log\nTS2345: type problem on item 110\nunique line 111 of the log\nTS2345: type problem on item 112\nunique line 113 of the log\nTS2345: type problem on item 114\nunique line 115 of the log\nTS2345: type problem on item 116\nunique line 117 of the log\nTS2345: type problem on item 118\nunique line 119 of the log\nTS2345: type problem on item 120\nunique line 121 of the log\nTS2345: type problem on item 122\nunique line 123 of the log\nTS2345: type problem on item 124\nunique line 125 of the log\nTS2345: type problem on item 126\nunique line 127 of the log\nTS2345: type problem on item 128\nunique line 129 of the log\nTS2345: type problem on item 130\nunique line 131 of the log\nTS2345: type problem on item 132\nunique line 133 of the log\nTS2345: type problem on item 134\nunique line 135 of the log\nTS2345: type problem on item 136\nunique line 137 of the log\nTS2345: type problem on item 138\nunique line 139 of the log\nTS2345: type problem on item 140\nunique line 141 of the log\nTS2345: type problem on item 142\nunique line 143 of the log\nTS2345: type problem on item 144\nunique line 145 of the log\nTS2345: type problem on item 146\nunique line 147 of the log\nTS2345: type problem on item 148\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nTS2345: type problem on item 152\nunique line 153 of the log\nTS2345: type problem on item 154\nunique line 155 of the log\nTS2345: type problem on item 156\nunique line 157 of the log\nTS2345: type problem on item 158\nunique line 159 of the log\nTS2345: type problem on item 160\nunique line 161 of the log\nTS2345: type problem on item 162\nunique line 163 of the log\nTS2345: type problem on item 164\nunique line 165 of the log\nTS2345: type problem on item 166\nunique line 167 of the log\nTS2345: type problem on item 168\nunique line 169 of the log\nTS2345: type problem on item 170\nunique line 171 of the log\nTS2345: type problem on item 172\nunique line 173 of the log\nTS2345: type problem on item 174\nunique line 175 of the log\nTS2345: type problem on item 176\nunique line 177 of the log\nTS2345: type problem on item 178\nunique line 179 of the log\nTS2345: type problem on item 180\nunique line 181 of the log\nTS2345: type problem on item 182\nunique line 183 of the log\nTS2345: type problem on item 184\nunique line 185 of the log\nTS2345: type problem on item 186\nunique line 187 of the log\nTS2345: type problem on item 188\nunique line 189 of the log\nTS2345: type problem on item 190\nunique line 191 of the log\nTS2345: type problem on item 192\nunique line 193 of the log\nTS2345: type problem on item 194\nunique line 195 of the log\nTS2345: type problem on item 196\nunique line 197 of the log\nTS2345: type problem on item 198\nunique line 199 of the log"
+  },
+  "failuresEverywhere max 60": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "TS2345: type problem on item 0\nunique line 1 of the log\nTS2345: type problem on item 2\nunique line 3 of the log\nTS2345: type problem on item 4\nunique line 5 of the log\nTS2345: type problem on item 6\nunique line 7 of the log\nTS2345: type problem on item 8\nunique line 9 of the log\nTS2345: type problem on item 10\nunique line 11 of the log\nTS2345: type problem on item 12\nunique line 13 of the log\nTS2345: type problem on item 14\nunique line 15 of the log\nTS2345: type problem on item 16\nunique line 17 of the log\nTS2345: type problem on item 18\nunique line 19 of the log\nTS2345: type problem on item 20\nunique line 21 of the log\nTS2345: type problem on item 22\nunique line 23 of the log\nTS2345: type problem on item 24\nunique line 25 of the log\nTS2345: type problem on item 26\nunique line 27 of the log\nTS2345: type problem on item 28\nunique line 29 of the log\nTS2345: type problem on item 30\nunique line 31 of the log\nTS2345: type problem on item 32\nunique line 33 of the log\nTS2345: type problem on item 34\nunique line 35 of the log\nTS2345: type problem on item 36\nunique line 37 of the log\nTS2345: type problem on item 38\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nTS2345: type problem on item 42\nunique line 43 of the log\nTS2345: type problem on item 44\nunique line 45 of the log\nTS2345: type problem on item 46\nunique line 47 of the log\nTS2345: type problem on item 48\nunique line 49 of the log\nTS2345: type problem on item 50\nunique line 51 of the log\nTS2345: type problem on item 52\nunique line 53 of the log\nTS2345: type problem on item 54\nunique line 55 of the log\nTS2345: type problem on item 56\nunique line 57 of the log\nTS2345: type problem on item 58\nunique line 59 of the log\nTS2345: type problem on item 60\nunique line 61 of the log\nTS2345: type problem on item 62\nunique line 63 of the log\nTS2345: type problem on item 64\nunique line 65 of the log\nTS2345: type problem on item 66\nunique line 67 of the log\nTS2345: type problem on item 68\nunique line 69 of the log\nTS2345: type problem on item 70\nunique line 71 of the log\nTS2345: type problem on item 72\nunique line 73 of the log\nTS2345: type problem on item 74\nunique line 75 of the log\nTS2345: type problem on item 76\nunique line 77 of the log\nTS2345: type problem on item 78\nunique line 79 of the log\nTS2345: type problem on item 80\nunique line 81 of the log\nTS2345: type problem on item 82\nunique line 83 of the log\nTS2345: type problem on item 84\nunique line 85 of the log\nTS2345: type problem on item 86\nunique line 87 of the log\nTS2345: type problem on item 88\nunique line 89 of the log\nTS2345: type problem on item 90\nunique line 91 of the log\nTS2345: type problem on item 92\nunique line 93 of the log\nTS2345: type problem on item 94\nunique line 95 of the log\nTS2345: type problem on item 96\nunique line 97 of the log\nTS2345: type problem on item 98\nunique line 99 of the log\nTS2345: type problem on item 100\nunique line 101 of the log\nTS2345: type problem on item 102\nunique line 103 of the log\nTS2345: type problem on item 104\nunique line 105 of the log\nTS2345: type problem on item 106\nunique line 107 of the log\nTS2345: type problem on item 108\nunique line 109 of the log\nTS2345: type problem on item 110\nunique line 111 of the log\nTS2345: type problem on item 112\nunique line 113 of the log\nTS2345: type problem on item 114\nunique line 115 of the log\nTS2345: type problem on item 116\nunique line 117 of the log\nTS2345: type problem on item 118\nunique line 119 of the log\nTS2345: type problem on item 120\nunique line 121 of the log\nTS2345: type problem on item 122\nunique line 123 of the log\nTS2345: type problem on item 124\nunique line 125 of the log\nTS2345: type problem on item 126\nunique line 127 of the log\nTS2345: type problem on item 128\nunique line 129 of the log\nTS2345: type problem on item 130\nunique line 131 of the log\nTS2345: type problem on item 132\nunique line 133 of the log\nTS2345: type problem on item 134\nunique line 135 of the log\nTS2345: type problem on item 136\nunique line 137 of the log\nTS2345: type problem on item 138\nunique line 139 of the log\nTS2345: type problem on item 140\nunique line 141 of the log\nTS2345: type problem on item 142\nunique line 143 of the log\nTS2345: type problem on item 144\nunique line 145 of the log\nTS2345: type problem on item 146\nunique line 147 of the log\nTS2345: type problem on item 148\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nTS2345: type problem on item 152\nunique line 153 of the log\nTS2345: type problem on item 154\nunique line 155 of the log\nTS2345: type problem on item 156\nunique line 157 of the log\nTS2345: type problem on item 158\nunique line 159 of the log\nTS2345: type problem on item 160\nunique line 161 of the log\nTS2345: type problem on item 162\nunique line 163 of the log\nTS2345: type problem on item 164\nunique line 165 of the log\nTS2345: type problem on item 166\nunique line 167 of the log\nTS2345: type problem on item 168\nunique line 169 of the log\nTS2345: type problem on item 170\nunique line 171 of the log\nTS2345: type problem on item 172\nunique line 173 of the log\nTS2345: type problem on item 174\nunique line 175 of the log\nTS2345: type problem on item 176\nunique line 177 of the log\nTS2345: type problem on item 178\nunique line 179 of the log\nTS2345: type problem on item 180\nunique line 181 of the log\nTS2345: type problem on item 182\nunique line 183 of the log\nTS2345: type problem on item 184\nunique line 185 of the log\nTS2345: type problem on item 186\nunique line 187 of the log\nTS2345: type problem on item 188\nunique line 189 of the log\nTS2345: type problem on item 190\nunique line 191 of the log\nTS2345: type problem on item 192\nunique line 193 of the log\nTS2345: type problem on item 194\nunique line 195 of the log\nTS2345: type problem on item 196\nunique line 197 of the log\nTS2345: type problem on item 198\nunique line 199 of the log"
+  },
+  "failuresEverywhere max 100": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "TS2345: type problem on item 0\nunique line 1 of the log\nTS2345: type problem on item 2\nunique line 3 of the log\nTS2345: type problem on item 4\nunique line 5 of the log\nTS2345: type problem on item 6\nunique line 7 of the log\nTS2345: type problem on item 8\nunique line 9 of the log\nTS2345: type problem on item 10\nunique line 11 of the log\nTS2345: type problem on item 12\nunique line 13 of the log\nTS2345: type problem on item 14\nunique line 15 of the log\nTS2345: type problem on item 16\nunique line 17 of the log\nTS2345: type problem on item 18\nunique line 19 of the log\nTS2345: type problem on item 20\nunique line 21 of the log\nTS2345: type problem on item 22\nunique line 23 of the log\nTS2345: type problem on item 24\nunique line 25 of the log\nTS2345: type problem on item 26\nunique line 27 of the log\nTS2345: type problem on item 28\nunique line 29 of the log\nTS2345: type problem on item 30\nunique line 31 of the log\nTS2345: type problem on item 32\nunique line 33 of the log\nTS2345: type problem on item 34\nunique line 35 of the log\nTS2345: type problem on item 36\nunique line 37 of the log\nTS2345: type problem on item 38\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nTS2345: type problem on item 42\nunique line 43 of the log\nTS2345: type problem on item 44\nunique line 45 of the log\nTS2345: type problem on item 46\nunique line 47 of the log\nTS2345: type problem on item 48\nunique line 49 of the log\nTS2345: type problem on item 50\nunique line 51 of the log\nTS2345: type problem on item 52\nunique line 53 of the log\nTS2345: type problem on item 54\nunique line 55 of the log\nTS2345: type problem on item 56\nunique line 57 of the log\nTS2345: type problem on item 58\nunique line 59 of the log\nTS2345: type problem on item 60\nunique line 61 of the log\nTS2345: type problem on item 62\nunique line 63 of the log\nTS2345: type problem on item 64\nunique line 65 of the log\nTS2345: type problem on item 66\nunique line 67 of the log\nTS2345: type problem on item 68\nunique line 69 of the log\nTS2345: type problem on item 70\nunique line 71 of the log\nTS2345: type problem on item 72\nunique line 73 of the log\nTS2345: type problem on item 74\nunique line 75 of the log\nTS2345: type problem on item 76\nunique line 77 of the log\nTS2345: type problem on item 78\nunique line 79 of the log\nTS2345: type problem on item 80\nunique line 81 of the log\nTS2345: type problem on item 82\nunique line 83 of the log\nTS2345: type problem on item 84\nunique line 85 of the log\nTS2345: type problem on item 86\nunique line 87 of the log\nTS2345: type problem on item 88\nunique line 89 of the log\nTS2345: type problem on item 90\nunique line 91 of the log\nTS2345: type problem on item 92\nunique line 93 of the log\nTS2345: type problem on item 94\nunique line 95 of the log\nTS2345: type problem on item 96\nunique line 97 of the log\nTS2345: type problem on item 98\nunique line 99 of the log\nTS2345: type problem on item 100\nunique line 101 of the log\nTS2345: type problem on item 102\nunique line 103 of the log\nTS2345: type problem on item 104\nunique line 105 of the log\nTS2345: type problem on item 106\nunique line 107 of the log\nTS2345: type problem on item 108\nunique line 109 of the log\nTS2345: type problem on item 110\nunique line 111 of the log\nTS2345: type problem on item 112\nunique line 113 of the log\nTS2345: type problem on item 114\nunique line 115 of the log\nTS2345: type problem on item 116\nunique line 117 of the log\nTS2345: type problem on item 118\nunique line 119 of the log\nTS2345: type problem on item 120\nunique line 121 of the log\nTS2345: type problem on item 122\nunique line 123 of the log\nTS2345: type problem on item 124\nunique line 125 of the log\nTS2345: type problem on item 126\nunique line 127 of the log\nTS2345: type problem on item 128\nunique line 129 of the log\nTS2345: type problem on item 130\nunique line 131 of the log\nTS2345: type problem on item 132\nunique line 133 of the log\nTS2345: type problem on item 134\nunique line 135 of the log\nTS2345: type problem on item 136\nunique line 137 of the log\nTS2345: type problem on item 138\nunique line 139 of the log\nTS2345: type problem on item 140\nunique line 141 of the log\nTS2345: type problem on item 142\nunique line 143 of the log\nTS2345: type problem on item 144\nunique line 145 of the log\nTS2345: type problem on item 146\nunique line 147 of the log\nTS2345: type problem on item 148\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nTS2345: type problem on item 152\nunique line 153 of the log\nTS2345: type problem on item 154\nunique line 155 of the log\nTS2345: type problem on item 156\nunique line 157 of the log\nTS2345: type problem on item 158\nunique line 159 of the log\nTS2345: type problem on item 160\nunique line 161 of the log\nTS2345: type problem on item 162\nunique line 163 of the log\nTS2345: type problem on item 164\nunique line 165 of the log\nTS2345: type problem on item 166\nunique line 167 of the log\nTS2345: type problem on item 168\nunique line 169 of the log\nTS2345: type problem on item 170\nunique line 171 of the log\nTS2345: type problem on item 172\nunique line 173 of the log\nTS2345: type problem on item 174\nunique line 175 of the log\nTS2345: type problem on item 176\nunique line 177 of the log\nTS2345: type problem on item 178\nunique line 179 of the log\nTS2345: type problem on item 180\nunique line 181 of the log\nTS2345: type problem on item 182\nunique line 183 of the log\nTS2345: type problem on item 184\nunique line 185 of the log\nTS2345: type problem on item 186\nunique line 187 of the log\nTS2345: type problem on item 188\nunique line 189 of the log\nTS2345: type problem on item 190\nunique line 191 of the log\nTS2345: type problem on item 192\nunique line 193 of the log\nTS2345: type problem on item 194\nunique line 195 of the log\nTS2345: type problem on item 196\nunique line 197 of the log\nTS2345: type problem on item 198\nunique line 199 of the log"
+  },
+  "failuresEverywhere max 150": {
+   "changed": false,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   },
+   "text": "TS2345: type problem on item 0\nunique line 1 of the log\nTS2345: type problem on item 2\nunique line 3 of the log\nTS2345: type problem on item 4\nunique line 5 of the log\nTS2345: type problem on item 6\nunique line 7 of the log\nTS2345: type problem on item 8\nunique line 9 of the log\nTS2345: type problem on item 10\nunique line 11 of the log\nTS2345: type problem on item 12\nunique line 13 of the log\nTS2345: type problem on item 14\nunique line 15 of the log\nTS2345: type problem on item 16\nunique line 17 of the log\nTS2345: type problem on item 18\nunique line 19 of the log\nTS2345: type problem on item 20\nunique line 21 of the log\nTS2345: type problem on item 22\nunique line 23 of the log\nTS2345: type problem on item 24\nunique line 25 of the log\nTS2345: type problem on item 26\nunique line 27 of the log\nTS2345: type problem on item 28\nunique line 29 of the log\nTS2345: type problem on item 30\nunique line 31 of the log\nTS2345: type problem on item 32\nunique line 33 of the log\nTS2345: type problem on item 34\nunique line 35 of the log\nTS2345: type problem on item 36\nunique line 37 of the log\nTS2345: type problem on item 38\nunique line 39 of the log\nTS2345: type problem on item 40\nunique line 41 of the log\nTS2345: type problem on item 42\nunique line 43 of the log\nTS2345: type problem on item 44\nunique line 45 of the log\nTS2345: type problem on item 46\nunique line 47 of the log\nTS2345: type problem on item 48\nunique line 49 of the log\nTS2345: type problem on item 50\nunique line 51 of the log\nTS2345: type problem on item 52\nunique line 53 of the log\nTS2345: type problem on item 54\nunique line 55 of the log\nTS2345: type problem on item 56\nunique line 57 of the log\nTS2345: type problem on item 58\nunique line 59 of the log\nTS2345: type problem on item 60\nunique line 61 of the log\nTS2345: type problem on item 62\nunique line 63 of the log\nTS2345: type problem on item 64\nunique line 65 of the log\nTS2345: type problem on item 66\nunique line 67 of the log\nTS2345: type problem on item 68\nunique line 69 of the log\nTS2345: type problem on item 70\nunique line 71 of the log\nTS2345: type problem on item 72\nunique line 73 of the log\nTS2345: type problem on item 74\nunique line 75 of the log\nTS2345: type problem on item 76\nunique line 77 of the log\nTS2345: type problem on item 78\nunique line 79 of the log\nTS2345: type problem on item 80\nunique line 81 of the log\nTS2345: type problem on item 82\nunique line 83 of the log\nTS2345: type problem on item 84\nunique line 85 of the log\nTS2345: type problem on item 86\nunique line 87 of the log\nTS2345: type problem on item 88\nunique line 89 of the log\nTS2345: type problem on item 90\nunique line 91 of the log\nTS2345: type problem on item 92\nunique line 93 of the log\nTS2345: type problem on item 94\nunique line 95 of the log\nTS2345: type problem on item 96\nunique line 97 of the log\nTS2345: type problem on item 98\nunique line 99 of the log\nTS2345: type problem on item 100\nunique line 101 of the log\nTS2345: type problem on item 102\nunique line 103 of the log\nTS2345: type problem on item 104\nunique line 105 of the log\nTS2345: type problem on item 106\nunique line 107 of the log\nTS2345: type problem on item 108\nunique line 109 of the log\nTS2345: type problem on item 110\nunique line 111 of the log\nTS2345: type problem on item 112\nunique line 113 of the log\nTS2345: type problem on item 114\nunique line 115 of the log\nTS2345: type problem on item 116\nunique line 117 of the log\nTS2345: type problem on item 118\nunique line 119 of the log\nTS2345: type problem on item 120\nunique line 121 of the log\nTS2345: type problem on item 122\nunique line 123 of the log\nTS2345: type problem on item 124\nunique line 125 of the log\nTS2345: type problem on item 126\nunique line 127 of the log\nTS2345: type problem on item 128\nunique line 129 of the log\nTS2345: type problem on item 130\nunique line 131 of the log\nTS2345: type problem on item 132\nunique line 133 of the log\nTS2345: type problem on item 134\nunique line 135 of the log\nTS2345: type problem on item 136\nunique line 137 of the log\nTS2345: type problem on item 138\nunique line 139 of the log\nTS2345: type problem on item 140\nunique line 141 of the log\nTS2345: type problem on item 142\nunique line 143 of the log\nTS2345: type problem on item 144\nunique line 145 of the log\nTS2345: type problem on item 146\nunique line 147 of the log\nTS2345: type problem on item 148\nunique line 149 of the log\nTS2345: type problem on item 150\nunique line 151 of the log\nTS2345: type problem on item 152\nunique line 153 of the log\nTS2345: type problem on item 154\nunique line 155 of the log\nTS2345: type problem on item 156\nunique line 157 of the log\nTS2345: type problem on item 158\nunique line 159 of the log\nTS2345: type problem on item 160\nunique line 161 of the log\nTS2345: type problem on item 162\nunique line 163 of the log\nTS2345: type problem on item 164\nunique line 165 of the log\nTS2345: type problem on item 166\nunique line 167 of the log\nTS2345: type problem on item 168\nunique line 169 of the log\nTS2345: type problem on item 170\nunique line 171 of the log\nTS2345: type problem on item 172\nunique line 173 of the log\nTS2345: type problem on item 174\nunique line 175 of the log\nTS2345: type problem on item 176\nunique line 177 of the log\nTS2345: type problem on item 178\nunique line 179 of the log\nTS2345: type problem on item 180\nunique line 181 of the log\nTS2345: type problem on item 182\nunique line 183 of the log\nTS2345: type problem on item 184\nunique line 185 of the log\nTS2345: type problem on item 186\nunique line 187 of the log\nTS2345: type problem on item 188\nunique line 189 of the log\nTS2345: type problem on item 190\nunique line 191 of the log\nTS2345: type problem on item 192\nunique line 193 of the log\nTS2345: type problem on item 194\nunique line 195 of the log\nTS2345: type problem on item 196\nunique line 197 of the log\nTS2345: type problem on item 198\nunique line 199 of the log"
+  },
+  "long300 plain max 299": {
+   "changed": false,
+   "lines": 300,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 1
+   }
+  },
+  "long300 plain max 300": {
+   "changed": false,
+   "lines": 300,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   }
+  },
+  "long300 plain max 301": {
+   "changed": false,
+   "lines": 300,
+   "stats": {
+    "pass": 0,
+    "noise": 0,
+    "frames": 0,
+    "dup": 0,
+    "blank": 0,
+    "omitted": 0
+   }
+  }
+ },
+ "dups": {
+  "changed": true,
+  "stats": {
+   "pass": 0,
+   "noise": 0,
+   "frames": 0,
+   "dup": 50,
+   "blank": 1,
+   "omitted": 0
+  },
+  "text": "same line 0  (x6)\nsame line 1  (x6)\nsame line 2  (x6)\nsame line 3  (x6)\nsame line 4  (x6)\nsame line 5  (x6)\nsame line 6  (x6)\nsame line 7  (x6)\nsame line 8  (x6)\nsame line 9  (x6)\n\ntail"
+ },
+ "blanks": {
+  "changed": false,
+  "stats": {
+   "pass": 0,
+   "noise": 0,
+   "frames": 0,
+   "dup": 0,
+   "blank": 0,
+   "omitted": 0
+  },
+  "text": "\nrow 1\nrow 2\n\nrow 4\nrow 5\n\nrow 7\nrow 8\n\nrow 10\nrow 11\n\nrow 13\nrow 14\n\nrow 16\nrow 17\n\nrow 19\nrow 20\n\nrow 22\nrow 23\n\nrow 25\nrow 26\n\nrow 28\nrow 29\n\nrow 31\nrow 32\n\nrow 34\nrow 35\n\nrow 37\nrow 38\n\nrow 40\nrow 41\n\nrow 43\nrow 44\n\nrow 46\nrow 47\n\nrow 49"
+ },
+ "savingFlip": {
+  "firstChangedAt": 15,
+  "flags": "0000000000000001111111111111111"
+ },
+ "quote": {
+  "\"plain\"": {
+   "win": "plain",
+   "posix": "plain"
+  },
+  "\"with space\"": {
+   "win": "\"with space\"",
+   "posix": "'with space'"
+  },
+  "\"it's\"": {
+   "win": "\"it's\"",
+   "posix": "'it'\\''s'"
+  },
+  "\"say \\\"hi\\\"\"": {
+   "win": "\"say \\\"hi\\\"\"",
+   "posix": "'say \"hi\"'"
+  },
+  "\"back\\\\slash\\\\\"": {
+   "win": "back\\slash\\",
+   "posix": "back\\slash\\"
+  },
+  "\"path\\\\\\\"q\"": {
+   "win": "\"path\\\\\\\"q\"",
+   "posix": "'path\\\"q'"
+  },
+  "\"\"": {
+   "win": "\"\"",
+   "posix": "''"
+  },
+  "\"a&b\"": {
+   "win": "\"a&b\"",
+   "posix": "'a&b'"
+  },
+  "\"x=1,y:2/z.-@%+\"": {
+   "win": "x=1,y:2/z.-@%+",
+   "posix": "x=1,y:2/z.-@%+"
+  }
+ }
+}

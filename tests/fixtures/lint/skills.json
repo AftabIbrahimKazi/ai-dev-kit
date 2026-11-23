@@ -1,0 +1,155 @@
+{
+ "frontmatter": {
+  "none": null,
+  "simple": {
+   "fm": {
+    "name": "a",
+    "description": "Use it"
+   },
+   "body": "Rule one."
+  },
+  "crlf": {
+   "fm": {
+    "name": "a",
+    "description": "Use it"
+   },
+   "body": "body"
+  },
+  "quoted": {
+   "fm": {
+    "name": "a",
+    "description": "Use it"
+   },
+   "body": "Rule one."
+  },
+  "continued": {
+   "fm": {
+    "name": "a",
+    "description": "Use whenever this wraps and wraps again"
+   },
+   "body": "Rule one."
+  },
+  "continuation before a key": {
+   "fm": {
+    "name": "a"
+   },
+   "body": "Rule one."
+  },
+  "empty value then continuation": {
+   "fm": {
+    "name": "a",
+    "description": " Use later"
+   },
+   "body": "Rule one."
+  },
+  "dash keys": {
+   "fm": {
+    "name": "a",
+    "allowed-tools": "Bash(node:*)",
+    "disable-model-invocation": "true"
+   },
+   "body": "Rule one."
+  },
+  "colon in value": {
+   "fm": {
+    "name": "a",
+    "description": "Use it: now"
+   },
+   "body": "Rule one."
+  }
+ },
+ "skills": {
+  "good": [],
+  "no frontmatter": [],
+  "no name": [
+   {
+    "file": "s/no name.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   }
+  ],
+  "no description": [
+   {
+    "file": "s/no description.md",
+    "rule": "sk-desc",
+    "msg": "no description"
+   }
+  ],
+  "empty description": [
+   {
+    "file": "s/empty description.md",
+    "rule": "sk-desc",
+    "msg": "no description"
+   }
+  ],
+  "opens with When": [],
+  "opens with Run": [],
+  "opens with On": [],
+  "opens lowercase": [],
+  "opens badly": [
+   {
+    "file": "s/opens badly.md",
+    "rule": "sk-desc-open",
+    "msg": "description does not open with a situation (\"Use whenever …\")"
+   }
+  ],
+  "opens with Use only as a word": [
+   {
+    "file": "s/opens with Use only as a word.md",
+    "rule": "sk-desc-open",
+    "msg": "description does not open with a situation (\"Use whenever …\")"
+   }
+  ],
+  "50 words": [],
+  "51 words": [],
+  "no load before": [
+   {
+    "file": "s/no load before.md",
+    "rule": "sk-desc-load",
+    "msg": "description has no \"Load this BEFORE …\" instruction"
+   }
+  ],
+  "only before": [],
+  "load before in one sentence": [],
+  "load and before in two sentences": [],
+  "manual only": [],
+  "manual false": [
+   {
+    "file": "s/manual false.md",
+    "rule": "sk-desc-load",
+    "msg": "description has no \"Load this BEFORE …\" instruction"
+   }
+  ],
+  "130 lines": [],
+  "131 lines": [
+   {
+    "file": "s/131 lines.md",
+    "rule": "sk-lines",
+    "msg": "131 lines; the target is under about 120 (move depth to a references file)"
+   }
+  ],
+  "129 lines": [],
+  "everything wrong": [
+   {
+    "file": "s/everything wrong.md",
+    "rule": "sk-name",
+    "msg": "frontmatter has no name"
+   },
+   {
+    "file": "s/everything wrong.md",
+    "rule": "sk-desc-open",
+    "msg": "description does not open with a situation (\"Use whenever …\")"
+   },
+   {
+    "file": "s/everything wrong.md",
+    "rule": "sk-desc-load",
+    "msg": "description has no \"Load this BEFORE …\" instruction"
+   },
+   {
+    "file": "s/everything wrong.md",
+    "rule": "sk-lines",
+    "msg": "200 lines; the target is under about 120 (move depth to a references file)"
+   }
+  ]
+ }
+}

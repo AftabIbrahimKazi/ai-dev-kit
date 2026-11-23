@@ -84,3 +84,88 @@ t('bad usage exits 2 with one usage line', () => {
     assert.strictEqual(r.stderr.trim().split('\n').length, 1);
   }
 });
+
+// ---- round 4: golden scan and check (found by the kit-wide probe) ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/astro-page.conventions.test.js, then read the diff.
+const { renderScan } = require('../skills/stack/astro-page.conventions.js');
+const CR7 = String.fromCharCode(13), BS7 = String.fromCharCode(92);
+const gold7 = (name, text) => {
+	const file = path.join(__dirname, 'fixtures', 'astro', name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return; }
+	assert.ok(fs.existsSync(file), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(text, fs.readFileSync(file, 'utf8').split(CR7).join(''));
+};
+const deepDirs = (n) => Array.from({ length: n }, (_, i) => 'd' + i).join('/');
+
+function richProject() {
+	const d = proj();
+	write(d, 'astro.config.ts', 'export default {}');
+	write(d, 'src/styles/tokens.css', ':root{--ex-color-bg:#fff;--ex-color-ink:#000;--zz-space-1:4px;--zz-space-2:8px}');
+	write(d, 'src/styles/home.css', '.ex-hero{color:var(--ex-color-ink)}.ex-card{padding:1px}.zz-b{margin:0}.plain{margin:0}');
+	write(d, 'src/styles/old.min.css', '.minified{color:red}');
+	write(d, 'src/pages/index.astro', '---\n---\n<Hero client:visible /><Widget client:idle /><Side client:media="(min-width:1px)" /><Map client:only="react" />\n<style>.ex-x{color:var(--ex-color-ink)}</style>');
+	write(d, 'src/pages/about.md', '# about');
+	write(d, 'docs/pages/a.astro', '<p>a</p>'); write(d, 'docs/pages/b.astro', '<p>b</p>');
+	write(d, 'a/pages/c.mdx', '# c'); write(d, 'a/pages/d.astro', '<p>d</p>');
+	write(d, 'src/components/ui/Button.astro', '<button class="ex-btn" />'); write(d, 'src/components/Card.tsx', 'export {}'); write(d, 'src/components/Box.svelte', '<div/>');
+	write(d, 'src/layouts/Base.astro', '<slot /><script>document.addEventListener("astro:after-swap", () => {})</script><ClientRouter />');
+	write(d, 'src/scripts/home-entry.ts', 'document.addEventListener("astro:page-load", () => {})'); write(d, 'src/scripts/vite.config.ts', 'export {}'); write(d, 'src/types.d.ts', 'export {}');
+	write(d, 'public/js/main.js', 'export {}'); write(d, 'tools/build.js', 'export {}');
+	write(d, 'public/img/a.png', 'x'); write(d, 'src/assets/b.svg', '<svg/>');
+	write(d, deepDirs(8) + '/ok.astro', '<Hero client:visible />');
+	write(d, deepDirs(9) + '/deep.astro', '<Hero client:idle /><style>p{margin:0}</style>');
+	write(d, 'node_modules/x/n.astro', '<Hero client:only="react" />');
+	write(d, '.hidden/h.astro', '<Hero client:only="react" />');
+	return d;
+}
+
+t('golden: scan over a rich project, a bare one, and ones with a single entry or no majority prefix', () => {
+	const out = {};
+	const rich = richProject();
+	out.rich = scan(rich); out.richText = renderScan(out.rich);
+	out.bare = scan(proj()); out.bareText = renderScan(out.bare);
+	const single = proj(); write(single, 'astro.config.js', ''); write(single, 'src/scripts/main.ts', 'export {}'); write(single, 'src/styles/a.css', '.aa-x{--aa-one:1}.bb-y{}.cc-z{}'); write(single, 'src/pages/p.astro', '<link rel="stylesheet" href="x.css">');
+	out.single = scan(single);
+	const noMain = proj(); write(noMain, 'astro.config.mjs', ''); write(noMain, 'src/styles/a.css', '.ex-a{}.ex-b{}.zz-c{}.zz-d{}'); write(noMain, 'src/styles/t.css', ':root{--ex-a:1;--ex-b:2;--zz-a:3;--zz-b:4}');
+	out.exactHalf = scan(noMain);
+	const third = proj(); write(third, 'src/styles/t.css', ':root{--ex-a:1;--zz-b:2;--yy-c:3}'); write(third, 'src/pages/i.astro', 'x');
+	out.noMajority = scan(third);
+	const cssOnly = proj(); write(cssOnly, 'src/styles/a.scss', '.ex-a{}'); write(cssOnly, 'src/styles/b.pcss', '.ex-b{}'); write(cssOnly, 'src/pages/i.astro', 'x'); write(cssOnly, 'src/components/A.vue', 'x'); write(cssOnly, 'src/components/b/B.jsx', 'x'); write(cssOnly, 'src/layouts/L.astro', 'x');
+	out.cssOnly = scan(cssOnly);
+	gold7('scan.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+t('golden: check over css and astro files, with and without conventions to apply', () => {
+	const d = richProject(); const conv = scan(d);
+	const files = {
+		'src/styles/new.css': '.ex-ok{color:#fff;border:1px solid #abcdef}\n.bare{color:var(--ex-color-ink)}\n:root{--ex-new:#123456}\n  .zz-x{background:rgb(1,2,3)}\n.plain2 { color: HSL(1,2%,3%) }\n.ex-fine{margin:0}\n   --ex-spaced:#000;\n.oklch-user{color:oklch(0.5 0.1 100)}',
+		'src/pages/new.astro': '---\n---\n<Hero client:load />\n<div style="color:#fff">x</div>\n<style>.a{color:#ff0000}.b{color:var(--ex-color-ink)}.c{color:var(--other-token)}</style>\n<script>console.log(1)</script>',
+		'src/pages/plain.astro': '<p style="color:#fff">no style tag</p><div class="x">y</div>\n<Foo client:load /> <Bar client:visible />',
+		'src/pages/inline.astro': '<script is:inline>1</script>', 'src/pages/srcscript.astro': '<script src="../scripts/x.ts"></script>\n<script type="module">1</script>',
+		'src/pages/two.astro': '<p>a</p>\n<p>b</p>\n<script>1</script>\n<script>2</script>', 'src/pages/foreign.astro': '<style>\n.a{color:var(--zz-space-1)}\n.b{color:var(--ex-color-bg)}\n.c{margin:var(--nope)}\n.d{--local:1}\n</style>',
+		'src/components/Plain.tsx': '.a{color:#fff} client:load', 'src/pages/crlf.astro': '<style>' + CR7 + String.fromCharCode(10) + '.a{color:#fff}' + CR7 + String.fromCharCode(10) + '</style>',
+	};
+	for (const [rel, text] of Object.entries(files)) write(d, rel, text);
+	const out = { withConv: {}, noTokens: {}, noPrefix: {} };
+	const bare = scan(proj());
+	for (const rel of Object.keys(files)) { out.withConv[rel] = check(d, [rel], conv); out.noTokens[rel] = check(d, [rel], { ...conv, tokenCount: 0 }); out.noPrefix[rel] = check(d, [rel], { ...conv, selectorPrefix: null, tokenPrefix: null, entryPattern: null }); }
+	out.missing = check(d, ['src/nope.css', 'src/pages/new.astro'], conv);
+	out.bareConv = check(d, ['src/pages/new.astro', 'src/styles/new.css'], bare);
+	out.manyAtOnce = check(d, Object.keys(files), conv).length;
+	gold7('check.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+t('golden: the CLI scan and check, JSON and text, exit codes and usage errors', () => {
+	const d = richProject();
+	write(d, 'src/pages/bad.astro', '<Hero client:load />\n<script>1</script>'); write(d, 'src/pages/good.astro', '<p>fine</p>');
+	const clean = (s) => s.split(CR7).join('').split(d).join('<d>').split(d.split(BS7).join('/')).join('<d>');
+	const out = {};
+	const rec = (k, r) => { out[k] = { status: r.status, stdout: clean(r.stdout), stderr: clean(r.stderr) }; };
+	rec('scan json', run(d, 'scan', '--json')); rec('scan text', run(d, 'scan'));
+	rec('check clean json', run(d, 'check', 'src/pages/good.astro', '--json')); rec('check clean text', run(d, 'check', 'src/pages/good.astro'));
+	rec('check findings json', run(d, 'check', 'src/pages/bad.astro', '--json')); rec('check findings text', run(d, 'check', 'src/pages/bad.astro'));
+	rec('check several', run(d, 'check', 'src/pages/bad.astro', 'src/pages/good.astro', 'src/nope.astro'));
+	rec('check no files', run(d, 'check')); rec('no command', run(d)); rec('unknown command', run(d, 'build'));
+	rec('cwd elsewhere', spawnSync(process.execPath, [CLI, 'scan', '--json', '--cwd', proj()], { encoding: 'utf8' }));
+	gold7('cli.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
