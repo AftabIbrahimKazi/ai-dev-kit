@@ -28,6 +28,9 @@ const none = { sharp: null, magick: false, ffmpeg: false, svgo: null, woff2: fal
 const opts = (extra = {}) => ({ ...parseArgs(['convert', 'x', '--to', 'webp']), ...extra });
 const writer = (size) => async (spec) => { fs.writeFileSync(spec.out || spec.args[spec.args.length - 1], Buffer.alloc(size, 1)); return { ok: true }; };
 
+// A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless every run block reached its end.
+let finished = 0;
+process.on('exit', () => { if (finished !== 3) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
 (async () => {
   await t('arguments: convert needs --to, rejects unknown options and bad numbers, presets fill gaps only', () => {
     assert.throws(() => parseArgs(['convert', 'a.png']), /needs --to/);
@@ -223,6 +226,7 @@ const writer = (size) => async (spec) => { fs.writeFileSync(spec.out || spec.arg
     assert.strictEqual(cli('scan', '--bogus').status, 2);
     assert.strictEqual(cli('convert', 'nope.png', '--to', 'webp', '--cwd', d).status, 2);
   });
+  finished++;
 })();
 
 (async () => {
@@ -233,6 +237,7 @@ const writer = (size) => async (spec) => { fs.writeFileSync(spec.out || spec.arg
     const s = scan({ ...parseArgs(['scan', '--min-kb', '100000']), cwd: d, paths: [] });
     assert.deepStrictEqual(s.rows, []);
   });
+  finished++;
 })();
 
 (async () => {
@@ -242,4 +247,5 @@ const writer = (size) => async (spec) => { fs.writeFileSync(spec.out || spec.arg
     assert.deepStrictEqual([a.targets, a.quality, a.maxEdge], [b.targets, b.quality, b.maxEdge]);
     assert.strictEqual(a.maxEdge, 1568);
   });
+  finished++;
 })();

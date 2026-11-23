@@ -115,8 +115,12 @@ t('a non-loopback Ollama URL is refused', async () => {
   assert.ok(/loopback/.test(r.note));
 });
 
+// A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless every run block reached its end.
+let finished = 0;
+process.on('exit', () => { if (finished !== 1) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
 (async () => {
   for (const [name, fn] of tests) { try { await fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + e.message); } }
+  finished++;
   if (failed) { console.log('plan-first.reviewer.test: FAILED'); process.exit(1); }
   console.log('plan-first.reviewer.test: ok');
 })();

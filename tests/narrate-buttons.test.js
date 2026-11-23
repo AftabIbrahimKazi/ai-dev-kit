@@ -7,6 +7,9 @@ const t = async (name, fn) => { try { await fn(); console.log('ok   ' + name); }
 const norm = (p) => p && p.split(path.sep).join('/');
 const have = (set) => (p) => set.includes(norm(p));
 
+// A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless every run block reached its end.
+let finished = 0;
+process.on('exit', () => { if (finished !== 1) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
 (async () => {
   await t('findScript: explicit path wins, then workspace install, workspace kit checkout, then home install', () => {
     assert.strictEqual(norm(findScript('speak', '/x/s.js', ['/w'], '/h', have(['/x/s.js', '/w/.claude/skills/narrate/speak.js']))), '/x/s.js');
@@ -108,4 +111,5 @@ const have = (set) => (p) => set.includes(norm(p));
       assert.deepStrictEqual(spawned[0], ['--play']);
     } finally { subs.forEach((s) => s.dispose && s.dispose()); } // stop the refresh timer even when an assertion fails
   });
+  finished++;
 })();
