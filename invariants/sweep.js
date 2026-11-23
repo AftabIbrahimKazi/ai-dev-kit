@@ -7,7 +7,9 @@
 //
 //   --only   probe just these script names (matched by the end of the path), e.g. usage-mine.js,skill-writer.lint.js
 //   --shard  run every Nth pair starting at I (0-based): `--shard 0/4` ... `--shard 3/4` in four terminals
-//   --max    mutants per script (default 40); --out  results file (default invariants/sweep.<shard>.jsonl, git-ignored by name)
+//   --max    mutants per script (default 40; use 100000 for every mutant); --timeout  minutes per script (default 25)
+//   --out    results file (default invariants/sweep.<shard>.jsonl, git-ignored by name)
+//   figma-code.cli is always capped at 12 mutants: its test takes about 75 s per mutant.
 // Each line: { script, test, secs, result: { total, killed, survivors[], ignored, baselineOk } | null }.
 // The ignore list invariants/probe-ignore.json is applied. Use a distinct --out per run. Safe to stop with Ctrl-C: only the
 // temp copy is touched. Plain Node, no dependencies. Needs about 40 MB of temp space per running shard.
@@ -21,6 +23,7 @@ const KIT = path.resolve(__dirname, '..');
 const [shardIdx, shardN] = (arg('shard', '0/1')).split('/').map(Number);
 const only = (arg('only', '') || '').split(',').filter(Boolean);
 const max = String(arg('max', '40'));
+const timeoutMin = Number(arg('timeout', '25')); // minutes allowed per script; a script that runs out gets result null
 const out = path.resolve(arg('out', path.join(__dirname, 'sweep.' + shardIdx + 'of' + shardN + '.jsonl')));
 if (!Number.isInteger(shardIdx) || !Number.isInteger(shardN) || shardN < 1 || shardIdx < 0 || shardIdx >= shardN) { console.error('bad --shard, use I/N like 0/4'); process.exit(2); }
 
@@ -44,7 +47,7 @@ try {
 	for (const [s, t] of pairs) {
 		fs.writeFileSync(rulesFile, JSON.stringify([{ id: 'T', rule: 'its test passes', covers: [s], check: 'node ' + t }]));
 		const t0 = Date.now();
-		const r = spawnSync(process.execPath, ['skills/addons/invariants.cli.js', 'probe', '--file', rulesFile, '--max', /figma-code\.cli/.test(s) ? '12' : max, '--json'], { cwd: copy, encoding: 'utf8', timeout: 1500000, maxBuffer: 1 << 26 });
+		const r = spawnSync(process.execPath, ['skills/addons/invariants.cli.js', 'probe', '--file', rulesFile, '--max', /figma-code\.cli/.test(s) ? '12' : max, '--json'], { cwd: copy, encoding: 'utf8', timeout: timeoutMin * 60000, maxBuffer: 1 << 26 });
 		let result = null; try { result = JSON.parse(r.stdout)[0]; } catch { /* a crash or timeout: result stays null */ }
 		fs.appendFileSync(out, JSON.stringify({ script: s, test: t, secs: Math.round((Date.now() - t0) / 1000), result, err: result ? undefined : (r.stderr || 'no output').slice(0, 200) }) + '\n');
 	}
