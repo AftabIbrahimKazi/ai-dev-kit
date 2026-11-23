@@ -48,3 +48,16 @@ Scratch payments module, 7 planted real bugs plus 1 harmless edit. "Tests" = 5 h
 - Wired in: bare `invariants` (or `/invariants`) runs rules, probe and stale in one report; command template `skills/commands/invariants.md`; install-kit tests still pass (no change needed, the command installs with its skill).
 
 - Closed the 4 install-kit.signature gaps (protocolFile, missing-row note, remove with no stored row, remove with no file): 5 new tests (54 total), probe now 7 of 7 killed. Still open: 6 in memory-gardener.stale, 4 in handover.size.
+
+## Kit-wide probe (same day)
+
+All 51 kit scripts that have a same-named test (`skills/**/X.js` + `tests/X.test.js`), up to 40 mutants each (12 for figma-code, whose test is slow), the test file as the only check. No model, no tokens. Run in 4 parallel shards, each on a private copy of the kit (parallel runs on one tree are unsafe: tests load other scripts and see each other's mutations).
+
+- **1,807 mutants, 1,068 killed, 737 survived: mutation score 59%.** Every baseline passed; no timeouts.
+- Weakest: install-kit.select 33 of 40 survived, diagram.cli 31, skill-scope.device 28, install-kit.cli 27, teardown.cli 25, usage-mine 24, invariants.cli 23 (my own new tool's tests), install-kit.company 22, project-context.figma 22, perf-audit.weigh 20.
+- Clean (0 survivors): handover.size, memory-gardener.stale, install-kit.signature, the three closed in this session.
+- Triage of a random 20 survivors (one pass, mine): about 13 real behavior gaps (an exit-code check, a default value, plugin detection, input validation, a `> 0` flag), 5 display-only or cosmetic (message text, a line number in a warning), 2 harmless. So most of the 737 are real but many are boundary edits (`>` vs `>=`) of low consequence. Not every one needs a test.
+- 30 scripts have no same-named test: 10 are teardown template assets, 14 are named by some other test, 6 are named by none: system1-prefilter.ladder, strata-css.coverage, mcp-manager.image-gen, mcp-manager.local-vision, skill-scope.move (exercised indirectly through install-kit), hooks-enforcement.cx-check.
+- Mods (`mods/*`) are TypeScript against the host's test harness and were not probed.
+- Tool bug found and fixed during the run: a forced kill (a timeout) left figma-code.cli.js mutated, because Windows skips signal handlers. The tool now writes `<file>.invariants-bak` before each mutation and the next run restores it; it did so for install-kit.company.js when I stopped a run by hand. Restored by hand once, by the tool once.
+- Open: the 737 survivors are not closed. The 6 untested scripts and the weakest 5 are the place to start. Raw per-script numbers are not committed (scratch output only).
