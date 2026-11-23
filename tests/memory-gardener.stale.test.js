@@ -68,3 +68,33 @@ t('a project with no memory files reports zero without error', () => {
   assert.strictEqual(r.status, 0);
   assert.match(r.stdout, /0 of 0 bullet/);
 });
+
+// ---- gaps found by `invariants probe` on memory-gardener.stale.js ----
+t('handover/ is scanned for .md files only: other files and a folder named x.md are skipped', () => {
+  const d = proj();
+  put(d, 'handover/a.md', '- 2026 `src/gone.ts` broke\n');
+  put(d, 'handover/notes.txt', '- 2026 `src/gone.ts` broke\n- another\n');
+  put(d, 'handover/sub.md/inner.md', '- 2026 `src/gone.ts` broke\n');
+  let r;
+  assert.doesNotThrow(() => { r = stale.scan(d); });
+  assert.strictEqual(r.bullets, 1);
+  assert.strictEqual(r.stale[0].file, 'handover/a.md');
+});
+
+t('a path that exists only nested deeper in the project counts as present', () => {
+  const d = proj();
+  put(d, 'pkg/lib/b.js', 'x');
+  put(d, '.claude/skills/foo/learnings.md', '- 2026 `lib/b.js` needs await\n- 2026 `lib/missing.js` broke\n');
+  const r = stale.scan(d);
+  assert.strictEqual(r.stale.length, 1);
+  assert.deepStrictEqual(r.stale[0].missing, ['lib/missing.js']);
+});
+
+t('node_modules, .git, dist and .next are not searched when deciding a file exists', () => {
+  const d = proj();
+  put(d, 'node_modules/x/only1.js', 'x'); put(d, '.git/x/only2.js', 'x'); put(d, 'dist/x/only3.js', 'x'); put(d, '.next/x/only4.js', 'x');
+  put(d, 'src/real.js', 'x');
+  put(d, '.claude/skills/foo/learnings.md', '- 2026 `only1.js` a\n- 2026 `only2.js` b\n- 2026 `only3.js` c\n- 2026 `only4.js` d\n- 2026 `real.js` e\n');
+  const r = stale.scan(d);
+  assert.deepStrictEqual(r.stale.map((s) => s.missing[0]).sort(), ['only1.js', 'only2.js', 'only3.js', 'only4.js']);
+});

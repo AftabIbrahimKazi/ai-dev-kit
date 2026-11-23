@@ -40,7 +40,7 @@ description: Opt-in add-on. Use when the user wants a project rule proven by a c
 | `stale [--json]` | Lists rules whose covered files changed since `verified`. Exit 1 if any. |
 | `check` | Validates the rules file only. |
 
-A covered file is edited only for the length of one mutation run, and the original bytes are always restored, also on Ctrl-C. The script writes `invariants.json` only for `stamp`. Commit your work before the first run anyway.
+A covered file is edited only for the length of one mutation run, and the original bytes are always restored, also on Ctrl-C. Before each mutation the original is copied to `<file>.invariants-bak`; if a run is killed outright (a timeout, a crash), the next run restores the file from that copy and says so. The script writes `invariants.json` only for `stamp`. Commit your work before the first run anyway.
 
 ## Closing a survivor
 1. Read the line the report names. Ask: if this edit were a real bug, would anyone notice?

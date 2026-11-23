@@ -18,7 +18,7 @@
 // Rules file (default invariants/invariants.json): [{ id, rule, covers: [files], check: "cmd",
 //   mutate?: { file, find, replace }, verified?: "<commit>" }]
 // Exit codes: 0 ok, 1 problem found, 2 bad usage. It edits a covered file only for the length of one mutation run and
-// always restores the original bytes (also on Ctrl-C). It writes the rules file only for `stamp`. Never commits or deletes.
+// always restores the original bytes (also on Ctrl-C; after a forced kill the next run restores them from <file>.invariants-bak). It writes the rules file only for `stamp`. Never commits or deletes.
 import fs = require('node:fs');
 import path = require('node:path');
 import cp = require('node:child_process');
@@ -78,7 +78,9 @@ function evaluate(rule: Rule, root: string): Result {
 	try { original = fs.readFileSync(target, 'utf8'); } catch { return { id: rule.id, status: 'BADMUTATION', note: 'cannot read ' + rule.mutate.file }; }
 	const idx = original.indexOf(rule.mutate.find);
 	if (idx < 0) return { id: rule.id, status: 'BADMUTATION', note: '"find" text not in ' + rule.mutate.file };
-	const restore = () => fs.writeFileSync(target, original);
+	const bak = target + '.invariants-bak'; // survives a forced kill (Windows skips signal handlers); the next run restores it
+	fs.writeFileSync(bak, original);
+	const restore = () => { fs.writeFileSync(target, original); try { fs.unlinkSync(bak); } catch { /* already gone */ } };
 	const onSig = () => { restore(); process.exit(130); };
 	process.once('SIGINT', onSig);
 	process.once('SIGTERM', onSig);
@@ -183,7 +185,9 @@ function probeFile(rel: string, rules: Rule[], root: string, max: number, ignore
 	let all = genMutants(original);
 	if (all.length > max) all = Array.from({ length: max }, (_, i) => all[Math.floor(i * all.length / max)]);
 	res.total = all.length;
-	const restore = () => fs.writeFileSync(target, original);
+	const bak = target + '.invariants-bak'; // survives a forced kill (Windows skips signal handlers); the next run restores it
+	fs.writeFileSync(bak, original);
+	const restore = () => { fs.writeFileSync(target, original); try { fs.unlinkSync(bak); } catch { /* already gone */ } };
 	const onSig = () => { restore(); process.exit(130); };
 	process.once('SIGINT', onSig);
 	process.once('SIGTERM', onSig);
@@ -224,6 +228,15 @@ function printProbe(out: ProbeFile[], json: boolean): void {
 	}
 }
 
+// A run killed mid-mutation leaves <file>.invariants-bak with the original bytes: put them back before doing anything else.
+function recover(rules: Rule[], root: string): void {
+	const files = new Set(rules.flatMap(r => [...r.covers, ...(r.mutate ? [r.mutate.file] : [])]));
+	for (const f of files) {
+		const target = path.resolve(root, f), bak = target + '.invariants-bak';
+		if (fs.existsSync(bak)) { fs.copyFileSync(bak, target); fs.unlinkSync(bak); console.error('recovered ' + f + ' from an interrupted run'); }
+	}
+}
+
 function staleRules(rules: Rule[], root: string): Result[] {
 	const head = git(root, ['rev-parse', 'HEAD']);
 	return rules.map((r): Result => {
@@ -252,6 +265,7 @@ function main(): number {
 	const root = process.cwd();
 	let rules: Rule[];
 	try { rules = loadRules(file); } catch (e) { console.error((e as Error).message); return 1; }
+	if (cmd !== 'check') recover(rules, root);
 	if (typeof flags.id === 'string') {
 		rules = rules.filter(r => r.id === flags.id);
 		if (!rules.length) { console.error('no rule with id ' + flags.id); return 1; }

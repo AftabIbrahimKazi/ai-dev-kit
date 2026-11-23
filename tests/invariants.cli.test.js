@@ -150,3 +150,21 @@ t('probe: tsc helper functions at the top of a file are skipped', () => {
 	fs.writeFileSync(path.join(d, 'lib.js'), 'var __helper = (this && this.__helper) || function (a) {\n    return a > 1 || a === 2;\n};\nexports.f = (a, b) => (a > b ? 1 : 0);\n');
 	assert.strictEqual(probeJson(d)[0].total, 1);
 });
+
+t('a run killed mid-mutation is repaired by the next run from the .invariants-bak copy', () => {
+  const d = proj([rule()]);
+  const lib = path.join(d, 'charge.js');
+  fs.writeFileSync(lib + '.invariants-bak', CHARGE);
+  fs.writeFileSync(lib, '// left broken by a killed run\n');
+  const r = cli(d, 'run');
+  assert.match(r.stderr, /recovered charge\.js/);
+  assert.strictEqual(fs.readFileSync(lib, 'utf8'), CHARGE);
+  assert.ok(!fs.existsSync(lib + '.invariants-bak'), 'backup removed');
+  assert.strictEqual(statusOf(r), 'PASS', r.stdout);
+});
+
+t('no backup file is left behind after a normal run or probe', () => {
+  const d = proj([rule()]);
+  cli(d, 'run'); cli(d, 'probe');
+  assert.ok(!fs.existsSync(path.join(d, 'charge.js.invariants-bak')));
+});

@@ -127,3 +127,32 @@ t('memory-bank index problems ride the hook when the skill is installed and the 
   write(clean, 'handover.md', '# H\n\n## Last session\nok\n');
   assert.strictEqual(spawnSync(process.execPath, [path.join(root, 'handover', 'size.js'), 'check', '--cwd', clean], { encoding: 'utf8' }).stdout, '');
 });
+
+// ---- gaps found by `invariants probe` on handover.size.js ----
+const bullets = (n) => '# L\n' + Array.from({ length: n }, (_, i) => '- lesson ' + i).join('\n') + '\n';
+
+t('a learnings file with exactly 30 bullets is within the limit; 31 is reported', () => {
+  const ok = proj(); write(ok, '.claude/skills/foo/learnings.md', bullets(30));
+  assert.strictEqual(run(ok, 'check').stdout, '');
+  const over = proj(); write(over, '.claude/skills/foo/learnings.md', bullets(31));
+  assert.match(run(over, 'check').stdout, /learnings\.md: 31 bullets \(limit 30\)/);
+});
+
+t('without --strict a problem still exits 0; with --strict it exits 1', () => {
+  const d = proj(); write(d, 'handover.md', lines(121));
+  assert.strictEqual(run(d, 'check').status, 0);
+  assert.strictEqual(run(d, 'check', '--strict').status, 1);
+});
+
+t('plain output is text unless --json is given', () => {
+  const d = proj(); write(d, 'handover.md', lines(121));
+  assert.throws(() => JSON.parse(run(d, 'check').stdout));
+  assert.strictEqual(JSON.parse(run(d, 'check', '--json').stdout).ok, false);
+});
+
+t('a limit of 0 is a usage error for both --max-lines and --max-bullets; 1 is accepted', () => {
+  const d = proj();
+  assert.strictEqual(run(d, 'check', '--max-lines', '0').status, 2);
+  assert.strictEqual(run(d, 'check', '--max-bullets', '0').status, 2);
+  assert.strictEqual(run(d, 'check', '--max-lines', '1', '--max-bullets', '1').status, 0);
+});
