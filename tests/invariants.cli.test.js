@@ -88,3 +88,65 @@ t('bad input: unknown command exits 2, bad rules file exits 1', () => {
 	fs.writeFileSync(path.join(d, 'invariants/invariants.json'), '[{"id":"A"}]');
 	assert.strictEqual(cli(d, 'check').status, 1);
 });
+
+// ---- probe ----
+const LIB = "exports.f = (a, b) => (a > b ? 1 : 0);\n// x > y && z\nexports.s = 'a > b || c';\nexports.r = /[<>]/.test('x');\n";
+const WEAK = 'node -e "process.exit(require(\'./lib.js\').f(2,1)===1?0:1)"';
+const STRONG = 'node -e "const f=require(\'./lib.js\').f;process.exit(f(2,1)===1&&f(1,1)===0?0:1)"';
+const lib = (check, extra = {}) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'inv probe-'));
+	fs.writeFileSync(path.join(d, 'lib.js'), LIB);
+	fs.mkdirSync(path.join(d, 'invariants'));
+	fs.writeFileSync(path.join(d, 'invariants/invariants.json'), JSON.stringify([{ id: 'P1', rule: 'f is strict', covers: ['lib.js'], check, ...extra }]));
+	return d;
+};
+const probeJson = (d, ...a) => JSON.parse(cli(d, 'probe', '--json', ...a).stdout);
+
+t('probe: a weak check leaves a boundary mutant alive; comments, strings and regex are not mutated', () => {
+	const d = lib(WEAK);
+	const r = cli(d, 'probe');
+	assert.strictEqual(r.status, 1, r.stdout);
+	const j = probeJson(d)[0];
+	assert.strictEqual(j.total, 1, 'only the code operator is mutated');
+	assert.strictEqual(j.survivors.length, 1);
+	assert.strictEqual(j.survivors[0].op, '> to >=');
+	assert.strictEqual(fs.readFileSync(path.join(d, 'lib.js'), 'utf8'), LIB);
+});
+
+t('probe: a check that covers the boundary kills the mutant, exit 0', () => {
+	const d = lib(STRONG);
+	const r = cli(d, 'probe');
+	assert.strictEqual(r.status, 0, r.stdout);
+	assert.strictEqual(probeJson(d)[0].killed, 1);
+});
+
+t('probe: probe-ignore.json hides a survivor by file:line:op', () => {
+	const d = lib(WEAK);
+	fs.writeFileSync(path.join(d, 'invariants/probe-ignore.json'), JSON.stringify(['lib.js:1:> to >=']));
+	const r = cli(d, 'probe');
+	assert.strictEqual(r.status, 0, r.stdout);
+	assert.strictEqual(probeJson(d)[0].ignored, 1);
+});
+
+t('probe: a check failing on the current code is reported, not probed', () => {
+	const d = lib('node -e "process.exit(1)"');
+	const j = probeJson(d)[0];
+	assert.strictEqual(j.baselineOk, false);
+	assert.strictEqual(j.total, 0);
+	assert.strictEqual(cli(d, 'probe').status, 1);
+});
+
+t('probe: --max caps mutants and a bad --max exits 2', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'inv probe-'));
+	fs.writeFileSync(path.join(d, 'lib.js'), 'exports.a = (x) => x > 1 && x < 9 && x !== 4 && x >= 0;\n');
+	fs.mkdirSync(path.join(d, 'invariants'));
+	fs.writeFileSync(path.join(d, 'invariants/invariants.json'), JSON.stringify([{ id: 'P', rule: 'r', covers: ['lib.js'], check: 'node -e "0"' }]));
+	assert.strictEqual(probeJson(d, '--max', '2')[0].total, 2);
+	assert.strictEqual(cli(d, 'probe', '--max', 'x').status, 2);
+});
+
+t('probe: tsc helper functions at the top of a file are skipped', () => {
+	const d = lib(WEAK);
+	fs.writeFileSync(path.join(d, 'lib.js'), 'var __helper = (this && this.__helper) || function (a) {\n    return a > 1 || a === 2;\n};\nexports.f = (a, b) => (a > b ? 1 : 0);\n');
+	assert.strictEqual(probeJson(d)[0].total, 1);
+});

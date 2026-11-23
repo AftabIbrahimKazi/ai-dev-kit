@@ -27,3 +27,22 @@ Scratch payments module, 7 planted real bugs plus 1 harmless edit. "Tests" = 5 h
 - The second row is not independent: R8 and R9 were added after seeing the misses. Fair claim: the loop (run, read the misses, close the rule gaps) works, and a first draft of rules from a header comment is not enough on its own.
 - Cost: zero tokens in every run. Rule authoring was the only model work, and it took one extra round.
 - Rules live in `invariants/` at the repo root (`invariants.json`, `ab-gate.check.js`); run with `node skills/addons/invariants.cli.js run`.
+
+## probe on more kit scripts (same day)
+
+`probe` auto-generates mutants of a covered file (flipped comparisons, `&&`/`||`, defaults, exit codes) and reports the ones every rule lets through. No model, no tokens. For these scripts the "rules" are their existing test files, so a survivor is a gap in today's tests.
+
+| Script | Mutants | Killed | Survived | Real gaps | Noise |
+|---|---|---|---|---|---|
+| skills/meta/ab-gate.js (11 rules) | 31 | 29 | 2 | 0 | 2 equivalent, now in probe-ignore.json |
+| skills/workflow/handover.size.js | 33 | 29 | 4 | 4 | 0 |
+| skills/memory/memory-gardener.stale.js | 25 | 19 | 6 | 6 | 0 |
+| skills/meta/install-kit.signature.js | 7 | 3 | 4 | 4 | 0 |
+
+- First `probe` on ab-gate (7 of my earlier rules plus R8, R9) listed 9 survivors: 7 real (the `improved` list, `--json`, one missing flag), 2 equivalent. Rules R10 and R11 killed the 7.
+- First version on the other three listed 20 survivors, 6 of them noise (5 from tsc's emitted `__createBinding`-style helper code, 1 from an operator inside a regex literal). Both are now filtered; the remaining 14 all read as real gaps by hand triage (boundary `>` vs `>=` on `maxBullets`/`maxLines`, `json: false` default, `.md` file filter, skipped-directory list, `protocolFile || 'CLAUDE.md'`). Triage was by me, one pass, not independently checked.
+- Noise rate after filtering: 2 equivalent of 16 survivors, 12%. Small sample, three scripts plus one.
+- Speed: about 23 s for 31 mutants against 11 rule checks; tests of 100 ms each run in seconds.
+- The 14 gaps in handover.size, memory-gardener.stale and install-kit.signature are not closed. They are a to-do list for those tests.
+- Laya triage of equivalent mutants: not worth building at a 12% noise rate.
+- Wired in: bare `invariants` (or `/invariants`) runs rules, probe and stale in one report; command template `skills/commands/invariants.md`; install-kit tests still pass (no change needed, the command installs with its skill).

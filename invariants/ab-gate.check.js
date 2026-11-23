@@ -29,5 +29,12 @@ const R = {
   R9() { const b = { a: 0.5, b: 0.9 }, c = { a: 0.9, b: 0.8 };
     if (cli(b, c) !== 1 || cli(b, c, '--tolerance', '0.2') !== 0) fail('R9 --tolerance not applied');
     if (cli({ a: 0.5 }, { a: 0.55 }) !== 0 || cli({ a: 0.5 }, { a: 0.55 }, '--min-gain', '0.5') !== 1) fail('R9 --min-gain not applied'); },
+  R10() { // CLI: --json prints parseable JSON, plain output does not; a single missing file flag is a usage error
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'abg-')); fs.writeFileSync(d + '/b.json', '{"a":0.1}'); fs.writeFileSync(d + '/c.json', '{"a":0.9}');
+    const out = (...a) => spawnSync('node', [G, '--base', d + '/b.json', '--cand', d + '/c.json', ...a], { encoding: 'utf8' }).stdout;
+    let j; try { j = JSON.parse(out('--json')); } catch { fail('R10 --json output is not JSON'); } if (j.action !== 'accept') fail('R10 --json lost the verdict');
+    try { JSON.parse(out()); fail('R10 plain output should not be JSON'); } catch (e) { if (String(e.message).startsWith('R10')) throw e; }
+    if (spawnSync('node', [G, '--base', d + '/b.json']).status !== 2 || spawnSync('node', [G, '--cand', d + '/c.json']).status !== 2) fail('R10 one missing flag should exit 2'); },
+  R11() { cases((b, c, tol) => { const r = evaluate(b, c, { tolerance: tol, noRegression: false }); const want = Object.keys(b).filter((t) => c[t] > b[t] + tol).sort().join(); if (r.improved.slice().sort().join() !== want) fail('R11 improved list wrong'); }); },
 };
 const f = R[process.argv[2]]; if (!f) { console.error('unknown rule'); process.exit(2); } f(); process.exit(0);

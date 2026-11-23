@@ -4,8 +4,15 @@
 // under its own mutation is reported VACUOUS. Also reports rules whose covered files changed since they were last
 // verified. No model is involved at any step. Plain Node, no dependencies, no network.
 //
+//   node cli.js [all]                                 run + probe + stale in one report (the /invariants default)
 //   node cli.js run   [--file F] [--id ID] [--json]   run checks and mutations; exit 1 on FAIL, VACUOUS or BADMUTATION
-//   node cli.js stale [--file F] [--json]             list rules whose covered files changed since `verified`; exit 1 if any
+//   node cli.js probe [--file F] [--target F] [--max N] [--json]
+//                                                     auto-generate mutants (operator flips, flag and exit-code edits) of each
+//                                                     covered .js file, run every rule covering it, list the survivors: places
+//                                                     the rules are too thin. --max caps mutants per file (default 60). Survivors
+//                                                     listed in invariants/probe-ignore.json as "file:line:op" are skipped. Exit 1
+//                                                     on a survivor or a failing baseline.
+//   node cli.js stale [--file F] [--json]           list rules whose covered files changed since `verified`; exit 1 if any
 //   node cli.js stamp [--file F] [--id ID]            run, then record HEAD as `verified` for rules that fully passed
 //   node cli.js check [--file F]                      validate the rules file only
 // Rules file (default invariants/invariants.json): [{ id, rule, covers: [files], check: "cmd",
@@ -31,7 +38,7 @@ function parseArgs(argv: string[]): { cmd: string; flags: Record<string, string 
 		if (!a.startsWith('--')) throw new Error('unexpected argument: ' + a);
 		const key = a.slice(2);
 		if (key === 'json') flags.json = true;
-		else if (key === 'file' || key === 'id') {
+		else if (key === 'file' || key === 'id' || key === 'target' || key === 'max') {
 			const v = rest[++i];
 			if (v === undefined) throw new Error('--' + key + ' needs a value');
 			flags[key] = v;
@@ -94,6 +101,129 @@ function git(root: string, args: string[]): string | null {
 	return r.status === 0 ? r.stdout.trim() : null;
 }
 
+// ---- probe: auto-generated mutants, run against every rule that covers the file; survivors mark thin rules ----
+interface Mutant { line: number; op: string; from: string; to: string; start: number; end: number }
+interface ProbeFile { file: string; baselineOk: boolean; total: number; killed: number; invalid: number; ignored: number; survivors: { line: number; op: string; from: string; to: string }[] }
+
+const OPS: { op: string; re: RegExp; to: string }[] = [
+	{ op: '=== to !==', re: /===/g, to: '!==' },
+	{ op: '!== to ===', re: /!==/g, to: '===' },
+	{ op: '>= to >', re: />=/g, to: '>' },
+	{ op: '<= to <', re: /<=/g, to: '<' },
+	{ op: '> to >=', re: /(?<![=>\-<])>(?![=>])/g, to: '>=' },
+	{ op: '< to <=', re: /(?<![<=\-!])<(?![<=])/g, to: '<=' },
+	{ op: '&& to ||', re: /&&/g, to: '||' },
+	{ op: '|| to &&', re: /\|\|/g, to: '&&' },
+	{ op: '+ to -', re: /(?<=\s)\+(?=\s)/g, to: '-' },
+	{ op: '- to +', re: /(?<=\s)-(?=\s)/g, to: '+' },
+	{ op: 'true to false', re: /\btrue\b/g, to: 'false' },
+	{ op: 'false to true', re: /\bfalse\b/g, to: 'true' },
+	{ op: '?? 0 to ?? 1', re: /\?\? 0\b/g, to: '?? 1' },
+	{ op: 'exit 0 to exit 1', re: /process\.exit\(0\)/g, to: 'process.exit(1)' },
+	{ op: 'exit 1 to exit 0', re: /process\.exit\(1\)/g, to: 'process.exit(0)' },
+	{ op: 'exit 2 to exit 1', re: /process\.exit\(2\)/g, to: 'process.exit(1)' },
+];
+
+// Index where code on this line stops (a // comment starts outside a string), and a per-index "inside a string" test.
+function lineCode(line: string): { end: number; inStr: boolean[] } {
+	const inStr: boolean[] = [];
+	let q = '';
+	for (let i = 0; i < line.length; i++) {
+		const ch = line[i];
+		if (q) { inStr[i] = true; if (ch === '\\') { i++; inStr[i] = true; } else if (ch === q) q = ''; }
+		else if (ch === '"' || ch === "'" || ch === '`') { q = ch; inStr[i] = true; }
+		else if (ch === '/' && line[i + 1] === '/') return { end: i, inStr };
+		else inStr[i] = false;
+	}
+	return { end: line.length, inStr };
+}
+
+// Regex literals on a line, so operators inside them (e.g. the < in /[*<>]/) are not mutated.
+const REGEX_LIT = /(?:^|[(=,:|&!?{;]\s*)(\/(?![\/*])(?:[^\/\\\n[]|\\.|\[(?:[^\]\\\n]|\\.)*\])+\/[gimsuy]*)/g;
+function markRegex(line: string, inStr: boolean[]): void {
+	REGEX_LIT.lastIndex = 0;
+	let m: RegExpExecArray | null;
+	while ((m = REGEX_LIT.exec(line))) {
+		const s = m.index + m[0].length - m[1].length;
+		for (let i = s; i < s + m[1].length; i++) inStr[i] = true;
+	}
+}
+
+function genMutants(src: string): Mutant[] {
+	const out: Mutant[] = [];
+	let offset = 0;
+	let helper = false; // tsc's emitted helper functions (var __createBinding = ... ) are not the project's own logic
+	src.split('\n').forEach((line, n) => {
+		if (/^var __\w+ = /.test(line)) helper = true;
+		else if (helper && /^\S/.test(line) && !line.startsWith('}')) helper = false;
+		const t = line.trim();
+		if (!helper && t && !t.startsWith('//') && !t.startsWith('*') && !t.startsWith('/*') && !line.includes('__esModule') && !line.includes('sourceMappingURL')) {
+			const { end, inStr } = lineCode(line);
+			markRegex(line, inStr);
+			for (const o of OPS) {
+				o.re.lastIndex = 0;
+				let m: RegExpExecArray | null;
+				while ((m = o.re.exec(line))) {
+					if (m.index >= end) break;
+					if (!inStr[m.index]) out.push({ line: n + 1, op: o.op, from: m[0], to: o.to, start: offset + m.index, end: offset + m.index + m[0].length });
+				}
+			}
+		}
+		offset += line.length + 1;
+	});
+	return out.sort((a, b) => a.start - b.start);
+}
+
+function probeFile(rel: string, rules: Rule[], root: string, max: number, ignore: Set<string>): ProbeFile {
+	const target = path.resolve(root, rel);
+	const mine = rules.filter(r => r.covers.some(c => path.resolve(root, c) === target));
+	const res: ProbeFile = { file: rel, baselineOk: true, total: 0, killed: 0, invalid: 0, ignored: 0, survivors: [] };
+	if (mine.some(r => runCheck(r.check, root) !== 0)) { res.baselineOk = false; return res; }
+	const original = fs.readFileSync(target, 'utf8');
+	let all = genMutants(original);
+	if (all.length > max) all = Array.from({ length: max }, (_, i) => all[Math.floor(i * all.length / max)]);
+	res.total = all.length;
+	const restore = () => fs.writeFileSync(target, original);
+	const onSig = () => { restore(); process.exit(130); };
+	process.once('SIGINT', onSig);
+	process.once('SIGTERM', onSig);
+	try {
+		for (const m of all) {
+			fs.writeFileSync(target, original.slice(0, m.start) + m.to + original.slice(m.end));
+			if (cp.spawnSync(process.execPath, ['--check', target], { stdio: 'ignore' }).status !== 0) { res.invalid++; continue; }
+			if (mine.some(r => runCheck(r.check, root) !== 0)) { res.killed++; continue; }
+			if (ignore.has(rel + ':' + m.line + ':' + m.op)) { res.ignored++; continue; }
+			res.survivors.push({ line: m.line, op: m.op, from: m.from, to: m.to });
+		}
+	} finally {
+		restore();
+		process.removeListener('SIGINT', onSig);
+		process.removeListener('SIGTERM', onSig);
+	}
+	return res;
+}
+
+function probe(rules: Rule[], root: string, flags: Record<string, string | boolean>): { out: ProbeFile[]; bad: boolean } {
+	const max = typeof flags.max === 'string' ? Number(flags.max) : 60;
+	if (!Number.isInteger(max) || max < 1) throw new Error('--max must be a whole number of 1 or more');
+	let files = [...new Set(rules.flatMap(r => r.covers).filter(c => /\.(c|m)?js$/.test(c)))];
+	if (typeof flags.target === 'string') files = files.filter(f => path.resolve(root, f) === path.resolve(root, flags.target as string));
+	let ignore = new Set<string>();
+	const ig = path.join(root, 'invariants/probe-ignore.json');
+	if (fs.existsSync(ig)) ignore = new Set(JSON.parse(fs.readFileSync(ig, 'utf8')) as string[]);
+	const out = files.map(f => probeFile(f, rules, root, max, ignore));
+	return { out, bad: out.some(f => !f.baselineOk || f.survivors.length > 0) };
+}
+
+function printProbe(out: ProbeFile[], json: boolean): void {
+	if (json) { console.log(JSON.stringify(out, null, 2)); return; }
+	for (const f of out) {
+		if (!f.baselineOk) { console.log(f.file + ': a rule fails on the current code, fix it first'); continue; }
+		console.log(f.file + ': ' + f.total + ' mutants, ' + f.killed + ' killed, ' + f.survivors.length + ' survived, ' + f.invalid + ' invalid' + (f.ignored ? ', ' + f.ignored + ' ignored' : ''));
+		for (const s of f.survivors) console.log('  SURVIVED ' + f.file + ':' + s.line + '  ' + s.op + '  (' + s.from + ' -> ' + s.to + ')');
+	}
+}
+
 function staleRules(rules: Rule[], root: string): Result[] {
 	const head = git(root, ['rev-parse', 'HEAD']);
 	return rules.map((r): Result => {
@@ -115,8 +245,9 @@ function print(results: Result[], json: boolean): void {
 function main(): number {
 	let parsed;
 	try { parsed = parseArgs(process.argv.slice(2)); } catch (e) { console.error((e as Error).message); return 2; }
-	const { cmd, flags } = parsed;
-	if (!['run', 'stale', 'stamp', 'check'].includes(cmd)) { console.error('usage: invariants <run|stale|stamp|check> [--file F] [--id ID] [--json]'); return 2; }
+	const { flags } = parsed;
+	const cmd = parsed.cmd || 'all';
+	if (!['all', 'run', 'stale', 'stamp', 'check', 'probe'].includes(cmd)) { console.error('usage: invariants [all|run|probe|stale|stamp|check] [--file F] [--id ID] [--target F] [--max N] [--json]'); return 2; }
 	const file = path.resolve(typeof flags.file === 'string' ? flags.file : 'invariants/invariants.json');
 	const root = process.cwd();
 	let rules: Rule[];
@@ -128,6 +259,17 @@ function main(): number {
 	const json = flags.json === true;
 	if (cmd === 'check') { console.log(rules.length + ' rule(s) valid'); return 0; }
 	if (cmd === 'stale') { const res = staleRules(rules, root); print(res, json); return res.some(r => r.status === 'FAIL') ? 1 : 0; }
+	if (cmd === 'all') { // one command: prove the rules, probe for thin spots, flag stale rules
+		const res = rules.map(r => evaluate(r, root));
+		console.log('== rules'); print(res, false);
+		let bad = res.some(r => r.status === 'FAIL' || r.status === 'VACUOUS' || r.status === 'BADMUTATION');
+		try { const p = probe(rules, root, flags); console.log('== probe'); printProbe(p.out, false); bad = bad || p.bad; } catch (e) { console.error((e as Error).message); return 2; }
+		const st = staleRules(rules, root); console.log('== stale'); print(st, false);
+		return bad || st.some(r => r.status === 'FAIL') ? 1 : 0;
+	}
+	if (cmd === 'probe') {
+		try { const p = probe(rules, root, flags); printProbe(p.out, json); return p.bad ? 1 : 0; } catch (e) { console.error((e as Error).message); return 2; }
+	}
 	const results = rules.map(r => evaluate(r, root));
 	print(results, json);
 	if (cmd === 'stamp') {

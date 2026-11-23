@@ -115,5 +115,31 @@
 			"find": "o.minGain = Number(argv[++i])",
 			"replace": "o.minGain = -Number(argv[++i])"
 		}
+	},
+	{
+		"id": "R10",
+		"rule": "The CLI prints JSON only with --json, and a missing --base or --cand is a usage error.",
+		"covers": [
+			"skills/meta/ab-gate.js"
+		],
+		"check": "node invariants/ab-gate.check.js R10",
+		"mutate": {
+			"file": "skills/meta/ab-gate.js",
+			"find": "json = true;",
+			"replace": "json = false;"
+		}
+	},
+	{
+		"id": "R11",
+		"rule": "The reported improved list is exactly the tasks that rose by more than the tolerance.",
+		"covers": [
+			"skills/meta/ab-gate.js"
+		],
+		"check": "node invariants/ab-gate.check.js R11",
+		"mutate": {
+			"file": "skills/meta/ab-gate.js",
+			"find": "cand[t] > base[t] + tol",
+			"replace": "cand[t] > base[t]"
+		}
 	}
 ]
