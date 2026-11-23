@@ -61,3 +61,21 @@ All 51 kit scripts that have a same-named test (`skills/**/X.js` + `tests/X.test
 - Mods (`mods/*`) are TypeScript against the host's test harness and were not probed.
 - Tool bug found and fixed during the run: a forced kill (a timeout) left figma-code.cli.js mutated, because Windows skips signal handlers. The tool now writes `<file>.invariants-bak` before each mutation and the next run restores it; it did so for install-kit.company.js when I stopped a run by hand. Restored by hand once, by the tool once.
 - Open: the 737 survivors are not closed. The 6 untested scripts and the weakest 5 are the place to start. Raw per-script numbers are not committed (scratch output only).
+
+## Closing survivors in the five weakest scripts (2026-11-23 to 24)
+
+Starting survivors out of 40: install-kit.select 33, diagram.cli 31, skill-scope.device 28, install-kit.cli 27, teardown.cli 25. Re-probed after each round; install-kit.cli was re-probed against all seven install-kit test files, because several of them cover it.
+
+| Script | Start | After | What closed it | Left |
+|---|---|---|---|---|
+| install-kit.select | 33 | 0 | a hang guard in the test, plus 4 tests (vim and capital keys, Home/End and the cursor marker, Buffer input and raw mode, pick order) | 2 equivalent, ignored |
+| diagram.cli | 31 | 3 open | golden files for a rich spec (light, dark, HTML), a cycle spec, stack detection (2 projects) and structure detection (2); validation, tokens and missing-logo tests | 3 layout-geometry edits (lines 135, 139, 328) that no spec tried triggers; 3 ignored (2 equivalent, 1 network call) |
+| skill-scope.device | 28 | 0 | a golden over 12 fake machines (JSON and text), 5 tests of the real scan with temp folders for every lookup | 14 ignored: Python-version probing, GPU commands, GB-size cache walking, spawn options |
+| install-kit.cli | 27 | 5 open | 6 flag and prompt tests, then 3 more (uninstall keeps the signature, first-answer redo, `--active-standards`) | 5 open in the interactive question flow (lines 955, 1226, 1291, 1692, 1732); 4 ignored: compiled boilerplate, a dead function, an rm option, a display truncation |
+| teardown.cli | 25 | 0 | a hang guard, golden for 17 `draftSpec` descriptions and 40 `validateSpec` cases, dry-run build, wildcard package exports, `findModels` depth, invalid-JSON error | 13 ignored: 12 sit in code that needs a live Chrome, plus 1 equivalent edit |
+
+- **Biggest single finding: tests that pass while hanging.** A test whose awaited promise never resolves ends the process with exit code 0, so a broken menu looks green. install-kit.select showed 26 of its 33 survivors from this alone. Fixed by an exit guard in install-kit.select and teardown.cli. Still unguarded: narrate-buttons, optimize-assets.convert, plan-first.goldfish, plan-first.reviewer.
+- **Golden files do the heavy lifting on deterministic output.** One snapshot of a rendered SVG or a detected spec kills a whole class of arithmetic and boundary edits at once. Cost: they need `UPDATE_GOLDEN=1` and a read of the diff when the output changes on purpose. Path and line-ending differences are normalized so they pass on any machine.
+- **Dead code:** `usageModEnabled()` in install-kit.cli is defined and never called.
+- **Test authoring gotchas on this machine:** backslashes are consumed once when code is written inline in a shell command, which silently turned `\x1b` into raw escape bytes in one test. Patch scripts are written to files instead.
+- **Honest limits:** the 13 + 14 + 4 + 3 ignore entries hide real but untestable code (live browser, real hardware), and ignored entries are keyed by line number, so they go stale when code moves. Remaining open survivors are listed in the table. Not re-probed after the final tests and ignore entries.

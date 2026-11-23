@@ -189,6 +189,27 @@ function fakeTerm(script) {
     assert.deepStrictEqual(await runMenu(fakeTerm([[DOWN, DOWN, ' ', UP, UP, ' ', ENTER]]).io, spec({ multi: true })), { kind: 'pick', picked: [0, 2] });
   });
 
+  await t('changing the first answer forgets every later redo', async () => {
+    const { io, menus } = fakeTerm([
+      [ENTER],            // A: a0
+      [ENTER],            // B: No
+      [ENTER],            // C: c0
+      [DOWN, ENTER],      // summary: Change an answer
+      [ENTER],            // which: the first (A)
+      [DOWN, ENTER],      // A again (remembered a0, redo offered): change to a1
+      [ENTER],            // B again: no redo, because the first answer changed
+      [ENTER],            // C again
+      [ENTER],            // summary: Install
+    ]);
+    cli.setMenuIO(io);
+    const args = { skills: [] }, log = [];
+    try { await cli.__testApi.runSteps(args, flow(log)(args)); } finally { cli.setMenuIO(null); }
+    assert.strictEqual(args.a, 'a1');
+    assert.ok(/Right redo/.test(menus[5].out), 'A offers redo of its remembered answer');
+    assert.ok(!/Right redo/.test(menus[6].out), 'B redo was cleared by the changed first answer');
+    assert.strictEqual(menus.length, 9);
+  });
+
   finished = true;
   if (failed) { console.log('install-kit.select.test: FAILED'); process.exit(1); }
   console.log('install-kit.select.test: ok');

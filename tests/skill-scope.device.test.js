@@ -100,10 +100,11 @@ const PROFILES = {
 	'amd discrete on linux': merge({ platform: 'linux', gpus: [{ name: 'RX 6800', vendor: 'amd', vramGB: 16, discrete: true }] }),
 	'apple silicon': merge({ platform: 'darwin', arch: 'arm64', ramGB: 32, gpus: [{ name: 'Apple M2', vendor: 'apple', vramGB: null, discrete: false }] }),
 	'nvidia 24 gb, vision only': merge({ ramGB: 64, freeDiskGB: 500, gpus: [{ name: 'RTX 4090', vendor: 'nvidia', vramGB: 24, discrete: true }], state: { vision: true } }),
+	'weak machine with laya and vision installed': merge({ ramGB: 4, freeDiskGB: 3, cores: 2, state: { laya: true, vision: true } }),
 	'everything installed': merge({ tools: { cloudflared: true }, state: { laya: true, vision: true, ollama: true, llamacpp: true, kaggleCli: true, kaggleCreds: true, hfCacheGB: 12 } }),
 	'kaggle cli without credentials': merge({ state: { kaggleCli: true, kaggleCreds: false, ollama: true } }),
 };
-t('golden: the device report as JSON and as text for eleven fake machines, plus a forced preset', () => {
+t('golden: the device report as JSON and as text for twelve fake machines, plus a forced preset', () => {
 	let out = '';
 	for (const [name, hw] of Object.entries(PROFILES)) {
 		const j = spawnSync(process.execPath, [script, '--json'], { encoding: 'utf8', env: { ...process.env, DEVICE_FAKE_HW: JSON.stringify(hw) } });

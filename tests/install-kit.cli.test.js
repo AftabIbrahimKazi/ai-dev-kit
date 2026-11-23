@@ -898,3 +898,16 @@ t('numbered prompts: numbers outside 1..N are refused with a hint, in-range ones
   assert.ok(r.stdout.includes('RESULT ["A","C"]'), r.stdout + r.stderr);
   assert.strictEqual(r.stdout.split('from 1 to 3').length - 1, 2, 'two refusals: 4 and 0');
 });
+
+t('--active-standards all keeps every standards row, a list keeps only those, none drops them', () => {
+  const lib = path.join(__dirname, '..');
+  const size = (...extra) => {
+    const root = tmp(); write(root, 'package.json', '{}');
+    const r = runCli(['install', '--yes', '--standards', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'handover', ...extra]);
+    assert.strictEqual(r.status, 0, r.stderr);
+    return fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8').length;
+  };
+  const dflt = size(), all = size('--active-standards', 'all'), css = size('--active-standards', 'css'), none = size('--active-standards', 'none');
+  assert.strictEqual(all, dflt, 'all is the default');
+  assert.ok(all > css && css > none, [all, css, none].join(' > '));
+});

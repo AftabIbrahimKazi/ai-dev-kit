@@ -597,3 +597,11 @@ t('a row that already shows the alias, with no signature stored, is not reported
   assert.doesNotMatch(r.notes.join(' '), /has no "Selector signature" row/);
   assert.strictEqual(readManifest(root).signature.alias, 'abc');
 });
+
+t('uninstall without --all leaves the stored signature and the row alone', () => {
+  const lib = makeLibrary(); const root = tmp();
+  install(lib, root, { signature: 'abc' });
+  doUninstall({ library: lib, root, skills: ['handover'], all: false });
+  assert.strictEqual(readManifest(root).signature.alias, 'abc');
+  assert.ok(read(root, 'CLAUDE.md').includes('`abc-`'));
+});
