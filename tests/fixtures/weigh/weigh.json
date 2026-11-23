@@ -3,15 +3,26 @@
   "dist": "dist",
   "totals": {
    "js": 205600,
-   "jsGzip": 29619,
+   "jsGzip": 204950,
    "css": 164642,
-   "cssGzip": 16950,
+   "cssGzip": 164033,
    "images": 1318920,
    "fonts": 102400,
    "video": 1228800,
    "files": 27
   },
-  "heavyChunks": [],
+  "heavyChunks": [
+   {
+    "file": "dist/assets/app.abc123def.js",
+    "size": 174080,
+    "gzip": 174153
+   },
+   {
+    "file": "dist/assets/app.abc123def.css",
+    "size": 163840,
+    "gzip": 163910
+   }
+  ],
   "heavyImages": [
    {
     "file": "dist/img/hero.png",
@@ -135,23 +146,34 @@
   "unhashed": 3,
   "notes": []
  },
- "table": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB      29 KB\n  CSS         161 KB      17 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n20 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+ "table": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB     200 KB\n  CSS         161 KB     160 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nChunks over 150 KB gzip:\n    170 KB gz    170 KB raw  dist/assets/app.abc123def.js\n    160 KB gz    160 KB raw  dist/assets/app.abc123def.css\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n22 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
  "summary": null,
- "summarize": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+7 smaller findings; rerun without --summary)",
- "summarize3": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n(+11 smaller findings; rerun without --summary)",
+ "summarize": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+9 smaller findings; rerun without --summary)",
+ "summarize3": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n(+13 smaller findings; rerun without --summary)",
  "top2": {
   "dist": "dist",
   "totals": {
    "js": 205600,
-   "jsGzip": 29619,
+   "jsGzip": 204950,
    "css": 164642,
-   "cssGzip": 16950,
+   "cssGzip": 164033,
    "images": 1318920,
    "fonts": 102400,
    "video": 1228800,
    "files": 27
   },
-  "heavyChunks": [],
+  "heavyChunks": [
+   {
+    "file": "dist/assets/app.abc123def.js",
+    "size": 174080,
+    "gzip": 174153
+   },
+   {
+    "file": "dist/assets/app.abc123def.css",
+    "size": 163840,
+    "gzip": 163910
+   }
+  ],
   "heavyImages": [
    {
     "file": "dist/img/hero.png",
@@ -305,15 +327,26 @@
   "dist": "dist",
   "totals": {
    "js": 205600,
-   "jsGzip": 29619,
+   "jsGzip": 204950,
    "css": 164642,
-   "cssGzip": 16950,
+   "cssGzip": 164033,
    "images": 1318920,
    "fonts": 102400,
    "video": 1228800,
    "files": 27
   },
-  "heavyChunks": [],
+  "heavyChunks": [
+   {
+    "file": "dist/assets/app.abc123def.js",
+    "size": 174080,
+    "gzip": 174153
+   },
+   {
+    "file": "dist/assets/app.abc123def.css",
+    "size": 163840,
+    "gzip": 163910
+   }
+  ],
   "heavyImages": [
    {
     "file": "dist/img/hero.png",
@@ -437,6 +470,6 @@
   "unhashed": 3,
   "notes": []
  },
- "cliSummary": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+7 smaller findings; rerun without --summary)\n",
- "cliTable": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB      29 KB\n  CSS         161 KB      17 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n20 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.\n"
+ "cliSummary": "Build folder: dist\nHeaviest: 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) (1.2 MB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 7 PNG/JPEG without WebP/AVIF (e.g. dist/img/hero.png) | 1.2 MB | add WebP/AVIF versions | S |\n| video dist/media/loop.webm | 700 KB | compress, add a poster, load on demand | M |\n| video dist/media/clip.mp4 | 500 KB | compress, add a poster, load on demand | M |\n| image dist/img/hero.png | 300 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/banner.jpg | 250 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/wide.jpeg | 220 KB | resize to display size, convert to WebP/AVIF | S |\n| image dist/img/over.png | 200 KB | resize to display size, convert to WebP/AVIF | S |\n(+9 smaller findings; rerun without --summary)\n",
+ "cliTable": "Build folder: dist (27 files)\n\nTotals         raw        gzip\n  JS          201 KB     200 KB\n  CSS         161 KB     160 KB\n  images      1.3 MB\n  fonts       100 KB  (5 files, font-display: missing)\n  video       1.2 MB\n\nChunks over 150 KB gzip:\n    170 KB gz    170 KB raw  dist/assets/app.abc123def.js\n    160 KB gz    160 KB raw  dist/assets/app.abc123def.css\n\nImages over 200 KB:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n\nPNG/JPEG with no WebP or AVIF sibling:\n    300 KB  dist/img/hero.png\n    250 KB  dist/img/banner.jpg\n    220 KB  dist/img/wide.jpeg\n    200 KB  dist/img/over.png\n    200 KB  dist/img/exact.png\n     30 KB  dist/img/photo.jpg\n     20 KB  dist/img/edge.png\n\nVideo:\n    700 KB  dist/media/loop.webm\n    500 KB  dist/media/clip.mp4\n\nFonts (5 files, limit 4):\n     20 KB  dist/fonts/f0.woff2\n     20 KB  dist/fonts/f1.woff2\n     20 KB  dist/fonts/f2.woff2\n     20 KB  dist/fonts/f3.woff2\n     20 KB  dist/fonts/f4.woff2\n\nHTML loading:\n  img-no-dimensions  dist/about.html: 2 <img> without width and height (layout shift)\n  blocking-script    dist/index.html: /assets/vendor.js\n  blocking-script    dist/index.html: https://cdn.example.com/a.js\n  third-party-sync   dist/index.html: cdn.example.com\n  eager-images       dist/index.html: 2 of 3 <img> without loading=\"lazy\"\n  no-lcp-priority    dist/index.html: no fetchpriority=\"high\" image and no image preload\n  img-no-dimensions  dist/index.html: 3 <img> without width and height (layout shift)\n\nUnhashed JS/CSS file names in the build: 3 (long-lived caching needs content hashes)\n\n22 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.\n"
 }

@@ -252,3 +252,21 @@ t('the bare command runs rules, probe and stale as separate sections and reports
 	d = withRules([ok({ mutate: { file: 'lib.js', find: 'not in the file', replace: 'x' } })]);
 	assert.strictEqual(cli(d).status, 1, 'bad mutation');
 });
+
+t('every option flag takes a value, an unknown flag or a stray word is refused, and each flag is accepted with a value', () => {
+	const d = plain([ok()], { 'lib.js': 'exports.x = 1;\n' });
+	for (const flag of ['--file', '--id', '--target', '--max']) {
+		const r = cli(d, 'run', flag);
+		assert.strictEqual(r.status, 2, flag);
+		assert.ok(r.stderr.includes(flag + ' needs a value'), flag + ': ' + r.stderr);
+	}
+	const bogus = cli(d, 'run', '--bogus');
+	assert.strictEqual(bogus.status, 2); assert.ok(bogus.stderr.includes('unknown flag: --bogus'));
+	const stray = cli(d, 'run', 'stray');
+	assert.strictEqual(stray.status, 2); assert.ok(stray.stderr.includes('unexpected argument: stray'));
+	assert.strictEqual(cli(d, 'probe', '--target', 'lib.js', '--max', '5').status, 0);
+	assert.strictEqual(cli(d, 'run', '--id', 'P').status, 0);
+	assert.strictEqual(cli(d, 'run', '--file', 'invariants/invariants.json').status, 0);
+	const none = cli(d, 'probe', '--target', 'other.js');
+	assert.strictEqual(none.status, 0); assert.strictEqual(none.stdout.trim(), '');
+});

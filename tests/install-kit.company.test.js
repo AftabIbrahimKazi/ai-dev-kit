@@ -395,3 +395,15 @@ t('the generated company README names the sync command and the project placehold
 	c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: path.join(co, 'docs'), companyDefaults: 'keep' });
 	assert.ok(read(root, 'coding-standards/company/README.md').includes('company sync --root <your-project>'));
 });
+
+// ---- third round: README line and repeat sync ----
+t('the company README shows the full sync command, and syncing twice in auto mode changes nothing the second time', () => {
+	const co = makeRichCompany(); const dir = path.join(co, 'docs'); const lib = makeLibrary(); const root = tmp();
+	doInstall({ library: lib, root, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'none' });
+	c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: dir, companyDefaults: 'auto' });
+	assert.ok(read(root, 'coding-standards/company/README.md').includes('node <ai-dev-kit>/skills/meta/install-kit.cli.js company sync --root <your-project>'));
+	const once = read(root, 'CLAUDE.md'); const listing = fs.readdirSync(path.join(root, 'coding-standards')).sort();
+	c.doCompanySync({ library: lib, root, tool: 'claude', companyFrom: dir, companyDefaults: 'auto' });
+	assert.strictEqual(read(root, 'CLAUDE.md'), once, 'a second identical sync leaves the protocol file alone');
+	assert.deepStrictEqual(fs.readdirSync(path.join(root, 'coding-standards')).sort(), listing);
+});

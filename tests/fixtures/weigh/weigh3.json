@@ -1,0 +1,83 @@
+{
+ "fontText": {
+  "4 swap": {
+   "text": "Build folder: dist (6 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         4 KB  (4 files, font-display: swap)\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n1 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+   "summary": "Build folder: dist\nHeaviest: 1 unhashed JS/CSS names\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+  },
+  "5 swap": {
+   "text": "Build folder: dist (7 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         5 KB  (5 files, font-display: swap)\n\nFonts (5 files, limit 4):\n      1 KB  dist/f0.woff2\n      1 KB  dist/f1.woff2\n      1 KB  dist/f2.woff2\n      1 KB  dist/f3.woff2\n      1 KB  dist/g4.woff2\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n2 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+   "summary": "Build folder: dist\nHeaviest: 5 font files (5 KB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 5 font files | 5 KB | subset and keep at most 4 files | M |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+  },
+  "4 block": {
+   "text": "Build folder: dist (6 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         4 KB  (4 files, font-display: other)\n  font-display: set but not swap/optional\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n1 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+   "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+  },
+  "4 missing": {
+   "text": "Build folder: dist (6 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         4 KB  (4 files, font-display: missing)\n  font-display: missing on some @font-face\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n1 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+   "summary": "Build folder: dist\nHeaviest: font-display\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| font-display | - | set font-display: swap on every @font-face | S |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+  },
+  "5 missing": {
+   "text": "Build folder: dist (7 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         5 KB  (5 files, font-display: missing)\n\nFonts (5 files, limit 4):\n      1 KB  dist/f0.woff2\n      1 KB  dist/f1.woff2\n      1 KB  dist/f2.woff2\n      1 KB  dist/f3.woff2\n      1 KB  dist/g4.woff2\n\nUnhashed JS/CSS file names in the build: 1 (long-lived caching needs content hashes)\n\n2 static findings. Rank by bytes, then check the runtime half (Step 3) in a browser.",
+   "summary": "Build folder: dist\nHeaviest: 5 font files (5 KB)\n\n| finding | size | fix | effort |\n|---|---|---|---|\n| 5 font files | 5 KB | subset and keep at most 4 files | M |\n| 1 unhashed JS/CSS names | - | enable content hashes in the build | M |"
+  },
+  "4 none": {
+   "text": "Build folder: dist (5 files)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         4 KB  (4 files, font-display: no-css)\n\nNo static findings over the thresholds. Go to the runtime half (Step 3).",
+   "summary": "Build folder: dist\nNo static findings over the thresholds; the next step is the runtime half (browser trace)."
+  }
+ },
+ "summaryCaps": {
+  "max 1": 7,
+  "max 2": 8,
+  "max 3": 9,
+  "max 4": 10,
+  "max 5": 11,
+  "max 6": 12,
+  "max 7": 13,
+  "max 8": 14,
+  "max 9": 15,
+  "max 10": 16,
+  "max 11": 17,
+  "max 12": 18,
+  "max 13": 19,
+  "max 14": 20,
+  "max 15": 21,
+  "max 16": 21,
+  "max 17": 21,
+  "max 18": 21,
+  "max 19": 21,
+  "max 20": 21,
+  "max 21": 21,
+  "max 22": 21,
+  "max 23": 21,
+  "max 24": 21,
+  "max 25": 21,
+  "max 26": 21,
+  "max 27": 21,
+  "max 28": 21,
+  "max 29": 21,
+  "max 30": 21,
+  "max 31": 21,
+  "max 32": 21,
+  "max 33": 21,
+  "max 34": 21,
+  "max 35": 21,
+  "max 36": 21,
+  "max 37": 21,
+  "max 38": 21,
+  "max 39": 21,
+  "max 40": 21
+ },
+ "order": {
+  "chunks": [
+   "dist/b.bbbbbb.js",
+   "dist/c.cccccc.js",
+   "dist/a.aaaaaa.js"
+  ],
+  "images": [
+   "dist/p2.png",
+   "dist/p3.png",
+   "dist/p1.png"
+  ]
+ },
+ "notes": "Source weigh-in (1 files)\nnote: no production build folder found; weighed source under src (build first for real chunk sizes)\n\nTotals         raw        gzip\n  JS            0 KB       0 KB\n  CSS           0 KB       0 KB\n  images        0 KB\n  fonts         0 KB  (0 files, font-display: no-css)\n\nNo static findings over the thresholds. Go to the runtime half (Step 3)."
+}

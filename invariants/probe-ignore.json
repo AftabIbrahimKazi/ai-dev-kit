@@ -42,5 +42,9 @@
 	"skills/addons/invariants.cli.js:175:< to <=",
 	"skills/meta/install-kit.company.js:415:true to false",
 	"skills/meta/install-kit.company.js:662:true to false",
-	"skills/addons/project-context.figma.js:200:&& to ||"
+	"skills/addons/project-context.figma.js:200:&& to ||",
+	"skills/meta/install-kit.company.js:136:+ to -",
+	"skills/addons/invariants.cli.js:161:+ to -",
+	"skills/addons/invariants.cli.js:196:>= to >",
+	"skills/meta/install-kit.company.js:535:&& to ||"
 ]

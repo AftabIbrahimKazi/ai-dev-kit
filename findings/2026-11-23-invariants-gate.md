@@ -90,3 +90,20 @@ Same method as the first sweep: all 51 script and same-named-test pairs, up to 4
 - Weakest now: usage-mine 24, invariants.cli 23 (the new add-on's own probe code, covered only by 16 tests), install-kit.company 22, project-context.figma 22, perf-audit.weigh 20, teardown-film.cli 20, teardown-sound.cli 20, session-budget.compact 20.
 - Process note: two of the four shards crashed at start on the first launch (Windows would not delete leftover copy folders from the first sweep) and were relaunched on fresh folder names. A fixed per-shard folder name is fragile; use a unique one per run.
 - Next candidates: usage-mine, invariants.cli, install-kit.company, project-context.figma, perf-audit.weigh. The 6 scripts with no same-named test are still untested.
+
+## The next five weakest scripts (2026-11-24)
+
+Same method as before: survivors out of 40 mutants, test file as the only check, ignore list applied, each re-probe on a private copy of the kit (a probe of invariants.cli.js itself must not run against its own live file).
+
+| Script | First sweep | Now | How |
+|---|---|---|---|
+| usage-mine | 24 | 0 | synthetic transcripts covering every block shape, golden of the miner and the CLI (text, JSON, --days, --out, usage-log merge), median and tie-break cases, malformed records, `--days 0` and negative |
+| project-context.figma | 22 | 0 | golden for PNG, three WebP kinds and JPEG edge shapes, SVG sizes, colors and fonts, token parsing, a folder scan and the CLI; boundary tests for a tied nearest token, a JPEG ending at its scan limit, type-size order |
+| invariants.cli (the new add-on's own code) | 23 | 0 | exact error text and exit codes for the rules file, a mutation at character 0, exact probe report lines, comment and string handling, the bare command's three sections and exit codes, every option flag |
+| install-kit.company | 22 | 0 | golden over scan, routes, overlap, signature and a sync and remove in each defaults mode, title and clip limits, signature threshold, protocol file other than CLAUDE.md, README line, repeat sync |
+| perf-audit.weigh | 20 | 0 | golden for a big build, font-display states, html findings, summary caps 1 to 40, heavy chunk and image order |
+
+- Ignored (7 more): equivalent or unreachable edits, each judged by reading the line: a loop bound, a `//` check where the character at that index is a slash, a redundant `endsWith` clause, an empty-list `takeRows` call, a rm option, and a missing-input branch that an earlier error makes unreachable.
+- **Kit-wide at the last full measurement: 1,256 of 1,807 killed = 69.5%** (first sweep 59.1%, second 64.0%), 504 open, 47 ignored, 8 scripts clean. After the last few tests the open count should be about 499. That figure was not re-measured as a whole sweep.
+- **A weak test fixture can hide a bug class.** perf-audit.weigh's test data was pseudo-random bytes that gzip compressed well, so no test chunk ever crossed the 150 KB limit and the chunk-ordering and heavy-chunk code was never exercised. xorshift bytes fix it. Check that a fixture really reaches the threshold it is meant to test.
+- Next weakest: teardown-film.cli 20, teardown-sound.cli 20, session-budget.compact 20, skill-writer.lint 19, astro-page.conventions 19, responsive-check.probes 19.

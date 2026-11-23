@@ -133,7 +133,7 @@ t('--summary with no build folder says to ask about building; a clean build says
 // ---- gaps found by `invariants probe` on perf-audit.weigh.js ----
 // Regenerate the golden on purpose with UPDATE_GOLDEN=1 node tests/perf-audit.weigh.test.js, then read the diff.
 const CRW = String.fromCharCode(13);
-const noise = (n, seed = 1) => { const b = Buffer.alloc(n); let x = seed; for (let i = 0; i < n; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; b[i] = x >> 16; } return b; };
+const noise = (n, seed = 1) => { const b = Buffer.alloc(n); let x = (seed * 2654435761) >>> 0 || 1; for (let i = 0; i < n; i++) { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; b[i] = x & 255; } return b; }; // xorshift32: deterministic and incompressible, so gzip sizes are stable
 const KBW = 1024;
 const goldW = (name, text) => {
 	const file = path.join(__dirname, 'fixtures', 'weigh', name);
@@ -203,4 +203,23 @@ t('CLI usage errors: a zero or negative or non-numeric --top and an empty --dist
 	for (const bad of [['--top', '0'], ['--top', '-3'], ['--top', 'abc'], ['--dist', ''], ['--src', '']]) assert.strictEqual(run(d, ...bad).status, 2, bad.join(' '));
 	assert.strictEqual(run(d, '--top', '1').status, 0);
 	assert.strictEqual(run(d, '--dist', 'nowhere').status, 1);
+});
+
+// ---- third round: report text and caps ----
+t('golden: report text for font cases and notes, summary caps, and the order of several heavy chunks and images', () => {
+	const W = require('../skills/workflow/perf-audit.weigh.js');
+	const face = (disp) => '@font-face{font-family:X;src:url(x.woff2)' + (disp ? ';font-display:' + disp : '') + '}';
+	const out = { fontText: {}, summaryCaps: {}, order: null, notes: null };
+	for (const [k, css, n] of [['4 swap', face('swap'), 4], ['5 swap', face('swap'), 5], ['4 block', face('block'), 4], ['4 missing', face('swap') + face(''), 4], ['5 missing', face(''), 5], ['4 none', null, 4]]) {
+		const d = fontsProject(css); for (let i = 4; i < n; i++) write(d, 'dist/g' + i + '.woff2', noise(KBW, 70 + i));
+		const r = W.weigh(d); out.fontText[k] = { text: W.render(r), summary: W.summarize(r) };
+	}
+	const big = bigSite(); const rb = W.weigh(big);
+	for (let m = 1; m <= 40; m++) out.summaryCaps['max ' + m] = W.summarize(rb, m).split(String.fromCharCode(10)).length;
+	const ord = proj(); write(ord, 'dist/index.html', '<html></html>');
+	for (const [name, kb, seed] of [['a.aaaaaa.js', 155, 1], ['b.bbbbbb.js', 190, 2], ['c.cccccc.js', 170, 3]]) write(ord, 'dist/' + name, noise(kb * KBW, seed));
+	for (const [name, kb, seed] of [['p1.png', 210, 4], ['p2.png', 260, 5], ['p3.png', 230, 6]]) write(ord, 'dist/' + name, noise(kb * KBW, seed));
+	const ro = W.weigh(ord); out.order = { chunks: ro.heavyChunks.map((x) => x.file), images: ro.heavyImages.map((x) => x.file) };
+	const srcOnly = proj(); write(srcOnly, 'src/app.js', 'x'.repeat(50)); out.notes = W.render(W.weigh(srcOnly));
+	goldW('weigh3.json', JSON.stringify(out, null, 1).split(CRW).join('') + String.fromCharCode(10));
 });
