@@ -83,3 +83,36 @@ t('text output has the three sections and prints no credential values', () => {
   assert.ok(/Device check/.test(r.stdout) && /Presets/.test(r.stdout) && /Next/.test(r.stdout));
   assert.ok(/contents not read/.test(r.stdout));
 });
+
+// ---- golden reports over fake machines (found by `invariants probe`): every row, status, preset and next step ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/skill-scope.device.test.js, then read the diff.
+const fs = require('node:fs');
+const os = require('node:os');
+const BS = String.fromCharCode(92), CR = String.fromCharCode(13);
+const clean = (s) => s.split(CR).join('').split(BS + BS).join('/').split(BS).join('/').split(path.join(__dirname, '..').split(BS).join('/')).join('<kit>').split(os.homedir().split(BS).join('/')).join('<home>');
+const PROFILES = {
+	'plain laptop': merge({}),
+	'low ram and disk': merge({ ramGB: 4, freeDiskGB: 3, cores: 2 }),
+	'old node, no python, no tools': merge({ tools: { node: '16.20.0', python: null, ffmpeg: false, git: false } }),
+	'old python': merge({ tools: { python: '3.9.1' } }),
+	'nvidia 6 gb': merge({ gpus: [{ name: 'RTX 3060', vendor: 'nvidia', vramGB: 6, discrete: true }] }),
+	'nvidia 24 gb, laya only': merge({ ramGB: 64, freeDiskGB: 500, gpus: [{ name: 'RTX 4090', vendor: 'nvidia', vramGB: 24, discrete: true }], state: { laya: true } }),
+	'amd discrete on linux': merge({ platform: 'linux', gpus: [{ name: 'RX 6800', vendor: 'amd', vramGB: 16, discrete: true }] }),
+	'apple silicon': merge({ platform: 'darwin', arch: 'arm64', ramGB: 32, gpus: [{ name: 'Apple M2', vendor: 'apple', vramGB: null, discrete: false }] }),
+	'everything installed': merge({ tools: { cloudflared: true }, state: { laya: true, vision: true, ollama: true, llamacpp: true, kaggleCli: true, kaggleCreds: true, hfCacheGB: 12 } }),
+	'kaggle cli without credentials': merge({ state: { kaggleCli: true, kaggleCreds: false, ollama: true } }),
+};
+t('golden: the device report as JSON and as text for ten fake machines, plus a forced preset', () => {
+	let out = '';
+	for (const [name, hw] of Object.entries(PROFILES)) {
+		const j = spawnSync(process.execPath, [script, '--json'], { encoding: 'utf8', env: { ...process.env, DEVICE_FAKE_HW: JSON.stringify(hw) } });
+		const x = spawnSync(process.execPath, [script], { encoding: 'utf8', env: { ...process.env, DEVICE_FAKE_HW: JSON.stringify(hw) } });
+		out += '=== ' + name + ' (json, status ' + j.status + ')\n' + clean(j.stdout) + '\n=== ' + name + ' (text, status ' + x.status + ')\n' + clean(x.stdout) + '\n';
+	}
+	const f = spawnSync(process.execPath, [script, '--json', '--preset', 'lite'], { encoding: 'utf8', env: { ...process.env, DEVICE_FAKE_HW: JSON.stringify(PROFILES['nvidia 24 gb, laya only']) } });
+	out += '=== forced lite (json, status ' + f.status + ')\n' + clean(f.stdout) + '\n';
+	const file = path.join(__dirname, 'fixtures', 'device', 'reports.txt');
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, out); return; }
+	assert.ok(fs.existsSync(file), 'missing golden (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(out, fs.readFileSync(file, 'utf8').split(CR).join(''), 'a device report changed; if intended regenerate with UPDATE_GOLDEN=1 and read the diff');
+});

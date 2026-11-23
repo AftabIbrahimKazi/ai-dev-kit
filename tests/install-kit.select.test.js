@@ -4,6 +4,9 @@ const { parseKeys, runMenu, QuitSignal } = require('../skills/meta/install-kit.s
 const cli = require('../skills/meta/install-kit.cli.js');
 
 let failed = 0;
+// A menu that never resolves would end the process with exit code 0 and look like a pass: fail unless the run reached its end.
+let finished = false;
+process.on('exit', () => { if (!finished) { console.log('FAIL the test run never finished (a menu or step is waiting forever)'); process.exitCode = 1; } });
 const t = async (name, fn) => { try { await fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + e.message); } };
 
 const UP = '\x1b[A', DOWN = '\x1b[B', RIGHT = '\x1b[C', LEFT = '\x1b[D', ENTER = '\r';
@@ -11,12 +14,13 @@ const UP = '\x1b[A', DOWN = '\x1b[B', RIGHT = '\x1b[C', LEFT = '\x1b[D', ENTER =
 // A fake terminal. `script` holds one list of key chunks per menu that opens; each is sent once the menu is listening.
 function fakeTerm(script) {
   const menus = [];
+  const raw = [];
   let listener = null;
   const io = {
     color: false,
     output: { write: (s) => { if (menus.length) menus[menus.length - 1].out += s; } },
     input: {
-      setRawMode() {}, resume() {}, pause() {}, setEncoding() {},
+      setRawMode(v) { raw.push(v); }, resume() {}, pause() {}, setEncoding() {},
       on(_ev, fn) {
         listener = fn;
         const keys = script[menus.length] || [];
@@ -26,7 +30,7 @@ function fakeTerm(script) {
       off(_ev, fn) { if (listener === fn) listener = null; },
     },
   };
-  return { io, menus };
+  return { io, menus, raw };
 }
 
 (async () => {
@@ -159,6 +163,33 @@ function fakeTerm(script) {
     assert.ok(fs.existsSync(path.join(a, '.claude', 'skills', 'implicit-state-audit', 'scan.js')) && fs.existsSync(path.join(a, '.claude', 'skills', 'implicit-state-audit', 'ask.txt')));
   });
 
+  await t('vim keys and capitals: k up, j down, A all, N none, Q quit; an unknown letter is dropped; Home and End', async () => {
+    assert.deepStrictEqual(parseKeys('kj'), ['up', 'down']);
+    assert.deepStrictEqual(parseKeys('AN'), ['all', 'none']);
+    assert.deepStrictEqual(parseKeys('Q'), ['quit']);
+    assert.deepStrictEqual(parseKeys('x'), []);
+    assert.deepStrictEqual(parseKeys('\x1b[H\x1b[F'), ['home', 'end']);
+  });
+
+  await t('Home and End jump to the first and last item, and the last frame marks only the cursor row', async () => {
+    assert.deepStrictEqual(await runMenu(fakeTerm([[DOWN, '\x1b[H', ENTER]]).io, spec()), { kind: 'pick', picked: [0] });
+    assert.deepStrictEqual(await runMenu(fakeTerm([['\x1b[F', ENTER]]).io, spec()), { kind: 'pick', picked: [2] });
+    const c = fakeTerm([[DOWN, ENTER]]); await runMenu(c.io, spec());
+    const last = c.menus[0].out.split('\x1b[0J').pop();
+    assert.ok(last.includes('(*) two') && last.includes('( ) one') && !last.includes('(*) one'), last);
+  });
+
+  await t('input may arrive as Buffers, and raw mode is switched on for the menu and off afterwards', async () => {
+    const term = fakeTerm([[Buffer.from(DOWN), Buffer.from(ENTER)]]);
+    assert.deepStrictEqual(await runMenu(term.io, spec()), { kind: 'pick', picked: [1] });
+    assert.deepStrictEqual(term.raw, [true, false]);
+  });
+
+  await t('multi picks come back in item order, whatever order they were ticked in', async () => {
+    assert.deepStrictEqual(await runMenu(fakeTerm([[DOWN, DOWN, ' ', UP, UP, ' ', ENTER]]).io, spec({ multi: true })), { kind: 'pick', picked: [0, 2] });
+  });
+
+  finished = true;
   if (failed) { console.log('install-kit.select.test: FAILED'); process.exit(1); }
   console.log('install-kit.select.test: ok');
 })();

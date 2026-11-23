@@ -1,0 +1,179 @@
+{
+ "spec": {
+  "title": "Architecture of demo",
+  "description": "How the main parts of demo connect: User, Next.js, PostgreSQL, Redis, Stripe and more.",
+  "mode": "stack",
+  "fingerprint": "162e98cd72eee994",
+  "nodes": [
+   {
+    "id": "user",
+    "label": "User",
+    "role": "user"
+   },
+   {
+    "id": "next-js",
+    "label": "Next.js",
+    "role": "app",
+    "icon": "nextjs",
+    "group": "host"
+   },
+   {
+    "id": "postgresql",
+    "label": "PostgreSQL",
+    "role": "db",
+    "icon": "postgresql"
+   },
+   {
+    "id": "redis",
+    "label": "Redis",
+    "role": "cache",
+    "icon": "redis"
+   },
+   {
+    "id": "stripe",
+    "label": "Stripe",
+    "role": "payments",
+    "icon": "stripe"
+   },
+   {
+    "id": "resend",
+    "label": "Resend",
+    "role": "email",
+    "icon": "resend"
+   },
+   {
+    "id": "github-actions",
+    "label": "GitHub Actions",
+    "role": "ci",
+    "icon": "github-actions"
+   },
+   {
+    "id": "sentry",
+    "label": "Sentry",
+    "role": "monitor",
+    "icon": "sentry"
+   },
+   {
+    "id": "vitest",
+    "label": "Vitest",
+    "role": "tool",
+    "icon": "vitest",
+    "group": "tooling"
+   },
+   {
+    "id": "eslint",
+    "label": "ESLint",
+    "role": "tool",
+    "icon": "eslint",
+    "group": "tooling"
+   },
+   {
+    "id": "typescript",
+    "label": "TypeScript",
+    "role": "tool",
+    "icon": "typescript",
+    "group": "tooling"
+   },
+   {
+    "id": "tailwind-css",
+    "label": "Tailwind CSS",
+    "role": "tool",
+    "icon": "tailwindcss",
+    "group": "tooling"
+   }
+  ],
+  "groups": [
+   {
+    "id": "host",
+    "label": "Vercel"
+   },
+   {
+    "id": "tooling",
+    "label": "Tooling"
+   }
+  ],
+  "edges": [
+   {
+    "from": "user",
+    "to": "next-js",
+    "label": "HTTPS",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "next-js",
+    "to": "postgresql",
+    "label": "queries",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "next-js",
+    "to": "redis",
+    "label": "cache",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "next-js",
+    "to": "stripe",
+    "label": "checkout",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "next-js",
+    "to": "resend",
+    "label": "email",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "next-js",
+    "to": "sentry",
+    "label": "errors",
+    "kind": "secondary",
+    "guess": true
+   },
+   {
+    "from": "github-actions",
+    "to": "next-js",
+    "label": "deploy",
+    "kind": "deploy",
+    "guess": true
+   },
+   {
+    "from": "github-actions",
+    "to": "vitest",
+    "label": "runs",
+    "kind": "deploy",
+    "guess": true
+   },
+   {
+    "from": "github-actions",
+    "to": "eslint",
+    "label": "runs",
+    "kind": "deploy",
+    "guess": true
+   },
+   {
+    "from": "github-actions",
+    "to": "typescript",
+    "label": "runs",
+    "kind": "deploy",
+    "guess": true
+   },
+   {
+    "from": "github-actions",
+    "to": "tailwind-css",
+    "label": "runs",
+    "kind": "deploy",
+    "guess": true
+   }
+  ]
+ },
+ "open": [
+  "11 edge(s) are inferred from roles (guess: true); confirm or fix them in the spec",
+  "brand logos: run \"icons nextjs postgresql redis stripe resend github-actions sentry vitest eslint typescript tailwindcss\" once to cache them; until then a drawn glyph is used"
+ ]
+}

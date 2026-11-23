@@ -144,3 +144,123 @@ t('CLI: build will not replace a file it did not write unless --force; warnings 
 	assert.match(f.stderr, /warning: .*guess/); assert.ok(!/warning/.test(f.stdout));
 	assert.strictEqual(cli(d, 'build', 's.spec.json').status, 0, 'a second build over its own output is allowed');
 });
+
+// ---- golden files: any change to detection, layout or rendering shows up as a diff (found by `invariants probe`) ----
+// Regenerate on purpose with UPDATE_GOLDEN=1 node tests/diagram.cli.test.js, then read the diff before committing.
+const GOLD = path.join(__dirname, 'fixtures', 'diagram');
+const CR = String.fromCharCode(13);
+const lf = (s) => s.split(CR).join('');
+const golden = (name, actual) => {
+	const f = path.join(GOLD, name);
+	if (process.env.UPDATE_GOLDEN === '1') { fs.mkdirSync(GOLD, { recursive: true }); fs.writeFileSync(f, lf(actual)); return; }
+	assert.ok(fs.existsSync(f), 'missing golden ' + name + ' (generate with UPDATE_GOLDEN=1)');
+	assert.strictEqual(lf(actual), lf(fs.readFileSync(f, 'utf8')), name + ' changed; if that is intended regenerate with UPDATE_GOLDEN=1 and read the diff');
+};
+const named = (files) => { const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'dg gold-')); const root = path.join(parent, 'demo'); fs.mkdirSync(root); for (const [f, s] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true }); fs.writeFileSync(path.join(root, f), s); } return root; };
+const stable = (o) => JSON.stringify(o, null, 1) + '\n';
+
+const RICH = {
+	title: 'Rich demo', description: 'Groups, three edge kinds, long labels and a nested group.',
+	nodes: [
+		{ id: 'u', label: 'Visitor browser session', role: 'user' }, { id: 'cdn', label: 'Edge cache', role: 'cdn' },
+		{ id: 'a', label: 'Web app', role: 'app', group: 'g1' }, { id: 'api', label: 'Public API gateway', role: 'api', group: 'g1' },
+		{ id: 'db', label: 'Primary database', role: 'db', group: 'g2' }, { id: 'q', label: 'Job queue', role: 'queue', group: 'g2' },
+		{ id: 'ci', label: 'CI pipeline', role: 'ci' }, { id: 'mon', label: 'Monitoring', role: 'monitoring' },
+	],
+	groups: [{ id: 'g1', label: 'Backend services' }, { id: 'g2', label: 'Data tier', parent: 'g1' }],
+	edges: [
+		{ from: 'u', to: 'cdn', label: 'HTTPS' }, { from: 'cdn', to: 'a', label: 'origin fetch' }, { from: 'a', to: 'api', label: 'REST calls' },
+		{ from: 'api', to: 'db', label: 'SQL' }, { from: 'api', to: 'q', label: 'enqueue', kind: 'secondary' }, { from: 'q', to: 'db', label: 'writes', kind: 'secondary' },
+		{ from: 'ci', to: 'a', label: 'deploy', kind: 'deploy' }, { from: 'a', to: 'mon', label: 'traces', kind: 'secondary' },
+	],
+};
+
+t('golden: a rich spec builds the same light SVG, dark SVG and HTML page', () => {
+	assert.deepStrictEqual(D.validateSpec(RICH), []);
+	const d = proj({ 'diagram/rich.spec.json': stable(RICH) });
+	const r = cli(d, 'build', 'diagram/rich.spec.json', '--name', 'rich');
+	assert.strictEqual(r.status, 0, r.stderr);
+	for (const ext of ['light.svg', 'dark.svg', 'html']) golden('rich.' + ext, fs.readFileSync(path.join(d, 'diagram', 'rich.' + ext), 'utf8'));
+});
+
+t('golden: stack detection on a project with a framework, host, Docker, CI, database and env names', () => {
+	const root = named({
+		'package.json': JSON.stringify({ name: 'demo', dependencies: { next: '15', react: '19', pg: '8', redis: '4', '@sentry/nextjs': '8', stripe: '16', tailwindcss: '4' }, devDependencies: { vitest: '2', eslint: '9', typescript: '5' } }),
+		'vercel.json': '{}', Dockerfile: 'FROM node:22\n',
+		'docker-compose.yml': 'services:\n  db:\n    image: postgres:16\n  cache:\n    image: redis:7\n',
+		'.github/workflows/ci.yml': 'name: ci\n', '.env.example': 'DATABASE_URL=\nSTRIPE_SECRET_KEY=\nSENTRY_DSN=\nRESEND_API_KEY=\n',
+	});
+	golden('detect-stack.json', stable(D.detectStack(root)));
+});
+
+t('golden: stack detection on a plain Docker project with GitLab CI', () => {
+	const root = named({ 'package.json': JSON.stringify({ dependencies: { express: '4', mongoose: '8' } }), Dockerfile: 'FROM node\n', '.gitlab-ci.yml': 'stages: []\n' });
+	golden('detect-stack-docker.json', stable(D.detectStack(root)));
+});
+
+t('golden: structure detection follows imports between folders and skips vendored folders', () => {
+	const root = named({
+		'src/web/index.js': "import { handle } from '../api/handler.js';\nimport '../shared/util.js';\n",
+		'src/api/handler.js': "const s = require('../db/store.js');\nrequire('../shared/util.js');\n",
+		'src/db/store.js': 'module.exports = {};\n', 'src/shared/util.js': 'module.exports = {};\n',
+		'node_modules/x/index.js': "require('../../src/web/index.js');\n", 'dist/out.js': "require('../src/db/store.js');\n",
+	});
+	golden('detect-structure.json', stable(D.detectStructure(root)));
+});
+
+t('validateSpec: a non-object spec and a group without id or label are reported, never thrown', () => {
+	for (const bad of [null, undefined, 'x', 5]) assert.deepStrictEqual(D.validateSpec(bad), ['spec is not an object']);
+	assert.ok(D.validateSpec(spec({ groups: [{ id: 'g' }] })).some((e) => e.includes('a group needs id and label')));
+	assert.ok(D.validateSpec(spec({ groups: [{ label: 'G' }] })).some((e) => e.includes('a group needs id and label')));
+});
+
+t('CLI: no command and an unknown command both exit 2', () => {
+	const d = proj();
+	assert.strictEqual(cli(d).status, 2);
+	assert.strictEqual(cli(d, 'bogus').status, 2);
+});
+
+t('build --tokens overrides the light and dark palettes separately', () => {
+	const files = { 'diagram/s.spec.json': stable(spec()), 'light.json': JSON.stringify({ light: { bg: '#0a0b0c' } }), 'dark.json': JSON.stringify({ dark: { bg: '#0d0e0f' } }) };
+	const d = proj(files);
+	const out = (n, ext) => fs.readFileSync(path.join(d, 'diagram', n + '.' + ext + '.svg'), 'utf8');
+	assert.strictEqual(cli(d, 'build', 'diagram/s.spec.json', '--name', 'a', '--tokens', 'light.json').status, 0);
+	assert.ok(out('a', 'light').includes('#0a0b0c') && !out('a', 'dark').includes('#0a0b0c'));
+	assert.strictEqual(cli(d, 'build', 'diagram/s.spec.json', '--name', 'b', '--tokens', 'dark.json').status, 0);
+	assert.ok(out('b', 'dark').includes('#0d0e0f') && !out('b', 'light').includes('#0d0e0f'));
+});
+
+t('build notes a node whose logo is not cached, but not one that has a drawn glyph', () => {
+	const sp = spec({ nodes: [{ id: 'z', label: 'Zed', icon: 'nobrand' }, { id: 'd', label: 'DB', role: 'db', icon: 'nobrand' }], edges: [{ from: 'z', to: 'd', label: 'x' }] });
+	const d = proj({ 'diagram/s.spec.json': stable(sp) });
+	const r = cli(d, 'build', 'diagram/s.spec.json', '--name', 's');
+	assert.strictEqual(r.status, 0, r.stderr);
+	const note = r.stdout + r.stderr;
+	assert.ok(note.includes('no cached logo for Zed'), note);
+	assert.ok(!note.includes('no cached logo for Zed, DB') && !note.includes('for DB'), note);
+});
+
+const RICH2 = {
+	title: 'Cycle and loose parts', description: 'A five step chain with a back edge, a cross edge, a group and three unconnected parts.',
+	nodes: [
+		{ id: 'a', label: 'Entry', role: 'user' }, { id: 'b', label: 'Router', role: 'app' }, { id: 'c', label: 'Auth', role: 'auth', group: 'g' },
+		{ id: 'd', label: 'Orders', role: 'api', group: 'g' }, { id: 'e', label: 'Ledger', role: 'db' },
+		{ id: 'l1', label: 'Docs', role: 'tool' }, { id: 'l2', label: 'Metrics', role: 'monitoring' }, { id: 'l3', label: 'Mail', role: 'email' },
+	],
+	groups: [{ id: 'g', label: 'Services' }],
+	edges: [{ from: 'a', to: 'b', label: 'in' }, { from: 'b', to: 'c', label: 'check' }, { from: 'c', to: 'd', label: 'pass' }, { from: 'd', to: 'e', label: 'write' }, { from: 'e', to: 'b', label: 'callback', kind: 'secondary' }, { from: 'a', to: 'd', label: 'direct', kind: 'deploy' }],
+};
+t('golden: a cycle, a cross edge, a group and loose parts keep the same layout', () => {
+	assert.deepStrictEqual(D.validateSpec(RICH2), []);
+	const d = proj({ 'diagram/c.spec.json': stable(RICH2) });
+	assert.strictEqual(cli(d, 'build', 'diagram/c.spec.json', '--name', 'c').status, 0);
+	golden('cycle.light.svg', fs.readFileSync(path.join(d, 'diagram', 'c.light.svg'), 'utf8'));
+});
+
+t('golden: structure detection ignores imports within a folder and into unknown folders', () => {
+	const root = named({
+		'src/web/index.js': "import { h } from './local.js';\nimport '../api/handler.js';\nimport '../nowhere/x.js';\nimport 'react';\n",
+		'src/web/local.js': 'export const h = 1;\n', 'src/api/handler.js': "require('./helper.js');\nrequire('../web/index.js');\n", 'src/api/helper.js': 'module.exports = 1;\n',
+	});
+	golden('detect-structure-2.json', stable(D.detectStructure(root)));
+});

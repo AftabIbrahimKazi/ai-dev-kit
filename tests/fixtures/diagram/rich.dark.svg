@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="dg-svg" viewBox="0 0 1646 844" width="1646" height="844" role="img" aria-labelledby="dg-t dg-d" font-family="system-ui,-apple-system,'Segoe UI',sans-serif">
+<title id="dg-t">Rich demo</title><desc id="dg-d">Groups, three edge kinds, long labels and a nested group.</desc>
+<style>svg.dg-svg{--dg-bg:#0f1620;--dg-grid:#18222f;--dg-text:#e6edf5;--dg-muted:#8fa0b3;--dg-tile:#ffffff;--dg-tileline:#3b4a5c;--dg-group:#162030;--dg-groupline:#2e3d50;--dg-accent:#6ea1ff;--dg-edge:#7f90a4;--dg-pill:#0f1620}</style>
+<defs><pattern id="dg-g" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="var(--dg-grid)" stroke-width="1"/></pattern>
+<marker id="dg-primary" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 1 10 5 0 9z" fill="var(--dg-accent)"/></marker>
+<marker id="dg-secondary" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 1 10 5 0 9z" fill="var(--dg-edge)"/></marker>
+<marker id="dg-deploy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 1 10 5 0 9z" fill="var(--dg-edge)"/></marker>
+</defs>
+<rect width="1646" height="844" fill="var(--dg-bg)"/><rect width="1646" height="844" fill="url(#dg-g)"/>
+<text x="48" y="40" font-size="20" font-weight="700" fill="var(--dg-text)">Rich demo</text>
+<text x="48" y="62" font-size="13" fill="var(--dg-muted)">Groups, three edge kinds, long labels and a nested group.</text>
+<rect x="570" y="390" width="1066" height="341" rx="12" fill="var(--dg-group)" stroke="var(--dg-groupline)" stroke-width="1.5"/>
+<text x="584" y="409" font-size="12" font-weight="600" fill="var(--dg-muted)">Backend services</text>
+<rect x="1146" y="562" width="474" height="169" rx="12" fill="var(--dg-group)" stroke="var(--dg-groupline)" stroke-width="1.5"/>
+<text x="1160" y="581" font-size="12" font-weight="600" fill="var(--dg-muted)">Data tier</text>
+<path d="M149 127 L377 127" fill="none" stroke="var(--dg-accent)" stroke-width="2" stroke-linejoin="round" marker-end="url(#dg-primary)"/>
+<path d="M429 127 L543 127 L543 467 L657 467" fill="none" stroke="var(--dg-accent)" stroke-width="2" stroke-linejoin="round" marker-end="url(#dg-primary)"/>
+<path d="M709 467 L937 467" fill="none" stroke="var(--dg-accent)" stroke-width="2" stroke-linejoin="round" marker-end="url(#dg-primary)"/>
+<path d="M989 467 L1103 467 L1103 556 L1383 556 L1383 639 L1497 639" fill="none" stroke="var(--dg-accent)" stroke-width="2" stroke-linejoin="round" marker-end="url(#dg-primary)"/>
+<path d="M989 467 L1114 467 L1114 639 L1217 639" fill="none" stroke="var(--dg-edge)" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#dg-secondary)"/>
+<path d="M1269 639 L1497 639" fill="none" stroke="var(--dg-edge)" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#dg-secondary)"/>
+<path d="M429 265 L554 265 L554 467 L657 467" fill="none" stroke="var(--dg-edge)" stroke-width="1.5" stroke-dasharray="6 5" stroke-linejoin="round" marker-end="url(#dg-deploy)"/>
+<path d="M709 467 L823 467 L823 127 L937 127" fill="none" stroke="var(--dg-edge)" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#dg-secondary)"/>
+<rect x="238.5" y="117" width="49" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="263" y="131" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">HTTPS</text>
+<rect x="438.5" y="117" width="95" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="486" y="131" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">origin fetch</text>
+<rect x="782" y="457" width="82" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="823" y="471" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">REST calls</text>
+<rect x="1225" y="546" width="36" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="1243" y="560" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">SQL</text>
+<rect x="1020.5" y="457" width="62" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="1051.5" y="471" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">enqueue</text>
+<rect x="1355" y="629" width="56" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="1383" y="643" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">writes</text>
+<rect x="463.5" y="255" width="56" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="491.5" y="269" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">deploy</text>
+<rect x="715.2" y="457" width="56" height="20" rx="5" fill="var(--dg-pill)" stroke="var(--dg-groupline)"/>
+<text x="743.2" y="471" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-text)">traces</text>
+<rect x="97" y="101" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(109 113) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></g>
+<text x="123" y="171" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Visitor browser</text>
+<text x="123" y="186" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">session</text>
+<text x="123" y="201" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">user</text>
+<rect x="377" y="101" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<text x="403" y="134" font-size="17" font-weight="700" text-anchor="middle" fill="#2563eb">ED</text>
+<text x="403" y="171" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Edge cache</text>
+<text x="403" y="186" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">cdn</text>
+<rect x="657" y="441" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(669 453) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></g>
+<text x="683" y="511" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Web app</text>
+<text x="683" y="526" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">app</text>
+<rect x="937" y="441" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(949 453) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="1"/><rect x="3" y="13" width="18" height="7" rx="1"/><path d="M7 7.5h.01M7 16.5h.01"/></g>
+<text x="963" y="511" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Public API gateway</text>
+<text x="963" y="526" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">api</text>
+<rect x="1497" y="613" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(1509 625) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text x="1523" y="683" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Primary database</text>
+<text x="1523" y="698" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">db</text>
+<rect x="1217" y="613" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(1229 625) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></g>
+<text x="1243" y="683" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Job queue</text>
+<text x="1243" y="698" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">queue</text>
+<rect x="377" y="239" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<g transform="translate(389 251) scale(1.1667)" fill="none" stroke="#3b4a5c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="12" r="2"/><path d="M6 7v10M8 5c7 0 8 3 8 5"/></g>
+<text x="403" y="309" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">CI pipeline</text>
+<text x="403" y="324" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">ci</text>
+<rect x="937" y="101" width="52" height="52" rx="12" fill="var(--dg-tile)" stroke="var(--dg-tileline)" stroke-width="1.5"/>
+<text x="963" y="134" font-size="17" font-weight="700" text-anchor="middle" fill="#2563eb">MO</text>
+<text x="963" y="171" font-size="13" font-weight="600" text-anchor="middle" fill="var(--dg-text)">Monitoring</text>
+<text x="963" y="186" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--dg-muted)">monitoring</text>
+<path d="M48 822 h32" stroke="var(--dg-accent)" stroke-width="2" marker-end="url(#dg-primary)"/>
+<text x="88" y="826" font-size="11" fill="var(--dg-muted)">main flow</text>
+<path d="M174.5 822 h32" stroke="var(--dg-edge)" stroke-width="1.5" marker-end="url(#dg-secondary)"/>
+<text x="214.5" y="826" font-size="11" fill="var(--dg-muted)">internal link</text>
+<path d="M327 822 h32" stroke="var(--dg-edge)" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#dg-deploy)"/>
+<text x="367" y="826" font-size="11" fill="var(--dg-muted)">build / deploy</text>
+</svg>

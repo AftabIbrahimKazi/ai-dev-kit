@@ -1,0 +1,42 @@
+{
+ "spec": {
+  "title": "Structure of demo",
+  "description": "Source folders of demo and the imports between them.",
+  "mode": "structure",
+  "fingerprint": "bc495cc34188098c",
+  "nodes": [
+   {
+    "id": "api",
+    "label": "api/",
+    "role": "2 source files",
+    "glyph": "folder"
+   },
+   {
+    "id": "web",
+    "label": "web/",
+    "role": "2 source files",
+    "glyph": "folder"
+   }
+  ],
+  "groups": [],
+  "edges": [
+   {
+    "from": "api",
+    "to": "web",
+    "label": "1 import",
+    "kind": "secondary",
+    "guess": false
+   },
+   {
+    "from": "web",
+    "to": "api",
+    "label": "1 import",
+    "kind": "secondary",
+    "guess": false
+   }
+  ]
+ },
+ "open": [
+  "edges are counted from relative imports; dynamic or aliased imports are not seen"
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "spec": {
+  "title": "Architecture of demo",
+  "description": "How the main parts of demo connect: User, Express, MongoDB, GitLab CI.",
+  "mode": "stack",
+  "fingerprint": "7a8b870505733ffc",
+  "nodes": [
+   {
+    "id": "user",
+    "label": "User",
+    "role": "user"
+   },
+   {
+    "id": "express",
+    "label": "Express",
+    "role": "api",
+    "icon": "express"
+   },
+   {
+    "id": "mongodb",
+    "label": "MongoDB",
+    "role": "db",
+    "icon": "mongodb"
+   },
+   {
+    "id": "gitlab-ci",
+    "label": "GitLab CI",
+    "role": "ci",
+    "icon": "gitlab"
+   }
+  ],
+  "groups": [],
+  "edges": [
+   {
+    "from": "user",
+    "to": "express",
+    "label": "HTTPS",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "express",
+    "to": "mongodb",
+    "label": "queries",
+    "kind": "primary",
+    "guess": true
+   },
+   {
+    "from": "gitlab-ci",
+    "to": "express",
+    "label": "deploy",
+    "kind": "deploy",
+    "guess": true
+   }
+  ]
+ },
+ "open": [
+  "3 edge(s) are inferred from roles (guess: true); confirm or fix them in the spec",
+  "brand logos: run \"icons express mongodb gitlab\" once to cache them; until then a drawn glyph is used"
+ ]
+}

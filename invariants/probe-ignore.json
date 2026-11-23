@@ -1,4 +1,9 @@
 [
 	"skills/meta/ab-gate.js:21:|| to &&",
-	"skills/meta/ab-gate.js:45:< to <="
+	"skills/meta/ab-gate.js:45:< to <=",
+	"skills/meta/install-kit.select.js:13:< to <=",
+	"skills/meta/install-kit.select.js:91:&& to ||",
+	"skills/addons/diagram.cli.js:218:|| to &&",
+	"skills/addons/diagram.cli.js:834:=== to !==",
+	"skills/addons/diagram.cli.js:883:|| to &&"
 ]

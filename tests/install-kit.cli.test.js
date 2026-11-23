@@ -835,3 +835,66 @@ t('mergeHooks retires the old skill-scope hooks and leaves every other hook alon
   assert.strictEqual(after.model, 'x');
   assert.deepStrictEqual(mergeHooks(target, []).retired, []);
 });
+
+// ---- gaps found by `invariants probe` on install-kit.cli.js ----
+const { spawnSync: spawnCli } = require('node:child_process');
+const CLI_JS = path.join(__dirname, '..', 'skills', 'meta', 'install-kit.cli.js');
+const runCli = (args, env = {}, input = '') => spawnCli(process.execPath, [CLI_JS, ...args], { encoding: 'utf8', input, env: { ...process.env, AI_DEV_KIT_HOME: tmp(), ...env } });
+
+t('flag values are validated: --company-defaults, --usage and --usage-notify take only their words', () => {
+  const root = tmp();
+  for (const bad of [['--company-defaults', 'bogus'], ['--usage', 'maybe'], ['--usage-notify', 'bogus']]) assert.strictEqual(runCli(['company', 'status', '--root', root, ...bad]).status, 2, bad.join(' '));
+  for (const good of [['--company-defaults', 'keep'], ['--company-defaults', 'drop'], ['--company-defaults', 'auto'], ['--usage', 'on'], ['--usage', 'off'], ['--usage-notify', 'on']]) assert.notStrictEqual(runCli(['company', 'status', '--root', root, ...good]).status, 2, good.join(' '));
+});
+
+t('--dry-run is refused outside the company and signature commands, and allowed there', () => {
+  const root = tmp();
+  assert.strictEqual(runCli(['install', '--yes', '--root', root, '--dry-run']).status, 2);
+  assert.notStrictEqual(runCli(['signature', 'show', '--root', root, '--dry-run']).status, 2);
+  assert.notStrictEqual(runCli(['company', 'status', '--root', root, '--dry-run']).status, 2);
+});
+
+t('usage errors: signature without an action, alias or root, mods or company without a root', () => {
+  const root = tmp();
+  assert.strictEqual(runCli(['signature', '--root', root]).status, 2);
+  assert.strictEqual(runCli(['signature', 'set', '--root', root]).status, 2);
+  assert.strictEqual(runCli(['signature', 'wrong', '--root', root]).status, 2);
+  assert.strictEqual(runCli(['signature', 'show']).status, 2);
+  assert.strictEqual(runCli(['mods']).status, 2);
+  assert.strictEqual(runCli(['company', 'status']).status, 2);
+  assert.strictEqual(runCli(['signature', 'show', '--root', root]).status, 0);
+});
+
+t('usage tracking config: only the keys given change, and a stored false stays false', () => {
+  const home = tmp(); const prev = process.env.AI_DEV_KIT_HOME; process.env.AI_DEV_KIT_HOME = home;
+  try {
+    const { setUsageTracking } = require('../skills/meta/install-kit.cli.js');
+    const file = path.join(home, '.ai-dev-kit', 'usage', 'config.json');
+    write(home, '.ai-dev-kit/usage/config.json', JSON.stringify({ track: false, notify: true }));
+    const a = setUsageTracking(undefined, 'off');
+    assert.deepStrictEqual({ track: a.track, notify: a.notify }, { track: false, notify: false });
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { track: false, notify: false });
+    const b = setUsageTracking('on');
+    assert.deepStrictEqual({ track: b.track, notify: b.notify }, { track: true, notify: false });
+    fs.unlinkSync(file);
+    const c = setUsageTracking(undefined, 'on');
+    assert.deepStrictEqual({ track: c.track, notify: c.notify }, { track: true, notify: true });
+    assert.strictEqual(setUsageTracking(), undefined);
+  } finally { if (prev === undefined) delete process.env.AI_DEV_KIT_HOME; else process.env.AI_DEV_KIT_HOME = prev; }
+});
+
+t('reviewer choice: an existing state-audit.json is kept unless --force', () => {
+  const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
+  const inst = (...extra) => runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', ...extra]);
+  const cfg = () => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'state-audit.json'), 'utf8')).reviewer;
+  assert.strictEqual(inst('--reviewer', 'ollama').status, 0); assert.strictEqual(cfg(), 'ollama');
+  inst('--reviewer', 'static'); assert.strictEqual(cfg(), 'ollama', 'kept without --force');
+  inst('--reviewer', 'static', '--force'); assert.strictEqual(cfg(), 'static', 'replaced with --force');
+});
+
+t('numbered prompts: numbers outside 1..N are refused with a hint, in-range ones accepted', () => {
+  const code = "const c=require(process.argv[1]).__testApi;const ch=[{title:'a',value:'A'},{title:'b',value:'B'},{title:'c',value:'C'}];c.askMultiselect('Pick',ch).then(v=>{console.log('RESULT '+JSON.stringify(v));process.exit(0)})";
+  const r = spawnCli(process.execPath, ['-e', code, CLI_JS], { encoding: 'utf8', input: '4\n0\n1,3\n' });
+  assert.ok(r.stdout.includes('RESULT ["A","C"]'), r.stdout + r.stderr);
+  assert.strictEqual(r.stdout.split('from 1 to 3').length - 1, 2, 'two refusals: 4 and 0');
+});

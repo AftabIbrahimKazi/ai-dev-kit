@@ -1,0 +1,1733 @@
+=== plain laptop (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== plain laptop (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            none detected (CPU only)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== low ram and disk (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 2,
+    "ramGB": 4,
+    "freeDiskGB": 3,
+    "gpus": [],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 2 threads, 4.0 GB RAM, 3.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "lite",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": [
+        "4.6 GB free disk"
+      ]
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "4.6 GB free disk",
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "Nothing to install. The kit works as it is."
+  ]
+}
+
+=== low ram and disk (text, status 0)
+Device check
+
+           System                         win32/x64, 2 threads, 4.0 GB RAM, 3.0 GB free disk
+           GPU                            none detected (CPU only)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+  > lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+    standard not ready, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle). Missing: 4.6 GB free disk.
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: 4.6 GB free disk, Kaggle CLI, Kaggle credentials.
+
+Recommended: lite
+Next
+  Nothing to install. The kit works as it is.
+
+=== old node, no python, no tools (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [],
+    "tools": {
+      "node": "16.20.0",
+      "python": null,
+      "ffmpeg": false,
+      "git": false,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "missing",
+      "note": "Node 18 or newer needed for every kit script"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "info",
+      "note": "not found (needed only for Laya; Kaggle runs its own)"
+    },
+    {
+      "item": "git",
+      "status": "missing",
+      "note": "not found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "lite",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": [
+        "Python 3.10+ (for Laya)"
+      ]
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Python 3.10+ (for Laya)",
+        "ffmpeg",
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "Nothing to install. The kit works as it is."
+  ]
+}
+
+=== old node, no python, no tools (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            none detected (CPU only)
+  MISSING  Node                           Node 18 or newer needed for every kit script
+           Python 3.10+                   not found (needed only for Laya; Kaggle runs its own)
+  MISSING  git                            not found
+           ffmpeg                         not found (needed only for the media harness)
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+  > lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+    standard not ready, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle). Missing: Python 3.10+ (for Laya).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Python 3.10+ (for Laya), ffmpeg, Kaggle CLI, Kaggle credentials.
+
+Recommended: lite
+Next
+  Nothing to install. The kit works as it is.
+
+=== old python (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.9.1",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.9.1"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== old python (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            none detected (CPU only)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.9.1
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== nvidia 6 gb (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [
+      {
+        "name": "RTX 3060",
+        "vendor": "nvidia",
+        "vramGB": 6,
+        "discrete": true
+      }
+    ],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "RTX 3060 6 GB"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 8.7,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 8.7,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 5.5 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 3.2 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== nvidia 6 gb (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            RTX 3060 6 GB
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 8.7 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 8.7 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 5.5 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 3.2 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== nvidia 24 gb, laya only (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 64,
+    "freeDiskGB": 500,
+    "gpus": [
+      {
+        "name": "RTX 4090",
+        "vendor": "nvidia",
+        "vramGB": 24,
+        "discrete": true
+      }
+    ],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": true,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 64.0 GB RAM, 500.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "RTX 4090 24 GB"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "have",
+      "note": "installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.2,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.2,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 3.2 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== nvidia 24 gb, laya only (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 64.0 GB RAM, 500.0 GB free disk
+           GPU                            RTX 4090 24 GB
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  HAVE     Laya (prefilter ranking)       installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.2 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.2 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 3.2 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== amd discrete on linux (json, status 0)
+{
+  "scan": {
+    "platform": "linux",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [
+      {
+        "name": "RX 6800",
+        "vendor": "amd",
+        "vramGB": 16,
+        "discrete": true
+      }
+    ],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "linux/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "RX 6800 16 GB"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== amd discrete on linux (text, status 0)
+Device check
+
+           System                         linux/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            RX 6800 16 GB
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== apple silicon (json, status 0)
+{
+  "scan": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cores": 8,
+    "ramGB": 32,
+    "freeDiskGB": 100,
+    "gpus": [
+      {
+        "name": "Apple M2",
+        "vendor": "apple",
+        "vramGB": null,
+        "discrete": false
+      }
+    ],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "darwin/arm64, 8 threads, 32.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "Apple M2 (integrated, treated as CPU)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== apple silicon (text, status 0)
+Device check
+
+           System                         darwin/arm64, 8 threads, 32.0 GB RAM, 100.0 GB free disk
+           GPU                            Apple M2 (integrated, treated as CPU)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+           Ollama                         not found (optional)
+           llama.cpp server               not found (local-vision installs its own)
+           Kaggle CLI                     not found (needed only for the media harness)
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle CLI, Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== everything installed (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": true
+    },
+    "state": {
+      "laya": true,
+      "vision": true,
+      "ollama": true,
+      "llamacpp": true,
+      "kaggleCli": true,
+      "kaggleCreds": true,
+      "hfCacheGB": 12
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "have",
+      "note": "installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "have",
+      "note": "installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "have",
+      "note": "present (contents not read)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "12 GB"
+    }
+  ],
+  "preset": "full",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": []
+    }
+  },
+  "next": [
+    "Everything for this preset is already installed.",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== everything installed (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            none detected (CPU only)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+  HAVE     cloudflared                    found
+  HAVE     Laya (prefilter ranking)       installed
+  HAVE     local-vision (describe_image)  installed
+  HAVE     Ollama                         found
+  HAVE     llama.cpp server               found
+  HAVE     Kaggle CLI                     found
+  HAVE     Kaggle credentials             present (contents not read)
+           Hugging Face cache             12 GB
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+    standard fits, download 0 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+  > full     fits, download 0 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload.
+
+Recommended: full
+Next
+  Everything for this preset is already installed.
+  Each command above downloads files. Run them only when you want them.
+
+=== kaggle cli without credentials (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 16,
+    "freeDiskGB": 100,
+    "gpus": [],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": false,
+      "vision": false,
+      "ollama": true,
+      "llamacpp": false,
+      "kaggleCli": true,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "none detected (CPU only)"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "standard",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.8,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.8,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)",
+    "node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)",
+    "Each command above downloads files. Run them only when you want them."
+  ]
+}
+
+=== kaggle cli without credentials (text, status 0)
+Device check
+
+           System                         win32/x64, 8 threads, 16.0 GB RAM, 100.0 GB free disk
+           GPU                            none detected (CPU only)
+  HAVE     Node                           v22.1.0
+  HAVE     Python 3.10+                   Python 3.12
+  HAVE     git                            found
+  HAVE     ffmpeg                         found
+           cloudflared                    not found (optional, live-tunnel experiment only)
+  MISSING  Laya (prefilter ranking)       not installed
+  MISSING  local-vision (describe_image)  not installed
+  HAVE     Ollama                         found
+           llama.cpp server               not found (local-vision installs its own)
+  HAVE     Kaggle CLI                     found
+           Kaggle credentials             not found (needed only for the media harness)
+           Hugging Face cache             none
+
+Presets
+    lite     fits, download 0 GB. Skip it and you lose: prefilter ranking and describe_image; script routes, hooks and standards all still work.
+  > standard fits, download 3.8 GB. Skip it and you lose: the media harness (images and video on Kaggle).
+    full     not ready, download 3.8 GB. Skip it and you lose: nothing; the Kaggle part still needs a phone-verified account and a one-time model upload. Missing: Kaggle credentials.
+
+Recommended: standard
+Next
+  node <home>/.ai-dev-kit/mcp/laya-ctl.js setup    (about 2.2 GB; weights download on first start)
+  node <home>/.ai-dev-kit/mcp/local-vision.js setup    (about 1.6 GB)
+  Each command above downloads files. Run them only when you want them.
+
+=== forced lite (json, status 0)
+{
+  "scan": {
+    "platform": "win32",
+    "arch": "x64",
+    "cores": 8,
+    "ramGB": 64,
+    "freeDiskGB": 500,
+    "gpus": [
+      {
+        "name": "RTX 4090",
+        "vendor": "nvidia",
+        "vramGB": 24,
+        "discrete": true
+      }
+    ],
+    "tools": {
+      "node": "22.1.0",
+      "python": "3.12",
+      "ffmpeg": true,
+      "git": true,
+      "cloudflared": false
+    },
+    "state": {
+      "laya": true,
+      "vision": false,
+      "ollama": false,
+      "llamacpp": false,
+      "kaggleCli": false,
+      "kaggleCreds": false,
+      "hfCacheGB": null
+    }
+  },
+  "rows": [
+    {
+      "item": "System",
+      "status": "info",
+      "note": "win32/x64, 8 threads, 64.0 GB RAM, 500.0 GB free disk"
+    },
+    {
+      "item": "GPU",
+      "status": "info",
+      "note": "RTX 4090 24 GB"
+    },
+    {
+      "item": "Node",
+      "status": "have",
+      "note": "v22.1.0"
+    },
+    {
+      "item": "Python 3.10+",
+      "status": "have",
+      "note": "Python 3.12"
+    },
+    {
+      "item": "git",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "ffmpeg",
+      "status": "have",
+      "note": "found"
+    },
+    {
+      "item": "cloudflared",
+      "status": "info",
+      "note": "not found (optional, live-tunnel experiment only)"
+    },
+    {
+      "item": "Laya (prefilter ranking)",
+      "status": "have",
+      "note": "installed"
+    },
+    {
+      "item": "local-vision (describe_image)",
+      "status": "missing",
+      "note": "not installed"
+    },
+    {
+      "item": "Ollama",
+      "status": "info",
+      "note": "not found (optional)"
+    },
+    {
+      "item": "llama.cpp server",
+      "status": "info",
+      "note": "not found (local-vision installs its own)"
+    },
+    {
+      "item": "Kaggle CLI",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Kaggle credentials",
+      "status": "info",
+      "note": "not found (needed only for the media harness)"
+    },
+    {
+      "item": "Hugging Face cache",
+      "status": "info",
+      "note": "none"
+    }
+  ],
+  "preset": "lite",
+  "presets": {
+    "lite": {
+      "fits": true,
+      "downloadGB": 0,
+      "lose": "prefilter ranking and describe_image; script routes, hooks and standards all still work",
+      "missing": []
+    },
+    "standard": {
+      "fits": true,
+      "downloadGB": 3.2,
+      "lose": "the media harness (images and video on Kaggle)",
+      "missing": []
+    },
+    "full": {
+      "fits": false,
+      "downloadGB": 3.2,
+      "lose": "nothing; the Kaggle part still needs a phone-verified account and a one-time model upload",
+      "missing": [
+        "Kaggle CLI",
+        "Kaggle credentials"
+      ]
+    }
+  },
+  "next": [
+    "Nothing to install. The kit works as it is."
+  ]
+}
+
