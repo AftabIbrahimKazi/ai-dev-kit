@@ -146,9 +146,9 @@ t('golden: check over css and astro files, with and without conventions to apply
 		'src/components/Plain.tsx': '.a{color:#fff} client:load', 'src/pages/crlf.astro': '<style>' + CR7 + String.fromCharCode(10) + '.a{color:#fff}' + CR7 + String.fromCharCode(10) + '</style>',
 	};
 	for (const [rel, text] of Object.entries(files)) write(d, rel, text);
-	const out = { withConv: {}, noTokens: {}, noPrefix: {} };
+	const out = { withConv: {}, withPrefix: {}, noTokens: {}, noPrefix: {} };
 	const bare = scan(proj());
-	for (const rel of Object.keys(files)) { out.withConv[rel] = check(d, [rel], conv); out.noTokens[rel] = check(d, [rel], { ...conv, tokenCount: 0 }); out.noPrefix[rel] = check(d, [rel], { ...conv, selectorPrefix: null, tokenPrefix: null, entryPattern: null }); }
+	for (const rel of Object.keys(files)) { out.withConv[rel] = check(d, [rel], conv); out.withPrefix[rel] = check(d, [rel], { ...conv, selectorPrefix: 'ex-' }); out.noTokens[rel] = check(d, [rel], { ...conv, tokenCount: 0 }); out.noPrefix[rel] = check(d, [rel], { ...conv, selectorPrefix: null, tokenPrefix: null, entryPattern: null }); }
 	out.missing = check(d, ['src/nope.css', 'src/pages/new.astro'], conv);
 	out.bareConv = check(d, ['src/pages/new.astro', 'src/styles/new.css'], bare);
 	out.manyAtOnce = check(d, Object.keys(files), conv).length;
@@ -168,4 +168,16 @@ t('golden: the CLI scan and check, JSON and text, exit codes and usage errors', 
 	rec('check no files', run(d, 'check')); rec('no command', run(d)); rec('unknown command', run(d, 'build'));
 	rec('cwd elsewhere', spawnSync(process.execPath, [CLI, 'scan', '--json', '--cwd', proj()], { encoding: 'utf8' }));
 	gold7('cli.json', JSON.stringify(out, null, 1) + String.fromCharCode(10));
+});
+
+// ---- round 4c: prefix and tie edges ----
+t('a class or token starting with the separator has no prefix; a smaller folder never beats a bigger one; scripts outside src and public, config and typing files are not entries', () => {
+	const a = proj(); write(a, 'src/styles/a.css', '.-a{}.-b{}.-c{}'); write(a, 'src/pages/x.astro', 'x');
+	assert.strictEqual(scan(a).selectorPrefix, null);
+	const b = proj(); for (const n of ['p1', 'p2', 'p3']) write(b, 'src/pages/' + n + '.astro', 'x'); write(b, 'a/pages/only.astro', 'x');
+	assert.strictEqual(scan(b).pagesDir, 'src/pages');
+	const c = proj(); write(c, 'tools/index.js', 'x'); write(c, 'src/main.d.ts', 'x'); write(c, 'src/scripts/index.config.ts', 'x');
+	assert.strictEqual(scan(c).entryPattern, null);
+	const e = proj(); write(e, 'src/scripts/index.ts', 'x');
+	assert.strictEqual(scan(e).entryPattern, 'single index.ts');
 });

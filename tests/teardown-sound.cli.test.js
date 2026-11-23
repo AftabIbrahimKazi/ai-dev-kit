@@ -154,3 +154,19 @@ t('golden: the CLI sound and measure commands, dry runs, seeds and errors', () =
 	run('sound with a broken spec', bad, 'sound', 'teardown/m');
 	gold4('cli.txt', lines.join(String.fromCharCode(10)) + String.fromCharCode(10));
 });
+
+// ---- round 4c: loudness gating ----
+t('loudness gating: silence and a very quiet passage are ignored, a moderately quiet one counts, a clip shorter than one block has no loudness', () => {
+	const sine = (secs, amp) => { const x = new Float32Array(Math.round(S.RATE * secs)); for (let i = 0; i < x.length; i++) x[i] = amp * Math.sin((2 * Math.PI * 1000 * i) / S.RATE); return x; };
+	const cat = (...p) => { const n = p.reduce((a, b) => a + b.length, 0); const y = new Float32Array(n); let o = 0; for (const a of p) { y.set(a, o); o += a.length; } return y; };
+	const solid = S.loudness(sine(4, 0.1));
+	const withSilence = S.loudness(cat(sine(4, 0.1), new Float32Array(S.RATE * 4)));
+	assert.ok(Math.abs(withSilence - solid) < 0.25, 'silence is gated out: ' + withSilence);
+	assert.ok(Math.abs(S.loudness(cat(sine(4, 0.1), sine(4, 0.0001))) - withSilence) < 0.01, 'a -80 dB passage is gated out exactly like silence');
+	const mixed = S.loudness(cat(sine(3, 0.1), sine(3, 0.03)));
+	assert.ok(mixed < solid && mixed > solid - 4, String(mixed));
+	assert.strictEqual(S.loudness(sine(0.399, 0.1)), -Infinity);
+	assert.ok(Number.isFinite(S.loudness(sine(0.4, 0.1))));
+	const x = S.loudness(cat(sine(1, 0.1), new Float32Array(S.RATE), sine(1, 0.1)));
+	assert.ok(Math.abs(x - solid) < 1, 'a gap between two passages is gated out: ' + x);
+});

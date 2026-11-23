@@ -65,7 +65,13 @@
    }
   ],
   "writer word inside": [],
-  "claude path": [],
+  "claude path": [
+   {
+    "file": "c/claude path.md",
+    "rule": "cmd-path",
+    "msg": "hardcodes .claude/; use {{skill-root}}"
+   }
+  ],
   "claude path with root": [],
   "bang with sh": [
    {

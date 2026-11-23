@@ -73,7 +73,7 @@ t('golden: frontmatter parsing and every skill rule at its limits', () => {
 		'good': sk8('name: a' + NL8 + 'description: ' + base), 'no frontmatter': 'nothing', 'no name': sk8('description: ' + base), 'no description': sk8('name: a'), 'empty description': sk8('name: a' + NL8 + 'description:'),
 		'opens with When': sk8('name: a' + NL8 + 'description: When x fails. Load before'), 'opens with Run': sk8('name: a' + NL8 + 'description: Run it. Load this before'), 'opens with On': sk8('name: a' + NL8 + 'description: On start. Load before it'), 'opens lowercase': sk8('name: a' + NL8 + 'description: use it. Load before'),
 		'opens badly': sk8('name: a' + NL8 + 'description: Helps with forms. Load before'), 'opens with Use only as a word': sk8('name: a' + NL8 + 'description: Used for forms. Load before'),
-		'50 words': sk8('name: a' + NL8 + 'description: Use ' + words8(47) + ' before'), '51 words': sk8('name: a' + NL8 + 'description: Use ' + words8(48) + ' before'),
+		'50 words': sk8('name: a' + NL8 + 'description: Use ' + words8(48) + ' before'), '51 words': sk8('name: a' + NL8 + 'description: Use ' + words8(49) + ' before'),
 		'no load before': sk8('name: a' + NL8 + 'description: Use whenever a form fails.'), 'only before': sk8('name: a' + NL8 + 'description: Use whenever a form fails, before release.'), 'load before in one sentence': sk8('name: a' + NL8 + 'description: Use it. Load this first, then act before editing.'),
 		'load and before in two sentences': sk8('name: a' + NL8 + 'description: Use it. Load now. Then before that.'), 'manual only': sk8('name: a' + NL8 + 'disable-model-invocation: true' + NL8 + 'description: Use it.'), 'manual false': sk8('name: a' + NL8 + 'disable-model-invocation: false' + NL8 + 'description: Use it.'),
 		'130 lines': sk8('name: a' + NL8 + 'description: ' + base, body8(130)), '131 lines': sk8('name: a' + NL8 + 'description: ' + base, body8(131)), '129 lines': sk8('name: a' + NL8 + 'description: ' + base, body8(129)),
@@ -90,7 +90,7 @@ t('golden: command, mod and script rules', () => {
 	const cmds = {
 		'good': cmd('allowed-tools: Bash(node:*)', okBody), 'no frontmatter': 'body', 'no description': sk8('disable-model-invocation: true' + NL8 + 'allowed-tools: Bash(node:*)', okBody), 'dmi missing': sk8('description: d' + NL8 + 'allowed-tools: Bash(node:*)', okBody), 'dmi false': sk8('description: d' + NL8 + 'disable-model-invocation: false', okBody),
 		'bash star': cmd('allowed-tools: Bash(*)', okBody), 'star only': cmd('allowed-tools: *', okBody), 'write tool': cmd('allowed-tools: Write', okBody), 'edit tool': cmd('allowed-tools: Bash(node:*), Edit', okBody), 'notebook': cmd('allowed-tools: NotebookEdit', okBody), 'writer word inside': cmd('allowed-tools: Rewrite', okBody),
-		'claude path': cmd('', okBody + NL8 + 'See .claude/skills/x'), 'claude path with root': cmd('', okBody + NL8 + 'See .claude/skills/x and {{skill-root}}/y'),
+		'claude path': cmd('', 'Under 5 lines. See .claude/skills/x'), 'claude path with root': cmd('', okBody + NL8 + 'See .claude/skills/x and {{skill-root}}/y'),
 		'bang with sh': cmd('', 'Under 5 lines.' + NL8 + '!' + String.fromCharCode(96) + 'sh run.sh' + String.fromCharCode(96)), 'bang with grep': cmd('', 'Under 5 lines.' + NL8 + '!' + String.fromCharCode(96) + 'grep x y' + String.fromCharCode(96)), 'bang with cat in skill-root': cmd('', 'Under 5 lines.' + NL8 + '!' + String.fromCharCode(96) + 'node {{skill-root}}/cat/x.js' + String.fromCharCode(96)),
 		'bang with bash awk sed': cmd('', 'Under 5 lines.' + NL8 + '!' + String.fromCharCode(96) + 'bash a | awk b | sed c' + String.fromCharCode(96)), 'bang not at line start': cmd('', 'Under 5 lines. x !' + String.fromCharCode(96) + 'sh a' + String.fromCharCode(96)),
 		'no length cap': cmd('', 'Does things.'), 'cap: at most': cmd('', 'Reply at most 12 words.'), 'cap: three lines or fewer': cmd('', 'Say it in three lines or fewer.'), 'cap: worst first 5': cmd('', 'Show the worst 5 only.'), 'cap: word number': cmd('', 'Reply in two lines.'), 'cap: 7 lines': cmd('', 'Use 7 lines.'),
@@ -143,4 +143,17 @@ t('golden: a whole kit folder, with and without --strict and --only, and the CLI
 	out.cli.eight = run('--root', eight);
 	let js8 = JSON.stringify(out, null, 1); for (const base of [root, small, one, nine, eight]) for (const form of [base, base.split(BS8).join(BS8 + BS8), base.split(BS8).join('/')]) js8 = js8.split(form).join('<root>');
 	gold8('kit.json', js8 + NL8);
+});
+
+// ---- round 4c: group order ----
+t('the CLI lists the rule with the most findings first, whatever order they were found in', () => {
+	const root = fs8.mkdtempSync(path8.join(os8.tmpdir(), 'lint order-'));
+	const put = (rel, text) => { const p = path8.join(root, rel); fs8.mkdirSync(path8.dirname(p), { recursive: true }); fs8.writeFileSync(p, text); };
+	const good = 'Use whenever a form fails. Load this BEFORE editing.';
+	put('skills/a-first.md', sk8('name: a' + NL8 + 'description: Helps. Load before'));
+	for (let i = 0; i < 5; i++) put('skills/b' + i + '.md', sk8('description: ' + good));
+	for (let i = 0; i < 3; i++) put('skills/c' + i + '.md', sk8('name: c' + NL8 + 'description: Helps. Load before'));
+	const r = spawn8(process.execPath, [path8.join(__dirname, '../skills/meta/skill-writer.lint.js'), '--root', root, '--strict'], { encoding: 'utf8' });
+	const heads = r.stdout.split(NL8).filter((l) => /^[a-z-]+ [(][0-9]+[)]$/.test(l));
+	assert.deepStrictEqual(heads, ['sk-desc-open (4)', 'sk-name (5)'].sort((x, y) => Number(y.match(/[0-9]+/)[0]) - Number(x.match(/[0-9]+/)[0])));
 });

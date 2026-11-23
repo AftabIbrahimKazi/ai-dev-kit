@@ -27,3 +27,6 @@ kit-feedback.md
 *.key
 kaggle.json
 .npmrc
+
+# mutation sweep results (invariants/sweep.js)
+invariants/sweep.*.jsonl

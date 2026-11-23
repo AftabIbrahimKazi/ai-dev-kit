@@ -107,3 +107,20 @@ Same method as before: survivors out of 40 mutants, test file as the only check,
 - **Kit-wide at the last full measurement: 1,256 of 1,807 killed = 69.5%** (first sweep 59.1%, second 64.0%), 504 open, 47 ignored, 8 scripts clean. After the last few tests the open count should be about 499. That figure was not re-measured as a whole sweep.
 - **A weak test fixture can hide a bug class.** perf-audit.weigh's test data was pseudo-random bytes that gzip compressed well, so no test chunk ever crossed the 150 KB limit and the chunk-ordering and heavy-chunk code was never exercised. xorshift bytes fix it. Check that a fixture really reaches the threshold it is meant to test.
 - Next weakest: teardown-film.cli 20, teardown-sound.cli 20, session-budget.compact 20, skill-writer.lint 19, astro-page.conventions 19, responsive-check.probes 19.
+
+## Round four, and a read of the snapshots (2026-11-24, ON HOLD)
+
+Tests written for teardown-film.cli, teardown-sound.cli, session-budget.compact, skill-writer.lint and astro-page.conventions (snapshots of plans, DSP output, compaction, lint rules over a synthetic kit, scan and check over six project shapes, plus CLI paths). Survivors out of 40 at the first reprobe, before the review fixes and the extra tests below: film 20 to 15, sound 20 to 5, compact 20 to 5, lint 19 to 1, astro 19 to 5. A second reprobe was stopped before it finished, so the final numbers for these five are not measured. Ignore entries were added for live-recording code, equivalent loop bounds and an unreachable spawn-error branch.
+
+Reading the snapshot outputs for correctness found these small defects in the scripts (none fixed; the snapshots pin today's behavior):
+- skill-writer.lint `sk-desc-load` accepts any description containing the word "before": the "load ... before" test is subsumed by the plain "before" test, so "Use whenever a form fails, before release." passes with no Load instruction.
+- astro-page.conventions `inline-script` reports the line of the first `<script`, not the inline one; one `is:inline` script anywhere hides every other inline script.
+- astro-page.conventions colour check is case-sensitive (`HSL(...)` missed); a one-line `:root{--x:#fff}` counts as a hardcoded colour; a one-line `<style>` that also contains `var()` hides its other hardcoded colours and foreign tokens; `.min.css` files and `url(a.png)` inside CSS pollute prefix detection (the selector prefix came out null in the fixture).
+- teardown-film `--sound FILE` is not checked for existence in the plan (the automatic score is). From reading the code, a typo fails only after rendering starts and a write to the closed ffmpeg pipe may hang; not run.
+- teardown-film `status --json` exits 0 when ffmpeg is missing, while the text form exits 3.
+- teardown-sound `--seed abc` silently becomes seed 1.
+- Verified correct: compaction kept all 525 failure lines across the cases, mastering hit -14 LUFS and the -2 dBFS peak in 15 of 15 cases, loudness gating ignores silence and an -80 dB passage identically, perf-audit.weigh thresholds, the device presets, the company sync in all three modes.
+
+Mistakes in my own snapshots found and fixed in the same read: lint 50- and 51-word cases both under the cap, a `.claude/` path case that contained `{{skill-root}}`, two compact CLI snapshots that depended on this machine's shell and a space in the Node path, an astro selector check that never ran (selector prefix came out null), and a loudness tolerance that was tighter than a straddling block allows.
+
+Resume: see "Invariants add-on" in the local handover and `invariants/sweep.js` (a documented driver that sweeps a private copy of the kit, optionally one script or one shard at a time).

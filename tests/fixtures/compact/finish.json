@@ -36,13 +36,8 @@
   "stderr": ""
  },
  "cmdWhole": {
-  "status": 1,
-  "stdout": "'C:\\Program' is not recognized as an internal or external command,\noperable program or batch file.\n",
-  "stderr": ""
- },
- "cmdMissing": {
-  "status": 1,
-  "stdout": "'definitely-not-a-command-xyz' is not recognized as an internal or external command,\noperable program or batch file.\n",
+  "status": 0,
+  "stdout": "42\n",
   "stderr": ""
  },
  "noCmd": {

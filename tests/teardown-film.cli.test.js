@@ -140,3 +140,33 @@ t('the film CLI: usage errors, a missing folder or timeline, and the dry-run pla
 	let js5 = JSON.stringify(out, null, 1); const BS5 = String.fromCharCode(92); for (const form of [d, d.split(BS5).join(BS5 + BS5), d.split(BS5).join('/'), d.split(BS5).join(BS5 + BS5 + BS5 + BS5)]) js5 = js5.split(form).join('<d>');
 	gold5('cli.json', js5 + String.fromCharCode(10));
 });
+
+// ---- round 4c: ffmpeg version and status (found by reading the snapshots and the probe) ----
+const haveChrome5 = () => !!require('../skills/addons/teardown.cli.js').findChrome();
+t('ffmpegVersion: first line without the copyright tail; null for a missing program or one that exits non-zero', () => {
+	assert.strictEqual(F.ffmpegVersion(path.join(os.tmpdir(), 'no-such-ffmpeg-bin')), null);
+	assert.strictEqual(F.ffmpegVersion(process.execPath), null, 'node exits non-zero on -version');
+	if (!hasFfmpeg) return;
+	const v = F.ffmpegVersion();
+	assert.ok(v.startsWith('ffmpeg version') && !v.includes('Copyright') && !v.includes(String.fromCharCode(10)), v);
+});
+
+t('status: ok only when ffmpeg and Chrome are both found, exit 3 and a message when one is missing', () => {
+	if (!hasFfmpeg || !haveChrome5()) return;
+	const d = proj();
+	const good = cli(d, ['status', '--json']);
+	assert.strictEqual(JSON.parse(good.stdout).ok, true); assert.strictEqual(good.status, 0);
+	const noFf = cli(d, ['status', '--json'], { FFMPEG: path.join(d, 'nope') });
+	assert.strictEqual(JSON.parse(noFf.stdout).ok, false); assert.strictEqual(noFf.status, 0, 'the JSON form reports ok:false but exits 0 (the text form exits 3); pinned as it is today');
+	const text = cli(d, ['status'], { FFMPEG: path.join(d, 'nope') });
+	assert.strictEqual(text.status, 3); assert.ok(text.stdout.includes('ffmpeg: not found'), text.stdout);
+	assert.strictEqual(cli(d, ['status']).status, 0);
+});
+
+t('a range of exactly one frame is accepted, and an empty one is refused', () => {
+	if (!hasFfmpeg || !haveChrome5()) return;
+	const d = proj();
+	const one = cli(d, ['film', 'teardown/m', '--dry-run', '--json', '--from', '0', '--to', '0.03']);
+	assert.strictEqual(one.status, 0, one.stderr); assert.strictEqual(JSON.parse(one.stdout).plan.frames, 1);
+	assert.strictEqual(cli(d, ['film', 'teardown/m', '--dry-run', '--from', '0', '--to', '0']).status, 1);
+});

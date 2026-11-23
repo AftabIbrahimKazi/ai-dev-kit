@@ -204,8 +204,8 @@ t('golden: finish keeps the full output in a raw folder, prunes to 20, and the C
 	out.cliSaveRawDir = sp(['--max', '30', '--save-raw', path.join(raw, 'sub')], text);
 	out.cmdExit = sp(['--no-save-raw', '--', process.execPath, '-e', 'console.log("out");console.error("err");process.exit(3)']);
 	out.cmdReport = sp(['--no-save-raw', '--report-exit', '--', process.execPath, '-e', 'process.exit(4)']);
-	out.cmdWhole = sp(['--no-save-raw', '--', process.execPath + ' -e "console.log(7*6)"']);
-	out.cmdMissing = sp(['--no-save-raw', '--', 'definitely-not-a-command-xyz']);
+	out.cmdWhole = sp(['--no-save-raw', '--', 'node -e "console.log(7*6)"']);
+	const miss = sp(['--no-save-raw', '--', 'definitely-not-a-command-xyz']); assert.notStrictEqual(miss.status, 0, 'a missing command fails'); assert.ok((miss.stdout + miss.stderr).includes('definitely-not-a-command-xyz'), 'the message names the command');
 	out.noCmd = sp(['--']);
 	let js6 = JSON.stringify(out, null, 1); const BS6 = String.fromCharCode(92); for (const [base, name] of [[raw, '<raw>'], [home, '<home>']]) for (const form of [base, base.split(BS6).join(BS6 + BS6), base.split(BS6).join('/')]) js6 = js6.split(form).join(name);
 	gold6('finish.json', js6.replace(/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9-]+Z/g, '<stamp>') + String.fromCharCode(10));
