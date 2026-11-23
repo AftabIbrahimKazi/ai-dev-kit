@@ -46,3 +46,5 @@ Scratch payments module, 7 planted real bugs plus 1 harmless edit. "Tests" = 5 h
 - The 14 gaps in handover.size, memory-gardener.stale and install-kit.signature are not closed. They are a to-do list for those tests.
 - Laya triage of equivalent mutants: not worth building at a 12% noise rate.
 - Wired in: bare `invariants` (or `/invariants`) runs rules, probe and stale in one report; command template `skills/commands/invariants.md`; install-kit tests still pass (no change needed, the command installs with its skill).
+
+- Closed the 4 install-kit.signature gaps (protocolFile, missing-row note, remove with no stored row, remove with no file): 5 new tests (54 total), probe now 7 of 7 killed. Still open: 6 in memory-gardener.stale, 4 in handover.size.

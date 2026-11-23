@@ -547,3 +547,53 @@ t('prompts: < on the very first question says there is nothing to go back to and
   assert.match(r.stdout, /first step; there is nothing to go back to/);
   assert.strictEqual(readManifest(root).signature.alias, 'acme');
 });
+
+// ---- gaps found by `invariants probe` on install-kit.signature.js ----
+const NOROW = (root) => { const f = path.join(root, 'CLAUDE.md'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(ROW + '\n', '')); };
+
+t('setSignature fills the row in the manifest\'s protocolFile, not a hard-coded CLAUDE.md', () => {
+  const lib = makeLibrary(); const root = tmp();
+  install(lib, root);
+  const claude = read(root, 'CLAUDE.md');
+  write(root, 'AGENTS.md', claude);
+  const m = readManifest(root); m.protocolFile = 'AGENTS.md'; fs.writeFileSync(path.join(root, '.ai-dev-kit.json'), JSON.stringify(m));
+  sig.setSignature(root, 'abc');
+  assert.ok(read(root, 'AGENTS.md').includes('`abc-`'), 'AGENTS.md got the row');
+  assert.strictEqual(read(root, 'CLAUDE.md'), claude, 'CLAUDE.md untouched');
+});
+
+t('a missing "Selector signature" row is reported, and a present one is not', () => {
+  const lib = makeLibrary(); const a = tmp(); const b = tmp();
+  install(lib, a); install(lib, b);
+  NOROW(a);
+  assert.match(sig.setSignature(a, 'abc').notes.join(' '), /has no "Selector signature" row/);
+  assert.doesNotMatch(sig.setSignature(b, 'abc').notes.join(' '), /has no "Selector signature" row/);
+});
+
+t('removing a signature that never had a row leaves the file exactly as it was', () => {
+  const lib = makeLibrary(); const root = tmp();
+  install(lib, root); NOROW(root);
+  sig.setSignature(root, 'abc');
+  const before = read(root, 'CLAUDE.md');
+  assert.strictEqual(readManifest(root).signature.row, undefined);
+  sig.setSignature(root, 'none');
+  assert.strictEqual(read(root, 'CLAUDE.md'), before, 'no "undefined" text written in');
+  assert.strictEqual(readManifest(root).signature, undefined);
+});
+
+t('removing a signature when the protocol file is gone does not throw and still forgets the alias', () => {
+  const lib = makeLibrary(); const root = tmp();
+  install(lib, root, { signature: 'abc' });
+  fs.unlinkSync(path.join(root, 'CLAUDE.md'));
+  assert.doesNotThrow(() => sig.setSignature(root, 'none'));
+  assert.strictEqual(readManifest(root).signature, undefined);
+});
+
+t('a row that already shows the alias, with no signature stored, is not reported as missing', () => {
+  const lib = makeLibrary(); const root = tmp();
+  install(lib, root, { signature: 'abc' });
+  const m = readManifest(root); delete m.signature; fs.writeFileSync(path.join(root, '.ai-dev-kit.json'), JSON.stringify(m));
+  const r = sig.setSignature(root, 'abc');
+  assert.doesNotMatch(r.notes.join(' '), /has no "Selector signature" row/);
+  assert.strictEqual(readManifest(root).signature.alias, 'abc');
+});
