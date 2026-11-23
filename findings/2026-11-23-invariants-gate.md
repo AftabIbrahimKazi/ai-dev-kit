@@ -79,3 +79,14 @@ Starting survivors out of 40: install-kit.select 33, diagram.cli 31, skill-scope
 - **Dead code:** `usageModEnabled()` in install-kit.cli is defined and never called.
 - **Test authoring gotchas on this machine:** backslashes are consumed once when code is written inline in a shell command, which silently turned `\x1b` into raw escape bytes in one test. Patch scripts are written to files instead.
 - **Honest limits:** the 13 + 14 + 4 + 3 ignore entries hide real but untestable code (live browser, real hardware), and ignored entries are keyed by line number, so they go stale when code moves. Remaining open survivors are listed in the table. Not re-probed after the final tests and ignore entries.
+
+## Kit-wide probe, second sweep (2026-11-24)
+
+Same method as the first sweep: all 51 script and same-named-test pairs, up to 40 mutants each (12 for figma-code), 4 shards on private copies, the test file as the only check, ignore list applied.
+
+- **Killed: 1,157 of 1,807 = 64.0%** (first sweep 1,068 = 59.1%). Survivors open 610 (was 737), ignored as untestable or equivalent 40. Killed or ignored: 66.2%. Every baseline passed.
+- Five scripts changed: install-kit.select 33 to 0, skill-scope.device 28 to 0, teardown.cli 25 to 0, diagram.cli 31 to 3, install-kit.cli 27 to 14. The other 46 scripts are unchanged. 6 scripts now have no open survivors.
+- install-kit.cli shows 14 here, not the 5 recorded above, because this sweep checks only tests/install-kit.cli.test.js; the 5 figure ran against all seven install-kit test files, whose siblings cover more of it. The honest read is 5 to 14 depending on how much of the suite counts.
+- Weakest now: usage-mine 24, invariants.cli 23 (the new add-on's own probe code, covered only by 16 tests), install-kit.company 22, project-context.figma 22, perf-audit.weigh 20, teardown-film.cli 20, teardown-sound.cli 20, session-budget.compact 20.
+- Process note: two of the four shards crashed at start on the first launch (Windows would not delete leftover copy folders from the first sweep) and were relaunched on fresh folder names. A fixed per-shard folder name is fragile; use a unique one per run.
+- Next candidates: usage-mine, invariants.cli, install-kit.company, project-context.figma, perf-audit.weigh. The 6 scripts with no same-named test are still untested.
