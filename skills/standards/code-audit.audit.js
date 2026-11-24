@@ -118,6 +118,7 @@ exports.RULES = Object.fromEntries([
     R('v-08', 'version', 'rule', 'no CHANGELOG.md entry for the package.json version'),
     R('v-09', 'version', 'rule', 'pre-release suffix must be alpha.N, beta.N or rc.N'),
     // UI element rules (coding-standards/ui-standards/*): run only in a project that has ui-standards installed.
+    R('ui-btn-19', 'ui', 'review', 'destructive confirm button in a dialog without data-agent-confirm'),
     R('ui-btn-02', 'ui', 'rule', 'button label is OK, Submit or Click here; name the action', true),
     R('ui-btn-07', 'ui', 'review', 'icon-only button has no accessible name'),
     R('ui-fbk-04', 'ui', 'rule', 'vague message ("Something went wrong", "Are you sure?"); say what happened and what to do next', true),
@@ -502,6 +503,9 @@ function uiChecks(rel, text) {
     const add = (idx, rule, msg) => { out.push({ file: rel, line: L(idx), rule, msg }); };
     for (const m of t.matchAll(/<button\b[^>]*>\s*(OK|Submit|Click here)\s*<\/button>/gi))
         add(m.index, 'ui-btn-02', `button labelled "${m[1]}"`);
+    for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>/gi))
+        for (const m of d[0].matchAll(/<button\b(?![^>]*data-agent-confirm)[^>]*>\s*(?:Delete|Remove|Pay|Send|Revoke)\b[^<]*<\/button>/gi))
+            add(d.index + m.index, 'ui-btn-19', 'confirm button without data-agent-confirm');
     for (const m of t.matchAll(/Something went wrong|Are you sure\?/gi))
         add(m.index, 'ui-fbk-04', `"${m[0]}"`);
     for (const m of t.matchAll(/<nav\b[\s\S]*?<\/nav>/gi)) {

@@ -29,6 +29,11 @@ t('ui-btn-02, ui-fbk-04, ui-mnu-02, ui-tbl-01: flagged, and the clean forms pass
   assert.deepStrictEqual(hits('a.html', lines('<table><tr><td>a</td></tr></table>', '<table><thead><tr><th scope="col">a</th></tr></thead></table>'), UI), ['ui-tbl-01@1']);
 });
 
+t('ui-btn-19: a confirm button in a dialog needs data-agent-confirm; the opener and a marked button pass', () => {
+  assert.deepStrictEqual(hits('a.html', lines('<button type="button">Delete invoice</button>', '<dialog>', '<button>Cancel</button>', '<button class="btn-danger">Delete invoice</button>', '</dialog>'), UI), ['ui-btn-19@4']);
+  assert.deepStrictEqual(hits('a.html', lines('<dialog>', '<button class="btn-danger" data-agent-confirm="Deletes invoice 42">Delete invoice</button>', '</dialog>'), UI), []);
+});
+
 t('ui review rules: icon-only button, placeholder-only input, number input, dialog without aria-modal', () => {
   assert.deepStrictEqual(hits('a.html', lines('<button type="button"><svg></svg></button>', '<button type="button" aria-label="Close"><svg></svg></button>', '<button type="button"><img src="x.svg" alt="Close" width="16" height="16"></button>'), UI), ['ui-btn-07@1']);
   assert.deepStrictEqual(hits('a.html', lines('<input placeholder="Name">', '<input placeholder="Name" aria-label="Name">', '<input type="hidden" placeholder="x">', '<input id="a" placeholder="Name">'), UI), ['ui-fld-01@1']);
@@ -62,8 +67,8 @@ t('ui-tbl-11 and ui-fld-22: pagination markers and the password show/hide contro
 
 t('ui-btn-08: a destructive button in a dialog needs the danger style; outside a dialog it is not checked', () => {
   const bad = '<dialog><button class="btn">Cancel</button><button class="btn btn-primary">Delete invoice</button></dialog>\n';
-  assert.deepStrictEqual(hits('a.html', bad, UI), ['ui-btn-08@1']);
-  const good = '<dialog><button class="btn">Cancel</button><button class="btn btn-danger">Delete invoice</button></dialog>\n';
+  assert.deepStrictEqual(hits('a.html', bad, UI), ['ui-btn-19@1', 'ui-btn-08@1']);
+  const good = '<dialog><button class="btn">Cancel</button><button class="btn btn-danger" data-agent-confirm="Deletes the invoice">Delete invoice</button></dialog>\n';
   assert.deepStrictEqual(hits('a.html', good, UI), []);
   assert.deepStrictEqual(hits('a.html', '<button class="btn">Delete invoice</button>\n', UI), []);
 });
