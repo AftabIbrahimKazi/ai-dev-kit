@@ -120,5 +120,47 @@ t('CLI: --changed keeps only files git shows as changed; --dry-run downloads not
   assert.strictEqual(spawnSync(process.execPath, [BIN, path.join(d, 'nope')], { encoding: 'utf8' }).status, 1);
 });
 
+t('scan: the runner override skips the Node check; 22.0.0 is new enough, 21.9 is not', () => {
+  const d = tmp(); const home = tmp();
+  const r = runner(d, "console.log('{\"findings\":[]}');");
+  const out = mw.scan(tmp(), { env: { ...process.env, MODERN_WEB_RUNNER: r, AI_DEV_KIT_HOME: home }, nodeVersion: '18.0.0' });
+  assert.ok(out.json && !out.skipped, JSON.stringify(out));
+  const ok22 = mw.scan(tmp(), { env: { ...process.env, MODERN_WEB_RUNNER: r, AI_DEV_KIT_HOME: home }, nodeVersion: '22.0.0' });
+  assert.ok(!ok22.skipped);
+  assert.ok(/you have 21\.9\.0/.test(mw.scan(tmp(), { env: { AI_DEV_KIT_HOME: home }, nodeVersion: '21.9.0' }).skipped));
+  const none = mw.scan(tmp(), { env: { AI_DEV_KIT_HOME: home }, nodeVersion: '22.0.0' });
+  assert.ok(!(none.skipped || '').includes('needs Node 22'));
+});
+
+t('extractHits: the rubric falls back from keepWhen to dropWhen to nothing', () => {
+  const hit = { file: 'a.js', line: 1, text: 'x' };
+  assert.strictEqual(mw.extractHits({ guideId: 'g', keepWhen: ['k1'], dropWhen: ['d1'], hits: [hit] })[0].verify, 'k1');
+  assert.strictEqual(mw.extractHits({ guideId: 'g', dropWhen: ['d1'], hits: [hit] })[0].verify, 'd1');
+  assert.strictEqual(mw.extractHits({ guideId: 'g', hits: [hit] })[0].verify, '');
+});
+
+t('formatTable: a list exactly at the limit has no "more" line', () => {
+  const hits = [{ file: 'a.js', line: 1, guide: 'g', text: 'x', retrieve: '', verify: '', note: '' }, { file: 'b.js', line: 2, guide: 'g', text: 'y', retrieve: '', verify: '', note: '' }];
+  assert.ok(!/more/.test(mw.formatTable(hits, 2, 2).split('\n').slice(0, -1).join('\n')));
+  assert.ok(/\.\.\. and 1 more/.test(mw.formatTable(hits, 1, 2)));
+});
+
+t('CLI: bad --limit values exit 2; without --changed every hit shows even in a git repo; empty or vendor-only output is not "unknown shape"', () => {
+  const d = tmp();
+  spawnSync('git', ['init', '-q'], { cwd: d });
+  put(d, 'src/app.js', 'x');
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'add', '.'], { cwd: d });
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'init'], { cwd: d });
+  const run = (body, ...a) => spawnSync(process.execPath, [BIN, d, ...a], { encoding: 'utf8', env: env({ MODERN_WEB_RUNNER: runner(tmp(), body), AI_DEV_KIT_HOME: tmp() }) });
+  const one = "console.log(JSON.stringify({findings:[{file:'src/app.js',line:1,lineContent:'a'}]}));";
+  for (const bad of ['0', 'abc', '1.5', '-2']) assert.strictEqual(run(one, '--limit', bad).status, 2, bad);
+  assert.strictEqual(run(one, '--limit', '3').status, 0);
+  assert.match(run(one).stdout, /src\/app\.js:1/);
+  assert.match(run("console.log('{}');").stdout, /no legacy patterns/);
+  assert.match(run("console.log('[]');").stdout, /no legacy patterns/);
+  assert.match(run("console.log(JSON.stringify({findings:[{file:'node_modules/x.js',line:1}]}));").stdout, /no legacy patterns/);
+  assert.match(run("console.log(JSON.stringify({file:'a.js'}));").stdout, /no legacy patterns/);
+});
+
 if (failed) { console.log('modern-web.cli.test: FAILED'); process.exit(1); }
 console.log('modern-web.cli.test: ok');

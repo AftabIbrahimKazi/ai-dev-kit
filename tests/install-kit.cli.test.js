@@ -1005,3 +1005,76 @@ t('menu rows shorten a purpose longer than 80 characters to 79 plus an ellipsis,
   const long = run(81);
   assert.ok(long.includes('x'.repeat(79) + '…') && !long.includes('x'.repeat(80)));
 });
+
+const LIBRARY = path.join(__dirname, '..');
+const talk = (args, root, input = '', env = {}) => runCli([...args, '--library', LIBRARY, '--root', root, '--tool', 'claude'], { AI_DEV_KIT_INTERACTIVE: '1', ...env }, input);
+const project = () => { const r = tmp(); write(r, 'package.json', '{}'); write(r, 'CLAUDE.md', '# mine\n'); return r; };
+
+t('prompt flow: an existing CLAUDE.md is asked about only with standards, and the flag answers it', () => {
+  const none = talk(['install', '--skills', 'handover'], project());
+  assert.ok(!/already exists in this project/.test(none.stdout), none.stdout);
+  const asked = talk(['install', '--skills', 'handover', '--standards'], project());
+  assert.match(asked.stdout, /CLAUDE\.md already exists in this project:/);
+  const flagged = talk(['install', '--skills', 'handover', '--standards', '--existing-protocol', 'append'], project());
+  assert.ok(!/already exists in this project/.test(flagged.stdout), flagged.stdout);
+  const r = project();
+  talk(['install', '--skills', 'handover', '--standards', '--existing-protocol', 'append'], r);
+  assert.ok(fs.readFileSync(path.join(r, 'CLAUDE.md'), 'utf8').includes('# mine'), 'append keeps the old text');
+  const rep = project();
+  talk(['install', '--skills', 'handover', '--standards'], rep, '\n\n\n\n\n\n');
+  assert.ok(fs.existsSync(path.join(rep, 'CLAUDE.md.bak')) || fs.readdirSync(rep).some((f) => /\.bak$/.test(f)), 'default answer replaces and keeps a .bak');
+});
+
+t('prompt flow: the context code is asked only when standards are on and no code was given', () => {
+  const ask = (...extra) => talk(['install', '--skills', 'handover', ...extra, '--existing-protocol', 'replace'], project()).stdout;
+  assert.match(ask('--standards'), /Context code/);
+  assert.ok(!/Context code/.test(ask('--standards', '--context-code', 'ZZ')));
+  assert.ok(!/Context code/.test(ask()));
+});
+
+t('prompt flow: update asks which skills only when some are installed and none were named', () => {
+  const r = project();
+  assert.ok(!/Apply update to:/.test(talk(['update'], r).stdout), 'nothing tracked: no question');
+  runCli(['install', '--yes', '--library', LIBRARY, '--root', r, '--tool', 'claude', '--skills', 'handover']);
+  assert.match(talk(['update'], r, '1\n').stdout, /Apply update to:/);
+  assert.ok(!/Apply update to:/.test(talk(['update', '--all'], r).stdout));
+  assert.ok(!/Apply update to:/.test(talk(['update', '--skills', 'handover'], r).stdout));
+  assert.match(talk(['update'], r, '2\n').stdout, /Which skills to update\?/);
+  assert.ok(!/Apply unarchive to:/.test(talk(['unarchive'], r).stdout), 'nothing archived: no question');
+});
+
+t('colour: on in a forced interactive run, off with NO_COLOR', () => {
+  const on = talk(['install', '--skills', 'handover'], project());
+  assert.ok(on.stdout.includes('\x1b['), 'escape codes expected');
+  const off = talk(['install', '--skills', 'handover'], project(), '', { NO_COLOR: '1' });
+  assert.ok(!off.stdout.includes('\x1b['), 'NO_COLOR removes them');
+});
+
+t('batch mod: on and off call the claude command with the right action and report its result', () => {
+  const { batchMod } = require('../skills/meta/install-kit.cli.js');
+  const stub = path.join(tmp(), 'fake-claude.js');
+  fs.writeFileSync(stub, "const a=process.argv.slice(2);require('fs').appendFileSync(process.env.STUB_LOG,a.join(' ')+'\\n');if(process.env.STUB_FAIL){console.error('boom');process.exit(3)}");
+  const log = path.join(tmp(), 'log.txt');
+  const old = { b: process.env.AI_DEV_KIT_CLAUDE_BIN, l: process.env.STUB_LOG, f: process.env.STUB_FAIL, c: process.env.CLAUDE_CONFIG_DIR };
+  process.env.AI_DEV_KIT_CLAUDE_BIN = stub; process.env.STUB_LOG = log; process.env.CLAUDE_CONFIG_DIR = tmp();
+  try {
+    const root = tmp();
+    const on = batchMod(root, null, true, 'on');
+    assert.strictEqual(on.action, 'install'); assert.strictEqual(on.ok, true);
+    const off = batchMod(root, null, true, 'off');
+    assert.strictEqual(off.action, 'uninstall'); assert.strictEqual(off.ok, true);
+    assert.deepStrictEqual(fs.readFileSync(log, 'utf8').trim().split('\n'), ['plugin install batch@ai-dev-kit-mods --scope project', 'plugin uninstall batch@ai-dev-kit-mods --scope project']);
+    process.env.STUB_FAIL = '1';
+    const bad = batchMod(root, null, true, 'on');
+    assert.strictEqual(bad.ok, false); assert.strictEqual(bad.error, 'boom');
+    assert.strictEqual(batchMod(root, null, true).action, undefined);
+    assert.match(batchMod(root, null, true).hint, /marketplace add/);
+  } finally {
+    for (const [k, v] of [['AI_DEV_KIT_CLAUDE_BIN', old.b], ['STUB_LOG', old.l], ['STUB_FAIL', old.f], ['CLAUDE_CONFIG_DIR', old.c]]) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  }
+});
+
+t('the manifest and archive helpers are re-exported from skill-scope.move', () => {
+  const me = require('../skills/meta/install-kit.cli.js'), mv = require('../skills/meta/skill-scope.move.js');
+  for (const k of ['readManifest', 'writeManifest', 'doArchive', 'doUnarchive']) { assert.strictEqual(typeof me[k], 'function', k); assert.strictEqual(me[k], mv[k], k); assert.ok(Object.keys(me).includes(k), k + ' is enumerable'); }
+});

@@ -91,3 +91,51 @@ t('CLI: exit 1 on a failure, 0 on a clean README, 2 on a bad flag, 1 when the RE
 
 if (failed) { console.log('readme-writer.audit.test: FAILED'); process.exit(1); }
 console.log('readme-writer.audit.test: ok');
+
+const rows = (n, w = 'text') => Array.from({ length: n }, (_, i) => w + ' ' + i).join('\n');
+const SCRIPT = path.join(__dirname, '..', 'skills', 'workflow', 'readme-writer.audit.js');
+const cli = (d, ...a) => spawnSync(process.execPath, [SCRIPT, ...a], { cwd: d, encoding: 'utf8' });
+
+t('messages carry the line number and the real figures', () => {
+  const f = audit(repo(), '# Kit\n\n14 skills here.\nrun install-kit --nope now\n');
+  assert.deepStrictEqual(f.map((x) => [x.check, x.line, x.msg]), [['count', 3, 'says 14 skills, the folders hold 2'], ['flag', 4, '--nope is not a flag in any script']]);
+});
+
+t('sample size may sit on the next line; without it the claim warns at its own line', () => {
+  assert.deepStrictEqual(checks(audit(repo(), '# K\n\nSaves 30% of tokens.\nn=3 runs per arm.\n')), []);
+  const f = audit(repo(), '# K\n\nSaves 30% of tokens.\n\nother\n');
+  assert.deepStrictEqual(f.map((x) => [x.level, x.check, x.line]), [['warn', 'sample-size', 3]]);
+});
+
+t('a section is flagged past 60 lines outside details, not at 60, and a closed details block counts as outside again', () => {
+  const sec = (body) => audit(repo(), '# K\n\n## Big\n' + body).filter((x) => x.check === 'section');
+  assert.strictEqual(sec(rows(60)).length, 0);
+  const over = sec(rows(61));
+  assert.deepStrictEqual(over.map((x) => [x.line, x.msg]), [[3, 'section "Big" is 61 lines outside <details> (cap 60)']]);
+  assert.strictEqual(sec('<details>\n' + rows(80) + '\n</details>').length, 0, 'inside details does not count');
+  assert.strictEqual(sec('<details>\nx\n</details>\n' + rows(61)).length, 1, 'after </details> lines count again');
+  const pre = audit(repo(), '# K\n\n' + rows(70) + '\n\n## After\nshort\n');
+  assert.strictEqual(pre.filter((x) => x.check === 'section').length, 0, 'text before the first ## is not a section');
+});
+
+t('only mod folders with .claude-plugin count', () => {
+  const d = repo();
+  put(d, 'mods/plain/readme.txt', 'x'); put(d, 'mods/loose.txt', 'x');
+  assert.strictEqual(realCounts(d).mods, 1);
+});
+
+t('cli: defaults to README.md in --root, exit 0 clean, 1 on a failure or missing file, 2 on an unknown flag', () => {
+  const d = repo();
+  put(d, 'README.md', GOOD);
+  const ok = cli(d, '--root', d);
+  assert.strictEqual(ok.status, 0, ok.stderr + ok.stdout);
+  assert.match(ok.stdout, /readme audit: 0 fail, 0 warn/);
+  put(d, 'README.md', '# K\n\n14 skills.\n');
+  const bad = cli(d, '--root', d);
+  assert.strictEqual(bad.status, 1);
+  assert.match(bad.stdout, /^FAIL count\s+line 3: says 14 skills/);
+  assert.strictEqual(JSON.parse(cli(d, '--root', d, '--json').stdout).findings.length, 1);
+  const none = cli(d, 'NOPE.md', '--root', d);
+  assert.strictEqual(none.status, 1); assert.match(none.stderr, /^error: .*NOPE\.md does not exist/);
+  assert.strictEqual(cli(d, '--wat').status, 2);
+});

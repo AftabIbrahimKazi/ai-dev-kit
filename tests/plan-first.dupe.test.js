@@ -100,3 +100,37 @@ t('parseArgs and the CLI: bad usage exits 2, an error exits 1, success exits 0',
 
 if (failed) { console.log('plan-first.dupe.test: FAILED'); process.exit(1); }
 console.log('plan-first.dupe.test: ok');
+
+t('extractBlock: wrapped flag, and line ranges are checked at both ends', () => {
+  assert.strictEqual(extractBlock(SRC, 'hero').wrapped, true);
+  assert.strictEqual(extractBlock('a\nb', undefined, '1-2').wrapped, false);
+  assert.strictEqual(extractBlock('a\nb', undefined, '2-2').block, 'b');
+  assert.throws(() => extractBlock('a\nb', undefined, '0-1'), /outside the file/);
+  assert.throws(() => extractBlock('a\nb', undefined, '2-1'), /outside the file/);
+  assert.throws(() => extractBlock('a\nb', undefined, '1-3'), /outside the file/);
+});
+
+t('place: --after goes behind the anchor, --before in front, a start-of-file anchor adds no blank line', () => {
+  assert.strictEqual(place('<main></main>', 'B', undefined, { after: '<main>' }).text, '<main>\nB\n</main>');
+  assert.strictEqual(place('<main></main>', 'B', undefined, { before: '<main>' }).text, 'B\n<main></main>');
+  assert.strictEqual(place('x\n<main></main>', 'B', undefined, { before: '<main>' }).text, 'x\nB\n<main></main>');
+});
+
+t('parseArgs: defaults, switches, and the three required options', () => {
+  assert.deepStrictEqual(parseArgs(['--from', 'a', '--block', 'b', '--to', 'c']), { to: ['c'], dryRun: false, json: false, from: 'a', block: 'b' });
+  const on = parseArgs(['--from', 'a', '--lines', '1-2', '--to', 'c,d', '--dry-run', '--json']);
+  assert.strictEqual(on.dryRun, true); assert.strictEqual(on.json, true); assert.deepStrictEqual(on.to, ['c', 'd']);
+  assert.strictEqual(parseArgs(['--block', 'b', '--to', 'c']), null);
+  assert.strictEqual(parseArgs(['--from', 'a', '--to', 'c']), null);
+  assert.strictEqual(parseArgs(['--from', 'a', '--block', 'b']), null);
+  assert.strictEqual(parseArgs(['--bogus']), null);
+});
+
+t('cli: a missing source file prints "error: ..." and exits 1; bad usage exits 2', () => {
+  const d = tmp();
+  const SCRIPT = path.join(__dirname, '..', 'skills', 'workflow', 'plan-first.dupe.js');
+  const bad = spawnSync(process.execPath, [SCRIPT, '--from', 'nope.html', '--block', 'x', '--to', 'y.html'], { cwd: d, encoding: 'utf8' });
+  assert.strictEqual(bad.status, 1);
+  assert.ok(bad.stderr.startsWith('error: source file nope.html does not exist'), bad.stderr);
+  assert.strictEqual(spawnSync(process.execPath, [SCRIPT], { cwd: d, encoding: 'utf8' }).status, 2);
+});

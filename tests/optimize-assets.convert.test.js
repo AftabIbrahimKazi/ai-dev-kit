@@ -249,3 +249,46 @@ process.on('exit', () => { if (finished !== 3) { console.log('FAIL the test run 
   });
   finished++;
 })();
+
+(async () => {
+  await t('convert picks the files a target needs: not itself, not .opt copies, jpeg counts as jpg, svg targets only svg', () => {
+    const d = proj({ 'a.png': Buffer.alloc(4), 'b.webp': Buffer.alloc(4), 'c.jpeg': Buffer.alloc(4), 'd.opt.png': Buffer.alloc(4), 'e.svg': '<svg/>' });
+    const files = (to) => JSON.parse(cli('convert', '.', '--cwd', d, '--to', to, '--dry-run', '--json').stdout).map((r) => r.file).sort();
+    assert.deepStrictEqual(files('webp'), ['a.png', 'c.jpeg']);
+    assert.deepStrictEqual(files('jpg'), ['a.png', 'b.webp']);
+    assert.deepStrictEqual(files('svg'), ['e.svg']);
+  });
+
+  await t('scan: a width exactly at --wide is not wide, one more is', () => {
+    const d = proj({ 'a.png': png(100, 10), 'b.png': png(101, 10) });
+    const o = { ...parseArgs(['scan', '.', '--wide', '100', '--min-kb', '100000']), cwd: d };
+    const by = Object.fromEntries(scan(o).rows.map((r) => [r.file, r.flags]));
+    assert.deepStrictEqual(by, { 'b.png': ['wide'] });
+  });
+
+  await t('convertFile removes an empty output and reports no output', async () => {
+    const d = proj({ 'a.png': png(10, 10) });
+    const r = await convertFile(path.join(d, 'a.png'), opts({ cwd: d }), { tools: all, exec: writer(0) });
+    assert.strictEqual(r.error, 'the converter produced no output');
+    assert.ok(!fs.existsSync(path.join(d, 'a.webp')));
+  });
+
+  await t('readDims: a jpeg SOF segment that ends exactly at the end of the file is not read', () => {
+    const d = proj({});
+    const tight = Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x20, 0x00, 0x30]);
+    fs.writeFileSync(path.join(d, 'tight.jpg'), tight);
+    fs.writeFileSync(path.join(d, 'ok.jpg'), Buffer.concat([tight, Buffer.from([0x00])]));
+    assert.strictEqual(readDims(path.join(d, 'tight.jpg')), null);
+    assert.deepStrictEqual(readDims(path.join(d, 'ok.jpg')), [48, 32]);
+  });
+
+  await t('the real converter run reports the tool\'s own error text, not just an exit code', async () => {
+    const bin = proj({});
+    const name = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+    fs.copyFileSync(process.execPath, path.join(bin, name));
+    const d = proj({ 'a.png': png(10, 10) });
+    const r = spawnSync('node', [SCRIPT, 'convert', '.', '--cwd', d, '--to', 'jpg', '--engine', 'ffmpeg', '--json'], { encoding: 'utf8', env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } });
+    const row = JSON.parse(r.stdout)[0];
+    assert.ok(row.error && !/^exit \d+$/.test(row.error) && row.error.length > 4, JSON.stringify(row));
+  });
+})();
