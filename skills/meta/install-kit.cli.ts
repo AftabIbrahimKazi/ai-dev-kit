@@ -539,8 +539,8 @@ export function applyActiveStandards(body: string, opts: ActiveStandardsOpts): s
   return out;
 }
 
-interface StandardsOpts { agentReady?: boolean; contextCode?: string; force?: boolean; installedNames?: Set<string>; activeStandards?: ActiveStandardsOpts; omit?: string[] }
-export interface StandardsResult { copied: string[]; protocolCreated: boolean; refused: boolean }
+interface StandardsOpts { existing?: 'replace' | 'append' | 'keep'; agentReady?: boolean; contextCode?: string; force?: boolean; installedNames?: Set<string>; activeStandards?: ActiveStandardsOpts; omit?: string[] }
+export interface StandardsResult { copied: string[]; protocolCreated: boolean; refused: boolean; replaced?: string; appended?: string; contextCodeFailed?: string }
 
 export function installStandards(libraryRoot: string, root: string, protocolFile: string, opts: StandardsOpts): StandardsResult {
   const result: StandardsResult = { copied: [], protocolCreated: false, refused: false };
@@ -562,8 +562,7 @@ export function installStandards(libraryRoot: string, root: string, protocolFile
     }
   }
 
-  const protocolAbs = path.join(root, protocolFile);
-  if (!fs.existsSync(protocolAbs)) {
+  const buildBody = (): string => {
     let body = stripTemplatePreamble(fs.readFileSync(path.join(srcDir, 'CLAUDE.example.md'), 'utf8'));
     if (opts.contextCode) body = applyContextCode(body, opts.contextCode);
     if (opts.installedNames) {
@@ -571,14 +570,72 @@ export function installStandards(libraryRoot: string, root: string, protocolFile
       body = removeParallelSessionSection(body, opts.installedNames.has('role-session'));
     }
     if (opts.activeStandards) body = applyActiveStandards(body, opts.activeStandards);
-    fs.writeFileSync(protocolAbs, body);
+    return body;
+  };
+  const existing = findExistingProtocols(root, protocolFile);
+  let protocolAbs = path.join(root, protocolFile);
+  if (!existing.length) {
+    fs.writeFileSync(protocolAbs, buildBody());
     result.protocolCreated = true;
-  } else if (opts.contextCode) {
-    const body = fs.readFileSync(protocolAbs, 'utf8');
-    fs.writeFileSync(protocolAbs, applyContextCode(body, opts.contextCode));
+  } else {
+    protocolAbs = existing[0];
+    const mode = opts.existing || 'keep';
+    if (mode === 'replace') {
+      fs.copyFileSync(protocolAbs, protocolAbs + '.bak');
+      fs.writeFileSync(protocolAbs, buildBody());
+      result.protocolCreated = true;
+      result.replaced = path.basename(protocolAbs);
+    } else if (mode === 'append') {
+      const old = fs.readFileSync(protocolAbs, 'utf8');
+      if (!old.includes(APPEND_MARKER)) {
+        fs.writeFileSync(protocolAbs, old.replace(/\n*$/, '\n\n') + APPEND_MARKER + '\n\n' + buildBody());
+        result.appended = path.basename(protocolAbs);
+      }
+    } else if (opts.contextCode) {
+      const old = fs.readFileSync(protocolAbs, 'utf8');
+      const next = ensureContextCode(old, opts.contextCode);
+      if (next !== old) fs.writeFileSync(protocolAbs, next);
+      else if (opts.contextCode !== 'none' && !new RegExp('\\|\\s*Context code\\s*\\|\\s*' + escapeRe(opts.contextCode) + '\\s*\\|').test(old)) {
+        result.contextCodeFailed = path.basename(protocolAbs);
+      }
+    }
   }
   if (opts.agentReady) applyAgentReady(root, protocolAbs);
   return result;
+}
+
+const APPEND_MARKER = '<!-- ai-dev-kit: coding-standards protocol appended below -->';
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&');
+}
+
+// Every CLAUDE.md / AGENTS.md variant (any letter case) already in the project root, the tool's own file first.
+export function findExistingProtocols(root: string, protocolFile: string): string[] {
+  let names: string[] = [];
+  try { names = fs.readdirSync(root); } catch { /* unreadable root */ }
+  const hits = names.filter((n) => /^(claude|agents)\.md$/i.test(n) && fs.statSync(path.join(root, n)).isFile());
+  const own = (n: string): number => (n.toLowerCase() === protocolFile.toLowerCase() ? 0 : 1);
+  hits.sort((a, b) => own(a) - own(b));
+  return hits.map((n) => path.join(root, n));
+}
+
+// Sets the Context code in an existing protocol file; inserts the row when the file has none.
+function ensureContextCode(body: string, contextCode: string): string {
+  if (contextCode === 'none' || CONTEXT_CODE_ROW_RE.test(body)) return applyContextCode(body, contextCode);
+  const row = `| Context code | ${contextCode} |`;
+  const sec = /## Project-Specific Context[\s\S]*?(?=\n## |\n---\s*\n|\s*$)/.exec(body);
+  const table = '| Property | Value |\n|---|---|\n' + row + '\n';
+  if (sec) {
+    const lines = sec[0].split('\n');
+    let last = -1;
+    lines.forEach((l, i) => { if (l.startsWith('|')) last = i; });
+    if (last >= 0) {
+      lines.splice(last + 1, 0, row);
+      return body.slice(0, sec.index) + lines.join('\n') + body.slice(sec.index + sec[0].length);
+    }
+    return body.slice(0, sec.index) + sec[0].replace(/\s*$/, '') + '\n\n' + table + body.slice(sec.index + sec[0].length);
+  }
+  return body.replace(/\n*$/, '\n\n') + '## Project-Specific Context\n\n' + table;
 }
 
 const AGENT_READY_LINE = 'This project is agent-ready: apply UI-BTN-19 (`data-agent-confirm` on a confirming button for an irreversible action).';
@@ -607,6 +664,7 @@ export interface CliArgs {
   activeStandardsKeys?: string[];
   commentStyleLevel?: string;
   contextCode?: string;
+  existingProtocol?: 'replace' | 'append' | 'keep';
   agentReady?: boolean;
   applyMigrations?: 'all' | string[];
   // Company standards: --company turns it on for install; --company-from copies a folder in; --company-defaults picks what happens to the kit defaults.
@@ -721,6 +779,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
       : undefined;
     standardsResult = installStandards(args.library!, args.root!, tool.protocol, {
       contextCode: args.contextCode,
+      existing: args.existingProtocol,
       agentReady: args.agentReady,
       force: args.force,
       installedNames: new Set(Object.keys(manifest.skills)),
@@ -730,7 +789,10 @@ export function doInstall(args: CliArgs): DoInstallResult {
     manifest.standards = true;
   }
   if (args.commentStyleLevel) manifest.commentStyleLevel = args.commentStyleLevel;
-  if (args.contextCode) manifest.contextCode = args.contextCode;
+  if (standardsResult?.replaced) console.error(standardsResult.replaced + ' replaced with the kit protocol (old copy saved as ' + standardsResult.replaced + '.bak)');
+  if (standardsResult?.appended) console.error('kit protocol appended to existing ' + standardsResult.appended);
+  if (standardsResult?.contextCodeFailed) console.error('warning: could not set the context code in ' + standardsResult.contextCodeFailed + '; add "| Context code | ' + args.contextCode + ' |" by hand');
+  if (args.contextCode && !standardsResult?.contextCodeFailed) manifest.contextCode = args.contextCode;
 
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
   manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
@@ -1617,6 +1679,15 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       }
       });
       steps.push(async () => {
+      if (!(args.standards || args.company) || args.existingProtocol) return;
+      const found = findExistingProtocols(args.root!, ROOTS[args.tool as Tool]?.protocol || 'CLAUDE.md');
+      if (!found.length) return;
+      args.existingProtocol = await askSelect(path.basename(found[0]) + ' already exists in this project:', [
+        { title: 'Replace it with the kit protocol ' + green('(recommended)') + ' ' + dim('— old copy saved as .bak'), value: 'replace' },
+        { title: 'Append the kit protocol to the existing file ' + dim('— keeps your content'), value: 'append' },
+      ], 0) as 'replace' | 'append';
+    });
+    steps.push(async () => {
       // RULE AI-01 belongs to every standards path (defaults, company, both): the company-only path gets its own CX block.
       if ((args.standards || args.company) && !args.contextCode) {
         const suggestion = randomContextCode();
@@ -1676,6 +1747,11 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];
     else if (k === '--context-code') a.contextCode = argv[++i];
     else if (k === '--agent-ready') a.agentReady = true;
+    else if (k === '--existing-protocol') {
+      const v = argv[++i];
+      if (v !== 'replace' && v !== 'append' && v !== 'keep') { console.error(red('error: --existing-protocol must be replace, append or keep')); process.exit(2); }
+      a.existingProtocol = v;
+    }
     else if (k === '--apply-migrations') { const v = argv[++i]; a.applyMigrations = v === 'all' ? 'all' : v.split(',').filter(Boolean); }
     else if (k === '--company') a.company = true;
     else if (k === '--company-from') { a.companyFrom = argv[++i]; a.company = true; }
