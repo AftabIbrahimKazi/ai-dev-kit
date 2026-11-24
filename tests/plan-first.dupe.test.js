@@ -98,8 +98,6 @@ t('parseArgs and the CLI: bad usage exits 2, an error exits 1, success exits 0',
   assert.strictEqual(JSON.parse(ok.stdout).results[0].action, 'inserted');
 });
 
-if (failed) { console.log('plan-first.dupe.test: FAILED'); process.exit(1); }
-console.log('plan-first.dupe.test: ok');
 
 t('extractBlock: wrapped flag, and line ranges are checked at both ends', () => {
   assert.strictEqual(extractBlock(SRC, 'hero').wrapped, true);
@@ -134,3 +132,6 @@ t('cli: a missing source file prints "error: ..." and exits 1; bad usage exits 2
   assert.ok(bad.stderr.startsWith('error: source file nope.html does not exist'), bad.stderr);
   assert.strictEqual(spawnSync(process.execPath, [SCRIPT], { cwd: d, encoding: 'utf8' }).status, 2);
 });
+
+if (failed) { console.log('plan-first.dupe.test: FAILED'); process.exit(1); }
+console.log('plan-first.dupe.test: ok');

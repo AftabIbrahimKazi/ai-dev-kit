@@ -89,8 +89,6 @@ t('CLI: exit 1 on a failure, 0 on a clean README, 2 on a bad flag, 1 when the RE
   assert.ok(JSON.parse(run('README.md', '--root', d, '--json').stdout).findings.length === 1);
 });
 
-if (failed) { console.log('readme-writer.audit.test: FAILED'); process.exit(1); }
-console.log('readme-writer.audit.test: ok');
 
 const rows = (n, w = 'text') => Array.from({ length: n }, (_, i) => w + ' ' + i).join('\n');
 const SCRIPT = path.join(__dirname, '..', 'skills', 'workflow', 'readme-writer.audit.js');
@@ -139,3 +137,6 @@ t('cli: defaults to README.md in --root, exit 0 clean, 1 on a failure or missing
   assert.strictEqual(none.status, 1); assert.match(none.stderr, /^error: .*NOPE\.md does not exist/);
   assert.strictEqual(cli(d, '--wat').status, 2);
 });
+
+if (failed) { console.log('readme-writer.audit.test: FAILED'); process.exit(1); }
+console.log('readme-writer.audit.test: ok');
