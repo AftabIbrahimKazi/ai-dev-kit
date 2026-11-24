@@ -1,6 +1,6 @@
 # Kaggle stage 0: measurement job (2026-11-16)
 
-Kernel `aftabkazi/kaggle-measure-stage0`, private, GPU + internet, qwen3-coder:30b via Ollama 0.40.16. Raw numbers: `kaggle-stage0-results.json`.
+Kernel `<your-kaggle-username>/kaggle-measure-stage0`, private, GPU + internet, qwen3-coder:30b via Ollama 0.40.16. Raw numbers: `kaggle-stage0-results.json`.
 
 - Hardware: 2x Tesla T4 (15 GB each), 4 CPUs, 20 GB disk. Model runs **100% GPU** at every context size (19 GB at 8k, 22 GB at 32k, 26 GB at 64k, split over both cards). The prototype's "Unable to detect GPU" line was only the installer; inference was fine.
 - Speed: 65-67 tok/s generation at 16k (prototype logged 25-30). 37 tok/s with 30k tokens in context; 61 tok/s with 6k. Prompt processing 1.3-2.2k tok/s, so a 30k-token prompt costs ~25 s.
