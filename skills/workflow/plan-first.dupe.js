@@ -28,9 +28,11 @@ exports.parseArgs = parseArgs;
 const fs = require("node:fs");
 const path = require("node:path");
 const EOL = (s) => (s.includes('\r\n') ? '\r\n' : '\n');
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function extractBlock(text, name, lines) {
     if (name) {
-        const re = new RegExp(`[ \\t]*<!--\\s*dupe:${name}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${name}\\s*-->`);
+        const safeName = escapeRegExp(name);
+        const re = new RegExp(`[ \\t]*<!--\\s*dupe:${safeName}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${safeName}\\s*-->`);
         const m = re.exec(text);
         if (!m)
             throw new Error(`no block named "${name}": wrap it in <!-- dupe:${name} --> ... <!-- /dupe:${name} --> or use --lines`);
@@ -61,10 +63,11 @@ function place(target, block, name, o) {
     const eol = EOL(target);
     const body = block.replace(/\r?\n/g, eol);
     if (name) {
-        const here = new RegExp(`[ \\t]*<!--\\s*dupe-here:${name}\\s*-->`);
+        const safeName = escapeRegExp(name);
+        const here = new RegExp(`[ \\t]*<!--\\s*dupe-here:${safeName}\\s*-->`);
         if (here.test(target))
             return { text: target.replace(here, () => body), action: 'inserted' };
-        const prior = new RegExp(`[ \\t]*<!--\\s*dupe:${name}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${name}\\s*-->`);
+        const prior = new RegExp(`[ \\t]*<!--\\s*dupe:${safeName}\\s*-->[\\s\\S]*?<!--\\s*/dupe:${safeName}\\s*-->`);
         if (prior.test(target))
             return { text: target.replace(prior, () => body), action: 'replaced' };
     }
