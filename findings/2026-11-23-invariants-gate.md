@@ -124,3 +124,12 @@ Reading the snapshot outputs for correctness found these small defects in the sc
 Mistakes in my own snapshots found and fixed in the same read: lint 50- and 51-word cases both under the cap, a `.claude/` path case that contained `{{skill-root}}`, two compact CLI snapshots that depended on this machine's shell and a space in the Node path, an astro selector check that never ran (selector prefix came out null), and a loudness tolerance that was tighter than a straddling block allows.
 
 Resume: see "Invariants add-on" in the local handover and `invariants/sweep.js` (a documented driver that sweeps a private copy of the kit, optionally one script or one shard at a time).
+
+## 2026-11-25: time-boxed pool, round five
+- `invariants/pool.js` splits every script's mutants into slices and runs them on a pool of workers, each on a private copy of the kit, stopping after a time budget. Slices are queued round-robin, so a cut-off run still samples every script evenly. A 10 minute run with 14 workers covers about 15% of the 5,546 mutants.
+- Whole-kit sample: 69.5% killed before this session's tests, 80.1% after (54 scripts, 647 sampled mutants, 116 open, 16 scripts with none open).
+- Test files that exit through a final `if (failed) process.exit(1)` line must keep it LAST: tests appended after it cannot change the exit code, so a probe never counts their kills. Found and fixed in plan-first.dupe and readme-writer.audit.
+- Ignored, not provable without hardware: narrate.speak lines 169, 173, 239, 249, 392, 396, 563, 566 (Windows speech, PowerShell and audio-player branches).
+- Equivalent mutants ignored: pre-merge-gate.scope:90 (empty hunk range), pre-commit.check lines 51, 60, 304, 357, 373, 383 (dead default argument, unused stderr, extra empty segment).
+- Open work: install-kit.cli (about half of 126 sampled mutants still open: warning strings, back-navigation, doInstall branches, the project-root guess), diagram.cli, install-kit.company, install-kit.verify, plan-first.goldfish, security-audit.recon.
+- Side defect found: `implicit-state-audit.scan --changed` misses files inside a brand-new untracked folder, because `git status --porcelain` collapses it to one `dir/` line. Not fixed; ask first.

@@ -200,5 +200,56 @@ t('learnPairs records staged files that differ from the repo copy', () => {
   assert.strictEqual(k.learnPairs(root, stage), 1);
 });
 
+t('estimate: five minutes of cold start, plus 0.85 per task for generation, plus reading the prompt', () => {
+  assert.strictEqual(k.estimate([]).minutes, 5);
+  assert.strictEqual(k.estimate(['x']).minutes, 6);
+  assert.strictEqual(k.estimate(Array(10).fill('x')).minutes, 14);
+  assert.strictEqual(k.estimate(['x'.repeat(1092000)]).minutes, 10, 'a 312000-token prompt adds four minutes of reading');
+  assert.strictEqual(k.estimate(['x']).gpuMinutes, k.estimate(['x']).minutes);
+});
+
+t('kaggleCommand: the runner override wins; without it the kaggle command or python is used', () => {
+  const c = k.kaggleCommand(['kernels', 'status'], { KAGGLE_RUNNER: '/x/run.js' });
+  assert.deepStrictEqual(c, { cmd: process.execPath, args: ['/x/run.js', 'kernels', 'status'] });
+  const plain = k.kaggleCommand(['--version'], {});
+  const py = process.platform === 'win32' ? 'python' : 'python3';
+  assert.ok((plain.cmd === 'kaggle' && plain.args[0] === '--version') || (plain.cmd === py && plain.args.join(' ') === '-m kaggle --version'), JSON.stringify(plain));
+});
+
+t('cli plan --standards: a Standards id must be a file, with or without .md, otherwise the plan fails', () => {
+  const p = project(); const std = path.join(p, 'std'); fs.mkdirSync(std);
+  const env = { AI_DEV_KIT_HOME: tmp() };
+  const missing = cli(['plan', 'plan.md', '--standards', std], p, env);
+  assert.strictEqual(missing.code, 1, missing.out);
+  assert.ok(/Standards "CX-1" is not a file in/.test(missing.out), missing.out);
+  fs.writeFileSync(path.join(std, 'CX-1.md'), '# rule\n');
+  assert.strictEqual(cli(['plan', 'plan.md', '--standards', std], p, env).code, 0);
+  fs.rmSync(path.join(std, 'CX-1.md')); fs.writeFileSync(path.join(std, 'CX-1'), '# rule\n');
+  assert.strictEqual(cli(['plan', 'plan.md', '--standards', std], p, env).code, 0);
+});
+
+t('cli run: staged html or css is flagged for /modern-web, and a failed kernel says so and exits 1', () => {
+  const p = project(), h = tmp(), d = tmp();
+  const web = Object.assign({}, GOODANS, { '2': 'FILE: src/config.json\n```json\n{"name":"x","port":1}\n```\nFILE: src/page.html\n```html\n<!doctype html><html><body>hi</body></html>\n```\n' });
+  const env = { AI_DEV_KIT_HOME: h, KAGGLE_RUNNER: fakeRunner(d, web), KAGGLE_API_TOKEN: 'KGAT_t' };
+  cli(['setup', '--user', 'me'], p, env);
+  const ok = cli(['run', 'plan.md', '--poll', '0'], p, env);
+  assert.ok(/web files staged: run \/modern-web /.test(ok.out), ok.out);
+  const noweb = project(), h2 = tmp(), d2 = tmp();
+  const env2 = { AI_DEV_KIT_HOME: h2, KAGGLE_RUNNER: fakeRunner(d2, GOODANS), KAGGLE_API_TOKEN: 'KGAT_t' };
+  cli(['setup', '--user', 'me'], noweb, env2);
+  assert.ok(!/web files staged/.test(cli(['run', 'plan.md', '--poll', '0'], noweb, env2).out));
+  const p3 = project(), h3 = tmp(), d3 = tmp();
+  const runner = fakeRunner(d3, GOODANS);
+  fs.writeFileSync(runner, fs.readFileSync(runner, 'utf8').split('"COMPLETE"').join('"ERROR"'));
+  const env3 = { AI_DEV_KIT_HOME: h3, KAGGLE_RUNNER: runner, KAGGLE_API_TOKEN: 'KGAT_t' };
+  cli(['setup', '--user', 'me'], p3, env3);
+  const bad = cli(['run', 'plan.md', '--poll', '0'], p3, env3);
+  assert.strictEqual(bad.code, 1, bad.out);
+  assert.ok(/kernel ended with an error: see the Kaggle page\. /.test(bad.out), bad.out);
+  const ledger = fs.readFileSync(path.join(h3, 'kaggle', fs.readdirSync(path.join(h3, 'kaggle')).filter((x) => x !== 'cfg' && x !== 'config.json')[0], 'ledger.jsonl'), 'utf8');
+  assert.ok(/"status":"error"/.test(ledger) && /"minutes":\d+/.test(ledger), ledger);
+});
+
 console.log(failed ? `${failed} FAILED` : 'all ok');
 process.exitCode = failed ? 1 : 0;

@@ -118,3 +118,53 @@ t('cli: prints the summary and sets the exit code', () => {
   assert.strictEqual(r.status, 0, r.stderr + r.stdout);
   assert.ok(r.stdout.startsWith('delegate: haiku'));
 });
+
+t('findCli: the newest extension copy is chosen by number (2.10.0 beats 2.2.5 and 2.1.9), independent of PATH', () => {
+  const d = tmp('dgv-');
+  const exe = process.platform === 'win32' ? 'claude.exe' : 'claude';
+  for (const v of ['2.1.9', '2.2.5', '2.10.0', '2.2.50']) {
+    const bin = path.join(d, '.vscode', 'extensions', `anthropic.claude-code-${v}-win32-x64`, 'resources', 'native-binary');
+    fs.mkdirSync(bin, { recursive: true }); fs.writeFileSync(path.join(bin, exe), '');
+  }
+  assert.ok(findCli(undefined, d, {}, () => []).includes('claude-code-2.10.0'));
+  const only = tmp('dgv2-');
+  for (const v of ['3.0.1', '3.0.12', '3.0.2']) {
+    const bin = path.join(only, '.vscode', 'extensions', `anthropic.claude-code-${v}-win32-x64`, 'resources', 'native-binary');
+    fs.mkdirSync(bin, { recursive: true }); fs.writeFileSync(path.join(bin, exe), '');
+  }
+  assert.ok(findCli(undefined, only, {}, () => []).includes('claude-code-3.0.12'));
+});
+
+t('findCli: CLAUDE_CODE_BIN is used only when set and present; the ~/.local/bin copy is the last resort', () => {
+  const d = tmp('dge-'); const home = tmp('dgeh-');
+  const real = path.join(d, 'my-claude'); fs.writeFileSync(real, '');
+  assert.strictEqual(findCli(undefined, home, { CLAUDE_CODE_BIN: real }, () => []), real);
+  assert.strictEqual(findCli(undefined, home, { CLAUDE_CODE_BIN: path.join(d, 'missing') }, () => []), null);
+  assert.strictEqual(findCli(undefined, home, {}, () => []), null);
+  const exe = process.platform === 'win32' ? 'claude.exe' : 'claude';
+  fs.mkdirSync(path.join(home, '.local', 'bin'), { recursive: true }); fs.writeFileSync(path.join(home, '.local', 'bin', exe), '');
+  assert.strictEqual(findCli(undefined, home, {}, () => []), path.join(home, '.local', 'bin', exe));
+});
+
+t('the ledger goes to AI_DEV_KIT_HOME when no home is passed', () => {
+  const d = repo(); const home = tmp('dgl-'); const old = process.env.AI_DEV_KIT_HOME;
+  process.env.AI_DEV_KIT_HOME = home;
+  try { run({ planFile: plan(d), tier: 'haiku', cwd: d, cliPath: fakeCli(d) }); } finally { if (old === undefined) delete process.env.AI_DEV_KIT_HOME; else process.env.AI_DEV_KIT_HOME = old; }
+  assert.ok(fs.existsSync(path.join(home, 'ledger', 'delegate.jsonl')));
+});
+
+t('a non-JSON reply shows what the executor printed, stdout and stderr both', () => {
+  const d = repo(); const home = tmp('dgh-');
+  const bad = run({ planFile: plan(d), tier: 'haiku', cwd: d, cliPath: fakeCli(d, 'badjson'), home });
+  assert.ok(bad.text.includes('executor output was not JSON: this is not json'), bad.text);
+  const fail = run({ planFile: plan(d), tier: 'haiku', cwd: d, cliPath: fakeCli(d, 'fail'), home });
+  assert.ok(fail.text.includes('executor output was not JSON:') && fail.text.includes('boom'), fail.text);
+});
+
+t('cli: --dry-run prints the command and runs nothing', () => {
+  const d = repo();
+  const r = spawnSync('node', [path.join(__dirname, '../skills/workflow/plan-first.delegate.js'), plan(d), '--tier', 'haiku', '--cwd', d, '--cli', fakeCli(d), '--dry-run'], { encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.ok(r.stdout.includes('--model claude-haiku-5-5'), r.stdout);
+  assert.ok(!fs.existsSync(path.join(d, 'out.txt')));
+});

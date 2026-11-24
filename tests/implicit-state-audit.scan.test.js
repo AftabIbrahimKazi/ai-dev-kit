@@ -144,5 +144,44 @@ t('CLI: a folder is scanned, --json works, a bad flag exits 2, a missing path ex
   assert.strictEqual(run('nope').status, 1);
 });
 
+const git = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8' });
+const gitRepo = () => { const d = tmp(); git(d, 'init', '-q', '-b', 'main'); git(d, 'config', 'user.email', 't@t'); git(d, 'config', 'user.name', 't'); git(d, 'config', 'commit.gpgsign', 'false'); put(d, 'README.md', 'x\n'); git(d, 'add', '.'); git(d, 'commit', '-qm', 'init'); return d; };
+const scan = (d, ...a) => spawnSync(process.execPath, [BIN, ...a, '--root', d], { encoding: 'utf8', env: { ...process.env, AI_DEV_KIT_HOME: path.join(d, '..', 'home-' + path.basename(d)) } });
+
+const useFlag = (n) => '  const [' + n + ', set' + n[0].toUpperCase() + n.slice(1) + '] = useState(false);';
+
+t('arrow-function bodies are scopes: flags split across two arrows are not one group, three in one arrow are', () => {
+  const split = 'const a = () => {\n' + useFlag('isLoading') + '\n' + useFlag('isError') + '\n};\nconst b = () => {\n' + useFlag('isSuccess') + '\n};\n';
+  assert.deepStrictEqual(scanText('x.tsx', split), []);
+  const one = 'const a = () => {\n' + useFlag('isLoading') + '\n' + useFlag('isError') + '\n' + useFlag('isSuccess') + '\n};\n';
+  assert.strictEqual(scanText('x.tsx', one).length, 1);
+});
+
+t('an object literal is its own group, separate from the flags of the function around it', () => {
+  const mixed = 'function f() {\n' + useFlag('isLoading') + '\n' + useFlag('isError') + '\n  const o = { isSuccess: true };\n}\n';
+  assert.deepStrictEqual(scanText('x.tsx', mixed), [], 'two hook flags plus one key are not three flags in one place');
+  const lit = 'function f() {\n  const o = { isLoading: true, isError: false, isSuccess: false };\n' + useFlag('isLoading') + '\n}\n';
+  assert.strictEqual(scanText('x.tsx', lit).length, 1);
+});
+
+t('--changed scans only changed code files in a git repo, and does nothing outside one', () => {
+  const d = gitRepo();
+  put(d, 'src/bad.tsx', CLEAN); put(d, 'src/bad.test.tsx', CLEAN); put(d, 'notes.md', 'x\n'); git(d, 'add', '.'); git(d, 'commit', '-qm', 'files');
+  put(d, 'src/bad.tsx', BAD); put(d, 'notes.md', 'isLoading isError isSuccess\n'); put(d, 'src/bad.test.tsx', BAD);
+  const j = JSON.parse(scan(d, '--changed', '--json').stdout);
+  assert.deepStrictEqual([j.scanned, j.findings.length, j.findings[0].file], [1, 1, 'src/bad.tsx']);
+  const plain = tmp(); put(plain, 'a.tsx', BAD);
+  assert.strictEqual(JSON.parse(scan(plain, '--changed', '--json').stdout).scanned, 0);
+});
+
+t('the cache is on by default and --no-cache leaves none behind', () => {
+  const d = tmp(); put(d, 'a.tsx', BAD);
+  const home = path.join(d, '..', 'home-' + path.basename(d));
+  scan(d, 'a.tsx', '--no-cache');
+  assert.ok(!fs.existsSync(path.join(home, 'cache', 'state-audit')), 'no cache written with --no-cache');
+  scan(d, 'a.tsx');
+  assert.ok(fs.readdirSync(path.join(home, 'cache', 'state-audit')).length === 1, 'default run writes one cache file');
+});
+
 if (failed) { console.log('implicit-state-audit.scan.test: FAILED'); process.exit(1); }
 console.log('implicit-state-audit.scan.test: ok');

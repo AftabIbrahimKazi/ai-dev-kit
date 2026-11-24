@@ -72,5 +72,13 @@
 	"skills/workflow/pre-commit.check.js:304:false to true",
 	"skills/workflow/pre-commit.check.js:373:< to <=",
 	"skills/workflow/pre-commit.check.js:357:+ to -",
-	"skills/workflow/pre-commit.check.js:383:+ to -"
+	"skills/workflow/pre-commit.check.js:383:+ to -",
+	"skills/addons/narrate.speak.js:169:!== to ===",
+	"skills/addons/narrate.speak.js:173:true to false",
+	"skills/addons/narrate.speak.js:239:false to true",
+	"skills/addons/narrate.speak.js:249:true to false",
+	"skills/addons/narrate.speak.js:392:&& to ||",
+	"skills/addons/narrate.speak.js:396:false to true",
+	"skills/addons/narrate.speak.js:563:false to true",
+	"skills/addons/narrate.speak.js:566:false to true"
 ]
