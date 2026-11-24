@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { DEFAULT_RULES, hintFor, matchSkills, mergeRules, scriptFor } from '../hooks/match'
+import { DEFAULT_RULES, SEMANTIC_SKILLS, hintFor, hintForNames, matchSkills, mergeRules, parseSemantic, scriptFor, semanticCandidates } from '../hooks/match'
 
 test('keywords match whole words, prefixes and phrases, case-insensitively', () => {
   expect(matchSkills('The build is Broken again', DEFAULT_RULES)).toContain('debug-protocol')
@@ -98,4 +98,24 @@ test('scriptFor runs a listed script only for an installed, active skill, once p
   expect(run?.script).toBe('weigh.js')
   expect(scriptFor('still slow', rules, { skills: { 'perf-audit': {} } }, ran)).toBeNull() // once per session
   expect(scriptFor('add a button', rules, { skills: { 'perf-audit': {} } }, new Set())).toBeNull()
+})
+
+test('semantic candidates skip skills the keywords already named, ones already hinted and ones not installed', () => {
+  const rules = mergeRules(DEFAULT_RULES, null)
+  const seen = new Set<string>()
+  expect(semanticCandidates('the checkout page shows a blank screen', rules, null, seen, SEMANTIC_SKILLS)).toEqual(['debug-protocol', 'plan-first'])
+  expect(semanticCandidates('it crashes on start', rules, null, seen, SEMANTIC_SKILLS)).toEqual(['plan-first']) // keywords named debug-protocol
+  seen.add('plan-first')
+  expect(semanticCandidates('the checkout page shows a blank screen', rules, null, seen, SEMANTIC_SKILLS)).toEqual(['debug-protocol'])
+  expect(semanticCandidates('x', rules, { skills: { 'plan-first': {} } }, new Set(), SEMANTIC_SKILLS)).toEqual(['plan-first'])
+})
+
+test('a semantic hint names its source, once per skill, and parses the script output', () => {
+  expect(parseSemantic('debug-protocol\t0.82\nplan-first\t0.55\n')).toEqual(['debug-protocol', 'plan-first'])
+  expect(parseSemantic('')).toEqual([])
+  const seen = new Set<string>()
+  const line = hintForNames(['debug-protocol'], null, seen, 'local model check')
+  expect(line).toContain('local model check')
+  expect(line).toContain('debug-protocol')
+  expect(hintForNames(['debug-protocol'], null, seen, 'local model check')).toBeNull()
 })

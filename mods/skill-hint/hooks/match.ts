@@ -24,6 +24,9 @@ export const DEFAULT_RULES: Rules = {
   'untrack': ['untrack', 'stop tracking', 'remove from git but keep', 'gitignore a tracked'],
 }
 
+// Skills the semantic script can judge (the same keys as SEMANTIC in skill-scope.semantic.ts; a test keeps them equal).
+export const SEMANTIC_SKILLS = ['debug-protocol', 'plan-first']
+
 export interface Manifest { skills?: Record<string, unknown>; archived?: Record<string, unknown>; skillRoot?: string }
 
 // Skills whose mechanical step a script can run outright when the prompt matches, so the facts arrive with the prompt
@@ -76,7 +79,23 @@ export function matchSkills(text: string, rules: Rules): string[] {
 
 // The line to attach, or null. Skills already hinted this session (seen) are not repeated; at most `max` per prompt.
 export function hintFor(text: string, rules: Rules, manifest: Manifest | null, seen: Set<string>, max = 2): string | null {
-  const found = matchSkills(text, rules).filter((n) => !seen.has(n))
+  return hintForNames(matchSkills(text, rules), manifest, seen, 'keyword match', max)
+}
+
+// Skills the keyword rules did not name, and that a semantic check (the local model, via skill-scope/semantic.js) might.
+// Not asked for a skill already hinted this session, or for one this install does not have.
+export function semanticCandidates(text: string, rules: Rules, manifest: Manifest | null, seen: Set<string>, table: string[]): string[] {
+  const named = new Set(matchSkills(text, rules))
+  return table.filter((n) => !named.has(n) && !seen.has(n) && (!manifest || !(manifest.skills || manifest.archived) || n in (manifest.skills ?? {}) || n in (manifest.archived ?? {})))
+}
+
+// Lines of "<skill>\t<score>" from the semantic script, best first, as skill names.
+export function parseSemantic(out: string): string[] {
+  return out.split('\n').map((l) => (l.split('\t')[0] ?? '').trim()).filter(Boolean)
+}
+
+export function hintForNames(names: string[], manifest: Manifest | null, seen: Set<string>, source: string, max = 2): string | null {
+  const found = names.filter((n) => !seen.has(n))
   const usable = found.filter((n) => !manifest || !(manifest.skills || manifest.archived) || n in (manifest.skills ?? {}) || n in (manifest.archived ?? {}))
   const pick = usable.slice(0, max)
   if (!pick.length) return null
@@ -86,5 +105,5 @@ export function hintFor(text: string, rules: Rules, manifest: Manifest | null, s
   const parts: string[] = []
   if (active.length) parts.push(`this prompt may need ${active.join(', ')}; load ${active.length > 1 ? 'them' : 'it'} if the task fits`)
   if (archived.length) parts.push(`${archived.join(', ')} ${archived.length > 1 ? 'are' : 'is'} archived: tell the user to run /unarchive ${archived[0]} if they want ${archived.length > 1 ? 'them' : 'it'}`)
-  return `skill-hint (keyword match, a suggestion only): ${parts.join('; ')}.`
+  return `skill-hint (${source}, a suggestion only): ${parts.join('; ')}.`
 }

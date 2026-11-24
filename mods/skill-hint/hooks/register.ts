@@ -1,5 +1,5 @@
 import type { Register } from 'claude-code'
-import { DEFAULT_RULES, hintFor, mergeRules, scriptFor, type Manifest, type Rules } from './match'
+import { DEFAULT_RULES, SEMANTIC_SKILLS, hintFor, hintForNames, mergeRules, parseSemantic, scriptFor, semanticCandidates, type Manifest, type Rules } from './match'
 
 // Hint only. On each typed prompt, matches keywords (code, no model call) and attaches one line naming skills that may apply.
 // It never loads, archives or restores anything, and says nothing for slash commands or for a skill already hinted this session.
@@ -41,6 +41,23 @@ async function roleLine($: any, text: string, m: Manifest | null): Promise<strin
   return out
 }
 
+// Semantic hint: for prompts the keywords did not name, skill-scope/semantic.js asks the local Laya model (exit 2 = Laya
+// not available). Two failures in a session stop the asking, so a machine without Laya pays nothing after that.
+let semanticFails = 0
+const MIN_SEMANTIC_CHARS = 25
+async function semanticLine($: any, text: string, r: Rules, m: Manifest | null): Promise<string | null> {
+  if (semanticFails >= 2 || text.trim().length < MIN_SEMANTIC_CHARS) return null
+  const file = `${m?.skillRoot ?? '.claude/skills'}/skill-scope/semantic.js`
+  if (!(await $.fs.exists(file))) return null
+  const ask = semanticCandidates(text, r, m, seen, SEMANTIC_SKILLS)
+  if (!ask.length) return null
+  const res = await $.process.run(['node', file, '--skills', ask.join(','), text], { timeoutMs: 6000 })
+  if (res.exitCode === 2) { semanticFails++; return null }
+  if (res.exitCode !== 0) return null
+  semanticFails = 0
+  return hintForNames(parseSemantic(String(res.stdout ?? '')), m, seen, 'local model check')
+}
+
 async function loadRules($: any): Promise<Rules> {
   if (rules) return rules
   let scope: unknown = null
@@ -62,6 +79,7 @@ export const register: Register = (on) => {
     seen = new Set()
     ran = new Set()
     roleSeen = new Set()
+    semanticFails = 0
     rules = null
     return next(e)
   }).catch(($, e, next) => next(e))
@@ -74,6 +92,7 @@ export const register: Register = (on) => {
         const add: string[] = []
         const line = hintFor(e.text, r, m, seen)
         if (line) add.push(line)
+        try { const sl = await semanticLine($, e.text, r, m); if (sl) add.push(sl) } catch { /* fail open */ }
         let table: string | null = null
         try { table = await runScript($, e.text, r, m) } catch { /* fail open: the hint line still goes */ }
         if (table) add.push(table)
