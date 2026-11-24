@@ -621,7 +621,25 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
         const body = fs.readFileSync(protocolAbs, 'utf8');
         fs.writeFileSync(protocolAbs, applyContextCode(body, opts.contextCode));
     }
+    if (opts.agentReady)
+        applyAgentReady(root, protocolAbs);
     return result;
+}
+const AGENT_READY_LINE = 'This project is agent-ready: apply UI-BTN-19 (`data-agent-confirm` on a confirming button for an irreversible action).';
+function applyAgentReady(root, protocolAbs) {
+    const body = fs.readFileSync(protocolAbs, 'utf8');
+    if (!body.includes(AGENT_READY_LINE))
+        fs.writeFileSync(protocolAbs, body.replace(/\n*$/, '\n\n') + AGENT_READY_LINE + '\n');
+    const cfgPath = path.join(root, '.claude', 'code-audit.json');
+    let cfg = {};
+    try {
+        cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    }
+    catch { /* none yet */ }
+    if (cfg.agentReady === true)
+        return;
+    fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+    fs.writeFileSync(cfgPath, JSON.stringify({ ...cfg, agentReady: true }, null, 2) + '\n');
 }
 const BATCH_ID = 'batch@ai-dev-kit-mods';
 // A mod is enabled when settings.enabledPlugins names it: project scope in <root>/.claude, user scope in the Claude config folder.
@@ -732,6 +750,7 @@ function doInstall(args) {
             : undefined;
         standardsResult = installStandards(args.library, args.root, tool.protocol, {
             contextCode: args.contextCode,
+            agentReady: args.agentReady,
             force: args.force,
             installedNames: new Set(Object.keys(manifest.skills)),
             activeStandards,
@@ -1822,6 +1841,8 @@ function parseArgs(argv) {
             a.commentStyleLevel = argv[++i];
         else if (k === '--context-code')
             a.contextCode = argv[++i];
+        else if (k === '--agent-ready')
+            a.agentReady = true;
         else if (k === '--apply-migrations') {
             const v = argv[++i];
             a.applyMigrations = v === 'all' ? 'all' : v.split(',').filter(Boolean);

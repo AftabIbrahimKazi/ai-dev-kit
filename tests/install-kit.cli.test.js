@@ -516,6 +516,20 @@ t('STANDARD_ROW_LABELS excludes Script standard and the two Framework rows (reso
   assert.strictEqual(Object.keys(STANDARD_ROW_LABELS).length, 11);
 });
 
+t('installStandards agentReady writes the CLAUDE.md line and the audit flag once; without it neither', () => {
+  const repoRoot = path.join(__dirname, '..');
+  const on = tmp();
+  installStandards(repoRoot, on, 'CLAUDE.md', { agentReady: true });
+  installStandards(repoRoot, on, 'CLAUDE.md', { agentReady: true });
+  const body = fs.readFileSync(path.join(on, 'CLAUDE.md'), 'utf8');
+  assert.strictEqual(body.split('apply UI-BTN-19').length - 1, 1);
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(on, '.claude', 'code-audit.json'), 'utf8')).agentReady, true);
+  const off = tmp();
+  installStandards(repoRoot, off, 'CLAUDE.md', {});
+  assert.ok(!fs.readFileSync(path.join(off, 'CLAUDE.md'), 'utf8').includes('UI-BTN-19'));
+  assert.ok(!fs.existsSync(path.join(off, '.claude', 'code-audit.json')));
+});
+
 t('installStandards against the real CLAUDE.example.md resolves the script standard and prunes inactive rows', () => {
   const repoRoot = path.join(__dirname, '..');
   const target = tmp();
