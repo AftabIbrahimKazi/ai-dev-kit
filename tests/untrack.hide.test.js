@@ -79,3 +79,46 @@ t('bad input exits non-zero', () => {
   assert.strictEqual(run(d, 'hide').status, 2);
   assert.strictEqual(run(d, 'hide', '../elsewhere').status, 1);
 });
+
+const exclude = (d) => path.join(d, '.git', 'info', 'exclude');
+
+t('hide counts every file in batches of 200: 200 and 201 files are both hidden in full', () => {
+  for (const n of [200, 201]) {
+    const d = repo();
+    for (let i = 0; i < n; i++) put(d, 'many/f' + i + '.txt', 'x');
+    sh(d, 'add', '-A'); sh(d, 'commit', '-qm', 'many');
+    const r = run(d, 'hide', 'many');
+    assert.strictEqual(r.status, 0, r.stderr);
+    assert.match(r.stdout, new RegExp('hidden  many: ' + n + ' tracked file'));
+    put(d, 'many/f0.txt', 'edited');
+    assert.strictEqual(status(d), '');
+  }
+});
+
+t('the exclude block: a file without a trailing newline keeps its text, a broken block is ignored, an empty block is removed', () => {
+  const d = repo();
+  fs.writeFileSync(exclude(d), 'keepme');
+  put(d, 'new.txt', 'u');
+  assert.strictEqual(run(d, 'hide', 'new.txt').status, 0);
+  const text = fs.readFileSync(exclude(d), 'utf8');
+  assert.ok(text.startsWith('keepme\n# ai-dev-kit untrack: begin'), JSON.stringify(text));
+  assert.ok(text.includes('/new.txt\n# ai-dev-kit untrack: end\n'));
+  const e = repo();
+  fs.writeFileSync(exclude(e), '# ai-dev-kit untrack: end\nold\n# ai-dev-kit untrack: begin (managed by untrack/hide.js, edit with hide/show)\n');
+  put(e, 'n.txt', 'u');
+  assert.strictEqual(run(e, 'hide', 'n.txt').status, 0);
+  const t2 = fs.readFileSync(exclude(e), 'utf8');
+  assert.ok(t2.includes('old') && t2.includes('/n.txt'), t2);
+  assert.strictEqual(run(d, 'show', 'new.txt').status, 0);
+  assert.ok(!fs.readFileSync(exclude(d), 'utf8').includes('untrack: begin'), 'block removed once empty');
+  assert.ok(fs.readFileSync(exclude(d), 'utf8').includes('keepme'));
+});
+
+t('usage: list needs no path, hide and show need one, an unknown command exits 2', () => {
+  const d = repo();
+  assert.strictEqual(run(d, 'list').status, 0);
+  assert.strictEqual(run(d, 'show').status, 2);
+  assert.strictEqual(run(d, 'bogus', 'a.txt').status, 2);
+  assert.match(run(d, 'bogus', 'a.txt').stderr, /^usage: node hide\.js/);
+  assert.strictEqual(run(d).status, 2);
+});

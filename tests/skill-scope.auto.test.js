@@ -298,3 +298,41 @@ t('plan keeps role-session when a handover/ folder exists, whatever the task wor
   const p = plan('write a css file', [], triggers, ['role-session'], [], root);
   assert.ok(!p.archive.includes('role-session') && p.keep.includes('role-session'));
 });
+
+t('run: bad skill or script names exit 2 with usage; a script that is not installed is explained in plain words', () => {
+  const root = makeProject(['perf-audit']);
+  const auto = path.join(root, '.claude', 'skills', 'skill-scope');
+  fs.mkdirSync(auto, { recursive: true });
+  fs.copyFileSync(CLI, path.join(auto, 'auto.js'));
+  for (const f of fs.readdirSync(path.dirname(CLI))) if (/^skill-scope\.(move|explain)\.js$/.test(f)) fs.copyFileSync(path.join(path.dirname(CLI), f), path.join(auto, f.replace('skill-scope.', '') ));
+  const go = (...a) => spawnSync(process.execPath, [path.join(auto, 'auto.js'), ...a], { encoding: 'utf8', cwd: root });
+  const bad = go('run', 'Bad Name', 'x.js');
+  assert.strictEqual(bad.status, 2);
+  assert.match(bad.stderr, /^usage: skill-scope\.auto\.js run <skill> <script>/);
+  assert.strictEqual(go('run', 'perf-audit').status, 2);
+  const missing = go('run', 'perf-audit', 'nope.js');
+  assert.strictEqual(missing.status, 1);
+  assert.match(missing.stderr, /^error: The script skill-scope\/auto\.js is not installed in this project/);
+});
+
+t('list names active and archived skills with their trigger words', () => {
+  const root = makeProject(['perf-audit', 'security-audit']);
+  run('apply', '--root', root, '--task', 'nothing relevant at all');
+  const out = run('list', '--root', root).stdout;
+  assert.match(out, /^active, archivable \(\d+\): /m);
+  assert.match(out, /^archived \(\d+\): /m);
+  assert.match(out, /bring one back with \/unarchive <name>/);
+});
+
+t('writeNext puts a blank line before a new section and none at the top of the file', () => {
+  const { writeNext } = require('../skills/meta/skill-scope.auto.js');
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'wn-'));
+  fs.writeFileSync(path.join(d, 'handover.md'), '# H\n\n## Current state\nx\n');
+  writeNext(d, 'apply', 'do the thing', ['a'], ['b']);
+  const text = fs.readFileSync(path.join(d, 'handover.md'), 'utf8');
+  assert.match(text, /## Current state\nx\n\n## Next task\napply: do the thing\n\n## Skills\narchived: a\nrestored: b\n/);
+  const e = fs.mkdtempSync(path.join(os.tmpdir(), 'wn-'));
+  fs.writeFileSync(path.join(e, 'handover.md'), '');
+  writeNext(e, 'apply', 't', [], []);
+  assert.ok(fs.readFileSync(path.join(e, 'handover.md'), 'utf8').trimStart().startsWith('## Next task') || /^\n*## Next task/.test(fs.readFileSync(path.join(e, 'handover.md'), 'utf8')));
+});

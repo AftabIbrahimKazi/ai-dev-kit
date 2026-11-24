@@ -108,3 +108,56 @@ t('id prints tool-4hex', () => {
   const r = spawnSync(process.execPath, [CLI, 'id', 'opencode'], { encoding: 'utf8' });
   assert.match(r.stdout.trim(), /^opencode-[0-9a-f]{4}$/);
 });
+
+t('cli: status, release and git usage errors, and bad status words, all exit 1 with a usage line', () => {
+  const d = proj();
+  assert.strictEqual(run(d, 'claim', 's1', 'dev', 'task', 'a.js').status, 0);
+  const noStatus = run(d, 'status', 's1');
+  assert.strictEqual(noStatus.status, 1); assert.match(noStatus.stderr, /usage: status <session> editing\|awaiting-review/);
+  const badStatus = run(d, 'status', 's1', 'napping');
+  assert.strictEqual(badStatus.status, 1);
+  assert.match(run(d, 'status', 's1', 'awaiting-review').stdout, /1 claim\(s\) now awaiting-review/);
+  assert.match(run(d, 'release').stderr, /usage: release/);
+  const gitBad = run(d, 'git', 'borrow', 's1');
+  assert.strictEqual(gitBad.status, 1); assert.match(gitBad.stderr, /usage: git take\|release <session>/);
+  assert.strictEqual(run(d, 'git', 'take').status, 1);
+});
+
+t('cli: git take is exclusive, release by another session is refused, id prefixes the name, bogus commands list the real ones', () => {
+  const d = proj();
+  assert.match(run(d, 'git', 'take', 's1').stdout, /git token taken/);
+  const second = run(d, 'git', 'take', 's2');
+  assert.strictEqual(second.status, 1); assert.match(second.stderr, /@git is held by s1/);
+  const wrong = run(d, 'git', 'release', 's2');
+  assert.strictEqual(wrong.status, 1); assert.match(wrong.stderr, /@git belongs to s1, not you/);
+  assert.match(run(d, 'git', 'release', 's1').stdout, /git token released/);
+  assert.match(run(d, 'id', 'bob').stdout, /^bob-[0-9a-f]{4}\n$/);
+  assert.match(run(d, 'id').stdout, /^claude-[0-9a-f]{4}\n$/);
+  const bogus = run(d, 'frobnicate');
+  assert.strictEqual(bogus.status, 1); assert.match(bogus.stderr, /commands: id, role, free, claim, status, release, git, list, key/);
+});
+
+t('cli: release keeps the role claim unless --role is given; list shows claims, none, and --json', () => {
+  const d = proj();
+  run(d, 'role', 's1', 'frontend');
+  run(d, 'claim', 's1', 'frontend', 'job', 'a.js');
+  assert.match(run(d, 'release', 's1').stdout, /released 1$/m);
+  assert.match(run(d, 'list').stdout, /@role__frontend/);
+  assert.match(run(d, 'release', 's1', '--role').stdout, /released 1$/m);
+  assert.match(run(d, 'list').stdout, /^no claims$/m);
+  run(d, 'claim', 's2', 'dev', 'job', 'b.js');
+  const rows = JSON.parse(run(d, 'list', '--json').stdout);
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].owner.session, 's2');
+  assert.match(run(d, 'list').stdout, /s2 \| dev \| editing/);
+});
+
+t('cli: --json and --role flags do not leak into the command arguments; free reports locked paths with exit 1', () => {
+  const d = proj();
+  run(d, 'claim', 's1', 'dev', 'job', 'a.js');
+  const free = run(d, 'free', 'a.js', 'b.js');
+  assert.strictEqual(free.status, 1);
+  assert.match(free.stdout, /LOCKED a\.js by s1 \(dev, editing\)/);
+  assert.match(run(d, 'free', 'b.js').stdout, /free: 1 path\(s\)/);
+  assert.match(run(d, '--json', 'free', 'b.js').stdout, /free: 1 path/);
+});

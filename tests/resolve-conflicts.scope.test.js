@@ -122,3 +122,50 @@ t('the role file is found in .opencode/ and .agents/ as well as .claude/', () =>
     assert.strictEqual(loadRole(d, 'frontend').name, 'frontend', dir);
   }
 });
+
+const lib = require(SCRIPT);
+
+t('parseArgs: saving is on by default and --no-save turns it off', () => {
+  assert.strictEqual(lib.parseArgs(['list']).save, true);
+  assert.strictEqual(lib.parseArgs(['list', '--no-save']).save, false);
+});
+
+t('--no-save writes no conflict set, so check has nothing to compare with', () => {
+  const d = conflicted();
+  assert.strictEqual(run(d, 'list', '--no-save').status, 0);
+  const r = run(d, 'check');
+  assert.notStrictEqual(r.status, 0);
+  assert.match(r.stderr, /no saved conflict set/);
+});
+
+t('loadRole: a role with only "in" has no out patterns and leaves out-of-scope files alone by default', () => {
+  const d = conflicted({ roles: { r: { in: ['ui/**'] } } });
+  const role = lib.loadRole(d, 'r');
+  assert.strictEqual(role.outRe.length, 0);
+  assert.strictEqual(role.outOfScope, 'leave');
+  assert.strictEqual(role.inRe.length, 1);
+});
+
+t('check policy: --out wins, then the saved one, then leave', () => {
+  const d = conflicted(FRONTEND);
+  run(d, 'list', '--role', 'frontend');
+  assert.strictEqual(JSON.parse(run(d, 'check', '--role', 'frontend', '--json').stdout).policy, 'leave');
+  assert.strictEqual(JSON.parse(run(d, 'check', '--role', 'frontend', '--out', 'ours', '--json').stdout).policy, 'ours');
+  const e = conflicted();
+  run(e, 'list');
+  assert.strictEqual(JSON.parse(run(e, 'check', '--json').stdout).policy, 'leave');
+  const f = conflicted(FRONTEND);
+  run(f, 'list', '--role', 'frontend', '--out', 'theirs');
+  assert.strictEqual(JSON.parse(run(f, 'check', '--json').stdout).policy, 'theirs');
+});
+
+t('policy leave: an out-of-scope file still unmerged counts as left even with its markers edited away; a resolved one fails', () => {
+  const d = conflicted(FRONTEND);
+  run(d, 'list', '--role', 'frontend');
+  put(d, 'server/b.txt', 'hand edited, not added\n');
+  const left = JSON.parse(run(d, 'check', '--role', 'frontend', '--json').stdout);
+  assert.ok(left.left.includes('server/b.txt'), JSON.stringify(left));
+  git(d, 'add', 'server/b.txt');
+  const done = JSON.parse(run(d, 'check', '--role', 'frontend', '--json').stdout);
+  assert.ok(done.fails.some((f) => /server\/b\.txt {2}out of scope but was resolved/.test(f)), JSON.stringify(done));
+});

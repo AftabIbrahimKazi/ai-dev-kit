@@ -115,6 +115,56 @@ t('a non-loopback Ollama URL is refused', async () => {
   assert.ok(/loopback/.test(r.note));
 });
 
+const { spawnSync } = require('node:child_process');
+const CLI = path.join(__dirname, '..', 'skills', 'workflow', 'plan-first.reviewer.js');
+
+t('a missing models.json means Ollama on loopback with the small default model; a config with no system2 does too', async () => {
+  const o = await server(ollamaReply('PASS'));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'rev-'));
+  fs.writeFileSync(path.join(empty, 'models.json'), '{}');
+  // the default base is 127.0.0.1:11434: nothing listens there in the test, so the call must end UNAVAILABLE, not throw
+  const r = await review('p', 'c', { reviewer: 'ollama', timeoutMs: 1500 }, { AI_DEV_KIT_HOME: empty });
+  o.s.close();
+  assert.strictEqual(r.status, 'UNAVAILABLE');
+  assert.ok(/Ollama unreachable/.test(r.note), r.note);
+});
+
+t('a Gemini server that is down reports "Gemini unreachable" with the reason, and a timeout says timeout', async () => {
+  const o = await server(ollamaReply('PASS'));
+  const down = await review('p', 'c', { reviewer: 'auto' }, { GEMINI_API_KEY: 'k', GEMINI_API_BASE: 'http://127.0.0.1:1', AI_DEV_KIT_HOME: home(o.base) });
+  assert.ok(/Gemini unreachable: (?!timeout)/.test(down.note), down.note);
+  const slow = await server(() => {});
+  const to = await review('p', 'c', { reviewer: 'auto', timeoutMs: 300 }, { GEMINI_API_KEY: 'k', GEMINI_API_BASE: slow.base, AI_DEV_KIT_HOME: home(o.base) });
+  slow.s.close(); o.s.close();
+  assert.ok(/Gemini unreachable: timeout/.test(to.note), to.note);
+});
+
+t('text is cut at 60000 characters, not before and not after', async () => {
+  const sizes = [];
+  const g = await server((_q, res, body) => { sizes.push(JSON.parse(body).contents[0].parts[0].text.length); geminiReply('PASS')(_q, res); });
+  const env = { GEMINI_API_KEY: 'k', GEMINI_API_BASE: g.base };
+  await review('', 'x'.repeat(60000), { reviewer: 'auto' }, env);
+  await review('', 'x'.repeat(60001), { reviewer: 'auto' }, env);
+  g.s.close();
+  assert.deepStrictEqual(sizes, [2 + 60000, 2 + 60000]);
+});
+
+t('cli: bad usage exits 2, a PASS prints nothing, a missing file fails open', () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'revcli-'));
+  fs.writeFileSync(path.join(d, 'p.txt'), 'prompt'); fs.writeFileSync(path.join(d, 'a.js'), 'code');
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: d, encoding: 'utf8', env: { ...process.env, AI_DEV_KIT_HOME: d } });
+  assert.strictEqual(run().status, 2);
+  assert.strictEqual(run('--prompt', 'p.txt').status, 2);
+  assert.strictEqual(run('--file', 'a.js').status, 2);
+  assert.strictEqual(run('--prompt', 'p.txt', '--file', 'a.js', '--reviewer', 'bogus').status, 2);
+  assert.strictEqual(run('--prompt', 'p.txt', '--file', 'a.js', '--wat').status, 2);
+  assert.match(run().stderr, /^usage: reviewer\.js/);
+  const ok = run('--prompt', 'p.txt', '--file', 'a.js', '--reviewer', 'static', '--root', d);
+  assert.strictEqual(ok.status, 0); assert.strictEqual(ok.stdout, '');
+  assert.strictEqual(run('--prompt', 'p.txt', '--file', 'missing.js').status, 0);
+  assert.strictEqual(run('--prompt', 'p.txt', '--file', '.env').status, 0);
+});
+
 // A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless every run block reached its end.
 let finished = 0;
 process.on('exit', () => { if (finished !== 1) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
