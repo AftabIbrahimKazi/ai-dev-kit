@@ -145,4 +145,14 @@ t('cli: apply adds only by default and replaces with --only; a broken roles file
   assert.strictEqual(r.status, 1);
   assert.ok(r.stderr.startsWith('error: '), r.stderr);
 });
+
+t('cli: no argument lists the roles and a bare role name applies it', () => {
+  const d = sandbox(ROLES);
+  const none = run(d);
+  assert.strictEqual(none.status, 0, none.stderr);
+  assert.match(none.stdout, /^dev\s+Dev: s1, s2/m);
+  assert.strictEqual(run(d, 'dev').stdout.split('\n')[0], 'AUTO apply --add-only --quiet --keep s1,s2');
+  assert.strictEqual(run(d, 'dev', '--only').stdout.split('\n')[0], 'AUTO apply --quiet --keep s1,s2');
+  assert.strictEqual(run(d, 'bogus').status, 2);
+});
 }

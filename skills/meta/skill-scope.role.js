@@ -126,9 +126,11 @@ function line(res, rf, installed, archived = []) {
     return 'role-loadout (a suggestion, load only what the task needs): ' + parts.join('; ') + '.';
 }
 function main(argv) {
-    const [cmd, ...rest] = argv;
+    let [cmd, ...rest] = argv;
     try {
         const rf = loadRoles();
+        if (cmd === undefined) cmd = 'list';
+        else if (!['list', 'show', 'apply', 'resolve'].includes(cmd) && rf.roles[cmd]) { rest = [cmd, ...rest]; cmd = 'apply'; } // a bare role name applies it
         if (cmd === 'list') {
             for (const [id, r] of Object.entries(rf.roles))
                 console.log(`${id.padEnd(14)} ${r.label}${r.includes ? ' (= ' + r.includes.join(' + ') + ')' : ''}: ${loadout(id, rf).skills.join(', ') || '-'}`);

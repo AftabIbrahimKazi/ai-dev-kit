@@ -1,15 +1,28 @@
 # Changelog
 
-<<<<<<< HEAD
-## 2026-11-17
-
-### Fixed
-- Kaggle CLI no longer prints env-derived values (token length, username, kernel URL); closes code scanning alerts 11, 12, 13.
-- Media bench: Juggernaut-X dropped (single-file checkpoint, not diffusers); RealVisXL V5.0 and DreamShaper XL v2 Turbo measured instead.
+## 2026-11-25
 
 ### Added
-- `skills/addons/media-harness/bench/FINDINGS.md`: Stage 5 numbers (SDXL 10-32 s per image, Wan 33 frames about 77 s, 81-frame estimate 3.0-3.3 min). Video gate accepted on the estimate.
-=======
+- Turning usage tracking on (`install --usage on`, or yes at the prompt) now also installs and enables the `feature-usage` mod: it adds the mods marketplace, installs at user scope, checks `settings.json` and prints the two manual commands if a step fails. `install --yes` alone no longer counts as asking for tracking.
+- `/role` works as its description says: no argument lists the roles, a bare role name applies it.
+
+### Fixed
+- `plan-first/dupe.js` escapes regex characters in block names.
+- `/next` and `/role` state a reply cap (kit-lint `cmd-cap`).
+- This file carried an unresolved merge-conflict marker; both sections are kept.
+
+## 2026-11-24
+
+### Added
+- Role loadouts: `skill-scope/role.js` maps twelve job roles (frontend, backend, fullstack, qa, seo, devops, security, performance, designer, accessibility, docs, refactor) to the skills, `coding-standards/` files and commands each needs. The `skill-hint` mod attaches one role line per session; `/role <name>` also restores that role's archived skills.
+- Opt-in `invariants` add-on and `/invariants`: proves a rule's check can fail by breaking the code on purpose, probes a script for edits no check notices, and flags rules whose code changed since they were last verified. A script, no model.
+- `code-audit` opt-in rule sets: `slop` (`slop-01` to `slop-04`: section banners, comments that narrate history, hedging words, numbered names) and `ui-btn-19`; `install --agent-ready` switches the second on. New rule UI-BTN-19: a button that deletes, pays or sends carries `data-agent-confirm` when the project is agent-ready.
+- Scripts: `pre-merge-gate/scope.js` (which areas a change reaches and whether a reviewer is needed), `role-session/claim.js` (claims, roles and the git token) and `mcp-manager/config.js` (merges a server into a tool's config without overwriting other keys).
+- `skill-hint` asks a local model, through `skill-scope/semantic.js`, about `debug-protocol` and `plan-first` when its keywords miss.
+
+### Changed
+- The installer handles an existing `CLAUDE.md` or `AGENTS.md`: `--existing-protocol replace|append|keep`. Opt-in categories moved out of the install-kit body, and the self-improvement block in 55 skills is now one `Learnings` line.
+
 ## 2026-11-20
 
 ### Added
@@ -19,7 +32,15 @@
 ### Changed
 - `prefilter-rank` 0.3.0: Laya now scores each candidate with its path plus a purpose line (first comment block, or the description or first heading of a markdown file) instead of the path alone, the read-first cutoff is relative (a third of the best score, floor 0.2) instead of an absolute 0.5, and it ranks at most 24 files (was 40) and stays silent when fewer than half the candidates have a purpose line. Measured on 10 tasks over 36 scripts with CPU Laya: the right file was in the read-first set 10 of 10 times (average set 10.6 of 36), against 2 of 10 for the old rule, which also stayed silent in 6 of 10. Cost: about 0.58 s per candidate. Limit: the gain is on broad, mixed candidate sets. After a keyword Grep every file matches, so Laya scores them alike (13 files for "archive|restore": 10 to 13 of 13 in the read-first set) and the mod stays silent, by design, because there is nothing to narrow; in 4 end-to-end runs of that kind no reminder was delivered. Nested ranking (folders first, then files) did not beat flat ranking on this size of corpus: best variant 4 of 10 first and 6 of 10 in the top 7, at the same time cost.
 - `session-budget`: two lines in "Reading discipline" (rank unknown file sets with a plain Grep/Glob, never inside a batch call; batch lookups with reducers when `mcp__batch__run` exists).
->>>>>>> ea9f262be9bcd7ebd3e7f45c2b5cbcc1cc4dc217
+
+## 2026-11-17
+
+### Fixed
+- Kaggle CLI no longer prints env-derived values (token length, username, kernel URL); closes code scanning alerts 11, 12, 13.
+- Media bench: Juggernaut-X dropped (single-file checkpoint, not diffusers); RealVisXL V5.0 and DreamShaper XL v2 Turbo measured instead.
+
+### Added
+- `skills/addons/media-harness/bench/FINDINGS.md`: Stage 5 numbers (SDXL 10-32 s per image, Wan 33 frames about 77 s, 81-frame estimate 3.0-3.3 min). Video gate accepted on the estimate.
 
 ## 2026-11-16
 
