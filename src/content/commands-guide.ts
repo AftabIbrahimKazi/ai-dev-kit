@@ -14,7 +14,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
       more: [
         "Every command file is marked so that only you can start it. The model never runs one on its own.",
         "Most commands need the skill that owns their script. A command whose skill is not installed has nothing to run.",
-        "Two commands run no script at all: /kit prints a cheat sheet and /eta restates the current time estimate.",
+        "Two commands run no script at all: /format sets the response shape and /eta restates the current time estimate.",
       ],
     },
   ],
@@ -87,7 +87,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
         { label: "/quiet", hl: "name:quiet", act: "does", text: "Runs a noisy command with shortened output and keeps the failure lines. Needs session-budget." },
         { label: "/format", hl: "name:format", act: "does", text: "Sets the response shape for the session: table, bullets, oneline, bool or reset. No script." },
         { label: "/device", hl: "name:device", act: "does", text: "Read-only scan of this machine: a Have / Missing / Next table plus a lite, standard or full preset with download sizes. Installs nothing; each Next command is yours to run. Needs skill-scope." },
-        { label: "/kit", hl: "name:kit", act: "does", text: "A cheat sheet that names the command that fits your situation. No script." },
+        { label: "/kit", hl: "name:kit", act: "does", text: "A script scores your words against the command table and names the one command that fits, or prints the whole cheat sheet when nothing matches. Needs skill-scope." },
         { label: "/persona", hl: "name:persona", act: "does", text: "Chooses how replies are phrased: set female or male at novice, mid or pro, off, status, list. Needs personality." },
         { label: "/narration", hl: "name:narration", act: "does", text: "Controls reply narration: play, pause, resume, mode, mute, voice, volume, speed, pitch, alerts and status. Needs narrate." },
         { label: "/figma-code", hl: "name:figma-code", act: "does", text: "Converts an exported Figma SVG to HTML and CSS and gates it with a pixel diff. Give a file path, never an attachment. Needs figma-code." },
