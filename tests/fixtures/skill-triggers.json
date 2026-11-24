@@ -1,5 +1,5 @@
 {
-  "_note": "Labeled prompts for skill-hint matching. 'want' = skills that should be hinted; 'none' = prompts that must hint nothing. Add a row whenever a real miss or false hint shows up in the misfire log. A hint on an overlapping skill is allowed only if listed in want.",
+  "_note": "Labeled prompts for skill-hint matching. 'want' = skills that should be hinted; none = prompts that must hint nothing. 'allow' = extra skills a prompt may legitimately hint (a real overlap). 'knownFalse' = false hints the keyword rules produce today: tolerated, but the test fails if one stops happening (remove it then) and fails on any false hint not listed. Add a row whenever a real miss or false hint shows up in the misfire log.",
   "rows": [
     {
       "q": "the login test keeps failing after my change",
@@ -144,6 +144,284 @@
     {
       "q": "create a new react component for the footer",
       "none": true
+    },
+    {
+      "q": "the app throws an exception when I upload a png",
+      "want": [
+        "debug-protocol"
+      ]
+    },
+    {
+      "q": "getting a traceback from the migration script",
+      "want": [
+        "debug-protocol"
+      ],
+      "allow": [
+        "plan-first"
+      ],
+      "knownFalse": [
+        "cli-writer"
+      ]
+    },
+    {
+      "q": "it is not working since the last deploy",
+      "want": [
+        "debug-protocol"
+      ]
+    },
+    {
+      "q": "overhaul the data layer and migrate every query",
+      "want": [
+        "plan-first"
+      ]
+    },
+    {
+      "q": "rewrite the router, it touches multiple files",
+      "want": [
+        "plan-first"
+      ]
+    },
+    {
+      "q": "tidy up the stylesheet, it is messy",
+      "want": [
+        "intent-capture"
+      ]
+    },
+    {
+      "q": "polish the landing page a bit",
+      "want": [
+        "intent-capture"
+      ],
+      "allow": [
+        "ui-design"
+      ]
+    },
+    {
+      "q": "how many tokens did that last task cost",
+      "want": [
+        "session-budget"
+      ]
+    },
+    {
+      "q": "i am worried about the budget for this session",
+      "want": [
+        "session-budget"
+      ]
+    },
+    {
+      "q": "add end-to-end tests with playwright for login",
+      "want": [
+        "e2e-scaffold"
+      ]
+    },
+    {
+      "q": "the lighthouse score dropped, the bundle got bigger",
+      "want": [
+        "perf-audit"
+      ]
+    },
+    {
+      "q": "page weight is over 3mb, check it",
+      "want": [
+        "perf-audit"
+      ]
+    },
+    {
+      "q": "test the breakpoints on a small viewport",
+      "want": [
+        "responsive-check"
+      ]
+    },
+    {
+      "q": "there is a merge conflict in package.json after the rebase",
+      "want": [
+        "resolve-conflicts"
+      ]
+    },
+    {
+      "q": "cherry-pick that fix onto the release branch",
+      "want": [
+        "resolve-conflicts"
+      ],
+      "allow": [
+        "version-bump"
+      ]
+    },
+    {
+      "q": "please bump the patch version and add a changelog entry",
+      "want": [
+        "version-bump"
+      ]
+    },
+    {
+      "q": "we are about to cut a release",
+      "want": [
+        "version-bump"
+      ]
+    },
+    {
+      "q": "run a code audit on the whole project",
+      "want": [
+        "code-audit"
+      ]
+    },
+    {
+      "q": "do a security review of the api, look at the attack surface",
+      "want": [
+        "security-audit"
+      ]
+    },
+    {
+      "q": "any known vulnerabilities in the auth flow, run a pentest style pass",
+      "want": [
+        "security-audit"
+      ]
+    },
+    {
+      "q": "prune memory, the learnings.md is huge",
+      "want": [
+        "memory-gardener"
+      ]
+    },
+    {
+      "q": "convert the hero images to webp and avif",
+      "want": [
+        "optimize-assets"
+      ]
+    },
+    {
+      "q": "the image size on the homepage is heavy assets mostly",
+      "want": [
+        "optimize-assets"
+      ]
+    },
+    {
+      "q": "draw a diagram of the system",
+      "want": [
+        "diagram"
+      ]
+    },
+    {
+      "q": "i want an architecture diagram for the readme",
+      "want": [
+        "diagram"
+      ],
+      "allow": [
+        "readme-writer"
+      ]
+    },
+    {
+      "q": "check the staged changes before i commit",
+      "want": [
+        "pre-commit"
+      ]
+    },
+    {
+      "q": "stop tracking the dist folder in git",
+      "want": [
+        "untrack"
+      ]
+    },
+    {
+      "q": "import the figma export into the design docs",
+      "want": [
+        "project-context"
+      ],
+      "allow": [
+        "ui-design"
+      ]
+    },
+    {
+      "q": "add a slow fade-in animation to the hero",
+      "want": [],
+      "allow": [
+        "ux-theory"
+      ],
+      "knownFalse": [
+        "perf-audit"
+      ]
+    },
+    {
+      "q": "write the release notes copy for the website",
+      "want": [],
+      "knownFalse": [
+        "version-bump"
+      ]
+    },
+    {
+      "q": "we need a bundle of three icons for the toolbar",
+      "want": [],
+      "knownFalse": [
+        "perf-audit"
+      ]
+    },
+    {
+      "q": "the cost column in the pricing table needs a currency symbol",
+      "want": [],
+      "knownFalse": [
+        "session-budget"
+      ]
+    },
+    {
+      "q": "improve the contrast of the footer links",
+      "want": [],
+      "knownFalse": [
+        "intent-capture"
+      ]
+    },
+    {
+      "q": "draw a rounded rectangle in the canvas component",
+      "want": []
+    },
+    {
+      "q": "what is a merge sort",
+      "want": [],
+      "knownFalse": [
+        "resolve-conflicts"
+      ]
+    },
+    {
+      "q": "add an option to export the table as csv",
+      "want": []
+    },
+    {
+      "q": "the polish translation file is missing two keys",
+      "want": [],
+      "knownFalse": [
+        "intent-capture"
+      ]
+    },
+    {
+      "q": "set the viewport meta tag in the layout",
+      "want": [],
+      "allow": [
+        "responsive-check"
+      ],
+      "knownFalse": [
+        "ui-design"
+      ]
+    },
+    {
+      "q": "explain what a token is in jwt",
+      "want": [],
+      "knownFalse": [
+        "session-budget"
+      ]
+    },
+    {
+      "q": "rename the audit page route to activity",
+      "want": [],
+      "knownFalse": [
+        "code-audit"
+      ]
+    },
+    {
+      "q": "remove the unused import in app.js",
+      "want": []
+    },
+    {
+      "q": "add a diagram icon to the sidebar",
+      "want": []
     }
   ]
 }

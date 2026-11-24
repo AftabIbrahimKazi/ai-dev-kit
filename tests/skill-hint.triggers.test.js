@@ -12,13 +12,18 @@ const scope = JSON.parse(fs.readFileSync(path.join(__dirname, '../skills/meta/sk
 const rules = mergeRules(DEFAULT_RULES, scope);
 const { rows } = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/skill-triggers.json'), 'utf8'));
 
-let wanted = 0, hit = 0; const misses = [], falses = [];
+let wanted = 0, hit = 0, known = 0; const misses = [], falses = [], stale = [];
 for (const r of rows) {
   const got = matchSkills(r.q, rules);
   for (const w of r.want || []) { wanted++; if (got.includes(w)) hit++; else misses.push(`MISS  "${r.q}" wanted ${w}, got [${got}]`); }
-  for (const g of got) if (!(r.want || []).includes(g)) falses.push(`FALSE "${r.q}" hinted ${g}`);
+  for (const g of got) {
+    if ((r.want || []).includes(g) || (r.allow || []).includes(g)) continue;
+    if ((r.knownFalse || []).includes(g)) { known++; continue; }
+    falses.push(`FALSE "${r.q}" hinted ${g}`);
+  }
+  for (const k of r.knownFalse || []) if (!got.includes(k)) stale.push(`STALE "${r.q}": ${k} no longer fires, remove it from knownFalse`);
 }
-console.log(`recall ${hit}/${wanted}, false hints ${falses.length}`);
-[...misses, ...falses].forEach((l) => console.log('  ' + l));
-try { assert.strictEqual(misses.length, 0, 'missed hints'); assert.strictEqual(falses.length, 0, 'false hints'); console.log('ok   skill-hint triggers'); }
+console.log(`${rows.length} rows: recall ${hit}/${wanted}, new false hints ${falses.length}, known false hints ${known}`);
+[...misses, ...falses, ...stale].forEach((l) => console.log('  ' + l));
+try { assert.strictEqual(misses.length, 0, 'missed hints'); assert.strictEqual(falses.length, 0, 'false hints'); assert.strictEqual(stale.length, 0, 'stale knownFalse entries'); console.log('ok   skill-hint triggers'); }
 catch (e) { console.log('FAIL ' + e.message); process.exitCode = 1; }

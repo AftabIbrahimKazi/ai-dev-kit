@@ -9,7 +9,9 @@
 // Exit 0: asked and answered (no lines = nothing applies). Exit 2: Laya unavailable (not running, timed out, hosted
 // provider configured). The caller counts exit 2 and stops asking for the session.
 //
-// Measured 2026-11-24 on 14 paraphrases with no keyword in them: keywords 0/14, this 14/14, 0 false hints on 14 other
+// Thresholds from tests/skill-scope.semantic.eval.js (hand-written fixture, 2026-11-24; tuned on it, so read the numbers as
+// optimistic): debug-protocol 0.5 = recall 24/26, false 0/52; plan-first 0.25 = recall 14/16, false 3/65 (0.4 gave 12/16).
+// Earlier probe: 14 paraphrases with no keyword in them: keywords 0/14, this 14/14, 0 false hints on 14 other
 // prompts. intent-capture was tried and dropped: the model cannot tell a vague request from a specific one (scores
 // 0.11-0.19 for vague, up to 0.25 for specific).
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -19,7 +21,7 @@ exports.pick = pick;
 exports.ask = ask;
 exports.SEMANTIC = {
     'debug-protocol': { q: 'Is something failing or misbehaving with an unknown cause (a bug, error, crash, regression, failing test or failing build)?', t: 0.5 },
-    'plan-first': { q: 'Does this task span three or more files or have several deliverables, so it needs a plan before any edit?', t: 0.4 },
+    'plan-first': { q: 'Does this task span three or more files or have several deliverables, so it needs a plan before any edit?', t: 0.25 },
 };
 // A loopback base URL or null. A configured hosted key means "not Laya": never touch it from here.
 function resolveBase(env) {
