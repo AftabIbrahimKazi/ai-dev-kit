@@ -6,6 +6,7 @@
 //   node kit.js [situation words...]   best command for the situation, or the table when none is given
 //   node kit.js --json [words...]      the same as one JSON document
 //   node kit.js --list                 the table
+//   node kit.js role [name]            load only that job role's skills (archives the other per-session ones); no name lists the roles
 //
 // Scoring: each keyword that appears in the situation (whole word, plural s/es allowed, or a phrase) adds its length, so a
 // specific phrase beats a loose word. A tie keeps the table order. No match prints the table and says so.
@@ -15,6 +16,9 @@ exports.ROWS = void 0;
 exports.score = score;
 exports.best = best;
 exports.table = table;
+const fs = require("node:fs");
+const path = require("node:path");
+const node_child_process_1 = require("node:child_process");
 exports.ROWS = [
     { situation: 'Health check of the whole project', use: '`/audit` (optional: `--standard css,html`, a path)', keys: ['audit', 'health check', 'standards', 'lint the project', 'violations', 'code quality'] },
     { situation: 'About to commit', use: '`/commit-check` (optional: `--message "feat: x"`)', keys: ['commit', 'before commit', 'staged', 'stage', 'ready to commit', 'secrets in'] },
@@ -53,6 +57,7 @@ exports.ROWS = [
     { situation: 'Change how answers are worded for your skill level', use: '`/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on)', keys: ['persona', 'wording', 'skill level', 'novice', 'tone', 'personality'] },
     { situation: 'Change how answers are shaped', use: '`/format table|bullets|oneline|bool` (`/format reset` for the default)', keys: ['format', 'answer shape', 'as a table', 'bullets', 'one line', 'shorter answers'] },
     { situation: 'Will the local models and media add-ons run on this machine', use: '`/device` (optional: `--preset lite|standard|full`, `--json`); read-only, downloads nothing', keys: ['device', 'my machine', 'hardware', 'gpu check', 'ram', 'disk space', 'what can i install', 'preset', 'first run'] },
+    { situation: "Load only one job role's skills (frontend, backend, seo, devops, qa...)", use: '`/kit role <name>` (no name lists the roles); `/role <name>` adds without archiving the rest', keys: ['role', 'job role', 'only the skills for', 'load only', 'frontend dev', 'backend dev'] },
     { situation: 'Set up or update a project', use: 'run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean', keys: ['install', 'set up the kit', 'setup', 'update the kit', 'install-kit', 'new project'] },
 ];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -75,8 +80,23 @@ function best(text) {
 function table() {
     return ['| Situation | Use |', '|---|---|', ...exports.ROWS.map((r) => `| ${r.situation} | ${r.use} |`)].join('\n');
 }
+// /kit role <name>: hands off to role.js, which restores the role's skills and archives the other per-session ones.
+function roleMain(rest) {
+    const file = path.join(__dirname, fs.existsSync(path.join(__dirname, 'role.js')) ? 'role.js' : 'skill-scope.role.js');
+    const name = rest.find((x) => !x.startsWith('--'));
+    const r = (0, node_child_process_1.spawnSync)(process.execPath, name ? [file, 'apply', name, '--only'] : [file, 'list'], { encoding: 'utf8' });
+    if (r.stdout)
+        process.stdout.write(r.stdout);
+    if (r.stderr)
+        process.stderr.write(r.stderr);
+    process.exitCode = r.status ?? 1;
+}
 function main() {
     const a = process.argv.slice(2);
+    if (a[0] === 'role') {
+        roleMain(a.slice(1));
+        return;
+    }
     const json = a.includes('--json');
     if (a.some((x) => x.startsWith('--') && x !== '--json' && x !== '--list')) {
         console.error('usage: kit.js [--json] [--list] [situation words...]');

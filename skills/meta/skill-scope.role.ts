@@ -4,7 +4,8 @@
 //   node skill-scope.role.js list
 //   node skill-scope.role.js show <role>
 //   node skill-scope.role.js resolve [--skills a,b] [--archived c] <prompt words...>
-//   node skill-scope.role.js apply <role>      (you chose the role: restores its archived skills, then prints the line)
+//   node skill-scope.role.js apply <role> [--only]   (you chose the role: restores its archived skills, then prints the line;
+//                                                    --only also archives every other per-session skill, so just the role stays loaded)
 //
 // resolve prints one line when a role is named outright ("as a frontend dev", "role: seo", "/role devops") or inferred from the
 // prompt (2 distinct signal words and a lead over the next role), and prints nothing otherwise. --skills limits the line to
@@ -111,17 +112,18 @@ function main(argv: string[]): number {
       return 0;
     }
     if (cmd === 'apply') {
-      const id = rest[0];
+      const id = rest.find((x) => !x.startsWith('--'));
+      const only = rest.includes('--only');
       if (!id || !rf.roles[id]) { console.error('error: unknown role "' + (id ?? '') + '". Run: node skill-scope/role.js list'); return 2; }
       const l = loadout(id, rf);
       const auto = path.join(__dirname, fs.existsSync(path.join(__dirname, 'auto.js')) ? 'auto.js' : 'skill-scope.auto.js');
-      const r = spawnSync(process.execPath, [auto, 'apply', '--add-only', '--quiet', '--keep', l.skills.join(',')], { encoding: 'utf8' });
+      const r = spawnSync(process.execPath, [auto, 'apply', ...(only ? [] : ['--add-only']), '--quiet', '--keep', l.skills.join(',')], { encoding: 'utf8' });
       if (r.status !== 0) { console.error('error: restoring skills failed: ' + String(r.stderr || r.stdout).trim()); return 1; }
       if (String(r.stdout).trim()) console.log(String(r.stdout).trim());
       console.log(line({ id, how: 'named', hits: [] }, rf));
       return 0;
     }
-    console.error('usage: role.js list | show <role> | apply <role> | resolve [--skills a,b] [--archived c] <prompt words...>');
+    console.error('usage: role.js list | show <role> | apply <role> [--only] | resolve [--skills a,b] [--archived c] <prompt words...>');
     return 2;
   } catch (e) {
     console.error('error: ' + (e instanceof Error ? e.message : String(e)));

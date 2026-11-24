@@ -5,10 +5,15 @@
 //   node kit.js [situation words...]   best command for the situation, or the table when none is given
 //   node kit.js --json [words...]      the same as one JSON document
 //   node kit.js --list                 the table
+//   node kit.js role [name]            load only that job role's skills (archives the other per-session ones); no name lists the roles
 //
 // Scoring: each keyword that appears in the situation (whole word, plural s/es allowed, or a phrase) adds its length, so a
 // specific phrase beats a loose word. A tie keeps the table order. No match prints the table and says so.
 // Exit codes: 0 done, 2 bad usage.
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 export interface Row { situation: string; use: string; keys: string[] }
 
@@ -50,6 +55,7 @@ export const ROWS: Row[] = [
   { situation: 'Change how answers are worded for your skill level', use: '`/persona set female|male novice|mid|pro`, `/persona off` (opt-in `personality` add-on)', keys: ['persona', 'wording', 'skill level', 'novice', 'tone', 'personality'] },
   { situation: 'Change how answers are shaped', use: '`/format table|bullets|oneline|bool` (`/format reset` for the default)', keys: ['format', 'answer shape', 'as a table', 'bullets', 'one line', 'shorter answers'] },
   { situation: 'Will the local models and media add-ons run on this machine', use: '`/device` (optional: `--preset lite|standard|full`, `--json`); read-only, downloads nothing', keys: ['device', 'my machine', 'hardware', 'gpu check', 'ram', 'disk space', 'what can i install', 'preset', 'first run'] },
+  { situation: "Load only one job role's skills (frontend, backend, seo, devops, qa...)", use: '`/kit role <name>` (no name lists the roles); `/role <name>` adds without archiving the rest', keys: ['role', 'job role', 'only the skills for', 'load only', 'frontend dev', 'backend dev'] },
   { situation: 'Set up or update a project', use: 'run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean', keys: ['install', 'set up the kit', 'setup', 'update the kit', 'install-kit', 'new project'] },
 ];
 
@@ -71,8 +77,19 @@ export function table(): string {
   return ['| Situation | Use |', '|---|---|', ...ROWS.map((r) => `| ${r.situation} | ${r.use} |`)].join('\n');
 }
 
+// /kit role <name>: hands off to role.js, which restores the role's skills and archives the other per-session ones.
+function roleMain(rest: string[]): void {
+  const file = path.join(__dirname, fs.existsSync(path.join(__dirname, 'role.js')) ? 'role.js' : 'skill-scope.role.js');
+  const name = rest.find((x) => !x.startsWith('--'));
+  const r = spawnSync(process.execPath, name ? [file, 'apply', name, '--only'] : [file, 'list'], { encoding: 'utf8' });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  process.exitCode = r.status ?? 1;
+}
+
 function main(): void {
   const a = process.argv.slice(2);
+  if (a[0] === 'role') { roleMain(a.slice(1)); return; }
   const json = a.includes('--json');
   if (a.some((x) => x.startsWith('--') && x !== '--json' && x !== '--list')) { console.error('usage: kit.js [--json] [--list] [situation words...]'); process.exitCode = 2; return; }
   const words = a.filter((x) => !x.startsWith('--')).join(' ').trim();
