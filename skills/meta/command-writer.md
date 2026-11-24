@@ -67,12 +67,11 @@ allowed-tools: Bash(node:*)
 4. Install into a scratch project with `install-kit` and type the command in a real session. Report which tool you ran it in. Claude Code and OpenCode load the template differently.
 
 ## Review checklist
+Run `node <kit>/skills/meta/skill-writer.lint.js --strict` first (add `--only skills|commands|mods`); it checks the items marked (lint) and prints only problems. Tick the rest by hand.
 - [ ] Step 0 says a command is the right tool
-- [ ] Frontmatter has `description` (under ~12 words) and `disable-model-invocation: true`
-- [ ] `allowed-tools` is one scoped pattern, or absent when there is no `!` line
-- [ ] No real paths; `{{skill-root}}` and `$ARGUMENTS` only
+- [ ] Frontmatter, `allowed-tools`, real paths, output cap (lint)
 - [ ] Script is plain JS with no npm dependencies and has `--dry-run` if it writes
-- [ ] Output has a stated cap; no commit, push, tag or delete without an explicit ask
+- [ ] No commit, push, tag or delete without an explicit ask (lint: writes)
 - [ ] No name collision with a skill or another command
 - [ ] Registered in `install-kit.md`, `kit.md`, both READMEs and `CHANGELOG.md`
 - [ ] Tested on the exact injected line, not only the script alone

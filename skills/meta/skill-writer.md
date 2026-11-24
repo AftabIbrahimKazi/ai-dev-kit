@@ -59,12 +59,13 @@ A beautiful skill with a vague description is dead weight — it never loads.
 - **The self-improvement loop is mandatory:** read `learnings.md` at start, append one dated, concrete, mergeable bullet at end. This is what makes the library compound.
 
 ## Review checklist (for existing skills)
-- [ ] Description opens with `Use whenever …` (situations in the user's words) and carries a `Load this BEFORE …` instruction
+Run `node <kit>/skills/meta/skill-writer.lint.js --strict` first (add `--only skills|commands|mods`); it checks the items marked (lint) and prints only problems. Tick the rest by hand.
+- [ ] Description, name and line cap (lint)
 - [ ] Every rule checkable; thresholds numeric
 - [ ] No project-specific hardcoding
 - [ ] Self-improvement loop present
 - [ ] Tool-specific mechanism? → has `compat: <tool>-only` in frontmatter + the bold dependency line, and any rule it assists still works without it
-- [ ] Under ~120 lines; no section that merely restates another
+- [ ] No section that merely restates another
 - [ ] Names follow CONTRIBUTING.md "File and folder names" (skill name 24 characters or fewer, file names 30 or fewer, 3+ `.md` companions in a folder); `node tests/naming.test.js` passes
 - [ ] Facts (APIs, prices, versions) verified against current docs, not memory — stale facts are worse than none
 - [ ] Renaming or merging a skill? Add a row to `migrations/RENAMES.md` (repo root) in the same change and update every cross-reference (grep the whole library for the old name) — a rename without a ledger row strands existing installs

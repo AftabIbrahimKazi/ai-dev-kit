@@ -68,8 +68,9 @@ mods/<name>/
 6. The VS Code chat panel is not covered by `-p`. Say so in the report until the user confirms it there.
 
 ## Review checklist
+Run `node <kit>/skills/meta/skill-writer.lint.js --strict` first (add `--only skills|commands|mods`); it checks the items marked (lint) and prints only problems. Tick the rest by hand.
 - [ ] Step 0 says a mod is the right tool
-- [ ] Observers fail open; any gate says it fails closed
+- [ ] Observers fail open; any gate says it fails closed (lint: both shell tools, no `$` destructuring, no `handover/` writes)
 - [ ] No network beyond a stated loopback-only exception (host checked in code, not just the env var); no secrets; no writes under `handover/`; nothing reads `handover/locks.d/`
 - [ ] `validate` passes; `calls:` lines match the intent
 - [ ] Tests cover the happy path, a failing host call, and "engine missing"
