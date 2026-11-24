@@ -96,6 +96,20 @@ t('install with a companion filter installs only the chosen companion', () => {
   assert.ok(!fs.existsSync(path.join(target, '.claude/skills/personality/personas')));
 });
 
+t('a companion filter on mcp-manager still installs its config writer, plus only the chosen server file', () => {
+  const lib = makeLibrary();
+  write(lib, 'skills/mcp/mcp-manager.md', '---\nname: mcp-manager\n---\n# mcp-manager\n');
+  write(lib, 'skills/mcp/mcp-manager.config.js', '// config\n');
+  write(lib, 'skills/mcp/mcp-manager.stitch.md', '# stitch\n');
+  write(lib, 'skills/mcp/mcp-manager.image-gen.md', '# image-gen\n');
+  const target = tmp();
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['mcp-manager:stitch'] });
+  const dir = path.join(target, '.claude/skills/mcp-manager');
+  assert.ok(fs.existsSync(path.join(dir, 'config.js')));
+  assert.ok(fs.existsSync(path.join(dir, 'stitch.md')));
+  assert.ok(!fs.existsSync(path.join(dir, 'image-gen.md')));
+});
+
 t('install with --standards copies coding-standards and creates a filled session-protocol file', () => {
   const lib = makeLibrary();
   const target = tmp();

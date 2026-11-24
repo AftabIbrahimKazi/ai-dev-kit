@@ -304,6 +304,9 @@ function parseSkillToken(token: string): ParsedToken {
   return { name: name.trim(), only };
 }
 
+// Companions that always install with their skill, even when a companion filter names only some (mcp-manager:stitch).
+const CORE_COMPANIONS: Record<string, string[]> = { 'mcp-manager': ['config'] };
+
 function companionStem(targetName: string): string {
   // "install-hook.js" -> "install-hook"; "roles.example.json" -> "roles.example"
   const dot = targetName.lastIndexOf('.');
@@ -438,7 +441,8 @@ export function installOneSkill(libraryRoot: string, absSkillRoot: string, catal
     changed = true;
   }
 
-  const companions = only ? entry.companions.filter((c) => only.has(companionStem(c.target))) : entry.companions;
+  const core = CORE_COMPANIONS[name] ?? [];
+  const companions = only ? entry.companions.filter((c) => only.has(companionStem(c.target)) || core.includes(companionStem(c.target))) : entry.companions;
   for (const c of companions) {
     const src = path.join(libraryRoot, 'skills', entry.dir, c.src);
     const dest = path.join(destDir, c.target);
