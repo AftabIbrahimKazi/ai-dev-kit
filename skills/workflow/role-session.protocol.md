@@ -19,11 +19,11 @@ Prose rules like "re-read the file, then write your row" are check-then-act and 
 
 **Session id.** At boot generate `<tool>-<4 hex>` (`claude-a3f9`, `opencode-07c2`), tell the dev, and stamp it on every claim, board row, and handover header. It is how a returning session recognises its own rows and how a takeover names whom it displaced.
 
-**Claim.** `mkdir handover/locks.d/<key>` — plain `mkdir` with no `-p`/`-Force`/`-ErrorAction` (works the same in bash and PowerShell; the parent `locks.d/` already exists). Success = you hold it. Failure ("already exists") = another session holds it: read its `owner`, do not proceed. Immediately after success write `handover/locks.d/<key>/owner` containing `session | role | task | status | claimed-timestamp`.
+**Claim.** `mkdir handover/locks.d/<key>` — plain `mkdir`, no `-p`/`-Force`. Success = you hold it; "already exists" = another session holds it, read its `owner`, do not proceed. Then write `<key>/owner`: `session | role | task | status | claimed-timestamp`. `role-session/claim.js` does all of this (use it; this section is the spec it implements and the manual fallback).
 
 **Key.** Encode the repo-relative path so the mapping is injective: replace `%` with `%25`, `_` with `%5F`, `@` with `%40`, then every `/` or `\` with `__` (`src/a/b.js` → `src__a__b.js`; `src/my_file.js` → `src__my%5Ffile.js`). After encoding, a raw `__` can only be a separator, so two distinct paths never share a key. **Reserved keys** live in their own namespace, prefixed `@` — which encoded file keys never start with: `@git` (commit token), `@role__<role>` (role ownership; one live session per role), `@memory-bank-index` (shared bank index — it **is** the one claim key for `memory-bank/INDEX.md`; that file is never also claimed under its encoded path). A reserved key is claimed by its reserved name only, never via the path rule, so a shared file never has two keys. A file path can never produce a reserved key. This is the only definition of the key scheme; other files reference it.
 
-**Release.** Delete the `owner` file, then the directory (`rmdir` / `Remove-Item`). Update status in place by rewriting your own `owner`.
+**Release.** Delete `owner`, then the directory. Update status by rewriting your own `owner`.
 
 **Multi-file claims:** take all keys before the first edit; if any `mkdir` fails, release the ones you took and report who holds the blocker. A directory with no `owner` file (a session died between the two steps) is a suspect claim — treat per §3.
 
@@ -79,7 +79,7 @@ If the session then dies abruptly, the note is at most one step stale, and Rule 
 
 Every claim's `owner` file carries a `claimed` timestamp and the owning session id. Locks normally live until task completion — but a dead session can strand them.
 
-- A lock is **suspect** when it has been claimed for an unusually long time relative to its task (hours-to-days with no matching progress, not minutes) **and** the corresponding `board.md` row shows no update over that period.
+- A lock is **suspect** when it has been claimed for hours-to-days with no matching progress **and** its `board.md` row shows no update over that period. `claim.js list` flags claims over 8 hours old (`--stale-hours N`) and claims with no `owner` file; it only reports, the takeover decision stays yours and the dev's.
 - A new session **may treat a suspect lock as abandoned** and take over the file/task — but **must log the decision** rather than silently seizing it. Record, in the board row and in the rewritten `owner` file, something like: `takeover: claim from <old-session> (<role>) claimed <timestamp> presumed abandoned, taken by <new-session> <timestamp>`.
 - The log is mandatory so that if the original owner's session comes back, they can recognise their old session id in the log and see exactly what happened instead of finding their claims mysteriously gone.
 - When in doubt — the dev is watching; asking beats seizing.
