@@ -941,3 +941,35 @@ t('--active-standards all keeps every standards row, a list keeps only those, no
   assert.strictEqual(all, dflt, 'all is the default');
   assert.ok(all > css && css > none, [all, css, none].join(' > '));
 });
+
+t('batchMod reads enabledPlugins: on, explicitly off, and missing', () => {
+  const { batchMod } = require('../skills/meta/install-kit.cli.js');
+  const cfg = tmp(), root = tmp(), old = process.env.CLAUDE_CONFIG_DIR;
+  process.env.CLAUDE_CONFIG_DIR = cfg;
+  try {
+    assert.strictEqual(batchMod(root, null, false).enabled, false);
+    write(root, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'batch@ai-dev-kit-mods': false } }));
+    assert.strictEqual(batchMod(root, null, false).enabled, false);
+    write(root, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'batch@ai-dev-kit-mods': true } }));
+    const on = batchMod(root, null, false);
+    assert.strictEqual(on.enabled, true);
+    assert.match(on.warning, /session-budget/);
+    assert.strictEqual(batchMod(root, null, true).warning, undefined);
+    write(root, '.claude/settings.json', JSON.stringify({ model: 'x' }));
+    assert.strictEqual(batchMod(root, null, false).enabled, false);
+  } finally { if (old === undefined) delete process.env.CLAUDE_CONFIG_DIR; else process.env.CLAUDE_CONFIG_DIR = old; }
+});
+
+t('parseChangelog keeps a 160-character headline whole and shortens a 161-character one', () => {
+  const { parseChangelog } = require('../skills/meta/install-kit.cli.js');
+  const mk = (n) => '## 2026-11-03\n\n### Added\n\n- ' + 'a'.repeat(n) + '\n';
+  assert.strictEqual(parseChangelog(mk(160))[0].headline, 'a'.repeat(160));
+  assert.strictEqual(parseChangelog(mk(161))[0].headline, 'a'.repeat(157) + '...');
+});
+
+t('comment-style installs untouched when no level is given and no copy exists', () => {
+  const lib = commandsLibrary(), target = tmp();
+  write(lib, 'skills/standards/comment-style.md', '---\nname: comment-style\n---\n# comment-style\n**Active level: none**\n');
+  doInstall({ library: lib, root: target, tool: 'claude', skills: ['comment-style'] });
+  assert.match(fs.readFileSync(path.join(target, '.claude/skills/comment-style/SKILL.md'), 'utf8'), /Active level: none/);
+});

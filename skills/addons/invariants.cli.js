@@ -35,7 +35,9 @@ function parseArgs(argv) {
         const key = a.slice(2);
         if (key === 'json')
             flags.json = true;
-        else if (key === 'file' || key === 'id' || key === 'target' || key === 'max') {
+        else if (key === 'count')
+            flags.count = true;
+        else if (key === 'file' || key === 'id' || key === 'target' || key === 'max' || key === 'slice') {
             const v = rest[++i];
             if (v === undefined)
                 throw new Error('--' + key + ' needs a value');
@@ -204,11 +206,11 @@ function genMutants(src) {
     });
     return out.sort((a, b) => a.start - b.start);
 }
-function probeFile(rel, rules, root, max, ignore) {
+function probeFile(rel, rules, root, max, ignore, slice = [0, 1], countOnly = false) {
     const target = path.resolve(root, rel);
     const mine = rules.filter(r => r.covers.some(c => path.resolve(root, c) === target));
     const res = { file: rel, baselineOk: true, total: 0, killed: 0, invalid: 0, ignored: 0, survivors: [] };
-    if (mine.some(r => runCheck(r.check, root) !== 0)) {
+    if (!countOnly && mine.some(r => runCheck(r.check, root) !== 0)) {
         res.baselineOk = false;
         return res;
     }
@@ -216,7 +218,11 @@ function probeFile(rel, rules, root, max, ignore) {
     let all = genMutants(original);
     if (all.length > max)
         all = Array.from({ length: max }, (_, i) => all[Math.floor(i * all.length / max)]);
+    if (slice[1] > 1)
+        all = all.filter((_, i) => i % slice[1] === slice[0]);
     res.total = all.length;
+    if (countOnly)
+        return res;
     const bak = target + '.invariants-bak'; // survives a forced kill (Windows skips signal handlers); the next run restores it
     fs.writeFileSync(bak, original);
     const restore = () => { fs.writeFileSync(target, original); try {
@@ -258,11 +264,14 @@ function probe(rules, root, flags) {
     let files = [...new Set(rules.flatMap(r => r.covers).filter(c => /\.(c|m)?js$/.test(c)))];
     if (typeof flags.target === 'string')
         files = files.filter(f => path.resolve(root, f) === path.resolve(root, flags.target));
+    const slice = typeof flags.slice === 'string' ? flags.slice.split('/').map(Number) : [0, 1];
+    if (slice.length !== 2 || !Number.isInteger(slice[0]) || !Number.isInteger(slice[1]) || slice[1] < 1 || slice[0] < 0 || slice[0] >= slice[1])
+        throw new Error('--slice must look like 0/4');
     let ignore = new Set();
     const ig = path.join(root, 'invariants/probe-ignore.json');
     if (fs.existsSync(ig))
         ignore = new Set(JSON.parse(fs.readFileSync(ig, 'utf8')));
-    const out = files.map(f => probeFile(f, rules, root, max, ignore));
+    const out = files.map(f => probeFile(f, rules, root, max, ignore, slice, flags.count === true));
     return { out, bad: out.some(f => !f.baselineOk || f.survivors.length > 0) };
 }
 function printProbe(out, json) {

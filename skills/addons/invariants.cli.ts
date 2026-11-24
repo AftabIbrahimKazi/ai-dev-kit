@@ -38,7 +38,8 @@ function parseArgs(argv: string[]): { cmd: string; flags: Record<string, string 
 		if (!a.startsWith('--')) throw new Error('unexpected argument: ' + a);
 		const key = a.slice(2);
 		if (key === 'json') flags.json = true;
-		else if (key === 'file' || key === 'id' || key === 'target' || key === 'max') {
+		else if (key === 'count') flags.count = true;
+		else if (key === 'file' || key === 'id' || key === 'target' || key === 'max' || key === 'slice') {
 			const v = rest[++i];
 			if (v === undefined) throw new Error('--' + key + ' needs a value');
 			flags[key] = v;
@@ -176,15 +177,17 @@ function genMutants(src: string): Mutant[] {
 	return out.sort((a, b) => a.start - b.start);
 }
 
-function probeFile(rel: string, rules: Rule[], root: string, max: number, ignore: Set<string>): ProbeFile {
+function probeFile(rel: string, rules: Rule[], root: string, max: number, ignore: Set<string>, slice: number[] = [0, 1], countOnly = false): ProbeFile {
 	const target = path.resolve(root, rel);
 	const mine = rules.filter(r => r.covers.some(c => path.resolve(root, c) === target));
 	const res: ProbeFile = { file: rel, baselineOk: true, total: 0, killed: 0, invalid: 0, ignored: 0, survivors: [] };
-	if (mine.some(r => runCheck(r.check, root) !== 0)) { res.baselineOk = false; return res; }
+	if (!countOnly && mine.some(r => runCheck(r.check, root) !== 0)) { res.baselineOk = false; return res; }
 	const original = fs.readFileSync(target, 'utf8');
 	let all = genMutants(original);
 	if (all.length > max) all = Array.from({ length: max }, (_, i) => all[Math.floor(i * all.length / max)]);
+	if (slice[1] > 1) all = all.filter((_, i) => i % slice[1] === slice[0]);
 	res.total = all.length;
+	if (countOnly) return res;
 	const bak = target + '.invariants-bak'; // survives a forced kill (Windows skips signal handlers); the next run restores it
 	fs.writeFileSync(bak, original);
 	const restore = () => { fs.writeFileSync(target, original); try { fs.unlinkSync(bak); } catch { /* already gone */ } };
@@ -212,10 +215,12 @@ function probe(rules: Rule[], root: string, flags: Record<string, string | boole
 	if (!Number.isInteger(max) || max < 1) throw new Error('--max must be a whole number of 1 or more');
 	let files = [...new Set(rules.flatMap(r => r.covers).filter(c => /\.(c|m)?js$/.test(c)))];
 	if (typeof flags.target === 'string') files = files.filter(f => path.resolve(root, f) === path.resolve(root, flags.target as string));
+	const slice = typeof flags.slice === 'string' ? flags.slice.split('/').map(Number) : [0, 1];
+	if (slice.length !== 2 || !Number.isInteger(slice[0]) || !Number.isInteger(slice[1]) || slice[1] < 1 || slice[0] < 0 || slice[0] >= slice[1]) throw new Error('--slice must look like 0/4');
 	let ignore = new Set<string>();
 	const ig = path.join(root, 'invariants/probe-ignore.json');
 	if (fs.existsSync(ig)) ignore = new Set(JSON.parse(fs.readFileSync(ig, 'utf8')) as string[]);
-	const out = files.map(f => probeFile(f, rules, root, max, ignore));
+	const out = files.map(f => probeFile(f, rules, root, max, ignore, slice, flags.count === true));
 	return { out, bad: out.some(f => !f.baselineOk || f.survivors.length > 0) };
 }
 
