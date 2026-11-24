@@ -68,10 +68,10 @@ export const KIT_MODULES: readonly KitModule[] = [
   {
     slug: "add-ons",
     name: "Add-ons",
-    summary: "Opt-in extras: reply personas, read-aloud, project docs, the prefilter, diagrams, a legacy-web scan, a Kaggle GPU executor, a media job planner and 3D simulators.",
+    summary: "Opt-in extras: reply personas, read-aloud, project docs, the prefilter, diagrams, a legacy-web scan, a Kaggle GPU executor, a media job planner, 3D simulators and rules proven able to fail.",
     metaDescription: "Opt-in AI Dev Kit extras: reply personas, read-aloud, project docs, the prefilter, diagrams and 3D simulators. Install only the ones you need.",
     source: "kit repository skills/addons/ and extensions/ folders",
-    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "figma-code", "modern-web", "kaggle", "media-harness", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
+    parts: ["personality", "narrate", "project-context", "system1-prefilter", "diagram", "figma-code", "modern-web", "kaggle", "media-harness", "invariants", "teardown", "teardown-film", "teardown-sound", "narrate-buttons"],
   },
   {
     slug: "libraries",

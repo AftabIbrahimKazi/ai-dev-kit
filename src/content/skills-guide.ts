@@ -155,7 +155,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
       },
       {
         name: "pre-merge-gate",
-        does: "Checks a diff against the loaded standards before handoff or commit. A companion script runs the mechanical checks.",
+        does: "Checks a diff against the loaded standards before handoff or commit. A companion script runs the mechanical checks, and a scope script says which areas of the change need a reviewer.",
         when: "A change is about to be called done, ready for review, handed off or committed.",
         mode: "auto",
         you: "Nothing.",
@@ -211,7 +211,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
       },
       {
         name: "role-session",
-        does: "A lane protocol for parallel sessions: role charters, atomic file claims, a git token and session ids.",
+        does: "A lane protocol for parallel sessions: role charters, atomic file claims, a git token and session ids. A claim script takes, lists and releases them.",
         when: "A role is assigned, or a handover board or locks folder exists.",
         mode: "auto",
         you: "Assign the role.",
@@ -259,7 +259,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
       },
       {
         name: "code-audit",
-        does: "A project-wide audit of the script-checkable rules. A script counts violations by rule and lists file and line.",
+        does: "A project-wide audit of the script-checkable rules. A script counts violations by rule and lists file and line. Opt-in rule sets cover AI-written slop in comments and names, and an agent-confirm attribute on risky buttons.",
         when: "Whole-project cleanup, audit or retrofit, or find all violations of a rule.",
         mode: "auto",
         you: "Ask for the audit.",
@@ -315,7 +315,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
     skills: [
       {
         name: "install-kit",
-        does: "Installs, updates, uninstalls or archives skills and git hooks, all at once, hand-picked, auto-detected or by stack preset. A script does the copy and a second script verifies it. Run bare in a terminal it shows arrow-key menus with undo and redo.",
+        does: "Installs, updates, uninstalls or archives skills and git hooks, all at once, hand-picked, auto-detected or by stack preset. A script does the copy and a second script verifies it. Run bare in a terminal it shows arrow-key menus with undo and redo. Turning usage tracking on also installs the feature-usage mod, and an existing CLAUDE.md can be replaced, appended to or kept.",
         when: "You ask to install skills or standards, or a project lacks them.",
         mode: "manual",
         you: "Choose what to install.",
@@ -331,7 +331,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
       },
       {
         name: "skill-scope",
-        does: "The single classification of pinned, conditional and archivable skills. Install-kit and handover both read it.",
+        does: "The single classification of pinned, conditional and archivable skills. Install-kit and handover both read it. It also maps twelve job roles, such as frontend or SEO, to the skills, standards and commands each needs.",
         when: "Classifying, installing, pinning or archiving a skill.",
         mode: "auto",
         you: "Nothing.",
@@ -419,7 +419,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
     skills: [
       {
         name: "mcp-manager",
-        does: "The meta skill for every MCP server: a setup interview, per-tool config and an MCP-first-then-fallback rule.",
+        does: "The meta skill for every MCP server: a setup interview, per-tool config and an MCP-first-then-fallback rule. A config script merges a server in without touching other keys.",
         when: "Adding, setting up or fixing an MCP, or a configured server covers the task.",
         mode: "opt-in",
         you: "Say set up MCP servers and answer the interview.",

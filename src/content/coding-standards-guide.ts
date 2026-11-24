@@ -39,7 +39,7 @@ export const CODING_STANDARDS_GUIDE: ModuleGuide = {
       line: "CSS, HTML and scripts, each with partials per file role.",
       rows: [
         { label: "CSS · 23 rules", hl: "name:css-standards", act: "does", text: "Global CSS laws, with partials for token, layout, component, overlay and utility files." },
-        { label: "HTML · 10 rules", hl: "name:html-standards", act: "does", text: "Global markup laws, with partials for layout templates, page files and component markup." },
+        { label: "HTML · 12 rules", hl: "name:html-standards", act: "does", text: "Global markup laws, with partials for layout templates, page files and component markup." },
         { label: "TypeScript · 16 rules", hl: "name:ts-standards", act: "does", text: "For projects that use TypeScript only. Partials cover entry scripts, classes, controllers, presets, utilities and type files." },
         { label: "JavaScript · 11 rules", hl: "name:js-standards", act: "does", text: "For projects that use JavaScript only. A third standard of 16 rules covers JS and TS used together." },
       ],
@@ -72,7 +72,7 @@ export const CODING_STANDARDS_GUIDE: ModuleGuide = {
       line: "Design taste and the AI's own conduct.",
       rows: [
         { label: "Design · 15 rules", hl: "name:design-standards", act: "does", text: "What to make: Floor, Reflex and Finish rules against generated-looking UI." },
-        { label: "AI · 19 rules", hl: "name:ai-standards", act: "does", text: "AI behaviour: hallucination detection and token efficiency." },
+        { label: "AI · 20 rules", hl: "name:ai-standards", act: "does", text: "AI behaviour: hallucination detection and token efficiency." },
       ],
     },
     {
@@ -107,7 +107,7 @@ export const CODING_STANDARDS_GUIDE: ModuleGuide = {
       hl: "group:standards",
       line: "What the file-type rules do not cover, and rules a company brings itself.",
       rows: [
-        { label: "UI standards", hl: "group:partials", act: "does", text: "A routing table plus 30 compact partials (button, fields, modal, table, header, sidebar, charts, theming, landing, mobile and more). They cover empty and error states, validation, pagination, upload and export security and sign-in. A UI edit reads at most two." },
+        { label: "UI standards", hl: "group:partials", act: "does", text: "A routing table plus 30 compact partials (button, fields, modal, table, header, sidebar, charts, theming, landing, mobile and more). They cover empty and error states, validation, pagination, upload and export security and sign-in. A UI edit reads at most two. An opt-in rule asks buttons that delete, pay or send to carry data-agent-confirm." },
         { label: "Company standards", act: "does", text: "A separate coding-standards/company/ folder for a company's own rules. install-kit.cli.js company sync scans it, writes a routing INDEX.md and a company-standards skill, and where a company rule and a kit default disagree, the company rule wins." },
         { label: "Project signature", act: "does", text: "One alias you choose at install, used in exactly three places: abc- classes and ids, data-abc- attributes and Abc shared components. Never applied to package or framework names." },
       ],

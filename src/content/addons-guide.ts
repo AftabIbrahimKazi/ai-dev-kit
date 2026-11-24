@@ -154,6 +154,22 @@ export const ADDONS_GUIDE: ModuleGuide = {
       ],
     },
     {
+      id: "invariants",
+      name: "Invariants",
+      hl: "name:invariants",
+      line: "Rules proven able to fail, not just written down.",
+      rows: [
+        { label: "Does", text: "A script runs each rule's check, breaks the covered code on purpose, confirms the check goes red, restores the file, and lists rules whose files changed since they were last verified. No model runs in any of these steps." },
+        { label: "You", text: "Write a rule in invariants/invariants.json: a check command that exits 0 when the rule holds, and a small edit that breaks it. Then type /invariants run." },
+        { label: "AI", text: "Drafts the rules and the mutations. You approve the rule wording." },
+      ],
+      moreLabel: "Reading the result",
+      more: [
+        "PASS: the check is green on the code and red when it is broken. VACUOUS: the check still passes with the code broken, so it proves nothing. FAIL: the check fails on the current code. UNPROVEN: it passes but no mutation was given. BADMUTATION: the text to replace is not in the file.",
+        "probe generates its own edits of each covered .js file (flipped comparisons, && and ||, defaults, exit codes) and lists every one that no rule notices. It is never part of a default install.",
+      ],
+    },
+    {
       id: "media-harness",
       name: "Media harness",
       hl: "name:harness",
@@ -193,5 +209,6 @@ export const ADDONS_GUIDE: ModuleGuide = {
     { situation: "You want fewer file reads before work starts", item: "system1-prefilter", hl: "name:system1-prefilter" },
     { situation: "You want an architecture or structure diagram for a README", item: "diagram", hl: "group:skills-addons" },
     { situation: "You want an interactive 3D cutaway of a machine or model", item: "teardown", hl: "group:skills-addons" },
+    { situation: "You want proof that a rule's check can actually fail", item: "invariants", hl: "name:invariants" },
   ],
 };

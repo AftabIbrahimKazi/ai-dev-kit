@@ -36,6 +36,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
         { label: "/modern-web", hl: "name:modern-web", act: "does", text: "Scans for legacy web patterns and lists the modern replacements as candidates, not verdicts. Edits nothing unless you ask. Needs modern-web." },
         { label: "/e2e", hl: "name:e2e", act: "does", text: "Reports Playwright scaffold status, or inits the config, fixtures and a smoke test. Needs e2e-scaffold." },
         { label: "/responsive-check", hl: "name:responsive-check", act: "does", text: "A viewport plan or breakpoint report on the RULE 17 zones, with custom ranges, widths and --detect. Needs responsive-check." },
+        { label: "/invariants", hl: "name:invariants", act: "does", text: "Proves a project rule can fail: breaks the covered code on purpose, expects the check to go red, then restores the file. Also probes for edits no check notices and flags stale rules. Opt-in. Needs invariants." },
       ],
     },
     {
@@ -47,6 +48,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
         { label: "/pickup", hl: "name:pickup", act: "does", text: "Loads handover.md as the project state and only reads. Needs handover." },
         { label: "/wrap-up", hl: "name:wrap-up", act: "does", text: "Rewrites handover.md in place so the next session resumes cold. Needs handover." },
         { label: "/next", hl: "name:next", act: "does", text: "Queues the next task with tsk-note or starts it with tsk-start, archives the skills it does not need and records the moves in handover.md. With no mode word and task it moves nothing. Needs skill-scope." },
+        { label: "/role", hl: "name:role", act: "does", text: "Picks a job role such as frontend, backend, SEO or DevOps and restores that role's archived skills; it names the standards files to read. With no argument it lists the twelve roles. Needs skill-scope." },
         { label: "/archive", hl: "name:archive", act: "does", text: "Archives skills you do not need this session. With no names it archives every archivable skill; a pinned skill stays. Needs skill-scope." },
         { label: "/unarchive", hl: "name:unarchive", act: "does", text: "Brings archived skills back and names the ones now active. With no names it restores every archived skill. Needs skill-scope." },
         { label: "/eta", hl: "name:eta", act: "does", text: "Restates the active task's time estimate and its next checkpoint. No script. Needs plan-first." },
@@ -103,5 +105,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
     { situation: "You want files out of the Changes tree", item: "/untrack hide <paths>", hl: "group:skills-commands" },
     { situation: "You are resuming work from last time", item: "/pickup", hl: "name:pickup" },
     { situation: "You are ending a session", item: "/wrap-up", hl: "name:wrap-up" },
+    { situation: "You want a rule proven able to fail", item: "/invariants", hl: "name:invariants" },
+    { situation: "You are about to work as one job, such as frontend or SEO", item: "/role <name>", hl: "name:role" },
   ],
 };
