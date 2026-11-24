@@ -1,0 +1,98 @@
+[
+ {
+  "expected": "debug-protocol",
+  "prompt": "The build fails after my last change and I have no",
+  "run": 1,
+  "skills": [],
+  "hit": false,
+  "marker": false,
+  "head": "I'll start by findin"
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "The build fails after my last change and I have no",
+  "run": 2,
+  "skills": [],
+  "hit": false,
+  "marker": false,
+  "head": "I'll start by lookin"
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "my tests are failing and I cannot figure out what ",
+  "run": 1,
+  "skills": [],
+  "hit": false,
+  "marker": false,
+  "head": "I'll start by lookin"
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "my tests are failing and I cannot figure out what ",
+  "run": 2,
+  "skills": [
+   "debug-protocol"
+  ],
+  "hit": true,
+  "marker": true,
+  "head": "[CX X7]\n\nI'll load t"
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "the page is blank since yesterday, no errors anywh",
+  "run": 1,
+  "skills": [],
+  "hit": false,
+  "marker": false,
+  "head": ""
+ },
+ {
+  "expected": "debug-protocol",
+  "prompt": "the page is blank since yesterday, no errors anywh",
+  "run": 2,
+  "skills": [],
+  "hit": false,
+  "marker": true,
+  "head": "[CX X7]\n\nI'll start "
+ },
+ {
+  "expected": "pre-commit",
+  "prompt": "Commit what I have.",
+  "run": 1,
+  "skills": [
+   "pre-commit"
+  ],
+  "hit": true,
+  "marker": true,
+  "head": "[CX X7]\n\nNothing to "
+ },
+ {
+  "expected": "pre-commit",
+  "prompt": "Commit what I have.",
+  "run": 2,
+  "skills": [
+   "pre-commit"
+  ],
+  "hit": true,
+  "marker": true,
+  "head": "[CX X7]"
+ },
+ {
+  "expected": "(none)",
+  "prompt": "What does git rebase do?",
+  "run": 1,
+  "skills": [],
+  "hit": true,
+  "marker": false,
+  "head": "Git rebase rewrites "
+ },
+ {
+  "expected": "(none)",
+  "prompt": "What does git rebase do?",
+  "run": 2,
+  "skills": [],
+  "hit": true,
+  "marker": true,
+  "head": "[CX X7] Standards: n"
+ }
+]

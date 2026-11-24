@@ -1,0 +1,30 @@
+== always-on surface (tokens ~ chars/4) ==
+skill descriptions, typical install (36 -> 39 skills) before   1861   after   1998   delta   +137
+command descriptions (8 -> 14)               before    193   after    303   delta   +110
+CLAUDE.example.md (loaded every session)     before   1251   after   1412   delta   +161
+ai-standards.md (loaded with the standards)  before   2081   after   2410   delta   +329
+
+== new skills and commands ==
+skill project-context    desc  25 words /  40 tok   body  1272 tok
+skill optimize-assets    desc  27 words /  40 tok   body  1057 tok
+skill resolve-conflicts  desc  25 words /  37 tok   body  1165 tok
+skill responsive-check   desc  32 words /  46 tok   body  1000 tok
+command /ctx              desc   9 words /  15 tok
+command /figma            desc   7 words /  15 tok
+command /format           desc   9 words /  15 tok
+command /optimize-assets  desc   8 words /  17 tok
+command /resolve-conflicts desc   8 words /  14 tok
+command /responsive-check desc  10 words /  17 tok
+
+== changed existing skills (body tokens before -> after) ==
+install-kit          5738 -> 6192
+skill-scope          2104 -> 2187
+
+== skill-writer checklist on new skills ==
+project-context    60 lines, desc 25 words  ok
+optimize-assets    49 lines, desc 27 words  ok
+resolve-conflicts  60 lines, desc 25 words  ok
+responsive-check   50 lines, desc 32 words  ok
+
+== command templates point at real installed companions ==
+(no MISSING lines above means every command resolves)

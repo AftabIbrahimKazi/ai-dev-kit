@@ -1,0 +1,98 @@
+[
+ {
+  "c": "/kit",
+  "sec": 9,
+  "err": false,
+  "head": "[CX X7] Standards: not yet loaded. | Situation | Use | |---|---| | Health check of the whole project | `/audit` (optional: `--standard css,html`, a path) | | About to commit | `/commit-check` (optional: `--message \"feat: x\"`) | | "
+ },
+ {
+  "c": "/audit",
+  "sec": 12,
+  "err": false,
+  "head": "[CX X7] Standards: not yet loaded (this turn reads no project files). - **Worst rules:** none. The audit found 0 violations. - **Worst files:** none. 0 findings in 0 files. - **Fix with the biggest effect:** none needed. - **Cover"
+ },
+ {
+  "c": "/commit-check",
+  "sec": 23,
+  "err": true,
+  "head": "{\"duration_api_ms\":13183,\"stop_reason\":\"tool_use\",\"session_id\":\"7e677c29-5305-44b2-8d33-71b57bfb1a1d\",\"total_cost_usd\":0.007302350000000001,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":22283,\"cache_read_input_tokens\":16"
+ },
+ {
+  "c": "/githooks",
+  "sec": 12,
+  "err": false,
+  "head": "[CX X7] pre-commit: not installed · commit-msg: not installed `node .claude/skills/pre-commit/install-hook.js` installs them, and `... uninstall` removes only hooks it wrote. Install them now? (yes/no) Standards: not yet loaded."
+ },
+ {
+  "c": "/token-report",
+  "sec": 15,
+  "err": false,
+  "head": "[CX X7] 1. **Biggest sink:** the broad `Glob **/*.{html,css,astro,js,ts}`, at about 158 est. tokens, the largest tool result in this session. 2. **Cost driver:** 18,003 cache-write tokens. Cache reads (116,894) are cheap, and the "
+ },
+ {
+  "c": "/quiet",
+  "sec": 8,
+  "err": false,
+  "head": "{\"is_error\":false,\"duration_api_ms\":0,\"num_turns\":0,\"stop_reason\":null,\"session_id\":\"8b924322-206f-4b5f-a4b7-c3fb1280712c\",\"total_cost_usd\":0,\"usage\":{\"output_tokens_details\":{\"thinking_tokens\":0},\"input_tokens\":0,\"cache_creation_"
+ },
+ {
+  "c": "/stale",
+  "sec": 10,
+  "err": false,
+  "head": "[CX X7] Standards not yet loaded; this turn touches no files. The stale-check found 0 of 0 bullets naming a missing file, so there are no candidates to classify and nothing to delete or keep. Nothing was edited."
+ },
+ {
+  "c": "/eta",
+  "sec": 8,
+  "err": false,
+  "head": "[CX X7] Standards: not yet loaded. This turn touches no files. 1. **Running now:** Nothing. No task is in progress in this session. 2. **Checkpoints:** None. No task has been broken into checkpoints. 3. **Overall estimate:** None "
+ },
+ {
+  "c": "/format",
+  "sec": 7,
+  "err": false,
+  "head": "[CX X7] Standards not yet loaded; they load when a turn touches a file. Which format do you want? | Argument | Shape from now on | |---|---| | `table` | A table for any data with 2+ items and 2+ attributes; one line for a single f"
+ },
+ {
+  "c": "/ctx",
+  "sec": 17,
+  "err": true,
+  "head": "{\"duration_api_ms\":7541,\"stop_reason\":\"tool_use\",\"session_id\":\"d256ee09-d93d-4dd8-8d37-cdb9f83cfe13\",\"total_cost_usd\":0.00594726,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":19104,\"cache_read_input_tokens\":166166,\"outpu"
+ },
+ {
+  "c": "/optimize-assets",
+  "sec": 19,
+  "err": false,
+  "head": "I've stopped here because the tool run was blocked. Running `convert.js tools` requires approval in this session, and I didn't get it. The Bash tool refused it twice, so I'm not going to route the same script through PowerShell to"
+ },
+ {
+  "c": "/responsive-check http://localhost:1",
+  "sec": 17,
+  "err": true,
+  "head": "{\"duration_api_ms\":7660,\"stop_reason\":\"tool_use\",\"session_id\":\"f37af84a-3086-4dbf-b1a3-c816375fec7d\",\"total_cost_usd\":0.00588023,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":18407,\"cache_read_input_tokens\":168553,\"outpu"
+ },
+ {
+  "c": "/resolve-conflicts",
+  "sec": 17,
+  "err": true,
+  "head": "{\"duration_api_ms\":8153,\"stop_reason\":\"tool_use\",\"session_id\":\"e02e33c4-5f21-4822-827a-25b6192e1f04\",\"total_cost_usd\":0.00598351,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":18678,\"cache_read_input_tokens\":169911,\"outpu"
+ },
+ {
+  "c": "/wrap-up",
+  "sec": 22,
+  "err": true,
+  "head": "{\"duration_api_ms\":13301,\"stop_reason\":\"tool_use\",\"session_id\":\"67dd1a6f-0d85-4a38-9b02-ba7e9c9353fc\",\"total_cost_usd\":0.00669497,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":19206,\"cache_read_input_tokens\":166947,\"outp"
+ },
+ {
+  "c": "/pickup",
+  "sec": 12,
+  "err": false,
+  "head": "[CX X7] No handover file was found, so I have no recorded project state, in-flight work, or next step. Standards: not yet loaded. This turn touches no files, so `coding-standards/index.md` has not been read. At session start, `git"
+ },
+ {
+  "c": "/figma",
+  "sec": 15,
+  "err": false,
+  "head": "[CX X7] I can't run `/figma` yet, for three reasons: - **No `project-context/design/` folder.** It doesn't exist in this project. Run `/ctx init` to create it. - **No Figma source.** The argument was empty, and there's no `figma.m"
+ }
+]

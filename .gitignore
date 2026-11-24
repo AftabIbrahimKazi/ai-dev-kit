@@ -31,6 +31,5 @@ kaggle.json
 # mutation sweep results (invariants/sweep.js)
 invariants/sweep.*.jsonl
 
-# development notes and mutation-testing tooling: local only, not part of what the kit installs
-/findings/
+# mutation-testing tooling: local only, not part of what the kit installs
 /invariants/
