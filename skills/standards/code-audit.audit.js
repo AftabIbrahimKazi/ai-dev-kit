@@ -491,7 +491,7 @@ function manifestChecks(rel, text) {
         miss.push('maskable icon');
     return miss.length ? [{ file: rel, line: 1, rule: 'ui-pwa-01', msg: 'manifest lacks: ' + miss.join(', ') }] : [];
 }
-function uiChecks(rel, text) {
+function uiChecks(rel, text, agentReady = false) {
     if (MANIFEST_FILE.test(rel))
         return manifestChecks(rel, text);
     const script = SCRIPT_EXT.test(rel);
@@ -503,9 +503,10 @@ function uiChecks(rel, text) {
     const add = (idx, rule, msg) => { out.push({ file: rel, line: L(idx), rule, msg }); };
     for (const m of t.matchAll(/<button\b[^>]*>\s*(OK|Submit|Click here)\s*<\/button>/gi))
         add(m.index, 'ui-btn-02', `button labelled "${m[1]}"`);
-    for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>/gi))
-        for (const m of d[0].matchAll(/<button\b(?![^>]*data-agent-confirm)[^>]*>\s*(?:Delete|Remove|Pay|Send|Revoke)\b[^<]*<\/button>/gi))
-            add(d.index + m.index, 'ui-btn-19', 'confirm button without data-agent-confirm');
+    if (agentReady)
+        for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>/gi))
+            for (const m of d[0].matchAll(/<button\b(?![^>]*data-agent-confirm)[^>]*>\s*(?:Delete|Remove|Pay|Send|Revoke)\b[^<]*<\/button>/gi))
+                add(d.index + m.index, 'ui-btn-19', 'confirm button without data-agent-confirm');
     for (const m of t.matchAll(/Something went wrong|Are you sure\?/gi))
         add(m.index, 'ui-fbk-04', `"${m[0]}"`);
     for (const m of t.matchAll(/<nav\b[\s\S]*?<\/nav>/gi)) {
@@ -1033,7 +1034,7 @@ function projectConfig(cwd, base = {}) {
 function checkText(rel, text, cfg = {}, profile = 'audit') {
     let f = [];
     if (cfg.ui)
-        f.push(...uiChecks(rel, text));
+        f.push(...uiChecks(rel, text, !!cfg.agentReady));
     if (cfg.signature)
         f.push(...signatureChecks(rel, text, cfg.signature, cfg), ...componentChecks(rel, text, cfg.signature, cfg));
     if (cfg.bannedImports && cfg.bannedImports.length)

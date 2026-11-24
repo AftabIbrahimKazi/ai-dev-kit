@@ -383,7 +383,7 @@ function manifestChecks(rel: string, text: string): Finding[] {
   return miss.length ? [{ file: rel, line: 1, rule: 'ui-pwa-01', msg: 'manifest lacks: ' + miss.join(', ') }] : [];
 }
 
-function uiChecks(rel: string, text: string): Finding[] {
+function uiChecks(rel: string, text: string, agentReady = false): Finding[] {
   if (MANIFEST_FILE.test(rel)) return manifestChecks(rel, text);
   const script = SCRIPT_EXT.test(rel);
   if (!script && !MARKUP_EXT.test(rel)) return [];
@@ -392,7 +392,7 @@ function uiChecks(rel: string, text: string): Finding[] {
   const L = lineFn(text);
   const add = (idx: number, rule: string, msg: string): void => { out.push({ file: rel, line: L(idx), rule, msg }); };
   for (const m of t.matchAll(/<button\b[^>]*>\s*(OK|Submit|Click here)\s*<\/button>/gi)) add(m.index!, 'ui-btn-02', `button labelled "${m[1]}"`);
-  for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>/gi))
+  if (agentReady) for (const d of t.matchAll(/<dialog\b[\s\S]*?<\/dialog>/gi))
     for (const m of d[0].matchAll(/<button\b(?![^>]*data-agent-confirm)[^>]*>\s*(?:Delete|Remove|Pay|Send|Revoke)\b[^<]*<\/button>/gi)) add(d.index! + m.index!, 'ui-btn-19', 'confirm button without data-agent-confirm');
   for (const m of t.matchAll(/Something went wrong|Are you sure\?/gi)) add(m.index!, 'ui-fbk-04', `"${m[0]}"`);
   for (const m of t.matchAll(/<nav\b[\s\S]*?<\/nav>/gi)) {
@@ -776,7 +776,7 @@ export function contrastChecks(rel: string, text: string, pairs: ContrastPair[] 
 
 export interface CheckTextConfig {
   contrastPairs?: ContrastPair[] | 'auto';       // A11Y-09: pairs of colour tokens to check, or "auto" (text tokens against surface and background tokens)
-  skipRules?: string[]; styleBlocks?: string; ui?: boolean;
+  skipRules?: string[]; styleBlocks?: string; ui?: boolean; agentReady?: boolean;
   signature?: string; signatureIgnore?: string[]; signatureExempt?: string[];
   signatureMode?: 'review' | 'strict';           // strict: css-11 and css-11-component are hard rules (per edit, and at commit on added lines)
   signatureComponentDirs?: string[];              // where shared components live (default components, ui, shared)
@@ -796,7 +796,7 @@ export function projectConfig(cwd: string, base: CheckTextConfig = {}): CheckTex
 // Findings for one file's text. profile "edit" keeps the small set edit-check has always run per edit.
 export function checkText(rel: string, text: string, cfg: CheckTextConfig = {}, profile = 'audit'): Finding[] {
   let f: Finding[] = [];
-  if (cfg.ui) f.push(...uiChecks(rel, text));
+  if (cfg.ui) f.push(...uiChecks(rel, text, !!cfg.agentReady));
   if (cfg.signature) f.push(...signatureChecks(rel, text, cfg.signature, cfg), ...componentChecks(rel, text, cfg.signature, cfg));
   if (cfg.bannedImports && cfg.bannedImports.length) f.push(...bannedChecks(rel, text, cfg.bannedImports));
   if (cfg.contrastPairs && CSS_EXT.test(rel)) f.push(...contrastChecks(rel, text, cfg.contrastPairs));
