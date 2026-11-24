@@ -31,6 +31,8 @@ It does not replace review. It replaces the searching. Rules a script cannot che
 ## Waivers, UI rules and strict mode
 - **`DEVIATION: <rule id> <reason>`** in a comment waives that rule on its own line and the next. It is counted (`dev-count`), a waiver that matches nothing is `dev-stale`, and one with no reason, an unknown rule or an accessibility or security rule is ignored and reported as `dev-invalid`.
 - **UI rules (`ui-*`)** check the `coding-standards/ui-standards/` rules that a script can verify (button labels, vague messages, `role="menu"` in `<nav>`, tables without `<th>`, cookie flags, the PWA manifest, native select and date inputs, password autocomplete, split one-time-code boxes, confirm-password fields, autoplay without muted, a page with no skip link). They run only where `coding-standards/ui-standards.md` exists, or with `"ui": true` in `.claude/code-audit.json`.
+- **UI-BTN-19 (`ui-btn-19`)** runs only with `"agentReady": true` in `.claude/code-audit.json` (set by `install-kit --agent-ready`).
+- **Slop rules (`slop-01` to `slop-04`)** run only with `"slop": true` in `.claude/code-audit.json`: section banner comments, comments that narrate history or the task, hedge or sales words in comments, and numbered or vague names (`data2`, `temp`). All review-level and script-only. What a script cannot judge, a comment that restates the next line or a defensive check the types rule out, stays a read-through of the diff.
 - **Strict mode:** `{"strict": true}` in `.claude/edit-check.json` makes the edit hook say findings are hard rules, and the pre-commit check blocks a commit that adds one. Old code never blocks. `{"scope": "changed"}` there limits the per-edit check to changed lines.
 
 ## Colour contrast (A11Y-09)

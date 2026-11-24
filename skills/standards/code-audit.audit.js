@@ -93,6 +93,10 @@ exports.RULES = Object.fromEntries([
     R('seo-07', 'seo', 'rule', 'page has no og:title'),
     R('perf-02', 'perf', 'rule', '<img> has no width/height attributes'),
     R('perf-06', 'perf', 'rule', 'blocking <script src> in <head> (add defer, async or type=module)'),
+    R('slop-01', 'slop', 'review', 'section banner comment; split the file instead'),
+    R('slop-02', 'slop', 'review', 'comment narrates history or the task; git holds that'),
+    R('slop-03', 'slop', 'review', 'hedge or sales word in a comment (robust, seamless, leverage...)'),
+    R('slop-04', 'slop', 'review', 'numbered or vague name (data2, temp, result1, handleClick2); name what it is'),
     R('js-03', 'js', 'rule', 'console.log/warn/error in committed code'),
     R('js-04', 'js', 'review', 'addEventListener with no removeEventListener or abort signal in the file'),
     R('js-08', 'js', 'review', 'commented-out code'),
@@ -152,7 +156,7 @@ exports.RULES = Object.fromEntries([
 // Never waivable: every accessibility rule and the security rules. A waiver comment for them is ignored and flagged.
 const waivable = (id) => !!exports.RULES[id] && exports.RULES[id].std !== 'a11y' && id !== 'ui-aut-09';
 exports.waivable = waivable;
-const PER_FILE_STD = new Set(['css', 'html', 'a11y', 'seo', 'perf', 'js', 'ts', 'ui', 'dev', 'ban']);
+const PER_FILE_STD = new Set(['css', 'html', 'a11y', 'seo', 'perf', 'js', 'ts', 'slop', 'ui', 'dev', 'ban']);
 const MANIFEST_FILE = /(^|\/)manifest\.(webmanifest|json)$/i;
 const NOT_CHECKED = 'Not machine-checked, judge by reading: css 01-03, 07-09, 12-13, 15-16, 18-22 · h-01, h-06, h-07, h-09 · ts/js function size, state, async errors, import order · a11y 01-02, 04, 07-08, 10-24 (09 only for pairs in contrastPairs) · seo 04-05, 08-12 · perf 01, 03-05, 07-15 · g-01..04, g-09..12 · v-01..04, v-06, v-07.';
 // ---- text helpers ----
@@ -460,6 +464,29 @@ function scriptChecks(rel, text) {
                 add(i + 1, 'ts-15', 'type assertion without a justifying comment');
         });
     }
+    return out;
+}
+// ---- slop rules: patterns that make code read as generated; review-level, script-only, on only where the project sets slop ----
+const SLOP_COMMENT = /^\s*(?:\/\/|\/\*+|\*)(?!\s*(?:eslint|prettier|@ts-|istanbul|c8|DEVIATION|STANDARDS GAP))(.*)$/;
+const VAGUE_NAME = /\b(?:const|let|function)\s+((?:data|item|items|result|temp|tmp|value|obj|res|val|flag|handle[A-Z]?\w*?)\d+)\b/g;
+function slopChecks(rel, text) {
+    const out = [];
+    const add = (line, rule, msg) => { out.push({ file: rel, line, rule, msg }); };
+    text.split('\n').forEach((l, i) => {
+        const c = SLOP_COMMENT.exec(l);
+        if (!c)
+            return;
+        const body = c[1];
+        if (/^\s*(?:[-=#*~_]{3,}|[-=#*~_]{2,}\s*[\w ./&()'-]+?\s*[-=#*~_]{2,})\s*\*?\/?\s*$/.test(body))
+            add(i + 1, 'slop-01', 'section banner comment');
+        else if (/\b(?:now we|updated to|fixed the bug|as requested|added for|changed to|previously)\b/i.test(body))
+            add(i + 1, 'slop-02', 'comment narrates history or the task; git holds that');
+        else if (/\b(?:robust|seamless(?:ly)?|comprehensive|easily|leverage[sd]?|utilize[sd]?|note that|it'?s important to)\b/i.test(body))
+            add(i + 1, 'slop-03', 'hedge or sales word in a comment');
+    });
+    const L = lineFn(text);
+    for (const m of stripCode(text).matchAll(VAGUE_NAME))
+        add(L(m.index), 'slop-04', `numbered or vague name "${m[1]}"`);
     return out;
 }
 // ---- UI element rules (ui-standards): static checks only; anything needing a browser is not here ----
@@ -1049,7 +1076,7 @@ function checkText(rel, text, cfg = {}, profile = 'audit') {
             f.push(...pageChecks(rel, text));
     }
     if (SCRIPT_EXT.test(rel))
-        f.push(...scriptChecks(rel, text));
+        f.push(...scriptChecks(rel, text), ...(cfg.slop ? slopChecks(rel, text) : []));
     f = applyDeviations(rel, text, f);
     if (profile === 'edit') {
         f = f.filter((x) => (exports.RULES[x.rule] && exports.RULES[x.rule].edit) || (x.rule === 'css-style-block' && cfg.styleBlocks === 'forbid') || ((x.rule === 'css-11' || x.rule === 'css-11-component') && cfg.signatureMode === 'strict'));

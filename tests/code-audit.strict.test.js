@@ -29,6 +29,12 @@ t('ui-btn-02, ui-fbk-04, ui-mnu-02, ui-tbl-01: flagged, and the clean forms pass
   assert.deepStrictEqual(hits('a.html', lines('<table><tr><td>a</td></tr></table>', '<table><thead><tr><th scope="col">a</th></tr></thead></table>'), UI), ['ui-tbl-01@1']);
 });
 
+t('slop rules run only with slop on: banner, history, hedge word, numbered name', () => {
+  const src = lines('// ---- helpers ----', '// Now we update the cache.', '// A robust parser.', 'const data2 = load();', '// Retries because the host drops idle sockets.', 'const rows = load();');
+  assert.deepStrictEqual(hits('a.js', src, {}), []);
+  assert.deepStrictEqual(hits('a.js', src, { slop: true }), ['slop-01@1', 'slop-02@2', 'slop-03@3', 'slop-04@4']);
+});
+
 t('ui-btn-19: a confirm button in a dialog needs data-agent-confirm; the opener and a marked button pass', () => {
   const AG = { ui: true, agentReady: true };
   assert.deepStrictEqual(hits('a.html', lines('<button type="button">Delete invoice</button>', '<dialog>', '<button>Cancel</button>', '<button class="btn-danger">Delete invoice</button>', '</dialog>'), AG), ['ui-btn-19@4']);
