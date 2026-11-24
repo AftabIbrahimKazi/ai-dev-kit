@@ -81,6 +81,10 @@ Each fires only on a specific task instance nameable in a next-task line, not a 
 
 Once requested and configured, treat as permanent-pinned — the user's own choice is durable, not re-derived per session or stack-scan.
 
+## Role loadouts (script, no model call)
+
+A role is a named job (frontend, backend, fullstack, qa, seo, devops, security, performance, designer, accessibility, docs, refactor) mapped to the skills, `coding-standards/` files and commands it needs. The list lives in `skill-scope.roles.json` (single source; `tests/skill-scope.role.test.js` fails on any name that does not exist). `role.js` matches by keyword: a role named outright ("as a frontend dev", "role: seo") always wins; otherwise a role is inferred from 2 distinct signal words with a lead over the next role, else nothing is said. The `skill-hint` mod runs it on each typed prompt and attaches one line, once per role per session. `/role <name>` is the explicit form: it also restores that role's archived skills (your explicit word overrides the default archive). It never loads a skill on its own. Roles here are loadouts for one session; the `role-session` skill is the separate multi-lane protocol.
+
 ## Mechanism split (who actually moves files, and where the override hook lives)
 
 - **install-kit**, at install or explicit re-detect: installs all universal Permanent-pinned skills unconditionally; scans for conditional-pinned signals and installs matches, citing the signal found; asks once for anything not file-observable. Before finalizing, asks the user for any explicit overrides ("also always pin X" / "never pin Y even though the scan matched") and records them.

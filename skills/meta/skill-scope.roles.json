@@ -1,0 +1,102 @@
+{
+  "_note": "Single source for role loadouts. A role is a named job (frontend, devops, seo...) mapped to the skills, standards files and commands that job needs. 'aliases' are what a user types to name the role outright (always wins). 'signals' are task words used to infer a role when none is named: 'word' is a whole word (plural s/es allowed), 'word*' any word starting with it, a phrase a substring; a role needs 2 distinct signal hits and a lead over the next role. 'includes' pulls in another role's loadout. 'standards' are paths under coding-standards/. Skills named here that are archived are reported, never restored by the hint.",
+  "roles": {
+    "frontend": {
+      "label": "Frontend",
+      "aliases": ["frontend", "front-end", "front end", "ui dev", "ui developer"],
+      "signals": ["css", "html", "component*", "layout", "responsive", "button", "modal", "form", "table", "sidebar", "navbar", "tailwind", "react", "vue", "astro", "svelte", "dom", "animation", "style*", "page"],
+      "skills": ["ui-design", "responsive-check", "ux-theory", "strata-css", "astro-page"],
+      "standards": ["html-standards.md", "css-standards.md", "js-standards.md", "ui-standards.md", "design-standards.md", "accessibility-standards.md"],
+      "commands": ["/responsive-check"]
+    },
+    "backend": {
+      "label": "Backend",
+      "aliases": ["backend", "back-end", "back end", "api dev", "server dev"],
+      "signals": ["api", "endpoint*", "database", "sql", "query", "queries", "migration*", "orm", "auth", "session*", "middleware", "server", "route*", "webhook*", "queue*", "cron", "cache", "schema"],
+      "skills": ["security-audit", "implicit-state-audit", "debug-protocol"],
+      "standards": ["js-and-ts-standards.md", "ts-standards.md", "qa/logic-and-error-checks.md", "qa/security-checks.md"],
+      "commands": ["/recon", "/state-audit"]
+    },
+    "fullstack": {
+      "label": "Full stack",
+      "aliases": ["fullstack", "full-stack", "full stack"],
+      "signals": [],
+      "includes": ["frontend", "backend"],
+      "skills": ["plan-first"],
+      "standards": [],
+      "commands": []
+    },
+    "qa": {
+      "label": "QA / testing",
+      "aliases": ["qa", "tester", "test engineer", "testing role", "qa engineer"],
+      "signals": ["test*", "e2e", "playwright", "cypress", "coverage", "flaky", "assert*", "regression", "repro", "bug report", "spec", "fixture*"],
+      "skills": ["e2e-scaffold", "debug-protocol", "implicit-state-audit"],
+      "standards": ["qa/index.md", "qa/definition-of-done.md", "qa/e2e-testing.md", "qa/bug-reporting.md", "qa/logic-and-error-checks.md"],
+      "commands": ["/e2e"]
+    },
+    "seo": {
+      "label": "SEO",
+      "aliases": ["seo", "seo specialist", "search optimization", "search optimisation"],
+      "signals": ["seo", "meta tag*", "sitemap", "robots.txt", "canonical", "schema.org", "structured data", "open graph", "og:image", "keyword*", "ranking", "serp", "core web vitals", "indexing", "backlink*"],
+      "skills": ["perf-audit", "optimize-assets"],
+      "standards": ["seo-standards.md", "performance-standards.md", "html-standards.md"],
+      "commands": ["/perf"]
+    },
+    "devops": {
+      "label": "DevOps",
+      "aliases": ["devops", "dev ops", "sre", "platform engineer", "release engineer"],
+      "signals": ["ci", "cd", "pipeline*", "deploy*", "docker*", "container*", "kubernetes", "k8s", "terraform", "github actions", "workflow file", "hosting", "nginx", "env var*", "secrets", "rollback", "infra*"],
+      "skills": ["pre-merge-gate", "pre-commit", "version-bump", "resolve-conflicts"],
+      "standards": ["git-standards.md", "versioning-standards.md", "qa/branch-gates.md", "tooling/README.md"],
+      "commands": ["/githooks", "/version-bump", "/commit-check"]
+    },
+    "security": {
+      "label": "Security",
+      "aliases": ["security", "appsec", "security engineer", "pentester", "pen tester"],
+      "signals": ["xss", "csrf", "injection", "owasp", "vulnerab*", "attack surface", "pentest", "cve", "sanitiz*", "cors", "csp", "token leak", "secret*", "exploit*"],
+      "skills": ["security-audit", "code-audit"],
+      "standards": ["qa/security-checks.md", "ai-standards.md"],
+      "commands": ["/recon", "/audit"]
+    },
+    "performance": {
+      "label": "Performance",
+      "aliases": ["performance", "perf engineer", "performance engineer"],
+      "signals": ["perf*", "slow", "lighthouse", "bundle", "latency", "vitals", "lcp", "cls", "memory leak", "profil*", "page weight", "load time", "throughput"],
+      "skills": ["perf-audit", "optimize-assets"],
+      "standards": ["performance-standards.md"],
+      "commands": ["/perf", "/optimize-assets"]
+    },
+    "designer": {
+      "label": "Design / UX",
+      "aliases": ["designer", "ux designer", "ui designer", "design role", "ux role"],
+      "signals": ["design", "ux", "palette", "typography", "mockup", "wireframe", "figma", "theme", "brand*", "spacing", "colour", "color", "hierarchy", "redesign", "landing"],
+      "skills": ["ui-design", "ux-theory", "project-context"],
+      "standards": ["design-standards.md", "ui-standards.md", "accessibility-standards.md"],
+      "commands": ["/figma", "/figma-code"]
+    },
+    "accessibility": {
+      "label": "Accessibility",
+      "aliases": ["accessibility", "a11y", "accessibility specialist"],
+      "signals": ["a11y", "aria", "screen reader*", "keyboard nav*", "focus ring*", "contrast", "wcag", "alt text", "tab order", "reduced motion"],
+      "skills": ["responsive-check", "ui-design"],
+      "standards": ["accessibility-standards.md", "html-standards.md"],
+      "commands": []
+    },
+    "docs": {
+      "label": "Docs",
+      "aliases": ["docs", "technical writer", "documentation role", "docs writer"],
+      "signals": ["readme", "documentation", "changelog", "tutorial", "guide", "jsdoc", "docstring*", "api docs", "walkthrough"],
+      "skills": ["readme-writer", "diagram"],
+      "standards": ["ai-standards.md"],
+      "commands": ["/diagram"]
+    },
+    "refactor": {
+      "label": "Maintainer / refactor",
+      "aliases": ["maintainer", "refactorer", "cleanup role", "code quality"],
+      "signals": ["refactor*", "dead code", "tech debt", "duplicate*", "lint*", "cleanup", "clean up", "rename*", "dedupe", "legacy"],
+      "skills": ["code-audit", "plan-first", "implicit-state-audit"],
+      "standards": ["js-and-ts-standards.md", "qa/definition-of-done.md"],
+      "commands": ["/audit", "/dupe", "/state-audit"]
+    }
+  }
+}
