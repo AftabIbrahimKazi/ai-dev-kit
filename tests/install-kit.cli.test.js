@@ -869,7 +869,9 @@ t('mergeHooks retires the old skill-scope hooks and leaves every other hook alon
 // ---- gaps found by `invariants probe` on install-kit.cli.js ----
 const { spawnSync: spawnCli } = require('node:child_process');
 const CLI_JS = path.join(__dirname, '..', 'skills', 'meta', 'install-kit.cli.js');
-const runCli = (args, env = {}, input = '') => spawnCli(process.execPath, [CLI_JS, ...args], { encoding: 'utf8', input, env: { ...process.env, AI_DEV_KIT_HOME: tmp(), ...env } });
+// Every CLI run gets a stand-in claude command and its own config folder: no test may touch the real Claude settings.
+const FAKE_CLAUDE = path.join(__dirname, 'fake-claude.cjs');
+const runCli = (args, env = {}, input = '') => spawnCli(process.execPath, [CLI_JS, ...args], { encoding: 'utf8', input, env: { ...process.env, AI_DEV_KIT_HOME: tmp(), AI_DEV_KIT_CLAUDE_BIN: FAKE_CLAUDE, CLAUDE_CONFIG_DIR: tmp(), ...env } });
 
 t('flag values are validated: --company-defaults, --usage and --usage-notify take only their words', () => {
   const root = tmp();
@@ -1077,4 +1079,39 @@ t('batch mod: on and off call the claude command with the right action and repor
 t('the manifest and archive helpers are re-exported from skill-scope.move', () => {
   const me = require('../skills/meta/install-kit.cli.js'), mv = require('../skills/meta/skill-scope.move.js');
   for (const k of ['readManifest', 'writeManifest', 'doArchive', 'doUnarchive']) { assert.strictEqual(typeof me[k], 'function', k); assert.strictEqual(me[k], mv[k], k); assert.ok(Object.keys(me).includes(k), k + ' is enumerable'); }
+});
+
+t('install with usage tracking on also installs and enables the feature-usage mod, with no step left for the AI', () => {
+  const root = project(), cfg = tmp(), log = path.join(tmp(), 'claude.log');
+  const r = runCli(['install', '--yes', '--library', LIBRARY, '--root', root, '--tool', 'claude', '--skills', 'handover', '--usage', 'on', '--usage-notify', 'on', '--json'], { CLAUDE_CONFIG_DIR: cfg, FAKE_CLAUDE_LOG: log });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
+  assert.strictEqual(lines[0], 'plugin marketplace add ' + path.join(LIBRARY, 'mods'));
+  assert.strictEqual(lines[1], 'plugin install feature-usage@ai-dev-kit-mods --scope user');
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(cfg, 'settings.json'), 'utf8')).enabledPlugins['feature-usage@ai-dev-kit-mods'], true);
+  const out = JSON.parse(r.stdout).usage;
+  assert.strictEqual(out.mod, 'installed'); assert.strictEqual(out.notify, true);
+  assert.match(r.stderr, /next Claude Code session/);
+});
+
+t('usage tracking: nothing is run when the mod is already enabled, or when tracking is off or not asked about', () => {
+  const root = project(), cfg = tmp(), log = path.join(tmp(), 'claude.log');
+  fs.writeFileSync(path.join(cfg, 'settings.json'), JSON.stringify({ enabledPlugins: { 'feature-usage@ai-dev-kit-mods': true } }));
+  const base = ['install', '--yes', '--library', LIBRARY, '--root', root, '--tool', 'claude', '--skills', 'handover'];
+  const on = JSON.parse(runCli([...base, '--usage', 'on', '--json'], { CLAUDE_CONFIG_DIR: cfg, FAKE_CLAUDE_LOG: log }).stdout).usage;
+  assert.strictEqual(on.mod, 'enabled');
+  runCli([...base, '--usage', 'off'], { CLAUDE_CONFIG_DIR: tmp(), FAKE_CLAUDE_LOG: log });
+  runCli(base, { CLAUDE_CONFIG_DIR: tmp(), FAKE_CLAUDE_LOG: log });
+  assert.ok(!fs.existsSync(log), 'claude was never called');
+});
+
+t('usage tracking: a failed install says so, names the commands to run by hand, and still exits 0', () => {
+  for (const mode of ['marketplace', 'install', 'silent']) {
+    const r = runCli(['install', '--yes', '--library', LIBRARY, '--root', project(), '--tool', 'claude', '--skills', 'handover', '--usage', 'on', '--json'], { CLAUDE_CONFIG_DIR: tmp(), FAKE_CLAUDE_FAIL: mode });
+    assert.strictEqual(r.status, 0, mode + ' ' + r.stderr);
+    const u = JSON.parse(r.stdout).usage;
+    assert.strictEqual(u.mod, 'failed', mode);
+    assert.match(u.warning, /claude plugin marketplace add ".*mods" then claude plugin install feature-usage@ai-dev-kit-mods --scope user/, mode);
+    assert.match(r.stderr, /Run: claude plugin marketplace add/, mode);
+  }
 });

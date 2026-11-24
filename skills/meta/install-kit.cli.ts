@@ -725,12 +725,35 @@ export function batchMod(root: string, library: string | undefined, paired: bool
   return r;
 }
 
-export interface UsageResult { file: string; track: boolean; notify: boolean; warning?: string }
+export interface UsageResult { file: string; track: boolean; notify: boolean; warning?: string; mod?: 'enabled' | 'installed' | 'failed' }
 const USAGE_MOD = 'feature-usage';
 // True when the feature-usage mod is enabled in the user's Claude settings (any scope key naming it).
 function usageModEnabled(): boolean {
   const dir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
   try { const j = JSON.parse(fs.readFileSync(path.join(dir, 'settings.json'), 'utf8')); return Object.entries(j.enabledPlugins || {}).some(([k, v]) => k.startsWith(USAGE_MOD + '@') && v !== false); } catch { return false; }
+}
+// The tracking switch is only a file; the mod that reads it must be installed in Claude Code, or nothing is ever logged and no
+// notice ever shows. So turning tracking on installs the mod too (marketplace add, then plugin install at user scope) and checks the
+// result in settings.json, so the user never has to ask the AI to finish the job. A failure returns the two commands to run by hand.
+function runClaude(args: string[], cwd: string): childProcess.SpawnSyncReturns<string> {
+  const bin = process.env.AI_DEV_KIT_CLAUDE_BIN || 'claude';
+  const viaNode = /.(c|m)?js$/.test(bin);
+  const shell = !viaNode && !process.env.AI_DEV_KIT_CLAUDE_BIN && process.platform === 'win32';
+  const a = shell ? args.map((x) => (/s/.test(x) ? '"' + x + '"' : x)) : args;
+  return childProcess.spawnSync(viaNode ? process.execPath : bin, viaNode ? [bin, ...a] : a, { cwd, encoding: 'utf8', timeout: 120000, shell });
+}
+export function ensureUsageMod(library: string | undefined): { state: 'enabled' | 'installed' | 'failed'; warning?: string } {
+  if (usageModEnabled()) return { state: 'enabled' };
+  const market = path.join(library || '<ai-dev-kit>', 'mods');
+  const manual = `claude plugin marketplace add "${market}" then claude plugin install ${USAGE_MOD}@ai-dev-kit-mods --scope user`;
+  const cwd = os.homedir();
+  const add = runClaude(['plugin', 'marketplace', 'add', market], cwd);
+  const addText = String(add.stderr || add.stdout || '');
+  if (add.status !== 0 && !/already/i.test(addText)) return { state: 'failed', warning: `could not add the mods marketplace (${(add.error?.message || addText || 'claude not found').trim().split('\n')[0]}). Run: ${manual}` };
+  const inst = runClaude(['plugin', 'install', `${USAGE_MOD}@ai-dev-kit-mods`, '--scope', 'user'], cwd);
+  if (inst.status !== 0 && !/already/i.test(String(inst.stderr || inst.stdout || ''))) return { state: 'failed', warning: `could not install the feature-usage mod (${String(inst.error?.message || inst.stderr || inst.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
+  if (!usageModEnabled()) return { state: 'failed', warning: `the feature-usage mod is not enabled in settings.json after the install. Run: ${manual}` };
+  return { state: 'installed' };
 }
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
@@ -806,7 +829,13 @@ export function doInstall(args: CliArgs): DoInstallResult {
     ? company.doCompanySync({ library: args.library, root: args.root, tool: args.tool, companyFrom: args.companyFrom, companyDefaults: args.companyDefaults })
     : undefined;
   const usageResult = setUsageTracking(args.usage, args.usageNotify);
-  if (usageResult?.warning) console.error(usageResult.warning);
+  if (usageResult && usageResult.track) {
+    const m = ensureUsageMod(args.library);
+    usageResult.mod = m.state;
+    if (m.warning) { usageResult.warning = m.warning; console.error(m.warning); }
+    else if (m.state === 'installed') console.error('feature-usage mod installed; it starts logging in your next Claude Code session (or run /reload-plugins).');
+  }
+  if (usageResult?.warning && !usageResult.mod) console.error(usageResult.warning);
   const batchPaired = Object.keys(manifest.skills).includes('session-budget');
   const batchResult = args.batch !== undefined || batchPaired ? batchMod(args.root!, args.library, batchPaired, args.batch) : undefined;
   if (batchResult?.warning) console.error(batchResult.warning);
@@ -1471,7 +1500,7 @@ async function askCompany(args: CliArgs, ask: boolean): Promise<void> {
 // The project signature is the user's own choice: an alias that watermarks code written to the standards, or none.
 // Feature-usage tracking is the user's own choice and never touches the project: it writes one small config file in the home folder.
 async function askUsage(args: CliArgs): Promise<void> {
-  if (args.usage !== undefined) return;
+  if (args.usage !== undefined || autoYes) return; // --yes alone is no request for tracking: it must not install the mod
   console.log(dim('Usage tracking: a script, not the AI (so it costs no tokens), writes one local line each time a skill loads, a slash command is typed or a kit script runs. Names only, never your prompts, files or code, and nothing leaves this machine. It needs the optional feature-usage mod (Claude Code only). See it with /kit-usage report; turn it off any time with /kit-usage off.'));
   args.usage = (await askYesNo('Keep track of which kit features get used?', true)) ? 'on' : 'off';
   if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only)', false)) ? 'on' : 'off';
