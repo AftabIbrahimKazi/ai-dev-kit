@@ -134,13 +134,15 @@ t('install with context-code "none" removes the Context code row', () => {
   assert.ok(!/Context code/.test(body));
 });
 
-t('install never overwrites an existing session-protocol file', () => {
+t('install keeps an existing session-protocol file and only adds the missing Context code row', () => {
   const lib = makeLibrary();
   const target = tmp();
   write(target, 'CLAUDE.md', '# my own hand-written file\n');
   doInstall({ library: lib, root: target, tool: 'claude', skills: ['handover'], standards: true, contextCode: 'X7' });
   const body = fs.readFileSync(path.join(target, 'CLAUDE.md'), 'utf8');
-  assert.strictEqual(body, '# my own hand-written file\n');
+  assert.ok(body.startsWith('# my own hand-written file\n'), 'user content kept as-is');
+  assert.match(body, /\| Context code \| X7 \|/);
+  assert.doesNotMatch(body, /Skill Triggers/);
 });
 
 t('comment-style level is written on install and carried forward on update without re-passing it', () => {
