@@ -7,9 +7,8 @@ description: Security audit or review, "is this safe", vulnerability hunt in a c
 
 A finding is a crossed trust boundary with a result, not a checklist gap. The rules live in `coding-standards/qa/security-checks.md` (QA-SEC-01–20); this skill is the procedure for hunting violations of them and for anything the rules do not cover. Method adapted from Cloudflare's MIT-licensed `security-audit-skill` (see CREDITS.md).
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a false positive that looked real, a class that paid off, a validation shortcut that worked). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a false positive that looked real, a class that paid off, a validation shortcut that worked); merge, don't duplicate.
 
 ## Modes
 - **Focused (default):** a question, one feature, a diff, triage. Read the relevant code, answer, write no files.

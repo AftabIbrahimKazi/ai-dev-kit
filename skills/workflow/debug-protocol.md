@@ -7,9 +7,8 @@ description: Something fails or misbehaves and the cause is unknown (bug, regres
 
 The expensive failure mode is "edit things until it works": it burns tokens, masks the real cause, and plants regressions. This loop is slower per step and much faster to resolution.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (root-cause class found, which hypothesis-shortcut worked, what wasted time). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (root-cause class found, which hypothesis-shortcut worked, what wasted time); merge, don't duplicate.
 
 ## The loop
 

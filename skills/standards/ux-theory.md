@@ -9,9 +9,8 @@ Field terms in the topic files are the instruction: apply each term as a practit
 
 `ui-design` decides what to build. `design-standards.md` (DES-01–15) is the law. This skill supplies the craft values behind a theme. It is not needed once a theme is built and its tokens exist.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a value that tested badly, a term the model misread). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a value that tested badly, a term the model misread); merge, don't duplicate.
 
 ## State decides what to read
 | State | Evidence | Do |

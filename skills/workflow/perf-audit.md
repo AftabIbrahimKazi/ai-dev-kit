@@ -7,9 +7,8 @@ description: Performance, slowness, bundle size, Lighthouse or page weight on a 
 
 Performance work fails two ways: optimizing without measuring (fixing the wrong thing) and reporting a wall of findings nobody acts on. This pass produces a ranked shortlist with numbers.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (the biggest win found and its measured impact, or a check that produced noise). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (the biggest win found and its measured impact, or a check that produced noise); merge, don't duplicate.
 
 ## Step 1 — Weigh the payload (static, no server needed)
 Run the production build, then the script; read its table, do not re-list files by hand:

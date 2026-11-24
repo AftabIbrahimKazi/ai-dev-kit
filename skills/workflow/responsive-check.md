@@ -7,9 +7,8 @@ description: Does the layout work at screen sizes, widths, phones or tablets; ho
 
 Responsive bugs hide at breakpoint edges and bleed across zones. This skill fixes the zones to check, measures each one in a real browser, and writes every fix as an isolated range (`css-standards.md` RULE 17).
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a breakpoint pattern that hid a bug, or a check that gave a false finding). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a breakpoint pattern that hid a bug, or a check that gave a false finding); merge, don't duplicate.
 
 ## Step 1 — Plan the viewports
 Run `node <skill-root>/responsive-check/probes.js [flags]`. It prints the probe list and any warnings. Show the plan in one line before measuring.

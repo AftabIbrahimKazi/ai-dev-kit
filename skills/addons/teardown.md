@@ -7,9 +7,8 @@ description: Opt-in add-on. Use whenever the user asks for a 3D simulator, cutaw
 
 **This is opt-in only, never part of any default install.** Once installed, load it on its own when a request matches the description. The user can also type `/teardown`. A hand-built simulator drifts (the gauges disagree with the motion), hides its failures (a shader that does not compile draws nothing) and costs tokens on every redraw. A script detects, scaffolds, checks, builds and photographs the page. Claude supplies only what a script cannot: the real dimensions, the reference, and the machine's own geometry. The page is machine-agnostic: it takes any set of named parts and gives each one isolate, cutaway, a camera that frames it and a tour stop.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a frame that looked wrong, a Triforge gap, a check that missed). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a frame that looked wrong, a Triforge gap, a check that missed); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Type `node -v` and press Enter. A number of 22 or more, such as `v24.12.0`, means yes. If you see "not recognised", install Node from nodejs.org.

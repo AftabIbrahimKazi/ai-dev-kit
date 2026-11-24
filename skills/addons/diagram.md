@@ -7,9 +7,8 @@ description: Opt-in add-on. Use whenever the user asks for an architecture, stac
 
 **This is opt-in only, never part of any default install.** Hand-drawn diagrams put arrows through text, drift from the code and cost tokens on every redraw. This add-on has a script detect, lay out, check and render the diagram from a small spec file. Claude only supplies what a script cannot: roles, wording and confirmation of guessed links.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a layout that broke, a detection miss, a label that never fit). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a layout that broke, a detection miss, a label that never fit); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Check Node is installed: type `node -v` and press Enter. A version number such as `v24.12.0` means yes. If you see "not recognised", install Node from nodejs.org.

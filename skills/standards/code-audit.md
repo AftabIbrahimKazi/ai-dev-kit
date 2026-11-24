@@ -10,9 +10,8 @@ A project-wide hunt for violations by grepping and opening files spends tokens o
 
 It does not replace review. It replaces the searching. Rules a script cannot check stay with you (see "Not covered").
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a false-positive pattern met, an ignore that was needed, a rule the audit missed). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a false-positive pattern met, an ignore that was needed, a rule the audit missed); merge, don't duplicate.
 
 ## Run it
 `node <skill-root>/code-audit/audit.js` from the project root (or `--cwd <dir>`). It works in any tool that can run Node.

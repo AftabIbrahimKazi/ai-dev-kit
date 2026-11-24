@@ -7,9 +7,8 @@ description: Use whenever UI code keeps state in several boolean flags (isLoadin
 
 Scattered flags hide a state machine nobody wrote down. Impossible combinations (`isLoading` and `isSuccess` both true) then become reachable, and the bug appears only in some order. This skill finds them with a script first and a model only for the files the script flags.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a pattern the scan missed, a false alarm it keeps raising). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a pattern the scan missed, a false alarm it keeps raising); merge, don't duplicate.
 
 ## The tool
 `node <skill-root>/implicit-state-audit/scan.js [file|folder ...] [--changed] [--json]` (`/state-audit`). Plain Node, no model, no network, results cached by file hash. With no path it scans the changed files, else the whole project. Read its table; do not re-derive it.

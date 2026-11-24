@@ -11,9 +11,8 @@ compat: claude-code-only
 
 A mod is unsandboxed code that runs with the user's permissions inside every session. A careless mod breaks sessions silently. This is the bar every kit mod meets. For API details, load the built-in `plugin-authoring` skill; do not copy its API tables here (they change between releases).
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (an API trap, a test-kit quirk, a rule that blocked a bad mod). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (an API trap, a test-kit quirk, a rule that blocked a bad mod); merge, don't duplicate.
 
 ## Step 0 — Choose the tool
 | Need | Use |

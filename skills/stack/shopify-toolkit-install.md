@@ -7,9 +7,8 @@ description: "setup for shopify", "install shopify skills", "shopify ai toolkit"
 
 Shopify publishes its own skills (Liquid, Shopify CLI, storefront GraphQL, partner, dev, onboarding) at `github.com/Shopify/Shopify-AI-Toolkit`. `ai-dev-kit` never stores a copy of these — doing so would misattribute Shopify-authored content inside an MIT/self-authored repo and fork their telemetry hook onto every future kit install. This skill is a thin installer that clones the live source straight into the target project instead, the same install-time-only relationship `install-kit` has with this repo's own skills.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a source-repo path change, a skill list update, a telemetry-opt-out step that changed). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a source-repo path change, a skill list update, a telemetry-opt-out step that changed); merge, don't duplicate.
 
 ## Source (verify, don't assume)
 `github.com/Shopify/Shopify-AI-Toolkit`, `skills/` folder. This is Shopify's repo, not this kit's — confirm it still exists and the `skills/` path is current before cloning; if it moved, update this line and note the change in `learnings.md`, don't silently guess a new URL.

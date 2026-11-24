@@ -13,9 +13,8 @@ Model ID: `claude-opus-4-8` · 1M context · 128K max output · $5 in / $25 out 
 ## Staleness guard
 Model facts here (ID, pricing, limits, API rules) were verified 2026-07. If a newer Claude model generation exists, pricing looks off, or the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill) before relying on them, follow the live source, and log the correction in `learnings.md`.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently); merge, don't duplicate.
 
 ## Hard API rules
 - **Adaptive thinking is NOT on by default** — omitting `thinking` runs without thinking. Set `thinking: {type: "adaptive"}` explicitly for anything non-trivial.

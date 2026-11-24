@@ -7,9 +7,8 @@ description: A stop-and-wait gate (agent-usage, debug-protocol, coding-standards
 
 Several skills in this library contain a "stop and don't act until asked" instruction: `agent-usage`'s approval gate, `debug-protocol`'s "deliver the diagnosis and stop," and the "don't fix unprompted" line in `coding-standards` (review mode) and `perf-audit`. Each defers to this file for how its gate behaves outside plain interactive mode, instead of restating mode-override logic individually.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a mode where a gate held or silently eroded, a case this table didn't cover). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a mode where a gate held or silently eroded, a case this table didn't cover); merge, don't duplicate.
 
 ## Normal interactive mode
 

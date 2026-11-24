@@ -7,9 +7,8 @@ description: Opt-in add-on. Use whenever the user asks to modernize a codebase, 
 
 **This is opt-in only, never part of any default install.** Models write old patterns because their training data is full of them. Chrome's `modern-web-guidance` package knows which patterns the platform now handles natively. This add-on runs its scanner and gives you a short table, not raw JSON.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a false positive that keeps returning, a scanner output change). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a false positive that keeps returning, a scanner output change); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Check Node is installed and new enough: type `node -v` and press Enter. You need `v22` or higher. A lower number or "not recognised": install the current Node from nodejs.org, then open a new terminal.

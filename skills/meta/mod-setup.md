@@ -10,9 +10,8 @@ compat: claude-code-only
 
 A mod runs with the user's permissions and sees every prompt and tool call. Install only after the user has seen what it does and said yes.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a check that failed, a surface that behaved differently, an install step that was missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a check that failed, a surface that behaved differently, an install step that was missing); merge, don't duplicate.
 
 ## Step 1 — Check the environment
 1. Version: run `claude --version` (VS Code: the bundled `claude.exe` under `~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/`). Below 2.1.287: stop and tell the user to update.

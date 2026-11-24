@@ -7,9 +7,8 @@ description: Opt-in add-on to teardown. Use when the user asks for a video, MP4 
 
 **This is opt-in only, never part of any default install, and needs the `teardown` add-on.** The simulator page draws any frame from time alone, so a script can step through the tour, photograph each frame in headless Chrome and encode the frames with ffmpeg. The video is the same picture as the live page. Claude does not hand-write capture code; it runs one command and reads the result.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (an encoder flag that broke a player, a frame that differed from the live page). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (an encoder flag that broke a player, a frame that differed from the live page); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Check ffmpeg: type `ffmpeg -version` and press Enter. A version line means yes. On Windows, if you see "not recognised", type `winget install Gyan.FFmpeg`, then open a new terminal.

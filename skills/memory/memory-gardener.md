@@ -7,9 +7,8 @@ description: Asked to clean or prune skills or memory, learnings.md over ~30 bul
 
 Self-improving skills only work if their learnings stay short, true, and deduplicated. Unpruned, a learnings file becomes a per-use context tax full of stale one-offs. This skill is the maintenance pass.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a pruning heuristic that worked, a class of bullet that always turns out stale). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a pruning heuristic that worked, a class of bullet that always turns out stale); merge, don't duplicate.
 
 ## Scope
 Glob for every `learnings.md` under the skills directories (`<skill-root>/*/`), the project's `memory-bank/` (INDEX.md + entries — see the `memory-bank` skill), **the project's handover notes (`handover.md`, or `handover/<role>.md` + `handover/board.md` in parallel mode — see the `handover` skill)**, plus the user's persistent memory index if present. Report per-file sizes first; garden the files over ~15 bullets, over the handover ceiling, or explicitly named.

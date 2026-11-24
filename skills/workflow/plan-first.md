@@ -7,9 +7,8 @@ description: Task touches 3+ files, has ambiguous scope or several deliverables,
 
 A wrong interpretation on a big run wastes the whole run. Five lines of plan costs ~100 tokens and catches it before execution.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (did the plan catch a misinterpretation? Was planning overhead wasted on a task too small for it?). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (did the plan catch a misinterpretation? Was planning overhead wasted on a task too small for it?); merge, don't duplicate.
 
 ## When it applies
 - Task will touch **3+ files**, OR

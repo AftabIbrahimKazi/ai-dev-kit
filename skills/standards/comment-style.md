@@ -7,9 +7,8 @@ description: Writing or editing code, or changing comment style or verbosity. Lo
 
 One project-wide comment level, so the AI stops improvising comment volume per edit.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a case that was wrongly commented or wrongly left bare, or an exception category that turned out to be missing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a case that was wrongly commented or wrongly left bare, or an exception category that turned out to be missing); merge, don't duplicate.
 
 ## Active level
 **Active level: none**

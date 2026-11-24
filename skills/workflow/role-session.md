@@ -13,9 +13,8 @@ The user runs multiple parallel AI sessions (Claude Code, OpenCode, or both), ea
 
 **Legacy projects:** a project activated before claims moved to `locks.d/` has a `handover/locks.md` table. If it has no live rows, delete it and create `locks.d/`; if it has live rows, finish or release those lanes first (the dev decides) — never run both mechanisms at once.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a coordination failure seen, a rule that saved a conflict, friction worth removing). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a coordination failure seen, a rule that saved a conflict, friction worth removing); merge, don't duplicate.
 
 ## The coordination files (in `handover/`)
 ```

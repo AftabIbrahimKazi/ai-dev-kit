@@ -10,9 +10,8 @@ Model ID: `claude-haiku-5-5` (no date suffix, no alias; Bedrock `anthropic.claud
 ## Staleness guard
 Model facts here (ID, pricing, limits, API rules) were verified 2026-10-08 against platform.claude.com. If a newer Haiku exists or the API contradicts this file: verify against current docs (Models API / platform.claude.com or the claude-api skill), follow the live source, and log the correction in `learnings.md`.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (what worked, what wasted tokens, what you'd prompt differently); merge, don't duplicate.
 
 ## Hard API rules (each is a 400 if violated; Haiku 4.5 rules no longer apply)
 - **`thinking: {type: "enabled", budget_tokens: N}` is rejected.** Omit `thinking` or send `{type: "adaptive"}` (default, on). `{type: "disabled"}` works at `high` effort or below only.

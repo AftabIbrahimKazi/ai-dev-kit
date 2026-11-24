@@ -7,9 +7,8 @@ description: Opt-in add-on. Use whenever the user wants an exported Figma SVG tu
 
 **This is opt-in only, never part of any default install.** Writing markup from a design by eye costs tokens and drifts a few pixels at a time. This add-on reads the SVG, writes the HTML and CSS itself, and proves the result with a pixel diff against the SVG rendered in a headless browser. Claude does not draw or tune layout; it runs the script and reports what the diff says.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (an SVG shape that needed a fallback, a font whose metrics were wrong, a rule that always reverted). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (an SVG shape that needed a fallback, a font whose metrics were wrong, a rule that always reverted); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Check Node is installed: type `node -v` and press Enter. A version number such as `v24.12.0` means yes. If you see "not recognised", install Node from nodejs.org. You also need Chrome or Edge.

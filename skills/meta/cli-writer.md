@@ -10,9 +10,8 @@ description: Use whenever creating, reviewing or improving a command-line tool, 
 
 A kit CLI runs on a machine the author never saw: Windows with a space in the path, no `node_modules`, no TTY, an agent instead of a person. This is the bar that survives that.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a cold-start failure, an OS quirk, a prompt that confused a tester). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a cold-start failure, an OS quirk, a prompt that confused a tester); merge, don't duplicate.
 
 ## Step 0 — Choose the tool
 | Need | Use |

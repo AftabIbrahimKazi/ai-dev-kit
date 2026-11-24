@@ -7,9 +7,8 @@ description: Converting, compressing, shrinking or optimizing images, video, fon
 
 Heavy assets cost page weight, repo size and, for images an AI model reads, tokens. This skill finds them, converts or compresses them with the converters the machine already has, and leaves every original in place until the user decides.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a quality setting that looked wrong, or a converter that failed on a file type). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a quality setting that looked wrong, or a converter that failed on a file type); merge, don't duplicate.
 
 ## The tool
 `node <skill-root>/optimize-assets/convert.js <command>`. Plain Node; it drives sharp, ImageMagick, ffmpeg, svgo, woff2_compress and oxipng when they are installed. It never edits or deletes an original.

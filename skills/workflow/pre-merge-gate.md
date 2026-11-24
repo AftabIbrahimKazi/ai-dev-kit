@@ -7,9 +7,8 @@ description: A change is about to be called done, ready for review, handed off o
 
 A change that violates a standard it was written under is cheaper to catch now than after a dev's review cycle finds it. This is the author's own check, not a substitute for that review.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a violation this caught before handoff, or a rule that produced a false flag). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a violation this caught before handoff, or a rule that produced a false flag); merge, don't duplicate.
 
 ## Rules
 1. **Scope is exactly the files edited this task** — in `role-session` parallel mode, exactly the files you hold claims on in `handover/locks.d/`. Never a whole-tree `git diff`, never another role's rows.

@@ -13,9 +13,8 @@ The missing memory layer: knowledge that must outlive sessions AND machines AND 
 - Auto-memory (assistant-level) = user preferences and cross-project facts.
 - **memory-bank = this project's durable truths**: decisions + why, domain context, constraints, solved-mystery writeups. If it belongs in git history or code comments, it doesn't belong here.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a recall that saved rework, a capture format that proved useful/useless). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a recall that saved rework, a capture format that proved useful/useless); merge, don't duplicate.
 
 ## Structure
 ```

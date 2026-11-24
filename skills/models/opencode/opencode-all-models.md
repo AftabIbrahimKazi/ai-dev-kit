@@ -10,9 +10,8 @@ OpenCode is the tool; the open-weight models are its gears. Same principle as th
 ## Staleness guard
 The lineup below was verified 2026-07 via web search. Open-weight releases move faster than the Claude lineup — before a load-bearing choice, re-verify against models.dev / OpenCode Zen's tested list, update the table, and log the change in `learnings.md`.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a routing choice that paid off or backfired, a config gotcha, a model that under/over-performed its benchmark reputation). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a routing choice that paid off or backfired, a config gotcha, a model that under/over-performed its benchmark reputation); merge, don't duplicate.
 
 ## The lineup (verified 2026-07)
 

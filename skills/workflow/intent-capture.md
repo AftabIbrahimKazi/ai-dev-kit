@@ -7,9 +7,8 @@ description: Vague request, two or more plausible readings, or no acceptance cri
 
 Make the read of a request explicit before `plan-first` or any edit.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a misread this caught, or a case where it fired on an already-clear request and wasted a turn). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a misread this caught, or a case where it fired on an already-clear request and wasted a turn); merge, don't duplicate.
 
 ## When it applies
 Same threshold as `plan-first`, so the two compose instead of double-gating every turn:

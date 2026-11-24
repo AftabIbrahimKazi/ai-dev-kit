@@ -7,9 +7,8 @@ description: Use whenever a README.md is written, restructured, trimmed or fact-
 
 A README decides in the first screen whether a developer installs the project. This skill stops the two usual failures: a wall of flags before the pitch, and numbers or flags copied from old text instead of the code.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a claim the audit missed, a section shape that read badly). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a claim the audit missed, a section shape that read badly); merge, don't duplicate.
 
 ## Principles
 1. **Hook first, manual second.** The first screen holds the pain, the differentiator and a 3-line quickstart. Flag tables and novice walkthroughs come after.

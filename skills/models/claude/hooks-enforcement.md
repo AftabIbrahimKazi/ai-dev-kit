@@ -12,9 +12,8 @@ compat: claude-code-only
 
 `ai-standards.md` remains the authoritative, tool-agnostic contract regardless of whether this is installed — never make any rule depend on this skill being present.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a case this caught, a false block, or a hook exit-code behavior that didn't match what's documented here). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a case this caught, a false block, or a hook exit-code behavior that didn't match what's documented here); merge, don't duplicate.
 
 ## Non-goal
 This cannot confirm `[CX]` (or its Context code) is honest — only that a proxy artifact exists. Residual reliance on prompt compliance is inherent and stays. Do not describe this as "enforcing" AI-01–AI-03 in project docs; describe it as assisting.

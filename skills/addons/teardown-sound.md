@@ -7,9 +7,8 @@ description: Opt-in add-on to teardown. Use when the user asks for sound, music 
 
 **This is opt-in only, never part of any default install, and needs the `teardown` add-on.** The sound is written by a script from the tour's own timeline, so it cannot drift from the picture. Every sample is reproducible. Claude does not compose or synthesise by hand; it runs one command and reads the loudness it reports.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a hum that clashed, a level that clipped on a phone). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a hum that clashed, a level that clipped on a phone); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Build the machine with the `teardown` add-on and run `/teardown sheet teardown/<name>` once. That writes the timeline the score follows.

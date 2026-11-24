@@ -7,9 +7,8 @@ description: Tokens, token usage, cost, budget or a filling context mentioned, o
 
 The model skills pick the gear; this skill drives it. Every rule targets the actual waste patterns: redundant reads, oversized reads, restated content, and premium-model grunt work.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (the biggest token sink observed this session and how to avoid it). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (the biggest token sink observed this session and how to avoid it); merge, don't duplicate.
 
 ## Reading discipline (input tokens)
 - **Grep/glob before read.** Locate the target line range, then read that range — not the whole file. Reading a 2000-line file to edit 10 lines is a 100× overspend.

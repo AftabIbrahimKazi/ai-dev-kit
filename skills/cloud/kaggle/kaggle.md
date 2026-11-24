@@ -7,9 +7,8 @@ description: Opt-in add-on. Use when the user wants to run a finished plan's cod
 
 **Opt-in only, never part of any default install.** Claude plans and reviews; a private Kaggle notebook running `qwen3-coder:30b` (Ollama, 2x T4) writes the files. Nothing runs by itself: every step is a `/kaggle` subcommand you type. Without them, Claude works as before.
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a task shape the model gets wrong, a Kaggle limit that changed). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a task shape the model gets wrong, a Kaggle limit that changed); merge, don't duplicate.
 
 ## First run (a person typing, no experience needed)
 1. Make a free account at kaggle.com and verify your phone (GPU needs it). In Settings, API, create a token.

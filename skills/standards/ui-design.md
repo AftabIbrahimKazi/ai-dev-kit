@@ -7,9 +7,8 @@ description: Designing a new page, screen or component from scratch with no desi
 
 `coding-standards` keeps the code clean; this skill decides what the UI should be. The laws are `coding-standards/design-standards.md` (DES-01–15). This file is the process. Adapted from Hallmark (Nutlope/hallmark, MIT; see CREDITS.md).
 
-## Self-improvement (do this first and last)
-1. **At start:** apply `learnings.md` if the `learnings-inject` mod supplied it. Do not search for it.
-2. **At end:** append one dated bullet only for a new, non-obvious lesson (a tell that slipped through, a direction that worked for a category, a question the user always answered the same way). Most uses add nothing. Merge instead of duplicating; delete disproven bullets.
+## Learnings
+Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). At end, add one dated bullet only for a new, non-obvious lesson (a tell that slipped through, a direction that worked for a category, a question the user always answered the same way); merge, don't duplicate.
 
 ## When it applies
 **Lead only when designing from scratch**: no design doc, no Figma file, no existing design system. Then run the flow and make the design decisions.
