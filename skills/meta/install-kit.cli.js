@@ -1384,6 +1384,8 @@ exports.__testApi = {
     askYesNo: (m, d) => askYesNo(m, d),
     askSelect: (m, c, i) => askSelect(m, c, i),
     askMultiselect: (m, c, o) => askMultiselect(m, c, o),
+    askCompany: (a, ask) => askCompany(a, ask),
+    skillChoices: (cat, purposes) => skillChoices(cat, purposes),
 };
 function useMenus() {
     if (menuIOOverride)

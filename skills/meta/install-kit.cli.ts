@@ -1289,6 +1289,8 @@ export const __testApi = {
   askYesNo: (m: string, d: boolean): Promise<boolean> => askYesNo(m, d),
   askSelect: (m: string, c: Choice[], i: number): Promise<string> => askSelect(m, c, i),
   askMultiselect: (m: string, c: Choice[], o?: { defaultAll?: boolean }): Promise<string[]> => askMultiselect(m, c, o),
+  askCompany: (a: CliArgs, ask: boolean): Promise<void> => askCompany(a, ask),
+  skillChoices: (cat: Catalog, purposes: Record<string, string>) => skillChoices(cat, purposes),
 };
 function useMenus(): boolean {
   if (menuIOOverride) return true;

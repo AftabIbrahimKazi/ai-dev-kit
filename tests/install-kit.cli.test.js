@@ -973,3 +973,35 @@ t('comment-style installs untouched when no level is given and no copy exists', 
   doInstall({ library: lib, root: target, tool: 'claude', skills: ['comment-style'] });
   assert.match(fs.readFileSync(path.join(target, '.claude/skills/comment-style/SKILL.md'), 'utf8'), /Active level: none/);
 });
+
+const runApi = (body, input) => {
+  const code = "const c=require(process.argv[1]).__testApi;(async()=>{" + body + "})().then(()=>process.exit(0))";
+  return spawnCli(process.execPath, ['-e', code, CLI_JS], { encoding: 'utf8', input });
+};
+
+t('company question: Enter means No, and the flow stops without asking more', () => {
+  const root = tmp();
+  const r = runApi("const a={root:" + JSON.stringify(root) + "};await c.askCompany(a,true);console.log('RESULT '+JSON.stringify(a));", '\n');
+  assert.ok(r.stdout.includes('"company":false') || !r.stdout.includes('"company":true'), r.stdout + r.stderr);
+  assert.ok(!/Folder to copy/.test(r.stdout), r.stdout);
+});
+
+t('company already chosen with --company still asks for the folder, and a scripted call with a root turns it on, but a bare one returns at once', () => {
+  const root = tmp();
+  const yes = runApi("const a={root:" + JSON.stringify(root) + ",company:true};await c.askCompany(a,true);console.log('RESULT '+JSON.stringify(a));", '\n1\n');
+  assert.match(yes.stdout, /Folder to copy/, yes.stdout + yes.stderr);
+  const bare = runApi("const a={};await c.askCompany(a,false);console.log('RESULT '+JSON.stringify(a));", '');
+  assert.ok(bare.stdout.includes('RESULT {}'), bare.stdout + bare.stderr);
+  const scripted = runApi("const a={root:" + JSON.stringify(root) + "};await c.askCompany(a,false);console.log('RESULT '+JSON.stringify(a));", '\n1\n');
+  assert.match(scripted.stdout, /"company":true/, scripted.stdout);
+});
+
+t('menu rows shorten a purpose longer than 80 characters to 79 plus an ellipsis, and leave 80 whole', () => {
+  const run = (n) => {
+    const r = runApi("console.log('R '+JSON.stringify(c.skillChoices({alpha:{}},{alpha:'x'.repeat(" + n + ")})[0].title));", '');
+    return r.stdout.split('R ')[1];
+  };
+  assert.ok(run(80).includes('x'.repeat(80)) && !run(80).includes('…'));
+  const long = run(81);
+  assert.ok(long.includes('x'.repeat(79) + '…') && !long.includes('x'.repeat(80)));
+});

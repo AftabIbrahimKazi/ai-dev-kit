@@ -223,3 +223,106 @@ t('--verdict ends the report with STOP, REVIEW, SAFE or nothing staged', () => {
   assert.match(v(c), /^verdict: SAFE/);
   assert.match(v(repo()), /^verdict: nothing staged/);
 });
+
+const { report } = require('../skills/workflow/pre-commit.check.js');
+
+t('an OpenAI-style key in a staged file BLOCKs', () => {
+  const d = repo(); put(d, 'src/k.txt', 'key = sk-' + 'aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG'.slice(0, 34) + '\n'); sh(d, 'add', '.');
+  assert.ok(kinds(check({ cwd: d }), 'BLOCK').some((k) => /^secret:src\/k\.txt/.test(k)), JSON.stringify(check({ cwd: d }).findings));
+});
+
+t('report counts BLOCK and WARN separately and lists BLOCK rows first', () => {
+  const f = (sev, kind) => ({ sev, kind, msg: 'm' });
+  const out = report({ label: 'L', files: 3, findings: [f('WARN', 'a'), f('BLOCK', 'b'), f('WARN', 'c')] });
+  assert.strictEqual(out, 'precommit-check (L, 3 file(s)): 1 BLOCK, 2 WARN\nBLOCK b  m\nWARN  a  m\nWARN  c  m');
+  assert.match(report({ label: 'L', files: 1, findings: [f('WARN', 'a')] }, true), /verdict: REVIEW, 1 warning/);
+  assert.match(report({ label: 'L', files: 1, findings: [f('BLOCK', 'a')] }, true), /verdict: STOP, 1 BLOCK/);
+});
+
+t('detect: PowerShell here-strings give the message only in PowerShell mode', () => {
+  assert.deepStrictEqual(detect("git commit -m @'\nfeat: x\n'@", true).messages, ['feat: x']);
+  assert.deepStrictEqual(detect("git commit -m @'\nfeat: x\n'@", false).messages, ['@\nfeat: x\n@']);
+  assert.deepStrictEqual(detect("git commit -m a@'b'", true).messages, ['a@b']);
+  assert.deepStrictEqual(detect("git commit -m @'x'", true).messages, ['@x']);
+});
+
+t('detect: newline and semicolon each start a new command', () => {
+  for (const sep of ['\n', ';', ' && ']) {
+    const d = detect('git add a' + sep + 'git commit -m x');
+    assert.ok(d.isCommit && d.stages, JSON.stringify(sep));
+  }
+});
+
+t('detect: bare git and a trailing global option do not throw or count as a commit', () => {
+  for (const c of ['git', 'git -C', 'git -c', 'git --no-pager']) assert.strictEqual(detect(c).isCommit, false, c);
+  assert.strictEqual(detect('git -c a=b commit -m x').isCommit, true);
+});
+
+const { addedLines } = require('../skills/workflow/pre-commit.check.js');
+
+t('addedLines: only + lines of a real file, with their new line numbers', () => {
+  const diff = ['diff --git a/x.js b/x.js', '--- a/x.js', '+++ b/x.js', '@@ -1,3 +10,4 @@', '+one', '-gone', '+two', '+++notreal', '--- a/y.js', '+++ /dev/null', '@@ -1 +0,0 @@', '+orphan'].join('\n');
+  assert.deepStrictEqual(addedLines(diff), [{ file: 'x.js', line: 10, text: 'one' }, { file: 'x.js', line: 11, text: 'two' }]);
+  assert.deepStrictEqual(addedLines('+++ b/z.js\n@@ -0,0 +1 @@\n context only\n-removed'), []);
+});
+
+t('every high-confidence secret shape BLOCKs', () => {
+  const d = repo();
+  const shapes = {
+    'slack.txt': 'xox' + 'b-1234567890abcd',
+    'pem.txt': '-----BEGIN RSA PRIVATE ' + 'KEY-----',
+    'gh.txt': 'gh' + 'p_' + 'a1B2c3'.repeat(6),
+    'goog.txt': 'AI' + 'za' + 'a1B2c3D'.repeat(5),
+  };
+  for (const [f, v] of Object.entries(shapes)) put(d, 'src/' + f, 'v = ' + v + '\n');
+  sh(d, 'add', '.');
+  const blocked = kinds(check({ cwd: d }), 'BLOCK');
+  for (const f of Object.keys(shapes)) assert.ok(blocked.some((k) => k.startsWith('secret:src/' + f)), f + ' ' + blocked.join(' '));
+});
+
+t('commit message: a 72-character body line is fine, 73 is flagged, links and BREAKING CHANGE are exempt', () => {
+  const m = (body) => checkMessage('fix: x\n\n' + body).map((f) => f.msg);
+  assert.deepStrictEqual(m('a'.repeat(72)), []);
+  assert.deepStrictEqual(m('a'.repeat(73)), ['1 body line(s) over 72 chars']);
+  assert.deepStrictEqual(m('https://example.com/' + 'a'.repeat(80)), []);
+  assert.deepStrictEqual(m('BREAKING CHANGE: ' + 'a'.repeat(80)), []);
+  assert.deepStrictEqual(m('short'), []);
+});
+
+t('size warning: over 1 MB warns, exactly 1 MB does not', () => {
+  const d = repo();
+  put(d, 'big.bin', 'x'.repeat(1024 * 1024 + 1)); put(d, 'edge.bin', 'x'.repeat(1024 * 1024)); sh(d, 'add', '.');
+  const warns = kinds(check({ cwd: d }), 'WARN');
+  assert.ok(warns.includes('size:big.bin') && !warns.includes('size:edge.bin'), warns.join(' '));
+});
+
+t('version check: only code changes count, and a version file counts by its content or its name', () => {
+  const warn = (setup) => { const d = repo(); setup(d); sh(d, 'add', '.'); return check({ cwd: d, version: true }).findings.some((f) => f.kind === 'version'); };
+  assert.strictEqual(warn((d) => { put(d, 'version.txt', '1.0\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'src/a.js', 'x();\n'); }), true);
+  assert.strictEqual(warn((d) => { put(d, 'VERSION', '1.0\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'src/a.js', 'x();\n'); }), true);
+  assert.strictEqual(warn((d) => { put(d, 'package.json', '{"name":"x"}\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'src/a.js', 'x();\n'); }), false, 'package.json without a version');
+  assert.strictEqual(warn((d) => { put(d, 'package.json', '{"version":"1.0.0"}\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'src/a.js', 'x();\n'); }), true);
+  assert.strictEqual(warn((d) => { put(d, 'package.json', '{"version":"1.0.0"}\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'notes.md', 'hi\n'); }), false, 'docs only');
+  assert.strictEqual(warn((d) => { put(d, 'package.json', '{"version":"1.0.0"}\n'); sh(d, 'add', '.'); sh(d, 'commit', '-qm', 'chore: v'); put(d, 'tests/a.test.js', 'x();\n'); }), false, 'tests only');
+});
+
+t('detect: PowerShell single & is a call operator, && and | still split; default mode is bash', () => {
+  assert.strictEqual(detect('git add a & git commit -m x', true).isCommit, false);
+  assert.strictEqual(detect('git add a & git commit -m x', false).isCommit, true);
+  assert.strictEqual(detect('git add a && git commit -m x', true).isCommit, true);
+  assert.strictEqual(detect('git add a|git commit -m x').isCommit, true);
+  assert.strictEqual(detect('git add a||git commit -m x').isCommit, true);
+  assert.deepStrictEqual(detect("git commit -m @'\nfeat: x\n'@").messages, ['@\nfeat: x\n@']);
+});
+
+t('detect: only the git program counts, by name, path or .exe; -a bundles mean commit all', () => {
+  assert.strictEqual(detect('echo commit -m x').isCommit, false);
+  assert.strictEqual(detect('git.exe commit -m x').isCommit, true);
+  assert.strictEqual(detect('/usr/bin/git commit -m x').isCommit, true);
+  assert.strictEqual(detect('FOO=1 git commit -m x').isCommit, true);
+  assert.strictEqual(detect('git commit -am x').all, true);
+  assert.strictEqual(detect('git commit -sa -m x').all, true);
+  assert.strictEqual(detect('git commit -m x').all, false);
+  assert.strictEqual(detect('git commit -n -m x').all, false);
+  assert.strictEqual(detect('git commit -n -m x').noVerify, true);
+});

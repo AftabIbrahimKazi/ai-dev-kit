@@ -66,5 +66,11 @@
 	"skills/addons/teardown-sound.cli.js:124:+ to -",
 	"skills/addons/teardown-sound.cli.js:141:>= to >",
 	"skills/addons/teardown-sound.cli.js:162:<= to <",
-	"skills/workflow/pre-merge-gate.scope.js:90:> to >="
+	"skills/workflow/pre-merge-gate.scope.js:90:> to >=",
+	"skills/workflow/pre-commit.check.js:60:|| to &&",
+	"skills/workflow/pre-commit.check.js:51:false to true",
+	"skills/workflow/pre-commit.check.js:304:false to true",
+	"skills/workflow/pre-commit.check.js:373:< to <=",
+	"skills/workflow/pre-commit.check.js:357:+ to -",
+	"skills/workflow/pre-commit.check.js:383:+ to -"
 ]
