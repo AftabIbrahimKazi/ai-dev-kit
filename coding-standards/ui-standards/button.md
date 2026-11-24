@@ -20,3 +20,4 @@ Read when: adding a button, icon button, link-style action or row action.
 - **UI-BTN-16** A Save button is never disabled for validation (`forms.md`).
 - **UI-BTN-17** Full width only on phones (action bars, sheets) and in narrow drawer footers. On desktop buttons size to content.
 - **UI-BTN-18** Colours come from tokens: primary and on-primary, field border, hover tint, danger solid and on-danger, focus ring.
+- **UI-BTN-19** A button that deletes, pays, sends or cannot be undone carries `data-agent-confirm="<what it does, for the person asked>"` in the markup from first render (UI-SHR-11), on the confirming button only, never on the trigger that opens a confirm dialog. A field whose value an assistant may fill but never read carries `data-agent-secret`; a region it must not see (recovery codes) carries `data-agent-hidden`. The value is written once and never changed by script.

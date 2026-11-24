@@ -22,7 +22,7 @@ Read when: adding a toast, alert, banner, flash message, confirm dialog, undo, n
 ## Confirm or Undo
 
 - **UI-FBK-05** A reversible action (archive, remove from list, change status, unassign, move) runs at once and shows a toast with Undo for at least 10 s. No confirmation. Apply it in a reversible form on the server (soft state) so Undo restores order and relations; after the toast closes the change stands, and where possible it can still be reversed from the record's activity or the archive.
-- **UI-FBK-06** An irreversible action (permanent delete, send an email or invoice, revoke access, payment) asks confirmation in an `alertdialog`: the title is a question naming the action and the object ("Delete laptop LT-0044?"), the body states the consequence ("…can't be undone."), "Cancel" has initial focus, and a solid danger button repeats the verb ("Delete laptop"). Esc cancels.
+- **UI-FBK-06** An irreversible action (permanent delete, send an email or invoice, revoke access, payment) asks confirmation in an `alertdialog`: the title is a question naming the action and the object ("Delete laptop LT-0044?"), the body states the consequence ("…can't be undone."), "Cancel" has initial focus, and a solid danger button repeats the verb ("Delete laptop"). Esc cancels. The confirming button carries `data-agent-confirm="<what it does>"` (UI-BTN-19).
 - **UI-FBK-12** A permanent bulk delete of more than 25 records, and the deletion of a tenant, site, account or any container of data, requires typing the record code or the count ("Type 40 to confirm"). The danger button stays `aria-disabled` until the text matches.
 
 ## Wording and notifications
