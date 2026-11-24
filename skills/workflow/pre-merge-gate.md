@@ -18,6 +18,9 @@ A change that violates a standard it was written under is cheaper to catch now t
 4. **Output is pass/fail per rule, not prose.** "3 checked, 1 flagged: `card.css:42` — hardcoded color, standard requires a token" beats a paragraph saying the same thing.
 5. **This gate is a self-check, not the review.** In `role-session` mode it runs before marking your claims `awaiting-review` — it never replaces the dev's actual approval step.
 
+## Independent review (only when a second pair of eyes is wanted)
+`node <skill-root>/pre-merge-gate/scope.js` (add `--base <ref>`) scopes it without a model: the areas the change reaches (`css`, `markup`, `script`, plus `security` by path), the files and audit findings on changed lines per area, what earlier reviews settled, and `reviewer YES` or `no (trivial)`. An empty plan means no reviewer. Spawn one reviewer per area marked YES, in parallel, with that area's files, its findings (so they are not re-reported) and its settled list (so it is not re-raised); read-only, report only what a linter cannot catch. After triage: `scope.js --settle <area> "<line with the reason>"` for what is decided otherwise, then `scope.js --mark` to move each area's last-reviewed commit to HEAD, so the next review starts there. State lives in `.claude/review-state.json`.
+
 ## Whole-project work
 Rule 1's scope limit is for a task's own diff. For a project-wide cleanup or audit, use the `code-audit` skill instead of searching by hand. `edit-check` runs the small per-edit subset of the same engine.
 
