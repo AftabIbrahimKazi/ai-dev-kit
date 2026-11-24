@@ -80,5 +80,6 @@
 	"skills/addons/narrate.speak.js:392:&& to ||",
 	"skills/addons/narrate.speak.js:396:false to true",
 	"skills/addons/narrate.speak.js:563:false to true",
-	"skills/addons/narrate.speak.js:566:false to true"
+	"skills/addons/narrate.speak.js:566:false to true",
+	"skills/workflow/resolve-conflicts.scope.js:42:< to <="
 ]

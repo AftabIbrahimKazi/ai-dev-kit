@@ -169,3 +169,32 @@ t('policy leave: an out-of-scope file still unmerged counts as left even with it
   const done = JSON.parse(run(d, 'check', '--role', 'frontend', '--json').stdout);
   assert.ok(done.fails.some((f) => /server\/b\.txt {2}out of scope but was resolved/.test(f)), JSON.stringify(done));
 });
+
+t('policy leave: an out-of-scope file that is no longer unmerged but still has markers counts as left', () => {
+  const d = conflicted(FRONTEND);
+  run(d, 'list', '--role', 'frontend');
+  put(d, 'server/b.txt', '<<<<<<< ours\nx\n=======\ny\n>>>>>>> theirs\n');
+  git(d, 'add', 'server/b.txt');
+  const r = JSON.parse(run(d, 'check', '--role', 'frontend', '--json').stdout);
+  assert.ok(r.left.includes('server/b.txt'), JSON.stringify(r));
+  assert.ok(!r.fails.some((f) => /server\/b\.txt/.test(f)), JSON.stringify(r));
+});
+
+t('list saves the chosen --out policy, with or without a role', () => {
+  const d = conflicted(FRONTEND);
+  assert.strictEqual(JSON.parse(run(d, 'list', '--role', 'frontend', '--out', 'ours', '--json').stdout).outOfScope, 'ours');
+  const e = conflicted();
+  assert.strictEqual(JSON.parse(run(e, 'list', '--out', 'theirs', '--json').stdout).outOfScope, 'theirs');
+  assert.strictEqual(JSON.parse(run(conflicted(FRONTEND), 'list', '--role', 'frontend', '--json').stdout).outOfScope, 'leave');
+  assert.strictEqual(JSON.parse(run(conflicted(), 'list', '--json').stdout).outOfScope, null);
+});
+
+t('the legend names a rebase when either rebase folder exists', () => {
+  for (const marker of ['rebase-merge', 'rebase-apply']) {
+    const d = conflicted();
+    fs.mkdirSync(path.join(d, '.git', marker), { recursive: true });
+    const legend = JSON.parse(run(d, 'list', '--json').stdout).legend;
+    assert.strictEqual(legend.op, 'rebase', marker);
+    assert.match(legend.theirs, /your commit being replayed/);
+  }
+});

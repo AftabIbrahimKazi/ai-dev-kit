@@ -133,5 +133,16 @@ t('cli: a missing source file prints "error: ..." and exits 1; bad usage exits 2
   assert.strictEqual(spawnSync(process.execPath, [SCRIPT], { cwd: d, encoding: 'utf8' }).status, 2);
 });
 
+t('run: slots merge the "*" set with the set for the exact path or, failing that, the file name', () => {
+  const d = tmp();
+  put(d, 'src.html', '<html><body><main>\n<!-- dupe:b -->A-{{x}}-{{y}}<!-- /dupe:b -->\n</main></body></html>\n');
+  put(d, 'sub/page.html', PAGE); put(d, 'other/page2.html', PAGE);
+  put(d, 'slots.json', JSON.stringify({ '*': { '{{x}}': 'star' }, 'sub/page.html': { '{{y}}': 'exact' }, 'page2.html': { '{{y}}': 'byname' } }));
+  const res = run({ from: 'src.html', block: 'b', to: ['sub/page.html', 'other/page2.html'], slots: 'slots.json' }, d);
+  assert.deepStrictEqual(res.map((r) => r.replaced), [2, 2]);
+  assert.ok(get(d, 'sub/page.html').includes('A-star-exact'), get(d, 'sub/page.html'));
+  assert.ok(get(d, 'other/page2.html').includes('A-star-byname'), get(d, 'other/page2.html'));
+});
+
 if (failed) { console.log('plan-first.dupe.test: FAILED'); process.exit(1); }
 console.log('plan-first.dupe.test: ok');

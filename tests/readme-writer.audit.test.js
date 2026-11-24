@@ -138,5 +138,32 @@ t('cli: defaults to README.md in --root, exit 0 clean, 1 on a failure or missing
   assert.strictEqual(cli(d, '--wat').status, 2);
 });
 
+t('realCounts: only a .md with a name in its frontmatter counts, and not under commands', () => {
+  const d = repo();
+  put(d, 'skills/meta/plain.md', '# no frontmatter at all\n');
+  put(d, 'skills/commands/named.md', '---\nname: cmd\n---\n');
+  put(d, 'skills/meta/nameless.md', '---\ndescription: x\n---\n');
+  assert.strictEqual(realCounts(d).skills, 2);
+});
+
+t('size: exactly 250 lines is fine, 251 warns, exactly 400 only warns, 401 fails', () => {
+  const sized = (n) => audit(repo(), rows(n)).filter((x) => x.check === 'size').map((x) => x.level);
+  assert.deepStrictEqual(sized(250), []);
+  assert.deepStrictEqual(sized(251), ['warn']);
+  assert.deepStrictEqual(sized(400), ['warn']);
+  assert.deepStrictEqual(sized(401), ['fail']);
+});
+
+t('a section that starts on the very first line is measured too', () => {
+  const f = audit(repo(), '## First\n' + rows(61)).filter((x) => x.check === 'section');
+  assert.deepStrictEqual(f.map((x) => x.line), [1]);
+});
+
+t('metrics: a heading line or a fenced block is not a measured claim', () => {
+  assert.deepStrictEqual(checks(audit(repo(), '# Saves 30% of tokens\n\nplain text\n')), []);
+  assert.deepStrictEqual(checks(audit(repo(), 'intro\n\n```\nsaves 30% of tokens\n```\n')), []);
+  assert.deepStrictEqual(checks(audit(repo(), 'intro\n\nSaves 30% of tokens.\n')), ['warn:sample-size']);
+});
+
 if (failed) { console.log('readme-writer.audit.test: FAILED'); process.exit(1); }
 console.log('readme-writer.audit.test: ok');
