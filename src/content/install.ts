@@ -36,6 +36,6 @@ export const INSTALL_TABS: readonly InstallTab[] = [
 ];
 
 export const INSTALL_AFTERCARE = {
-  text: "The installer is never copied into your project and re-verifies its own result. You may still spend your first session checking nothing was missed.",
+  text: "The installer is never copied into your project and re-verifies its own result. A fresh install starts lean: the per-session skills are archived, not deleted, and /next, /role or the skill-hint mod bring back what a task needs (add --keep-active to keep them all on). You may still spend your first session checking nothing was missed.",
   source: 'README "Installing from a terminal"; owner direction 2026-11-01',
 } as const;

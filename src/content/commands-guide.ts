@@ -30,6 +30,7 @@ export const COMMANDS_GUIDE: ModuleGuide = {
         { label: "/commit-check", hl: "name:commit-check", act: "does", text: "Mechanical check of the staged change before a commit. A BLOCK finding stops the summary there. Needs pre-commit." },
         { label: "/goldfish", hl: "name:goldfish", act: "does", text: "Reviews a plan with fresh-context reviewers: prepare runs the stages inline on Claude, local uses a local or Gemini model with no Claude tokens. Reviewers advise; you decide. Needs plan-first." },
         { label: "/githooks", hl: "name:githooks", act: "does", text: "Shows whether the kit's git hooks for secrets, files and commit messages are installed. Installs only after an explicit yes. Needs pre-commit." },
+        { label: "/test", act: "does", text: "Runs your tests first, then hands the model a verdict plus the failures grouped by cause instead of the raw log. Add --model none to skip any model call. Needs test-run." },
         { label: "/perf", hl: "name:perf", act: "does", text: "Weighs a build's payload and ranks it by bytes: heavy chunks, images, fonts and blocking scripts. Needs perf-audit." },
         { label: "/recon", hl: "name:recon", act: "does", text: "Maps security-relevant locations, not findings: routes, auth, env reads, sinks and secrets. Needs security-audit." },
         { label: "/state-audit", hl: "name:state-audit", act: "does", text: "Scans UI code for hidden state machines such as scattered boolean flags and prints a table. Edits nothing. Needs implicit-state-audit." },

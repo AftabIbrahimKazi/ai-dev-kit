@@ -178,6 +178,14 @@ export const GUIDE_TYPES: readonly GuideType[] = [
         ai: "Runs the bump script and checks the changelog entry.",
       },
       {
+        name: "test-run",
+        does: "Runs the project tests through a script and returns a verdict plus the failures grouped by cause, so the agent reads a short digest instead of a long log.",
+        when: "You ask to run the tests, or a change needs checking against the suite.",
+        mode: "auto",
+        you: "Name the test or say run the tests.",
+        ai: "Runs the script, then fixes failures one cause at a time.",
+      },
+      {
         name: "resolve-conflicts",
         does: "Resolves merge and rebase conflicts by mode (both, ours, theirs), pace (all, auto, step) and developer role.",
         when: "A merge, rebase, cherry-pick or pull stops with conflicts.",

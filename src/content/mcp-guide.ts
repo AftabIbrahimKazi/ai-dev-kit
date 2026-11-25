@@ -26,6 +26,7 @@ export const MCP_GUIDE: ModuleGuide = {
       more: [
         "The manager asks one question at a time and skips any you already answered: which servers, which AI tools, which scope, which keys, and how to route between a server and the normal flow.",
         "The routing rule is MCP first, then fallback. A server file lists what it replaces and when it is used first.",
+        "The two local servers, image-gen and local-vision, speak MCP 2026-07-28: no initialize step, the protocol version and client capabilities ride in each request, and server/discover lists what the server supports. An unknown version gets error -32022. They still answer the older initialize handshake, so existing clients keep working.",
       ],
     },
   ],

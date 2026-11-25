@@ -30,8 +30,8 @@ export const KIT_MODULES: readonly KitModule[] = [
     source: "kit repository skills/commands/ folder",
     parts: [
       "archive", "audit", "commit-check", "ctx", "diagram", "device", "dupe", "e2e", "eta", "figma", "figma-code", "format", "githooks", "goldfish", "kaggle", "kit", "modern-web", "narration", "next",
-      "optimize-assets", "perf", "persona", "pickup", "quiet", "recon", "resolve-conflicts", "responsive-check", "stale", "state-audit", "teardown", "teardown-film",
-      "teardown-sound", "unarchive", "untrack", "version-bump", "wrap-up",
+      "optimize-assets", "perf", "persona", "pickup", "quiet", "recon", "resolve-conflicts", "responsive-check", "role", "stale", "state-audit", "teardown", "teardown-film",
+      "teardown-sound", "test", "unarchive", "untrack", "version-bump", "wrap-up",
     ],
   },
   {
