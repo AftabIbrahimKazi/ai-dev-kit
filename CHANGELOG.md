@@ -7,6 +7,7 @@
 - `/role` works as its description says: no argument lists the roles, a bare role name applies it.
 
 ### Fixed
+- `plan-first` runs every stage of an approved plan in one continuous run. Checkpoints are resumable points, not stops, so Claude no longer pauses between stages to summarize or ask. It stops early only on an unresolved failure (2 attempts) or a stage that needs user input. Stopping between stages is opt-in: say so in the prompt ("stop after each stage"). Checked headless on Haiku: with the opt-in it stopped after Stage 1 in 3 of 3 runs; the default case did not reproduce the bug on a trivial 3-stage plan, so it is unconfirmed on a long real plan.
 - `plan-first/dupe.js` escapes regex characters in block names.
 - `/next` and `/role` state a reply cap (kit-lint `cmd-cap`).
 - This file carried an unresolved merge-conflict marker; both sections are kept.
