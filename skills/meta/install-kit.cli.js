@@ -114,7 +114,7 @@ function listCommands(libraryRoot) {
     return fs.readdirSync(dir).filter((n) => n.endsWith('.md')).map((n) => {
         const body = fs.readFileSync(path.join(dir, n), 'utf8');
         const name = n.slice(0, -3);
-        const run = /auto\.js run ([a-z0-9-]+)/.exec(body);
+        const run = /(?:auto\.js|"\$A") run ([a-z0-9-]+)/.exec(body);
         const path1 = /\{\{skill-root\}\}\/([a-z0-9-]+)\//.exec(body);
         const needs = run ? run[1] : path1 ? path1[1] : (name in COMMAND_NEEDS_FALLBACK ? COMMAND_NEEDS_FALLBACK[name] : undefined);
         if (needs === undefined)
