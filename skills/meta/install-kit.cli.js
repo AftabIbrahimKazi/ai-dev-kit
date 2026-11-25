@@ -42,7 +42,7 @@ exports.setMenuIO = setMenuIO;
 // session. See skills/meta/install-kit.md (install/update/uninstall) and the `handover` skill (archive).
 //
 //   node install-kit.cli.js list      --library <path> [--json]
-//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex [--no-commands]
+//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex [--no-commands] [--keep-active]
 //                                      --skills a,b,c[:companion+companion] [--standards]
 //                                      [--script-standard js|ts|js-and-ts] [--active-standards a,b|all|none]
 //                                      [--comment-style-level none|terse|descriptive] [--context-code X7|none]
@@ -818,6 +818,7 @@ function doInstall(args) {
     manifest.tool = args.tool;
     manifest.skillRoot = tool.skills;
     manifest.protocolFile = tool.protocol;
+    const knownBefore = new Set([...Object.keys(manifest.skills), ...Object.keys(manifest.archived)]);
     const results = [];
     for (const token of args.skills || []) {
         const r = installOneSkill(args.library, absSkillRoot, catalog, token, {
@@ -896,8 +897,16 @@ function doInstall(args) {
             fs.writeFileSync(cfg, JSON.stringify({ reviewer: args.reviewer }, null, 2) + '\n');
         }
     }
+    // Nobody knows the first task yet, so a fresh install starts lean: the per-session archivable skills are archived now, the pinned ones stay.
+    // /next <task>, /role, /unarchive <name> or a command that needs one brings it back. A skill the project already had (active or archived) keeps its state.
+    let archivedNow;
+    if (!args.keepActive) {
+        const fresh = results.filter((r) => !r.error && exports.ARCHIVABLE_SKILLS.includes(r.name) && !knownBefore.has(r.name)).map((r) => r.name);
+        if (fresh.length)
+            archivedNow = (0, skill_scope_move_1.doArchive)({ root: args.root, skills: fresh, by: 'auto' }).archived;
+    }
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
+    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -1945,6 +1954,8 @@ function parseArgs(argv) {
             a.removeHooks = true;
         else if (k === '--no-commands')
             a.noCommands = true;
+        else if (k === '--keep-active')
+            a.keepActive = true;
         else if (k === '--yes' || k === '-y')
             a.yes = true;
         else if (k === '--reviewer') {

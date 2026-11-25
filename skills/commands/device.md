@@ -1,5 +1,6 @@
 ---
 description: Scan this machine and say which kit preset fits: Have / Missing / Next
+argument-hint: '[--preset lite|standard|full] [--json]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

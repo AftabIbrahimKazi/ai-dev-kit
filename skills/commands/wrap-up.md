@@ -1,5 +1,6 @@
 ---
 description: Rewrite handover.md in place so the next session resumes cold
+argument-hint: '[next task words]  (none = skills stay as they are)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

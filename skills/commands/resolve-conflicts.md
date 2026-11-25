@@ -1,5 +1,6 @@
 ---
 description: Resolve merge conflicts: mode, pace and role guardrails
+argument-hint: '[both|ours|theirs] [all|auto|step] [--role <name>] [--out leave|ours|theirs] [--note "..."]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git status:*), Bash(git diff:*)
 ---

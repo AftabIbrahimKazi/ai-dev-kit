@@ -1,5 +1,6 @@
 ---
 description: Check or record a teardown simulator's tour as an MP4
+argument-hint: status [<dir>] | film <dir> [--dry-run|--preview]
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

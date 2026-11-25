@@ -1,5 +1,6 @@
 ---
 description: Detect, scaffold, check, build or photograph a 3D machine simulator
+argument-hint: detect | init <name> | check <dir> | build <dir> | sheet <dir> | probe <dir>
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

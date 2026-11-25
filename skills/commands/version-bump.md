@@ -1,5 +1,6 @@
 ---
 description: Bump a package.json version (major/feature/patch/alpha/beta/rc/release) and insert the matching CHANGELOG.md entry
+argument-hint: '[major|feature|patch|alpha|beta|rc|release] [scope] [--added|--changed|--fixed|--removed "text"] [--auto]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

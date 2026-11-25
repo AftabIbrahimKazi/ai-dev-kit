@@ -140,7 +140,7 @@ function fakeTerm(script) {
     const lib = path.join(__dirname, '..');
     const r = spawnSync(process.execPath, [path.join(lib, 'skills', 'meta', 'install-kit.cli.js'), 'install', '--yes', '--library', lib, '--root', root, '--tool', 'claude'], { input: '', encoding: 'utf8', timeout: 120000 });
     assert.strictEqual(r.status, 0, r.stderr);
-    assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'code-audit')), 'default skills installed');
+    assert.ok(fs.existsSync(path.join(root, '.claude', 'skills-archive', 'code-audit')), 'default skills installed (archivable ones start archived)');
     assert.ok(fs.existsSync(path.join(root, '.ai-dev-kit.json')));
   });
 
@@ -160,7 +160,7 @@ function fakeTerm(script) {
     assert.strictEqual(run(b, '--yes', '--reviewer', 'ollama').status, 0);
     assert.strictEqual(cfg(b).reviewer, 'ollama');
     assert.strictEqual(run(a, '--reviewer', 'bogus').status, 2);
-    assert.ok(fs.existsSync(path.join(a, '.claude', 'skills', 'implicit-state-audit', 'scan.js')) && fs.existsSync(path.join(a, '.claude', 'skills', 'implicit-state-audit', 'ask.txt')));
+    assert.ok(fs.existsSync(path.join(a, '.claude', 'skills-archive', 'implicit-state-audit', 'scan.js')) && fs.existsSync(path.join(a, '.claude', 'skills-archive', 'implicit-state-audit', 'ask.txt')));
   });
 
   await t('vim keys and capitals: k up, j down, A all, N none, Q quit; an unknown letter is dropped; Home and End', async () => {

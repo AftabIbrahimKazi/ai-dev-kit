@@ -1,5 +1,6 @@
 ---
 description: Scan, convert, compress or pre-compress assets; originals untouched
+argument-hint: '[convert <paths> --to webp,avif | compress <paths> | precompress <paths> | tools | refs <assets>] [--preset vision|web]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

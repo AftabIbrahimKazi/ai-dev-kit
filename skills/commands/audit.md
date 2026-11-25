@@ -1,5 +1,6 @@
 ---
 description: Standards audit of the whole project (runs the code-audit script, then summarizes)
+argument-hint: '[path...] [--standard css|html|js|ts|a11y|seo|perf|git] [--rule ID] [--changed] [--save]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

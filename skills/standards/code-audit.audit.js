@@ -17,7 +17,7 @@ exports.listRules = listRules;
 // Counts, not prose: the model reads a few dozen lines instead of opening files to look for violations.
 //
 //   node audit.js [path...] [--standard css,html,js,ts,a11y,seo,perf,git,version] [--rule ID] [--top N] [--limit N]
-//                 [--summary] [--changed] [--suggest-exempt] [--context] [--baseline] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
+//                 [--summary] [--changed] [--suggest-exempt] [--context] [--baseline] [--save] [--ignore GLOB]... [--commits N] [--no-git] [--include-generated] [--skipped] [--json] [--list] [--cwd D]
 //
 // Findings are "rule" (a violation) or "review" (a heuristic candidate that needs judgement) or "info" (a count).
 // Exit 0 normally; with a saved baseline (.claude/code-audit.baseline.json) exit 1 only when a count rose.
@@ -26,6 +26,8 @@ exports.listRules = listRules;
 //   { "ignore": ["glob"...], "skipRules": ["id"...], "styleBlocks": "count|forbid", "commits": 200, "ui": true|false, "signatureIgnore": ["glob"...], "signatureExempt": ["prefix"...],
 //     "contrastPairs": [{"fg": "--color-text", "bg": "--color-surface", "min": 4.5}] or "auto",
 //     "signatureMode": "review|strict", "signatureComponentDirs": ["components"...], "bannedImports": ["jquery", {"pattern": "@mui/*", "message": "use the shared component"}] }
+// --save writes audits/audit-<UTC time>-<id>.md (never overwrites) and compares with the previous report: new, still open, resolved, reopened,
+// not rechecked (outside this run's scope). Totals are compared only when the scope matches. Add audits/ to .gitignore if reports stay local.
 // --suggest-exempt groups the css-11 findings by first word so a library's prefix can be listed once in signatureExempt.
 // --changed reports only lines changed since HEAD. A "DEVIATION: <rule-id> reason" comment waives that rule on its line and the
 // next (never an accessibility or security rule). UI rules (ui-*) run only where coding-standards/ui-standards.md exists, or with "ui": true.
@@ -1420,10 +1422,105 @@ function listRules() {
     const rows = Object.values(exports.RULES).map((r) => `${r.id.padEnd(16)} ${r.std.padEnd(8)} ${r.kind.padEnd(7)} ${r.edit ? 'edit ' : '     '} ${r.what}`);
     return ['rule             standard kind    per-edit what', ...rows, '', NOT_CHECKED].join('\n');
 }
+const AUDITS_DIR = 'audits';
+const LEDGER_RE = /<!-- ledger:(.*?) -->/;
+function readPrior(dir) {
+    let names = [];
+    try {
+        names = fs.readdirSync(dir).filter((n) => /^audit-\d{4}-\d{2}-\d{2}-\d{6}-[0-9a-f]+\.md$/.test(n)).sort();
+    }
+    catch {
+        return null;
+    }
+    for (const name of names.reverse()) { // newest first; a damaged report is skipped, never guessed at
+        try {
+            const m = LEDGER_RE.exec(fs.readFileSync(path.join(dir, name), 'utf8'));
+            if (m)
+                return { name, ledger: JSON.parse(m[1]) };
+        }
+        catch { /* next */ }
+    }
+    return null;
+}
+// A prior finding can only be called resolved if this run looked where it lives.
+function inScope(rule, file, opt) {
+    if (!exports.RULES[rule] || opt.changed)
+        return false;
+    if (opt.rule && opt.rule !== rule)
+        return false;
+    if (opt.standard && !opt.standard.includes(exports.RULES[rule].std))
+        return false;
+    const paths = (opt.paths || []).map((x) => norm(x).replace(/^\.\//, '').replace(/\/$/, '')).filter((x) => x && x !== '.');
+    return !paths.length || paths.some((x) => file === x || file.startsWith(x + '/'));
+}
+function saveReport(cwd, findings, opt) {
+    const dir = path.join(cwd, AUDITS_DIR);
+    const now = new Date();
+    const stamp = now.toISOString();
+    const prior = readPrior(dir);
+    const scope = JSON.stringify({ s: opt.standard || null, r: opt.rule || null, p: (opt.paths || []).slice().sort(), c: !!opt.changed, i: (opt.ignore || []).slice().sort() });
+    const counts = {};
+    for (const f of findings)
+        if (exports.RULES[f.rule] && exports.RULES[f.rule].kind !== 'info') {
+            const k = `${f.rule}|${f.file}`;
+            counts[k] = (counts[k] || 0) + 1;
+        }
+    const old = prior ? prior.ledger.rows : {};
+    const rows = {};
+    const moves = { New: [], 'Still open': [], Resolved: [], Reopened: [], 'Not rechecked': [] };
+    let next = prior ? prior.ledger.next : 1;
+    for (const [key, count] of Object.entries(counts)) {
+        const [rule, file] = [key.slice(0, key.indexOf('|')), key.slice(key.indexOf('|') + 1)];
+        const was = old[key];
+        const row = { id: was ? was.id : `CA-${String(next++).padStart(3, '0')}`, rule, file, count, state: 'open', first: was ? was.first : stamp, last: stamp };
+        rows[key] = row;
+        moves[!was ? 'New' : was.state === 'resolved' ? 'Reopened' : 'Still open'].push(`${row.id} ${rule} ${file} (${count})`);
+    }
+    for (const [key, was] of Object.entries(old)) {
+        if (rows[key])
+            continue;
+        if (was.state === 'resolved')
+            rows[key] = was;
+        else if (inScope(was.rule, was.file, opt)) {
+            rows[key] = { ...was, count: 0, state: 'resolved', last: stamp };
+            moves.Resolved.push(`${was.id} ${was.rule} ${was.file}`);
+        }
+        else {
+            rows[key] = was;
+            moves['Not rechecked'].push(`${was.id} ${was.rule} ${was.file} (${was.count})`);
+        }
+    }
+    const kindOf = (r) => exports.RULES[r] && exports.RULES[r].kind;
+    const rules = findings.filter((f) => kindOf(f.rule) === 'rule').length;
+    const reviews = findings.filter((f) => kindOf(f.rule) === 'review').length;
+    const ledger = { scope, rules, reviews, next, rows };
+    const same = !!prior && prior.ledger.scope === scope;
+    const delta = same ? `rule violations ${prior.ledger.rules} -> ${rules} (${rules - prior.ledger.rules >= 0 ? '+' : ''}${rules - prior.ledger.rules}), review candidates ${prior.ledger.reviews} -> ${reviews}` : prior ? `scope changed since ${prior.name}; totals not comparable (rule violations ${rules}, review candidates ${reviews})` : `first recorded baseline (rule violations ${rules}, review candidates ${reviews})`;
+    const head = Object.entries(moves).map(([k, v]) => `${k.toLowerCase()} ${v.length}`).join(', ');
+    const md = [
+        `# Code audit ${stamp}`, '',
+        `- Root: ${norm(cwd)}`, `- Previous report: ${prior ? prior.name : 'none'}`, `- Scope: ${scope}`, `- Result: ${delta}`, `- Findings: ${head}`, '',
+        ...Object.entries(moves).filter(([k, v]) => v.length && k !== 'Still open').flatMap(([k, v]) => [`## ${k} (${v.length})`, ...v.slice(0, 100).map((x) => `- ${x}`), ...(v.length > 100 ? [`- (+${v.length - 100} more in the ledger)`] : []), '']),
+        `<!-- ledger:${JSON.stringify(ledger)} -->`, '',
+    ].join('\n');
+    fs.mkdirSync(dir, { recursive: true });
+    const day = stamp.slice(0, 10), clock = stamp.slice(11, 19).replace(/:/g, '');
+    for (let tries = 0;; tries++) { // exclusive create: a same-second run gets its own file, an earlier report is never replaced
+        const name = `audit-${day}-${clock}-${stamp.slice(20, 23)}${Math.floor(Math.random() * 0xff).toString(16).padStart(2, '0')}.md`; // ms first so same-second runs still sort in order
+        try {
+            fs.writeFileSync(path.join(dir, name), md, { flag: 'wx' });
+            return [`saved ${AUDITS_DIR}/${name}`, `vs ${prior ? prior.name : 'nothing'}: ${head}`, delta, ...['Resolved', 'Reopened', 'New'].flatMap((k) => moves[k].slice(0, 3).map((x) => `  ${k.toLowerCase()}: ${x}`))].join('\n');
+        }
+        catch (e) {
+            if (e.code !== 'EEXIST' || tries > 5)
+                throw e;
+        }
+    }
+}
 function main() {
     const a = process.argv.slice(2);
     let cwd = process.cwd();
-    let json = false, list = false, suggest = false;
+    let json = false, list = false, suggest = false, save = false;
     const opt = {
         rule: null, top: 5, sections: 6, limit: 200, baseline: false, context: false, noGit: false, ignore: [], paths: [], standard: null,
     };
@@ -1437,6 +1534,8 @@ function main() {
             list = true;
         else if (v === '--baseline')
             opt.baseline = true;
+        else if (v === '--save')
+            save = true;
         else if (v === '--context')
             opt.context = true;
         else if (v === '--no-git')
@@ -1516,6 +1615,19 @@ function main() {
         console.log(JSON.stringify(res, null, 2));
     else
         console.log(report(res, opt.baseline ? null : base, opt, cwd) + (opt.baseline ? `\nbaseline saved to ${norm(BASELINE)}` : ''));
+    if (save) {
+        try {
+            const m = saveReport(cwd, res.findings, opt);
+            if (json)
+                console.error(m);
+            else
+                console.log(m);
+        }
+        catch (e) {
+            console.log(`report not saved: ${e.message}`);
+            process.exitCode = 2;
+        }
+    }
     // exit 1 only when counts rose against a saved baseline, so it can gate CI without failing on old debt
     if (base && !opt.baseline && !opt.noFail) {
         process.exitCode = Object.entries(t).some(([r, byFile]) => Object.entries(byFile).some(([f, l]) => l.length > ((base.rules[r] || {})[f] || 0))) ? 1 : 0;

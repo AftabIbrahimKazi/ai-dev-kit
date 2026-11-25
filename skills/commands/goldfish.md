@@ -1,5 +1,6 @@
 ---
 description: Review a plan with fresh-context goldfish reviewers
+argument-hint: prepare <plan.md> | local <plan.md> [--delay <seconds>]
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

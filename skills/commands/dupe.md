@@ -1,5 +1,6 @@
 ---
 description: Copy a marked block into other files, swapping per-file values
+argument-hint: --from <file> --block <name>|--lines <a-b> --to <file>[,file] [--slots <json>] [--dry-run]
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

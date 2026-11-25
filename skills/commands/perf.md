@@ -1,5 +1,6 @@
 ---
 description: Weigh a build's payload: heavy chunks, images, fonts, blocking scripts
+argument-hint: '[--dist DIR] [--src DIR] [--top N] [--json]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: Mechanical check of staged changes before commit
+argument-hint: '[--message "draft commit message"]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git status:*)
 ---

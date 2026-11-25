@@ -1,5 +1,6 @@
 ---
 description: Write or measure a teardown simulator's score as a WAV file
+argument-hint: sound <dir> [--dry-run] | measure <file.wav>
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: Detect, check or build a stack or structure diagram
+argument-hint: '[detect [--structure] | check <spec> | build <spec> | icons <name>...]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: Bring archived skills back now (with no names, every archived skill)
+argument-hint: '[skill names...]  (none = every archived skill)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: Convert an exported Figma SVG to pixel-matched HTML and CSS, gated by a pixel diff
+argument-hint: '[build [file.svg] | standards <dir> | adapt <dir> | diff <a> <b> | detect]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

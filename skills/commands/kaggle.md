@@ -1,5 +1,6 @@
 ---
 description: Run a finished plan on a Kaggle GPU model, then review the result
+argument-hint: setup | plan <plan.md> | run <plan.md> | fetch | retry | status | stop | usage | review | learn
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

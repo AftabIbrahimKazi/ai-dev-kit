@@ -1,5 +1,6 @@
 ---
 description: Security recon map: routes, auth, env reads, sinks, secrets, obvious things
+argument-hint: '[--top N] [--json]  (none = grouped map)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

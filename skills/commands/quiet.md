@@ -1,5 +1,6 @@
 ---
 description: Run a noisy command with shortened output; failures kept
+argument-hint: <command to run>
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

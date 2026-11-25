@@ -1,5 +1,6 @@
 ---
 description: Prove project rules can fail, probe for thin checks, flag stale rules
+argument-hint: '[run | probe | stale | stamp | check] [--target F] [--max N]  (none = everything)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

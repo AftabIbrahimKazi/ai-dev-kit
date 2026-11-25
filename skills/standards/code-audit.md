@@ -26,6 +26,7 @@ Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). A
 | Leave out third-party code | `audit.js --ignore 'vendor/**'`, a line in `.aiignore` (gitignore-style, e.g. `vendor/`), or `ignore` in `.claude/code-audit.json` |
 | See what is and is not checked | `audit.js --list` |
 | Track progress | `audit.js --baseline` once, then plain `audit.js`; exit code 1 only if a count rose |
+| Keep a history | `audit.js --save` writes `audits/audit-<UTC time>.md` and prints what is new, still open, resolved or reopened since the last report. Findings outside this run's scope show as not rechecked, never resolved; totals are compared only for the same scope. Never overwrites; `audits/` is yours to commit or ignore |
 
 ## Waivers, UI rules and strict mode
 - **`DEVIATION: <rule id> <reason>`** in a comment waives that rule on its own line and the next. It is counted (`dev-count`), a waiver that matches nothing is `dev-stale`, and one with no reason, an unknown rule or an accessibility or security rule is ignored and reported as `dev-invalid`.

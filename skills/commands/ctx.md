@@ -1,5 +1,6 @@
 ---
 description: Set up and maintain the private project-context/ docs folder
+argument-hint: '[status | init | analyze <folder> | detect | add <folder> <file>]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

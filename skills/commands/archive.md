@@ -1,5 +1,6 @@
 ---
 description: Archive skills you do not need this session (with no names, every archivable skill)
+argument-hint: '[skill names...]  (none = every archivable skill)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

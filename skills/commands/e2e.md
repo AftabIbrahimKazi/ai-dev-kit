@@ -1,5 +1,6 @@
 ---
 description: Playwright scaffold: status, or init the config, fixtures and smoke test
+argument-hint: '[status | init [--port N] [--command "pnpm dev"] [--dry-run] [--force]]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

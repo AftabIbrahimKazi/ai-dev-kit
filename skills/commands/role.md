@@ -1,5 +1,6 @@
 ---
 description: Pick a job role (frontend, backend, seo, devops...) and load its skills and standards; no argument lists the roles
+argument-hint: '[frontend|backend|fullstack|qa|seo|devops|security|performance|designer|accessibility|docs|refactor]  (none = list)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

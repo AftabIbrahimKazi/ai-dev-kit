@@ -1,5 +1,6 @@
 ---
 description: Turn exported Figma PNG/SVG files into project-context/design/figma.md (no MCP)
+argument-hint: <export folder> [--link <figma url>] [--tokens <css file>] [--write]
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

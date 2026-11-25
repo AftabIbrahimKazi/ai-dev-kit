@@ -305,3 +305,19 @@ t('--summary prints the worst rules, worst files and the biggest fix in under 16
   assert.ok(out.split('\n').length < 16, out);
   assert.ok(!/rule {13}kind/.test(out), 'no full table in summary mode');
 });
+
+t('--save keeps a ledger: resolved, reopened, not rechecked, no overwrite, scope-aware totals', () => {
+  const d = tmp();
+  put(d, 'src/a.css', 'a{color:#fff!important}\n');
+  put(d, 'src/b.css', 'b{color:#fff!important}\n');
+  const run = (...x) => cli(d, '--save', '--summary', ...x).stdout;
+  assert.match(run(), /first recorded baseline/);
+  put(d, 'src/b.css', 'b{color:red}\n');
+  const second = run();
+  assert.match(second, /resolved 2/);
+  assert.match(second, /rule violations 4 -> 2/);
+  assert.match(run('--standard', 'js'), /not rechecked 2[^\n]*\n[^\n]*totals not comparable/);
+  put(d, 'src/b.css', 'b{color:#fff!important}\n');
+  assert.match(run(), /reopened 2/);
+  assert.strictEqual(new Set(fs.readdirSync(path.join(d, 'audits'))).size, 4);
+});

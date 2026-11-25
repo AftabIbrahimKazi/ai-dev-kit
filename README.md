@@ -188,6 +188,7 @@ Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flag
 | `--batch on\|off` | Installs or removes the `batch` mod at project scope. |
 | `--force` | Overwrites an existing `coding-standards/` folder wholesale instead of only merging the files that changed, and overwrites a slash command the kit wrote but you edited. |
 | `--no-commands` | Skip copying slash commands. By default `install` copies the command templates whose skill is installed (Claude Code and OpenCode; Codex has no command folder) and records each file with a hash. A file the kit did not write is never overwritten. Commands for the opt-in add-ons (`narration`, `persona`, `ctx`, `figma`) come from those add-ons' own setup. |
+| `--keep-active` | Keep every installed skill loaded. By default `install` archives the freshly installed per-session skills, since the first task is not known yet; `/next tsk-start <task>`, `/role` or `/unarchive <name>` brings one back. |
 | `--json` | Prints the result (including the verify check) as JSON instead of plain text. |
 
 **`update`** — re-syncs already-installed skills with whatever the library currently has, and offers any pending skill-rename migrations. It also refreshes **archived** skills in place (they stay archived), refreshes slash commands you have not edited and adds newly eligible ones, and adds any hook block a newer kit ships to `.claude/settings.json` when the project already holds a kit hook (a project that never opted in to kit hooks is left alone).

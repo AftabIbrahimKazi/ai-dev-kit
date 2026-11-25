@@ -6,7 +6,7 @@
 // session. See skills/meta/install-kit.md (install/update/uninstall) and the `handover` skill (archive).
 //
 //   node install-kit.cli.js list      --library <path> [--json]
-//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex [--no-commands]
+//   node install-kit.cli.js install   --library <path> --root <target> --tool claude|opencode|codex [--no-commands] [--keep-active]
 //                                      --skills a,b,c[:companion+companion] [--standards]
 //                                      [--script-standard js|ts|js-and-ts] [--active-standards a,b|all|none]
 //                                      [--comment-style-level none|terse|descriptive] [--context-code X7|none]
@@ -664,6 +664,7 @@ export interface CliArgs {
   removeStandards?: boolean;
   removeHooks?: boolean;
   noCommands?: boolean;
+  keepActive?: boolean;
   scriptStandard?: 'js' | 'ts' | 'js-and-ts';
   activeStandardsKeys?: string[];
   commentStyleLevel?: string;
@@ -689,7 +690,7 @@ export interface CliArgs {
   json?: boolean;
 }
 
-export interface DoInstallResult { skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult }
+export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult }
 
 // The batch mod adds one read-only tool (mcp__batch__run). It is a Claude Code mod, so it is installed through the plugin
 // marketplace, not copied like a skill; this reports whether it is enabled, offers the install, and checks the pairing with the
@@ -780,6 +781,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   manifest.skillRoot = tool.skills;
   manifest.protocolFile = tool.protocol;
 
+  const knownBefore = new Set([...Object.keys(manifest.skills), ...Object.keys(manifest.archived)]);
   const results: InstallOneResult[] = [];
   for (const token of args.skills || []) {
     const r = installOneSkill(args.library!, absSkillRoot, catalog, token, {
@@ -845,8 +847,15 @@ export function doInstall(args: CliArgs): DoInstallResult {
     const cfg = path.join(args.root!, '.claude', 'state-audit.json');
     if (!fs.existsSync(cfg) || args.force) { fs.mkdirSync(path.dirname(cfg), { recursive: true }); fs.writeFileSync(cfg, JSON.stringify({ reviewer: args.reviewer }, null, 2) + '\n'); }
   }
+  // Nobody knows the first task yet, so a fresh install starts lean: the per-session archivable skills are archived now, the pinned ones stay.
+  // /next <task>, /role, /unarchive <name> or a command that needs one brings it back. A skill the project already had (active or archived) keeps its state.
+  let archivedNow: string[] | undefined;
+  if (!args.keepActive) {
+    const fresh = results.filter((r) => !r.error && ARCHIVABLE_SKILLS.includes(r.name) && !knownBefore.has(r.name)).map((r) => r.name);
+    if (fresh.length) archivedNow = doArchive({ root: args.root!, skills: fresh, by: 'auto' }).archived;
+  }
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
+  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
@@ -1775,6 +1784,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--remove-standards') a.removeStandards = true;
     else if (k === '--remove-hooks') a.removeHooks = true;
     else if (k === '--no-commands') a.noCommands = true;
+    else if (k === '--keep-active') a.keepActive = true;
     else if (k === '--yes' || k === '-y') a.yes = true;
     else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.reviewer = v; }
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';

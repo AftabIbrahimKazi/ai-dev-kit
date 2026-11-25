@@ -1,5 +1,6 @@
 ---
 description: Queue the next task (tsk-note) or start it (tsk-start); loads only the skills it needs
+argument-hint: tsk-note|tsk-start <task words>  (note = queue it, start = begin now)
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: Responsive check on RULE 17 zones; custom ranges, widths, --detect
+argument-hint: <url> [--detect] [--range a-b] [--width W] [--min N] [--max N]
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

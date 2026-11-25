@@ -1,5 +1,6 @@
 ---
 description: Control reply narration: play, pause, mode, mute, voice, volume, speed, alerts, status
+argument-hint: play | pause | resume | stop | replay | status | mute | unmute | mode manual|auto | voice male|female | volume 0-100 | speed 0.5-2 | alerts on|off
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

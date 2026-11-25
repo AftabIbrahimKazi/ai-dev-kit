@@ -1,5 +1,6 @@
 ---
 description: Find hidden state machines (boolean flags, scattered toggles) in UI code
+argument-hint: '[file|folder...] [--changed] [--json]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

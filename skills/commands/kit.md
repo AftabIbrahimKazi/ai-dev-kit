@@ -1,5 +1,6 @@
 ---
 description: Cheat sheet: which kit command fits your situation
+argument-hint: '[describe your situation]  (none = the full table)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

@@ -1,5 +1,6 @@
 ---
 description: List memory bullets that name files which no longer exist
+argument-hint: '[--json]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

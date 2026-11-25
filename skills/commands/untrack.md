@@ -1,5 +1,6 @@
 ---
 description: Hide files from git status and the VS Code Changes tree (hide), bring them back (show), or list what is hidden
+argument-hint: hide <path|folder|glob>... | show <path>... | list
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

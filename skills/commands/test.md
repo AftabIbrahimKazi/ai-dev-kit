@@ -1,6 +1,6 @@
 ---
 description: Run tests, get the verdict only. Optional case words; a model is used only on a failure
-argument-hint: [case words] [--model auto|none|local|kaggle|claude[:haiku|sonnet|opus]]
+argument-hint: '[case words] [--model auto|none|local|kaggle|claude[:haiku|sonnet|opus]]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Agent
 ---

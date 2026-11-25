@@ -1,5 +1,6 @@
 ---
 description: Scan for legacy web patterns and list modern replacements
+argument-hint: '[folder] [--changed] [--limit N] [--refresh] [--json]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
