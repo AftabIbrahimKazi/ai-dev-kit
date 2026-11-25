@@ -180,10 +180,7 @@ No colour value (`hex`, `rgb()`, `rgba()`, `hsl()`, `oklch()`) may be hardcoded 
 
 All classes, IDs, and data attributes follow this structure:
 
-```
-[signature]-[semantic-name]
-[signature]-[semantic-name]-[suffix]
-```
+*Code examples for this rule: [css-standards/examples.md](css-standards/examples.md#rule-11).*
 
 | Part | Description |
 |---|---|
@@ -202,26 +199,9 @@ All classes, IDs, and data attributes follow this structure:
 
 The suffix always goes at the end regardless of how many words are in the semantic name.
 
-```css
-/* Wrong — no signature, no suffix where needed */
-.card-wrapper {}
-.hide {}
-
-/* Right — pure UI */
-.ex-card-wrapper {}
-.ex-text-muted {}
-
-/* Right — JS/TS touched */
-.ex-hide-js {}
-.ex-display-text-js-ts {}
-```
 
 IDs follow the exact same convention. The `#` symbol already distinguishes them from classes — no additional marker is needed.
 
-```css
-#ex-modal-js {}
-#ex-sidebar-ts {}
-```
 
 ---
 
@@ -360,13 +340,7 @@ If a CSS framework is in use on the project, its utilities and components must b
 3. Extend a framework class using the project's chaining pattern
 4. Only then write custom CSS
 
-```html
-<!-- Wrong — custom CSS written when framework class exists -->
-<div class="ex-flex-center">...</div>
-
-<!-- Right — framework class used first -->
-<div class="d-flex align-items-center">...</div>
-```
+*Code examples for this rule: [css-standards/examples.md](css-standards/examples.md#rule-18).*
 
 ---
 
@@ -374,22 +348,8 @@ If a CSS framework is in use on the project, its utilities and components must b
 
 Framework classes that internally use `!important`, inline styles, or any other pattern prohibited by these standards must not be used. Where the framework provides a workaround or alternative class, that must be used instead.
 
-```html
-<!-- Wrong — Bootstrap's .text-truncate uses inline overflow: hidden -->
-<p class="text-truncate">...</p>
+*Code examples for this rule: [css-standards/examples.md](css-standards/examples.md#rule-19).*
 
-<!-- Right — write a compliant custom class that achieves the same result -->
-<p class="ex-text-truncate">...</p>
-```
-
-```css
-/* ex-text-truncate in component CSS — no !important, no inline style */
-.ex-text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-```
 
 ---
 
@@ -404,13 +364,7 @@ Some third-party packages (e.g. Select2, Flatpickr, Swiper) inject their own sty
 
 Accepted exceptions must be documented with a comment at the point of use stating the package name, the violation, and that it was a deliberate developer decision.
 
-```css
-/* PACKAGE EXCEPTION — Select2 v4
-   Violation: injects inline styles for dropdown width
-   Decision: accepted — no workaround available
-   Reviewed by: [developer] */
-.select2-container { ... }
-```
+*Code examples for this rule: [css-standards/examples.md](css-standards/examples.md#rule-20).*
 
 The standards are never silently diluted. Every exception is visible.
 
@@ -428,30 +382,8 @@ The correct pattern has three parts — each in its own layer:
 2. **CSS file** — contains every visual rule for every possible state, targeting the `data-*` attribute
 3. **Script** — updates only the `data-*` attribute value, never touches `style`
 
-```html
-<!-- Wrong — inline style applied by JS -->
-<div id="ex-warp-veil"></div>
-<script>veil.style.opacity = '1'; veil.style.transition = 'opacity 0.35s ease-in';</script>
+*Code examples for this rule: [css-standards/examples.md](css-standards/examples.md#rule-21).*
 
-<!-- Wrong — state CSS written in a component style block -->
-<style is:global>
-  #ex-warp-veil[data-veil-state="fading-in"] { opacity: 1; transition: opacity 0.35s ease-in; }
-</style>
-
-<!-- Right — markup declares the initial state -->
-<div id="ex-warp-veil" data-veil-state="hidden"></div>
-```
-
-```css
-/* Right — state CSS in a named CSS file */
-#ex-warp-veil[data-veil-state="hidden"]    { opacity: 0; }
-#ex-warp-veil[data-veil-state="fading-in"] { opacity: 1; transition: opacity var(--ex-duration-veil-in) ease-in; }
-```
-
-```ts
-/* Right — script updates only the attribute value */
-veil.dataset.veilState = 'fading-in';
-```
 
 See the active script standard for the matching JS/TS rule on dataset-only state updates.
 
