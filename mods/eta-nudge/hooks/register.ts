@@ -13,6 +13,12 @@ export const register: Register = (on) => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
+  // Each new user prompt is a new task: restart the clock, or a second task in the same session inherits the first one's elapsed time.
+  on('prompt.submit', async ($, e, next) => {
+    if (!e.command) state = fresh()
+    return next(e)
+  }).catch(($, e, next) => next(e))
+
   on('tool.call', async ($, e, next) => {
     const ran = await next(e)
     try {

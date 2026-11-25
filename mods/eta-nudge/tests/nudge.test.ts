@@ -91,3 +91,14 @@ test('a subagent turn is ignored', async ($, on) => {
   const r: any = await $.tool.call({ tool: 'Bash', command: 'x', run_in_background: true, agentId: 'sub1' })
   expect(r.context).toBeUndefined()
 })
+
+test('a new prompt restarts the task clock, so a second task does not inherit the first one's elapsed time', async ($, on) => {
+  const { advance } = host(on, T0)
+  on('prompt.submit', (_: unknown, e: any) => e)
+  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+  await read($)
+  advance(FIRST_NUDGE_AFTER_MS + 1000)
+  await $.prompt.submit({ text: 'now do something else' })
+  const r: any = await read($) // would be a 6-minute checkpoint if the clock had not restarted
+  expect(r.context).toBeUndefined()
+})
