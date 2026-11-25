@@ -193,7 +193,7 @@ function rejectCondensed(condensed, log) {
 // ---- run ----
 function runTests(cmd, cwd) {
     const needShell = process.platform === "win32" && /\.(cmd|bat)$|^(npm|npx|pnpm|yarn)$/i.test(cmd[0]);
-    const q = (a) => (needShell && /[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
+    const q = (a) => (needShell && /[\s"]/.test(a) ? `"${a.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : a);
     // Inside a node --test run, NODE_TEST_CONTEXT makes a child `node --test` report to the parent and exit 0.
     const env = { ...process.env };
     delete env.NODE_TEST_CONTEXT;
@@ -357,11 +357,11 @@ function gateDecide(input, deps = {}) {
     const fingerprint = deps.fingerprint || ((d) => {
         const g = (a) => spawnSync("git", a, { cwd: d, encoding: "utf8" });
         const st = g(["status", "--porcelain"]);
-        return st.status === 0 ? crypto.createHash("sha1").update(st.stdout + (g(["diff", "HEAD"]).stdout || "")).digest("hex") : null;
+        return st.status === 0 ? crypto.createHash("sha256").update(st.stdout + (g(["diff", "HEAD"]).stdout || "")).digest("hex") : null;
     });
     const fp = fingerprint(cwd);
     if (!fp) return null;
-    const stateFile = path.join(os.tmpdir(), `test-run-gate-${crypto.createHash("sha1").update(cwd + (input.session_id || "")).digest("hex").slice(0, 12)}.txt`);
+    const stateFile = path.join(os.tmpdir(), `test-run-gate-${crypto.createHash("sha256").update(cwd + (input.session_id || "")).digest("hex").slice(0, 12)}.txt`);
     let last = "";
     try { last = fs.readFileSync(stateFile, "utf8"); } catch { /* first */ }
     if (last === fp) return null;
