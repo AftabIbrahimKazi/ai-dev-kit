@@ -3,6 +3,7 @@
 ## 2026-11-25
 
 ### Added
+- `test-run` skill and `/test` command: the script runs the tests first and relays a verdict plus failures grouped by cause (a green 70-test run: 96,993 chars to about 40; 40 failures: about 11,000 tokens to about 550). Case words run only matching test files. A pass never starts a model or agent. After a failure, `--model auto` tries a local Ollama model, then `LOCAL_LLM_URL`, then one Claude subagent (haiku or sonnet at low effort; a higher effort prints NEEDS APPROVAL and the session asks first; opus is opt-in, fable is never used). A condensed answer that drops an error or invents a line is rejected. `test-run/cli.js gate` is an optional Stop hook that runs the tests once per changed working tree. The local 1.5B model never beat the digest in the A/B.
 - Turning usage tracking on (`install --usage on`, or yes at the prompt) now also installs and enables the `feature-usage` mod: it adds the mods marketplace, installs at user scope, checks `settings.json` and prints the two manual commands if a step fails. `install --yes` alone no longer counts as asking for tracking.
 - `/role` works as its description says: no argument lists the roles, a bare role name applies it.
 

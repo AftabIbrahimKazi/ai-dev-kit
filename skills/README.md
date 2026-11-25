@@ -66,6 +66,7 @@ Pipeline for a new, non-trivial ask: `intent-capture` (pin *what*) → `plan-fir
 | [readme-writer](workflow/readme-writer.md) | Write, restructure or fact-check a README: hook first, every count, flag and metric checked against the code; `audit.js` companion checks links, counts, flags, sample sizes and size |
 | [version-bump](workflow/version-bump.md) | Bump a `package.json` version (major/feature/patch/alpha/beta/rc/release) and insert the matching `CHANGELOG.md` entry, scoped to the whole project, one group, or one package; `bump.js` companion runs the mechanical edit |
 | [perf-audit](workflow/perf-audit.md) | Measured, ranked performance audit (payload → loading → runtime → 3D) |
+| [test-run](workflow/test-run.md) | Runs the tests outside the model loop and returns a verdict plus failures grouped by cause, never the raw log; optional local, remote or Claude condenser only on a failure |
 | [role-session](workflow/role-session.md) | Parallel-session lane protocol — role charters, atomic file claims, git token, session ids (+ [templates](workflow/role-session.templates.md), [cross-tool protocol](workflow/role-session.protocol.md)) |
 | [e2e-scaffold](workflow/e2e-scaffold.md) | Scaffold reusable Playwright config/fixtures/smoke-test once per project — pairs with `qa/e2e-testing.md` |
 
@@ -160,6 +161,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/state-audit` | find hidden state machines (boolean flags, scattered toggles) in UI code | `implicit-state-audit` |
 | `/version-bump` | bump a package.json version + changelog entry | `version-bump` |
 | `/perf` | static payload weigh-in of a build, ranked | `perf-audit` |
+| `/test` | run the tests, verdict only; case words run matching tests; `--model` picks the condenser | `test-run` |
 | `/e2e` | Playwright scaffold status or init | `e2e-scaffold` |
 | `/recon` | security recon map with file:line | `security-audit` |
 | `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
