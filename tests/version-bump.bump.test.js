@@ -152,3 +152,73 @@ t('CLI: an unresolvable scope fails loudly instead of silently doing nothing', (
   const r = run(['patch', 'does-not-exist', '--added', 'x'], d);
   assert.notStrictEqual(r.status, 0);
 });
+
+// ---- no-argument / --auto mode: real git repos, clean trees, fresh-session conditions ----
+const git = (d, ...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'core.autocrlf=false', ...a], { cwd: d, encoding: 'utf8' });
+const repo = (version, pkgCwd) => {
+  const d = tmp();
+  git(d, 'init', '-q');
+  put(d, 'package.json', `{"name":"x","version":"${version}"}\n`);
+  put(d, 'CHANGELOG.md', '# Changelog\n');
+  git(d, 'add', '-A'); git(d, 'commit', '-qm', 'init');
+  return d;
+};
+const commit = (d, msg) => { put(d, `f${Math.random()}.txt`, msg); git(d, 'add', '-A'); git(d, 'commit', '-qm', msg); };
+
+t('auto: clean tree, feat+fix commits suggest feature and write nothing', () => {
+  const d = repo('1.0.0'); commit(d, 'feat: add a'); commit(d, 'fix: fix b');
+  assert.strictEqual(git(d, 'status', '--porcelain').stdout.trim(), '');
+  const r = run([], d);
+  assert.strictEqual(r.status, 0);
+  assert.match(r.stdout, /feature --added "add a" --fixed "fix b"/);
+  assert.match(fs.readFileSync(path.join(d, 'package.json'), 'utf8'), /"1\.0\.0"/);
+});
+t('auto: fix-only commits suggest patch', () => {
+  const d = repo('1.0.0'); commit(d, 'fix: only a fix');
+  assert.match(run([], d).stdout, /patch --fixed "only a fix"/);
+});
+t('auto: breaking "!" commit suggests major', () => {
+  const d = repo('1.0.0'); commit(d, 'feat!: drop old api'); commit(d, 'fix: small');
+  assert.match(run([], d).stdout, /Suggested .*: major/);
+});
+t('auto: --auto applies bump and changelog on a clean tree', () => {
+  const d = repo('1.0.0'); commit(d, 'feat: add a'); commit(d, 'fix: fix b');
+  const r = run(['--auto'], d);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(fs.readFileSync(path.join(d, 'package.json'), 'utf8'), /"1\.1\.0"/);
+  const cl = fs.readFileSync(path.join(d, 'CHANGELOG.md'), 'utf8');
+  assert.match(cl, /## \[1\.1\.0\]/); assert.match(cl, /### Added\n- add a/); assert.match(cl, /### Fixed\n- fix b/);
+});
+t('auto: baseline moves past the last version-change commit', () => {
+  const d = repo('1.0.0'); commit(d, 'feat: old feature');
+  put(d, 'package.json', '{"name":"x","version": "1.1.0"}\n'); git(d, 'add', '-A'); git(d, 'commit', '-qm', 'chore: bump');
+  commit(d, 'fix: new fix');
+  const out = run([], d).stdout;
+  assert.match(out, /patch --fixed "new fix"/); assert.doesNotMatch(out, /old feature/);
+});
+t('auto: falls back to the last tag when package.json has no version change', () => {
+  const d = tmp(); git(d, 'init', '-q'); put(d, 'package.json', '{"name":"x"}\n'); git(d, 'add', '-A'); git(d, 'commit', '-qm', 'init');
+  commit(d, 'feat: before tag'); git(d, 'tag', 'v1.0.0'); commit(d, 'fix: after tag');
+  const out = run([], d).stdout;
+  assert.match(out, /after tag/); assert.doesNotMatch(out, /before tag/);
+});
+t('auto: docs/chore/merge-only history gives the usage error, exit 1', () => {
+  const d = repo('1.0.0'); commit(d, 'docs: readme'); commit(d, 'chore: tidy'); commit(d, 'Merge pull request #1');
+  const r = run([], d);
+  assert.strictEqual(r.status, 1); assert.match(r.stderr, /usage/);
+});
+t('auto: no commits since baseline gives the usage error', () => {
+  const d = repo('1.0.0');
+  assert.strictEqual(run([], d).status, 1);
+});
+t('auto: outside a git repo gives the usage error, no crash', () => {
+  const d = tmp(); put(d, 'package.json', '{"version":"1.0.0"}\n');
+  const r = run([], d);
+  assert.strictEqual(r.status, 1); assert.match(r.stderr, /usage/);
+});
+t('auto: an explicit bump type still wins and still needs a changelog line', () => {
+  const d = repo('1.0.0'); commit(d, 'feat: add a');
+  assert.strictEqual(run(['patch'], d).status, 1);
+  assert.strictEqual(run(['patch', '--fixed', 'x'], d).status, 0);
+  assert.match(fs.readFileSync(path.join(d, 'package.json'), 'utf8'), /"1\.0\.1"/);
+});

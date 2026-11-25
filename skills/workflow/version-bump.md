@@ -13,6 +13,8 @@ Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). A
 ## The tool
 `node <skill-root>/version-bump/bump.js <major|feature|patch|alpha|beta|rc|release> [scope] [options]`. Plain Node, no dependencies. It edits `package.json`'s `"version"` field in place (regex substitution, so the rest of the file's formatting is untouched) and inserts a `## [x.y.z] — date` block into the sibling `CHANGELOG.md`, newest entry first.
 
+**No arguments / `--auto`:** with no bump type the script reads commit subjects since the last commit that changed a package.json "version" (else the last tag), skips docs/chore/test/style/merge commits, and prints a suggested bump (`feat` → feature, `fix`/other → patch, `!` → major) plus ready-made bullets, writing nothing. Needs no uncommitted changes. `--auto` applies the suggestion. Review the bullets before using it; they are commit subjects, not prose.
+
 **Scope** picks how wide the bump reaches, matching RULE V-06 (sub-packages version independently):
 - Omitted → every `package.json` found under the current directory (skipping `node_modules` and dotdirs), each bumped independently. This is the base/default level.
 - A subfolder path → only the `package.json` file(s) under that subtree — scope to one group (e.g. a frontend/ or backend/ folder, or a specific module).

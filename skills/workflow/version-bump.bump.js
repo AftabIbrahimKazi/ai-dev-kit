@@ -10,6 +10,7 @@ exports.changelogBlock = changelogBlock;
 exports.insertChangelog = insertChangelog;
 exports.planPackage = planPackage;
 exports.applyPlan = applyPlan;
+exports.suggestFromGit = suggestFromGit;
 // Mechanical half of the version-bump skill: bump package.json version(s) and insert the matching
 // CHANGELOG.md entry, per coding-standards/versioning-standards.md. Plain Node, no dependencies.
 //
@@ -30,6 +31,7 @@ exports.applyPlan = applyPlan;
 //   --json                                         machine-readable output
 const fs = require("node:fs");
 const path = require("node:path");
+const node_child_process_1 = require("node:child_process");
 const STAGE_RANK = { alpha: 1, beta: 2, rc: 3 };
 const VERSION_RE = /^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$/;
 function parseVersion(v) {
@@ -154,13 +156,75 @@ function todayISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+// ---- git-derived suggestion: works on a clean tree, in a fresh session, with no arguments ----
+function git(cwd, args) {
+    try {
+        return (0, node_child_process_1.execFileSync)('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    }
+    catch {
+        return '';
+    }
+}
+function suggestFromGit(dir) {
+    // Baseline: the last commit that changed a package.json "version" line, else the last tag.
+    let since = git(dir, ['log', '-1', '--format=%H', '-G"version":', '--', 'package.json']);
+    if (!since)
+        since = git(dir, ['describe', '--tags', '--abbrev=0']);
+    const range = since ? [`${since}..HEAD`] : ['-20'];
+    const subjects = git(dir, ['log', ...range, '--format=%s']).split(String.fromCharCode(10)).map((l) => l.trim()).filter(Boolean);
+    if (!subjects.length)
+        return null;
+    const entries = { added: [], changed: [], fixed: [], removed: [] };
+    let bump = 'patch';
+    for (const subj of subjects) {
+        const m = /^(\w+)(\([^)]*\))?(!)?:\s*(.+)$/.exec(subj);
+        const type = m ? m[1].toLowerCase() : '';
+        const text = m ? m[4] : subj;
+        if (/^(merge|potential fix)/i.test(subj))
+            continue;
+        if (/^(merge|potential fix)/i.test(subj))
+            continue;
+        if (type === 'docs' || type === 'chore' || type === 'test' || type === 'style')
+            continue;
+        if (m && m[3])
+            bump = 'major';
+        if (type === 'feat') {
+            if (bump !== 'major')
+                bump = 'feature';
+            entries.added.push(text);
+        }
+        else if (type === 'fix')
+            entries.fixed.push(text);
+        else
+            entries.changed.push(text);
+    }
+    const any = Object.values(entries).some((v) => v && v.length);
+    return any ? { bump, entries, since: since || 'last 20 commits', count: subjects.length } : null;
+}
 function main() {
     const a = process.argv.slice(2);
-    const bump = a[0];
-    if (!bump || !['major', 'feature', 'patch', 'alpha', 'beta', 'rc', 'release'].includes(bump)) {
-        console.error('usage: bump.js <major|feature|patch|alpha|beta|rc|release> [scope] [options]');
-        process.exitCode = 1;
-        return;
+    const BUMPS = ['major', 'feature', 'patch', 'alpha', 'beta', 'rc', 'release'];
+    const auto = a.includes('--auto');
+    let bump = a[0];
+    if (!bump || !BUMPS.includes(bump)) {
+        // No bump type: read the commits since the last tag instead of failing, so a fresh session on a clean tree still works.
+        const sugg = suggestFromGit(process.cwd());
+        if (!sugg) {
+            console.error('usage: bump.js <major|feature|patch|alpha|beta|rc|release> [scope] [options]  (no bump-worthy commits found since the last tag to suggest from)');
+            process.exitCode = 1;
+            return;
+        }
+        const flags = ['added', 'changed', 'fixed', 'removed'].flatMap((k) => (sugg.entries[k] || []).map((t) => `--${k} ${JSON.stringify(t)}`));
+        if (!auto) {
+            console.log(`Suggested from ${sugg.count} commit(s) since ${sugg.since}: ${sugg.bump}`);
+            console.log(`  /version-bump ${sugg.bump} ${flags.join(' ')}`);
+            console.log('Review, then run that line, or re-run with --auto to apply it as-is.');
+            return;
+        }
+        a.unshift(sugg.bump);
+        bump = sugg.bump;
+        for (const k of ['added', 'changed', 'fixed', 'removed'])
+            (sugg.entries[k] || []).forEach((t) => a.push(`--${k}`, t));
     }
     let scope = '.';
     const entries = { added: [], changed: [], fixed: [], removed: [] };
@@ -191,6 +255,8 @@ function main() {
             json = true;
         else if (k === '--no-changelog')
             noChangelog = true;
+        else if (k === '--auto')
+            continue;
         else if (!k.startsWith('--'))
             scope = k;
     }
