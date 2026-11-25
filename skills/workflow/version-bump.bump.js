@@ -10,6 +10,7 @@ exports.changelogBlock = changelogBlock;
 exports.insertChangelog = insertChangelog;
 exports.planPackage = planPackage;
 exports.applyPlan = applyPlan;
+exports.pendingBump = pendingBump;
 exports.suggestFromGit = suggestFromGit;
 // Mechanical half of the version-bump skill: bump package.json version(s) and insert the matching
 // CHANGELOG.md entry, per coding-standards/versioning-standards.md. Plain Node, no dependencies.
@@ -165,13 +166,20 @@ function git(cwd, args) {
         return '';
     }
 }
+// Files whose "version" line is changed but uncommitted: the push-time bump is already done.
+function pendingBump(dir) {
+    const top = git(dir, ['rev-parse', '--show-toplevel']) || dir;
+    return git(top, ['diff', 'HEAD', '--name-only', '-G"version":', '--', ':(glob)**/package.json']).split(String.fromCharCode(10)).map((l) => l.trim()).filter(Boolean);
+}
 function suggestFromGit(dir) {
     // Baseline: the last commit that changed a package.json "version" line, else the last tag.
-    let since = git(dir, ['log', '-1', '--format=%H', '-G"version":', '--', 'package.json']);
+    // Resolve from the repo top so a subfolder cwd sees the same history; any package.json counts.
+    const top = git(dir, ['rev-parse', '--show-toplevel']) || dir;
+    let since = git(top, ['log', '-1', '--format=%H', '-G"version":', '--', ':(glob)**/package.json']);
     if (!since)
-        since = git(dir, ['describe', '--tags', '--abbrev=0']);
+        since = git(top, ['describe', '--tags', '--abbrev=0']);
     const range = since ? [`${since}..HEAD`] : ['-20'];
-    const subjects = git(dir, ['log', ...range, '--format=%s']).split(String.fromCharCode(10)).map((l) => l.trim()).filter(Boolean);
+    const subjects = git(top, ['log', ...range, '--format=%s']).split(String.fromCharCode(10)).map((l) => l.trim()).filter(Boolean);
     if (!subjects.length)
         return null;
     const entries = { added: [], changed: [], fixed: [], removed: [] };
@@ -208,6 +216,11 @@ function main() {
     let bump = a[0];
     if (!bump || !BUMPS.includes(bump)) {
         // No bump type: read the commits since the last tag instead of failing, so a fresh session on a clean tree still works.
+        const pending = pendingBump(process.cwd());
+        if (pending.length) {
+            console.log(`Version already bumped and not committed (${pending.join(', ')}). Commit it before suggesting another bump.`);
+            return;
+        }
         const sugg = suggestFromGit(process.cwd());
         if (!sugg) {
             console.error('usage: bump.js <major|feature|patch|alpha|beta|rc|release> [scope] [options]  (no bump-worthy commits found since the last tag to suggest from)');

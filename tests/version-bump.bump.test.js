@@ -222,3 +222,16 @@ t('auto: an explicit bump type still wins and still needs a changelog line', () 
   assert.strictEqual(run(['patch', '--fixed', 'x'], d).status, 0);
   assert.match(fs.readFileSync(path.join(d, 'package.json'), 'utf8'), /"1\.0\.1"/);
 });
+t('auto: works from a subfolder of the repo (same baseline as the root)', () => {
+  const d = repo('1.0.0'); commit(d, 'fix: a fix');
+  fs.mkdirSync(path.join(d, 'sub'));
+  const out = run([], path.join(d, 'sub')).stdout;
+  assert.match(out, /patch --fixed "a fix"/); assert.doesNotMatch(out, /"init"/);
+});
+t('auto: a second --auto before committing the bump does not bump twice', () => {
+  const d = repo('1.0.0'); commit(d, 'fix: a fix');
+  assert.strictEqual(run(['--auto'], d).status, 0);
+  const again = run(['--auto'], d);
+  assert.match(again.stdout, /already bumped/);
+  assert.match(fs.readFileSync(path.join(d, 'package.json'), 'utf8'), /"1\.0\.1"/);
+});
