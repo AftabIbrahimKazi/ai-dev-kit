@@ -298,7 +298,11 @@ async function describeImage({ image_path, prompt }) {
 const TOOLS = [
     { name: 'describe_image', description: 'Describe/read an image file with a local vision model (free, offline). Use for screenshots, diagrams, photos, OCR-style questions. Treat exact strings/numbers as unverified.', inputSchema: { type: 'object', properties: { image_path: { type: 'string', description: 'Absolute path to a png/jpg/webp/gif' }, prompt: { type: 'string', description: 'What to look for (default: full description)' } }, required: ['image_path'] } },
 ];
+const SV = ['2026-07-28', '2025-11-25'];
+const META = 'io.modelcontextprotocol/';
+const INFO = { name: 'local-vision', version: '2.0.0' };
 function mcp() {
+    let legacy = false; // set by an initialize request: older clients keep session semantics
     const send = (o) => { process.stdout.write(JSON.stringify(o) + '\n'); };
     let buf = '';
     process.stdin.on('data', async (d) => {
@@ -316,18 +320,43 @@ function mcp() {
             catch {
                 continue;
             }
-            if (m.method === 'initialize')
-                send({ jsonrpc: '2.0', id: m.id, result: { protocolVersion: m.params?.protocolVersion || '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'local-vision', version: '2.0.0' } } });
-            else if (m.method === 'tools/list')
-                send({ jsonrpc: '2.0', id: m.id, result: { tools: TOOLS } });
+            if (!m.method)
+                continue;
+            if (m.method === 'initialize') {
+                legacy = true;
+                send({ jsonrpc: '2.0', id: m.id, result: { protocolVersion: m.params?.protocolVersion || '2025-03-26', capabilities: { tools: {} }, serverInfo: INFO } });
+                continue;
+            }
+            if (m.method === 'server/discover') {
+                send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', supportedVersions: SV, capabilities: { tools: {} }, _meta: { [META + 'serverInfo']: INFO }, ttlMs: 3600000, cacheScope: 'public' } });
+                continue;
+            }
+            if (m.method === 'ping' && legacy) {
+                send({ jsonrpc: '2.0', id: m.id, result: {} });
+                continue;
+            }
+            if (!legacy && m.id !== undefined && m.method !== 'ping') {
+                const meta = (m.params?._meta || {});
+                const v = meta[META + 'protocolVersion'];
+                if (typeof v !== 'string' || !meta[META + 'clientCapabilities']) {
+                    send({ jsonrpc: '2.0', id: m.id, error: { code: -32602, message: 'Invalid params: _meta protocolVersion and clientCapabilities required' } });
+                    continue;
+                }
+                if (!SV.includes(v)) {
+                    send({ jsonrpc: '2.0', id: m.id, error: { code: -32022, message: 'Unsupported protocol version', data: { supported: SV, requested: v } } });
+                    continue;
+                }
+            }
+            if (m.method === 'tools/list')
+                send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', ttlMs: 3600000, cacheScope: 'public', tools: TOOLS } });
             else if (m.method === 'tools/call') {
                 try {
                     if (m.params.name !== 'describe_image')
                         throw new Error('unknown tool');
-                    send({ jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: await describeImage(m.params.arguments || {}) }] } });
+                    send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', content: [{ type: 'text', text: await describeImage(m.params.arguments || {}) }] } });
                 }
                 catch (e) {
-                    send({ jsonrpc: '2.0', id: m.id, result: { isError: true, content: [{ type: 'text', text: String(e.message) }] } });
+                    send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', isError: true, content: [{ type: 'text', text: String(e.message) }] } });
                 }
             }
             else if (m.id !== undefined && !m.method.startsWith('notifications/'))

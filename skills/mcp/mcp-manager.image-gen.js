@@ -402,7 +402,11 @@ function render(r) {
 const TOOL = { name: 'generate_image', description: "Generate an image for a website/app via Gemini 'Nano Banana' with automatic fallback to Cloudflare FLUX.1 schnell (daily caps apply). Pass `style` for SaaS/business looks. Reports which provider was used. Never put exact text, logos or real people's likenesses in the prompt. On failure, fall back to a placeholder.", inputSchema: { type: 'object', properties: { prompt: { type: 'string', description: 'Subject and setting' }, style: { type: 'string', enum: Object.keys(STYLES) }, aspect: { type: 'string', enum: ASPECTS, description: 'Gemini only (default 16:9); Cloudflare uses its native size' }, output_path: { type: 'string', description: 'Where to save (extension may change to match the image format)' } }, required: ['prompt'] } };
 const ENHANCE_TOOL = { name: 'enhance_image', description: 'Enhance an existing photo with traditional editing (auto-levels, brightness/contrast, saturation, warmth, gamma, sharpen, denoise, resize) via ImageMagick. Deterministic: no AI, no quota, nothing invented, subject unchanged. Writes a new file beside the original (never overwrites). Use a preset and/or individual adjustments.', inputSchema: { type: 'object', properties: { input_path: { type: 'string' }, preset: { type: 'string', enum: Object.keys(PRESETS) }, brightness: { type: 'number', description: '-100..100' }, contrast: { type: 'number', description: '-100..100' }, saturation: { type: 'number', description: '-100..100' }, warmth: { type: 'number', description: '-100 cool .. 100 warm' }, gamma: { type: 'number', description: '0.2..5, above 1 brightens midtones' }, sharpen: { type: 'number', description: '0..5' }, denoise: { type: 'number', description: '0..20 percent' }, max_width: { type: 'number', description: 'downscale only' }, quality: { type: 'number', description: 'JPEG quality, default 92' }, output_path: { type: 'string', description: 'default <name>-enhanced.<ext> next to the input' } }, required: ['input_path'] } };
 const AI_EDIT_TOOL = { name: 'ai_edit_image', description: "Small prompt-driven edit of an existing photo with AI (Gemini 'Nano Banana', fallback Cloudflare SD 1.5 img2img; shares the daily caps). Use ONLY when traditional editing (enhance_image) cannot do it, e.g. 'remove the colour cast from the skin', 'brighten the dark background'. It re-renders the image, so details can change: always compare with the original and tell the user. Never use on client photos without saying so. Writes <name>-ai-edit.<ext> beside the original.", inputSchema: { type: 'object', properties: { input_path: { type: 'string' }, prompt: { type: 'string', description: 'What to change, specifically and minimally' }, strength: { type: 'number', description: 'Cloudflare fallback only, 0.05..1, default 0.35; lower stays closer to the original' }, output_path: { type: 'string' } }, required: ['input_path', 'prompt'] } };
+const SV = ['2026-07-28', '2025-11-25'];
+const META = 'io.modelcontextprotocol/';
+const INFO = { name: 'image-gen', version: '1.0.0' };
 function mcp() {
+    let legacy = false; // set by an initialize request: older clients keep session semantics
     const send = (o) => { process.stdout.write(JSON.stringify(o) + '\n'); };
     let buf = '';
     process.stdin.on('data', async (d) => {
@@ -420,33 +424,58 @@ function mcp() {
             catch {
                 continue;
             }
-            if (m.method === 'initialize')
-                send({ jsonrpc: '2.0', id: m.id, result: { protocolVersion: m.params?.protocolVersion || '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'image-gen', version: '1.0.0' } } });
-            else if (m.method === 'tools/list')
-                send({ jsonrpc: '2.0', id: m.id, result: { tools: [TOOL, ENHANCE_TOOL, AI_EDIT_TOOL] } });
+            if (!m.method)
+                continue;
+            if (m.method === 'initialize') {
+                legacy = true;
+                send({ jsonrpc: '2.0', id: m.id, result: { protocolVersion: m.params?.protocolVersion || '2025-03-26', capabilities: { tools: {} }, serverInfo: INFO } });
+                continue;
+            }
+            if (m.method === 'server/discover') {
+                send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', supportedVersions: SV, capabilities: { tools: {} }, _meta: { [META + 'serverInfo']: INFO }, ttlMs: 3600000, cacheScope: 'public' } });
+                continue;
+            }
+            if (m.method === 'ping' && legacy) {
+                send({ jsonrpc: '2.0', id: m.id, result: {} });
+                continue;
+            }
+            if (!legacy && m.id !== undefined && m.method !== 'ping') {
+                const meta = (m.params?._meta || {});
+                const v = meta[META + 'protocolVersion'];
+                if (typeof v !== 'string' || !meta[META + 'clientCapabilities']) {
+                    send({ jsonrpc: '2.0', id: m.id, error: { code: -32602, message: 'Invalid params: _meta protocolVersion and clientCapabilities required' } });
+                    continue;
+                }
+                if (!SV.includes(v)) {
+                    send({ jsonrpc: '2.0', id: m.id, error: { code: -32022, message: 'Unsupported protocol version', data: { supported: SV, requested: v } } });
+                    continue;
+                }
+            }
+            if (m.method === 'tools/list')
+                send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', ttlMs: 3600000, cacheScope: 'public', tools: [TOOL, ENHANCE_TOOL, AI_EDIT_TOOL] } });
             else if (m.method === 'tools/call') {
                 try {
                     if (m.params.name === 'enhance_image') {
                         const e = m.params.arguments || {};
                         const r = await enhance({ ...e, input: e.input_path, out: e.output_path });
-                        send({ jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: [r.file, `applied: ${r.applied.join(', ')}`, `original untouched: ${r.input}`].join(String.fromCharCode(10)) }] } });
+                        send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', content: [{ type: 'text', text: [r.file, `applied: ${r.applied.join(', ')}`, `original untouched: ${r.input}`].join(String.fromCharCode(10)) }] } });
                         continue;
                     }
                     if (m.params.name === 'ai_edit_image') {
                         const e = m.params.arguments || {};
                         const r = await aiEdit({ input: e.input_path, prompt: e.prompt, strength: e.strength, out: e.output_path });
                         const NL = String.fromCharCode(10);
-                        send({ jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: [...(r.notices.length ? ['NOTICES - tell the user about each of these in your reply:', ...r.notices.map((n) => '- ' + n), ''] : []), r.file, `provider: ${r.provider} (${r.model})`, `original untouched: ${r.input}`].join(NL) }] } });
+                        send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', content: [{ type: 'text', text: [...(r.notices.length ? ['NOTICES - tell the user about each of these in your reply:', ...r.notices.map((n) => '- ' + n), ''] : []), r.file, `provider: ${r.provider} (${r.model})`, `original untouched: ${r.input}`].join(NL) }] } });
                         continue;
                     }
                     if (m.params.name !== 'generate_image')
                         throw new Error('unknown tool');
                     const a = m.params.arguments || {};
                     const r = await generate({ prompt: a.prompt, style: a.style, aspect: a.aspect, out: a.output_path });
-                    send({ jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: render(r) }] } });
+                    send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', content: [{ type: 'text', text: render(r) }] } });
                 }
                 catch (e) {
-                    send({ jsonrpc: '2.0', id: m.id, result: { isError: true, content: [{ type: 'text', text: String(e.message) }] } });
+                    send({ jsonrpc: '2.0', id: m.id, result: { resultType: 'complete', isError: true, content: [{ type: 'text', text: String(e.message) }] } });
                 }
             }
             else if (m.id !== undefined && !m.method.startsWith('notifications/'))

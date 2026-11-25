@@ -48,5 +48,8 @@ For each `first`-routed server run `config.js pin --name N --trigger "<when>" --
 - **Health-check at setup:** call the server's cheapest *authenticated* read-only tool once. `tools/list` alone proves nothing — it may need no auth, so a bad key still passes it. Report plainly: ok / bad key / unreachable / server not running. Compare the live tool list with the server file and note drift.
 - **Free tiers end.** If a `cost: free|limited` server starts failing on auth/quota, tell the user once and fall back; don't keep probing.
 
+## Protocol versions (MCP 2026-07-28 and earlier)
+The kit's own stdio servers (`image-gen`, `local-vision`) speak both eras. A request carrying `_meta` `io.modelcontextprotocol/protocolVersion` and `.../clientCapabilities` is served statelessly with no `initialize`; `server/discover` returns `supportedVersions` (`2026-07-28`, `2025-11-25`); an unknown version gets `-32022`, missing `_meta` gets `-32602`; `ping` and `logging/setLevel` are method-not-found. A client that sends `initialize` gets the old handshake and `ping`. Every result carries `resultType: "complete"`, and `tools/list` adds `ttlMs` and `cacheScope`. Covered by `tests/mcp-protocol.test.js`. A new server file should state which era its endpoint was verified against.
+
 ## Adding a new server
 Create `mcp/mcp-manager.<name>.md` from `mcp-manager.stitch.md`'s shape. Facts (URL, auth, tool names) must come from the server's current docs, with `verified:` set — never memory. No other file changes needed except one catalog line in `skills/README.md`.

@@ -4,7 +4,7 @@
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 71 reusable `SKILL.md` agent skills (the OpenCode router also carries 10 per-model files), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 38 opt-in slash commands, 19 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
+**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 72 reusable `SKILL.md` agent skills (the OpenCode router also carries 10 per-model files), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 39 opt-in slash commands, 19 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
 
 Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering), an opt-in offline text-to-speech add-on that reads Claude's replies aloud, and opt-in reply personas, for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
@@ -251,7 +251,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
 | Token use is recorded | The `budget-ledger` mod writes one row per turn; `/budget` reads it | `budget-ledger` mod |
 | Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `skill-hint` (a skill that may apply), `prefilter-rank` (ranked read order) | those mods |
-| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 630 tokens from every turn. | `skill-scope` (pinned), Claude Code hooks |
+| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 960 tokens from every turn (measured: the 19 per-session skills a fresh install archives, descriptions only, chars/4). | `skill-scope` (pinned), Claude Code hooks |
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
 | On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
@@ -579,6 +579,8 @@ One setup interview (`mcp-manager`) wires any of these into Claude Code, OpenCod
 
 **Built so a free tool can never become a trap.** `image-gen` warns at 80% of a daily cap, switches provider at 90% (before anything fails or bills), pauses all generation until 00:00 UTC when every provider is exhausted, then serves clearly marked placeholders — and every switch, pause and placeholder is reported to you as a notice, in the tool output and in `~/.ai-dev-kit/image-gen/notices.log`. Installers run a hardware preflight (CPU, RAM, disk, GPU) first, refuse installs the machine cannot hold, and pick CUDA/Vulkan/Metal builds only when the hardware warrants it, with automatic CPU fallback.
 
+**Protocol.** The two local servers (`local-vision`, `image-gen`) speak both the MCP 2026-07-28 stateless protocol (no `initialize`; version and capabilities in each request's `_meta`; `server/discover`; `-32022` for an unknown version) and the older handshake, so existing clients keep working. Checked by `tests/mcp-protocol.test.js` (14 cases). The hosted `stitch` endpoint is Google's and follows whatever version Google serves.
+
 **Honest status.** Developed and tested on Windows 11 with an 8-core CPU and no discrete GPU. The CUDA, Metal, discrete-GPU Vulkan and Linux/macOS paths are implemented but untested. Model and API facts carry a `verified:` date and are re-checked live at setup. Credits and licences for every model and service (Qwen, llama.cpp, Laya, FLUX.1, Gemini, Stitch, placehold.co) are in [CREDITS.md](CREDITS.md) and each server file; nothing third-party is bundled in this repo.
 
 **Get started:** install the kit, then tell your agent *"set up MCP servers"* — [`mcp-manager`](skills/mcp/mcp-manager.md) asks which tools, which AI clients, and where to keep keys, then writes the configs (merging, never overwriting) and health-checks each one.
@@ -900,6 +902,9 @@ npm run dev
 
 ## Recent additions
 
+- **MCP 2026-07-28 support in the local servers.** `image-gen` and `local-vision` answer the new stateless protocol (version and capabilities in each request's `_meta`, `server/discover`, `-32022` for an unknown version, `resultType` on every result) and still accept the old `initialize` handshake. `tests/mcp-protocol.test.js` runs 14 cases against both.
+- **`test-run` and `/test`.** The script runs your tests first and hands the agent a verdict plus failures grouped by cause, instead of the raw log.
+- **A fresh install starts lean.** `install` archives the 19 per-session skills at once (about 960 tokens less per turn, measured); `/next <task>`, `/role` or the `skill-hint` mod bring back what a task needs, and `--keep-active` opts out. `/audit --save` keeps dated audit reports, and 35 commands carry an `argument-hint`.
 - **Usage tracking works from the first session.** `install --usage on` now installs and enables the `feature-usage` mod itself and checks `settings.json`; a failed step prints the commands to run by hand. `install --yes` alone does not turn tracking on.
 - **Role loadouts and `/role`.** `skill-scope/role.js` maps twelve job roles to the skills, standards files and commands each needs. `/role` with no argument lists them, `/role <name>` restores that role's archived skills, and `skill-hint` attaches one role line per session.
 - **`invariants` add-on and `/invariants`.** Proves a rule's check can fail by breaking the code on purpose, probes a script for edits no check notices, and flags rules whose code changed since they were last verified. Opt-in, a script, no model.
