@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { openStages, decide } = require("../skills/workflow/plan-first.gate.js");
+const { openStages, decide, STUCK_MAX } = require("../skills/workflow/plan-first.gate.js");
 
 const PLAN = "<!-- plan-gate -->\n- [x] one\n- [ ] two\n- [ ] three\n";
 
@@ -30,10 +30,9 @@ test("all ticked releases the stop", () => {
     assert.strictEqual(decide("<!-- plan-gate -->\n- [x] a\n").block, false);
 });
 
-test("no progress for 2 blocks releases a stuck run", () => {
+test("no progress for STUCK_MAX blocks releases a stuck run", () => {
     let g = decide(PLAN);
-    g = decide(PLAN, g);
-    assert.strictEqual(g.block, true);
+    for (let i = 1; i < STUCK_MAX; i++) { g = decide(PLAN, g); assert.strictEqual(g.block, true); }
     g = decide(PLAN, g);
     assert.strictEqual(g.block, false);
 });

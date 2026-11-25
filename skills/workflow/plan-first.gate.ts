@@ -3,10 +3,13 @@
 // Opt-in per plan: PLAN.md must carry the line `<!-- plan-gate -->`. A plan without it, or with
 // `<!-- plan-gate: off -->`, is never gated, so a stale checklist cannot trap a session.
 // Reads the hook JSON on stdin ({ cwd, session_id }). Fails open on any read or parse problem.
-// Releases the stop when the unchecked count has not dropped for 2 blocks in a row (a stuck run).
+// Releases the stop when the unchecked count has not dropped for 4 blocks in a row (a stuck run).
+// 2 was measured too low: Haiku ignored two blocks in 2 of 9 runs and then finished when blocked again.
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+
+export const STUCK_MAX = 4
 
 export type Gate = { block: boolean; open: number; reason?: string }
 
@@ -30,12 +33,12 @@ export function decide(plan: string, prev?: { open: number; stuck: number }): Ga
   const s = openStages(plan)
   if (!s || s.open === 0) return { block: false, open: s ? 0 : -1, stuck: 0 }
   const stuck = prev && s.open >= prev.open ? prev.stuck + 1 : 0
-  if (stuck >= 2) return { block: false, open: s.open, stuck }
+  if (stuck >= STUCK_MAX) return { block: false, open: s.open, stuck }
   return {
     block: true,
     open: s.open,
     stuck,
-    reason: `PLAN.md still has ${s.open} unchecked stage(s). Next: "${s.next}". Continue the run, tick each stage when done. Stop only on a blocking error you cannot fix in 2 attempts, then say so and add <!-- plan-gate: off --> to PLAN.md.`,
+    reason: `PLAN.md still has ${s.open} unchecked stage(s). Next: "${s.next}". Do not summarize or ask: do that stage now, tick it, then the next. Stop only on a blocking error you cannot fix in 2 attempts, then say so and add <!-- plan-gate: off --> to PLAN.md.`,
   }
 }
 
