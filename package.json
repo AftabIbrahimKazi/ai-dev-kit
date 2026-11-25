@@ -29,7 +29,7 @@
     "@triforge/uv-core": "^0.1.2",
     "@triforge/volume-core": "^0.1.1",
     "lucide-react": "^1.67.0",
-    "next": "16.4.3",
+    "next": "^16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "strata-css": "^1.9.0",
@@ -42,7 +42,7 @@
     "@types/react-dom": "^19",
     "@types/three": "0.187.0",
     "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "eslint-config-next": "^16.4.6",
     "stylelint": "^17.16.0",
     "stylelint-order": "^8.1.3",
     "typescript": "^5"
