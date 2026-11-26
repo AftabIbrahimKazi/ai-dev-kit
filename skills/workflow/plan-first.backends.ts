@@ -16,7 +16,7 @@ export type Backend = 'code' | 'ollama' | 'kaggle' | 'unified';
 export const ORDER: Backend[] = ['code', 'ollama', 'kaggle', 'unified'];
 export type Feature = 'review' | 'goldfish' | 'tests' | 'image' | 'coding';
 
-export interface AskOpts { maxTokens?: number; timeoutMs?: number; accept?: (text: string) => boolean }
+export interface AskOpts { maxTokens?: number; timeoutMs?: number; maxChars?: number; accept?: (text: string) => boolean }
 export type Answer = { text: string; backend: Exclude<Backend, 'code'>; notes: string[] } | { handoff: true; notes: string[] };
 
 const MAX_CHARS = 60000;
@@ -105,7 +105,8 @@ const CALL: Record<Exclude<Backend, 'code'>, typeof ollama> = { ollama, kaggle, 
 // Try each allowed model backend in the fixed order. First usable reply wins; if none does, the caller hands over to Claude.
 // "code" is skipped here: it is the caller's own free scan, which runs before any model is asked.
 export async function ask(prompt: string, text: string, backends: Backend[], opts: AskOpts = {}, env: NodeJS.ProcessEnv = process.env): Promise<Answer> {
-  const body = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+  const limit = opts.maxChars ?? MAX_CHARS;
+  const body = text.length > limit ? text.slice(0, limit) : text;
   const t = opts.timeoutMs ?? 25000;
   const cap = opts.maxTokens ?? 600;
   const accept = opts.accept ?? ((s: string) => s.trim().length > 0);

@@ -125,7 +125,8 @@ const CALL = { ollama, kaggle, unified };
 // Try each allowed model backend in the fixed order. First usable reply wins; if none does, the caller hands over to Claude.
 // "code" is skipped here: it is the caller's own free scan, which runs before any model is asked.
 async function ask(prompt, text, backends, opts = {}, env = process.env) {
-    const body = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+    const limit = opts.maxChars ?? MAX_CHARS;
+    const body = text.length > limit ? text.slice(0, limit) : text;
     const t = opts.timeoutMs ?? 25000;
     const cap = opts.maxTokens ?? 600;
     const accept = opts.accept ?? ((s) => s.trim().length > 0);

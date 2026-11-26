@@ -5,7 +5,7 @@
 //
 //   node cli.js setup [--user <kaggle-name>]        check the Kaggle CLI and token, save the account name
 //   node cli.js plan <plan.md> [--standards <dir>]  lint the plan, build the prompts, estimate GPU minutes (no GPU, no network)
-//   node cli.js run <plan.md> [--force] [--no-wait] [--poll <seconds>]   push, wait, fetch, stage, gate
+//   node cli.js run <plan.md> [--via auto|kaggle|unified] [--force] [--no-wait] [--poll <seconds>]   push, wait, fetch, stage, gate
 //   node cli.js fetch                               pull the last run's output (after --no-wait) and gate it
 //   node cli.js retry                               build a follow-up job from the failed tasks (max 2 rounds), then run it
 //   node cli.js status | stop | usage | review
@@ -17,12 +17,22 @@
 // Standards: --standards <dir> defaults to <project>/coding-standards when that folder exists; a Standards id that is not a file in it fails the plan.
 // Env: KAGGLE_RUNNER (a node script used instead of the kaggle CLI: tests), AI_DEV_KIT_HOME (state and .env location).
 // Token: KAGGLE_API_TOKEN or KAGGLE_API_KEY in the environment or in ~/.ai-dev-kit/.env (spaces and quotes are trimmed).
-// Exit codes: 0 done, 1 error, 2 bad usage, 3 blocked (budget, active session, missing prerequisite).
+// Who writes the code: "coding" in .claude/ai-backends.json lists kaggle and/or unified (no file or key: kaggle only, as before).
+//   Auto tries kaggle first and falls to unified when kaggle is blocked (no token, no account name, over quota); unified runs the same
+//   prompts on the free router from this machine (no GPU, no notebook) and fills the same staging folder. With nothing allowed or
+//   ready it prints HANDOFF: Claude writes the code itself.
+// Exit codes: 0 done, 1 error, 2 bad usage, 3 blocked (budget, active session, missing prerequisite, or HANDOFF).
 import fs = require('node:fs');
 import os = require('node:os');
 import path = require('node:path');
 import crypto = require('node:crypto');
 import { spawnSync } from 'node:child_process';
+import type * as BackendsModule from '../../workflow/plan-first.backends';
+
+function sibling<T>(installed: string, library: string): T {
+  return require(path.join(__dirname, fs.existsSync(path.join(__dirname, installed)) ? installed : library)) as T;
+}
+const bk = sibling<typeof BackendsModule>('backends.js', 'kaggle.backends.js');
 
 export const MODEL = 'qwen3-coder:30b';
 // Measured on 2x T4 (findings/kaggle-stage0.md): 65 tok/s at 16k, 37 tok/s with 30k in context, cold start about 5 minutes.
@@ -290,10 +300,45 @@ export function learnPairs(root: string, stage: string): number {
   return n;
 }
 
-function report(rows: { task: string; files: string[]; findings: string[] }[], stage: string, results: { tasks?: { id: string; gen_tokens?: number; truncated?: boolean }[]; elapsed_s?: number } | null): string {
+export type Coder = 'kaggle' | 'unified';
+// The coders the project allows, kaggle before unified. No "coding" list means kaggle only (the old behaviour). --via forces one.
+export function codingSteps(root: string, via: string): Coder[] {
+  if (via === 'kaggle' || via === 'unified') return [via];
+  let want: unknown[] | null = null;
+  try { const c = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8')); if (Array.isArray(c.coding)) want = c.coding; } catch { /* no file */ }
+  const list: Coder[] = want === null ? ['kaggle'] : (['kaggle', 'unified'] as Coder[]).filter((b) => (want as unknown[]).includes(b));
+  return list;
+}
+
+interface Results { model?: string; tasks?: { id: string; gen_tokens?: number; truncated?: boolean }[]; elapsed_s?: number }
+// The unified executor: the same queue the notebook runs, but each prompt goes to the router from here. Same out/<id>.txt files,
+// same results.json shape, same caps (wall clock, per task, failures in a row).
+export async function runUnified(tasks: { id: string; prompt: string }[], runDir: string, env: NodeJS.ProcessEnv = process.env): Promise<Results> {
+  const out = path.join(runDir, 'out');
+  fs.mkdirSync(out, { recursive: true });
+  const t0 = Date.now();
+  const res: { id: string; status: string; note?: string; wall_s: number }[] = [];
+  let fails = 0;
+  for (const job of tasks) {
+    if (Date.now() - t0 > CAPS.wall_s * 1000) { res.push({ id: job.id, status: 'skipped', note: 'wall-clock cap', wall_s: 0 }); continue; }
+    if (fails >= CAPS.max_fail) { res.push({ id: job.id, status: 'skipped', note: 'too many failures in a row', wall_s: 0 }); continue; }
+    const t = Date.now();
+    const r = await bk.ask('', job.prompt, ['unified'], { timeoutMs: CAPS.task_s * 1000, maxTokens: CAPS.num_predict, maxChars: 90000 }, env);
+    const wall_s = Math.round((Date.now() - t) / 100) / 10;
+    if ('text' in r) { fs.writeFileSync(path.join(out, job.id + '.txt'), r.text); res.push({ id: job.id, status: 'ok', wall_s }); fails = 0; }
+    else { res.push({ id: job.id, status: 'error', note: r.notes.join('; ').slice(0, 200), wall_s }); fails++; }
+    console.log(`task ${job.id}: ${res[res.length - 1].status}${res[res.length - 1].note ? ' (' + res[res.length - 1].note + ')' : ''}`);
+  }
+  const results: Results = { model: 'unified router', tasks: res, elapsed_s: Math.round((Date.now() - t0) / 1000) };
+  fs.writeFileSync(path.join(runDir, 'results.json'), JSON.stringify(results, null, 2));
+  return results;
+}
+
+function report(rows: { task: string; files: string[]; findings: string[] }[], stage: string, results: Results | null, coder: Coder = 'kaggle'): string {
   const bad = rows.filter((r) => r.findings.length);
-  const lines = [`kaggle results: ${rows.length - bad.length} of ${rows.length} task(s) passed the local gates; staged in ${stage}`];
-  if (results && results.elapsed_s) lines.push(`GPU session about ${Math.ceil(results.elapsed_s / 60)} min`);
+  const lines = [`${coder} results: ${rows.length - bad.length} of ${rows.length} task(s) passed the local gates; staged in ${stage}`];
+  if (coder === 'unified') lines.push('unified router run, no GPU quota used');
+  else if (results && results.elapsed_s) lines.push(`GPU session about ${Math.ceil(results.elapsed_s / 60)} min`);
   for (const r of bad) lines.push(`  FAIL ${r.task}: ${r.findings.join('; ')}`);
   for (const t of results?.tasks || []) if (t.truncated) lines.push(`  note ${t.id}: answer hit the output cap (${CAPS.num_predict} tokens); split the task`);
   const web = fs.existsSync(stage) && fs.readdirSync(stage, { recursive: true }).some((x) => /\.(html?|css)$/i.test(String(x)));
@@ -302,7 +347,7 @@ function report(rows: { task: string; files: string[]; findings: string[] }[], s
   return lines.join('\n');
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const a = process.argv.slice(2);
   const sub = a[0];
   const flag = (n: string): boolean => a.includes(n);
@@ -371,9 +416,18 @@ function main(): void {
     return;
   }
 
+  let coder: Coder = 'kaggle';
+  let unifiedJobs: { tasks: { id: string; prompt: string }[] } | null = null;
   if (sub === 'run' || sub === 'retry') {
-    if (!user) { console.error('error: no Kaggle account name. Run: setup --user <your kaggle username>'); process.exitCode = 3; return; }
-    if (!readToken()) { console.error('error: no Kaggle token. Run: setup'); process.exitCode = 3; return; }
+    const via = val('--via') || 'auto';
+    if (!['auto', 'kaggle', 'unified'].includes(via)) { console.error('usage: --via auto|kaggle|unified'); process.exitCode = 2; return; }
+    const steps = codingSteps(root, via);
+    if (!steps.length) { console.log('HANDOFF: no outside coder is allowed for this project (.claude/ai-backends.json "coding": ["kaggle", "unified"], or run install-kit). Write the code yourself.'); process.exitCode = 3; return; }
+    const kaggleOnly = steps.length === 1 && steps[0] === 'kaggle';
+    if (kaggleOnly) {
+      if (!user) { console.error('error: no Kaggle account name. Run: setup --user <your kaggle username>'); process.exitCode = 3; return; }
+      if (!readToken()) { console.error('error: no Kaggle token. Run: setup'); process.exitCode = 3; return; }
+    }
     let jobs = pj.jobs; let tasks = pj.tasks;
     if (sub === 'run' && pj.lint.problems.length) { console.error('plan has problems; fix them first:\n  ' + pj.lint.problems.join('\n  ')); process.exitCode = 1; return; }
     if (sub === 'retry') {
@@ -385,8 +439,20 @@ function main(): void {
     }
     const est = estimate(jobs.tasks.map((t) => t.prompt));
     const rows = readLedger(root);
-    const block = budgetCheck(rows, est.gpuMinutes, flag('--force'));
-    if (block) { console.error('blocked: ' + block); process.exitCode = 3; return; }
+    coder = steps[0];
+    if (coder === 'kaggle' && !kaggleOnly) {
+      const why = !user ? 'no Kaggle account name (setup --user)' : !readToken() ? 'no Kaggle token (setup)' : budgetCheck(rows, est.gpuMinutes, flag('--force'));
+      if (why) { console.log(`kaggle skipped: ${why}. Using the unified router.`); coder = 'unified'; }
+    } else if (coder === 'kaggle') {
+      const block = budgetCheck(rows, est.gpuMinutes, flag('--force'));
+      if (block) { console.error('blocked: ' + block); process.exitCode = 3; return; }
+    }
+    if (coder === 'unified') {
+      if (!bk.unifiedKey(process.env)) { console.log('HANDOFF: the unified router has no key (set UNIFIED_API_KEY) and kaggle is not available. Write the code yourself.'); process.exitCode = 3; return; }
+      unifiedJobs = jobs;
+      fs.mkdirSync(stateDir(root), { recursive: true }); fs.writeFileSync(lastPlan, planPath);
+    }
+    if (coder === 'kaggle') {
     const slug = `adk-${slugFor(root)}`;
     const work = path.join(stateDir(root), 'push'); fs.rmSync(work, { recursive: true, force: true }); fs.mkdirSync(work, { recursive: true });
     fs.writeFileSync(path.join(work, 'worker.ipynb'), buildNotebook(jobs, workerSource()));
@@ -405,23 +471,27 @@ function main(): void {
       if (/ERROR|CANCEL/.test(s)) { row.finished = new Date().toISOString(); row.status = 'error'; row.minutes = Math.ceil((Date.now() - Date.parse(row.started)) / 60000); writeLedger(root, rows); console.error('kernel ended with an error: see the Kaggle page. ' + s.split('\n').pop()); process.exitCode = 1; return; }
       sleep(poll);
     }
+    }
   }
 
   // fetch (also the tail of run/retry)
-  const rows = readLedger(root);
-  const row = [...rows].reverse().find((r) => !r.finished) || rows[rows.length - 1];
-  if (!row) { console.error('error: nothing in the ledger'); process.exitCode = 1; return; }
   const runDir = path.join(stateDir(root), 'runs', new Date().toISOString().replace(/[:.]/g, '-'));
   fs.mkdirSync(runDir, { recursive: true });
-  const o = kaggle(['kernels', 'output', row.kernel, '-p', runDir], cfgDir);
-  if (!o.ok) { console.error('fetch failed (still running?): ' + o.out.slice(0, 200)); process.exitCode = 1; return; }
-  let results: { tasks?: { id: string; gen_tokens?: number; truncated?: boolean }[]; elapsed_s?: number } | null = null;
-  try { results = JSON.parse(fs.readFileSync(path.join(runDir, 'results.json'), 'utf8')); } catch { /* no results */ }
-  if (!row.finished) { row.finished = new Date().toISOString(); row.status = 'done'; row.minutes = Math.ceil(((results?.elapsed_s ?? 0) || (Date.now() - Date.parse(row.started)) / 1000) / 60); writeLedger(root, rows); }
+  let results: Results | null = null;
+  if (coder === 'unified' && unifiedJobs) results = await runUnified(unifiedJobs.tasks, runDir);
+  else {
+    const rows = readLedger(root);
+    const row = [...rows].reverse().find((r) => !r.finished) || rows[rows.length - 1];
+    if (!row) { console.error('error: nothing in the ledger'); process.exitCode = 1; return; }
+    const o = kaggle(['kernels', 'output', row.kernel, '-p', runDir], cfgDir);
+    if (!o.ok) { console.error('fetch failed (still running?): ' + o.out.slice(0, 200)); process.exitCode = 1; return; }
+    try { results = JSON.parse(fs.readFileSync(path.join(runDir, 'results.json'), 'utf8')); } catch { /* no results */ }
+    if (!row.finished) { row.finished = new Date().toISOString(); row.status = 'done'; row.minutes = Math.ceil(((results?.elapsed_s ?? 0) || (Date.now() - Date.parse(row.started)) / 1000) / 60); writeLedger(root, rows); }
+  }
   const stage = path.join(stateDir(root), 'staging'); fs.mkdirSync(stage, { recursive: true });
   const ran = new Set((results?.tasks || []).map((t) => t.id));
   const rowsOut = stageResults(runDir, pj.tasks.filter((t) => !ran.size || ran.has(t.id)), stage);
-  const text = report(rowsOut, stage, results);
+  const text = report(rowsOut, stage, results, coder);
   fs.writeFileSync(path.join(stateDir(root), 'last-report.txt'), text);
   let round = 0; try { round = JSON.parse(fs.readFileSync(path.join(stateDir(root), 'last-fail.json'), 'utf8')).round; } catch { /* first */ }
   const failed = rowsOut.filter((r) => r.findings.length).map((r) => ({ id: r.task, findings: r.findings }));
@@ -429,4 +499,4 @@ function main(): void {
   console.log(text);
 }
 
-if (require.main === module) main();
+if (require.main === module) main().catch((e) => { console.error('error: ' + (e as Error).message); process.exitCode = 1; });

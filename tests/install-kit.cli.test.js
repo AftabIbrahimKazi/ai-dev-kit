@@ -944,6 +944,15 @@ t('ai backends: image=unified is written for mcp-manager and the server ships th
   assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'mcp-manager', 'image-gen.js')));
 });
 
+t('ai backends: coding=... is written for kaggle and the add-on ships the shared module beside it', () => {
+  const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
+  const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'kaggle', '--yes', '--ai', 'coding=unified+kaggle']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8')), { coding: ['kaggle', 'unified'] });
+  assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'kaggle', 'backends.js')), 'backends.js installed next to cli.js');
+  assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'kaggle', 'cli.js')));
+});
+
 t('ai backends: a feature whose skill is not installed is not written', () => {
   const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
   const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', '--ai', 'goldfish=unified']);
