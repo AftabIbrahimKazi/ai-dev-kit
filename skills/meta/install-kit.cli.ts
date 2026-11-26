@@ -680,7 +680,7 @@ export interface CliArgs {
   usageNotify?: 'on' | 'off';
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
   yes?: boolean; // --yes: accept every default, ask nothing
-  reviewer?: 'auto' | 'ollama' | 'static'; // second reviewer for hidden-state bugs (--reviewer)
+  ai?: Partial<Record<AiFeature, AiBackend[]>>; // outside models allowed per feature (--ai review=code+ollama, --reviewer legacy)
   signature?: string; // project signature: an alias of 2 to 6 letters, or "none"
   signatureAction?: string;
   companyAction?: string;
@@ -724,6 +724,37 @@ export function batchMod(root: string, library: string | undefined, paired: bool
   if (!r.enabled && paired) r.hint = `Optional batch mod (read-heavy tasks used about 28-34% fewer tokens in the kit's test): run claude plugin marketplace add "${market}" once, then claude plugin install ${BATCH_ID} --scope project, or re-run this command with --batch on.`;
   if (r.enabled && !paired) r.warning = 'the batch mod is enabled but the session-budget skill is not installed, so nothing tells the model when to use mcp__batch__run. Install session-budget.';
   return r;
+}
+
+// Which outside models a feature may use. The project lists them in .claude/ai-backends.json; scripts try them in a fixed order
+// (code, ollama, kaggle, unified) and Claude is always the last step. Nothing listed means Claude (or, for the review, the free scan).
+export type AiFeature = 'review' | 'goldfish';
+export type AiBackend = 'code' | 'ollama' | 'kaggle' | 'unified';
+export const AI_BACKENDS: AiBackend[] = ['code', 'ollama', 'kaggle', 'unified'];
+const AI_NEEDS: Record<AiFeature, string> = { review: 'implicit-state-audit', goldfish: 'plan-first' };
+
+export function parseAiFlag(v: string): { feature: AiFeature; list: AiBackend[] } | null {
+  const m = /^(review|goldfish)=(.*)$/.exec(v || '');
+  if (!m) return null;
+  const words = m[2] === 'none' || m[2] === '' ? [] : m[2].split(/[+,]/);
+  if (!words.every((w) => (AI_BACKENDS as string[]).includes(w))) return null;
+  return { feature: m[1] as AiFeature, list: AI_BACKENDS.filter((b) => words.includes(b)) };
+}
+
+// Merges the chosen features into <root>/.claude/ai-backends.json. A feature already in the file is kept unless --force.
+export function writeAiBackends(root: string, ai: Partial<Record<AiFeature, AiBackend[]>>, installed: string[], force?: boolean): string | undefined {
+  const file = path.join(root, '.claude', 'ai-backends.json');
+  let cur: Record<string, unknown> = {};
+  try { cur = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* none yet */ }
+  let changed = false;
+  for (const [f, list] of Object.entries(ai) as [AiFeature, AiBackend[]][]) {
+    if (!installed.includes(AI_NEEDS[f]) || (f in cur && !force)) continue;
+    cur[f] = list; changed = true;
+  }
+  if (!changed) return undefined;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(cur, null, 2) + '\n');
+  return file;
 }
 
 export interface UsageResult { file: string; track: boolean; notify: boolean; warning?: string; mod?: 'enabled' | 'installed' | 'failed' }
@@ -841,12 +872,9 @@ export function doInstall(args: CliArgs): DoInstallResult {
   const batchPaired = Object.keys(manifest.skills).includes('session-budget');
   const batchResult = args.batch !== undefined || batchPaired ? batchMod(args.root!, args.library, batchPaired, args.batch) : undefined;
   if (batchResult?.warning) console.error(batchResult.warning);
-  // The hidden-state reviewer choice lives in one small file the state-audit mod and plan-first/reviewer.js read.
-  // Only written when a choice was made; delete .claude/state-audit.json to go back to "static" (no model, no network).
-  if (args.reviewer && Object.keys(manifest.skills).includes('implicit-state-audit')) {
-    const cfg = path.join(args.root!, '.claude', 'state-audit.json');
-    if (!fs.existsSync(cfg) || args.force) { fs.mkdirSync(path.dirname(cfg), { recursive: true }); fs.writeFileSync(cfg, JSON.stringify({ reviewer: args.reviewer }, null, 2) + '\n'); }
-  }
+  // Outside-model choices live in one small file the scripts and mods read. Only written when a choice was made; delete a feature's
+  // key (or the file) to go back to the default (Claude, or the free scan for the review). --force replaces an existing key.
+  if (args.ai) writeAiBackends(args.root!, args.ai, Object.keys(manifest.skills), args.force);
   // Nobody knows the first task yet, so a fresh install starts lean: the per-session archivable skills are archived now, the pinned ones stay.
   // /next <task>, /role, /unarchive <name> or a command that needs one brings it back. A skill the project already had (active or archived) keeps its state.
   let archivedNow: string[] | undefined;
@@ -1515,18 +1543,27 @@ async function askUsage(args: CliArgs): Promise<void> {
   if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only; in the VS Code panel use /kit-usage report)', true)) ? 'on' : 'off';
 }
 
-// Reviewer for hidden-state bugs. Asked only when implicit-state-audit is being installed. Auto is pre-selected, but it sends a
-// changed file to Gemini's free tier (which may keep inputs), so --yes never picks it: --yes means "static", no model, no network.
-async function askReviewer(args: CliArgs): Promise<void> {
-  if (args.reviewer !== undefined || !args.skills.some((s) => parseSkillToken(s).name === 'implicit-state-audit')) return;
-  if (autoYes) { args.reviewer = 'static'; return; }
-  console.log(dim('A second model can read a file the free scan flagged, so Claude spends no tokens on it. Free-tier Gemini may keep what it is sent: choose Ollama only for private code. Only flagged files are ever sent, never files that look like secrets.'));
-  args.reviewer = await askSelect('Reviewer for hidden-state bugs:', [
-    { title: `Auto ${dim('-- Gemini first (needs GEMINI_API_KEY in your shell), then a local Ollama model')}`, value: 'auto' },
-    { title: `Ollama only ${dim('-- a model on this machine; nothing leaves it (private code)')}`, value: 'ollama' },
-    { title: `Static scan only ${dim('-- no AI reads your code; the free scan still runs')}`, value: 'static' },
-  ], 0) as 'auto' | 'ollama' | 'static';
+// Which outside models may do a job so Claude spends fewer tokens. Tick any; scripts try them in a fixed order and Claude is the
+// last step. --yes ticks nothing (no network, nothing leaves the machine), the same rule the old reviewer question had.
+const AI_TITLES: Record<AiBackend, string> = {
+  code: 'Free script scan -- no AI; runs on every edit of UI code and finds the hidden-state patterns',
+  ollama: 'Ollama -- a model on this machine; nothing leaves it',
+  kaggle: 'Kaggle GPU -- your own notebook over a tunnel (needs LOCAL_LLM_URL; the text leaves this machine, secrets masked)',
+  unified: 'Unified API -- the free router (needs UNIFIED_API_KEY; the text leaves this machine, secrets masked; free tiers may keep inputs)',
+};
+async function askBackends(args: CliArgs, feature: AiFeature, intro: string, message: string, offer: AiBackend[]): Promise<void> {
+  if (args.ai?.[feature] !== undefined || !args.skills.some((s) => parseSkillToken(s).name === AI_NEEDS[feature])) return;
+  if (autoYes) return;
+  console.log(dim(intro));
+  const picked = await askMultiselect(message, offer.map((b) => ({ title: AI_TITLES[b].replace(/ -- (.*)$/, (_m, d: string) => ` ${dim('-- ' + d)}`), value: b })));
+  args.ai = { ...args.ai, [feature]: AI_BACKENDS.filter((b) => picked.includes(b)) };
 }
+const askReviewer = (args: CliArgs): Promise<void> => askBackends(args, 'review',
+  'Hidden-state bugs: the free scan needs no model. Models can also read the files, so Claude spends no tokens on them; they are tried in the order listed, then Claude. Models other than Ollama send the file off this machine. With only models ticked, a model reads every edited UI file (slower). Nothing ticked: the free scan only.',
+  'Who reads your UI code for hidden-state bugs? (Space to tick, Enter to confirm)', ['code', 'ollama', 'kaggle', 'unified']);
+const askGoldfish = (args: CliArgs): Promise<void> => askBackends(args, 'goldfish',
+  'Goldfish plan review: fresh reviewers read a plan before it runs. By default Claude does it itself. Tick models to run the five stages on them instead (free, slower); they are tried in the order listed, then Claude. The plan text leaves this machine for Kaggle and Unified.',
+  'Who runs the goldfish plan review? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
 
 async function askSignature(args: CliArgs): Promise<void> {
   if (args.signature !== undefined) return;
@@ -1556,7 +1593,7 @@ type Step = () => Promise<void>;
 
 // Copy of the answers so far, so a step can be undone exactly (the arrays are copied, not shared).
 function snapshotArgs(a: CliArgs): CliArgs {
-  return { ...a, skills: [...a.skills], activeStandardsKeys: a.activeStandardsKeys ? [...a.activeStandardsKeys] : undefined };
+  return { ...a, skills: [...a.skills], activeStandardsKeys: a.activeStandardsKeys ? [...a.activeStandardsKeys] : undefined, ai: a.ai ? { ...a.ai } : undefined };
 }
 
 // Runs the questions one step at a time. A step that asked nothing (its answer came from a flag) is passed over in both
@@ -1740,6 +1777,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       });
       // last, so the questions above keep their order; the answer only writes a small file in the home folder
       steps.push(() => askReviewer(args));
+      steps.push(() => askGoldfish(args));
       steps.push(() => askUsage(args));
     }
 
@@ -1786,7 +1824,8 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--no-commands') a.noCommands = true;
     else if (k === '--keep-active') a.keepActive = true;
     else if (k === '--yes' || k === '-y') a.yes = true;
-    else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.reviewer = v; }
+    else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.ai = { ...a.ai, review: v === 'static' ? ['code'] : ['code', 'ollama'] }; } // legacy: auto used to try Gemini first
+    else if (k === '--ai') { const v = parseAiFlag(argv[++i]); if (!v) { console.error(red('error: --ai must look like review=code+ollama or goldfish=unified (backends: code, ollama, kaggle, unified; none for an empty list)')); process.exit(2); } a.ai = { ...a.ai, [v.feature]: v.list }; }
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

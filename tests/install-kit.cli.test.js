@@ -915,13 +915,22 @@ t('usage tracking config: only the keys given change, and a stored false stays f
   } finally { if (prev === undefined) delete process.env.AI_DEV_KIT_HOME; else process.env.AI_DEV_KIT_HOME = prev; }
 });
 
-t('reviewer choice: an existing state-audit.json is kept unless --force', () => {
+t('ai backends: a feature already in ai-backends.json is kept unless --force; other features merge in', () => {
   const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
-  const inst = (...extra) => runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', ...extra]);
-  const cfg = () => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'state-audit.json'), 'utf8')).reviewer;
-  assert.strictEqual(inst('--reviewer', 'ollama').status, 0); assert.strictEqual(cfg(), 'ollama');
-  inst('--reviewer', 'static'); assert.strictEqual(cfg(), 'ollama', 'kept without --force');
-  inst('--reviewer', 'static', '--force'); assert.strictEqual(cfg(), 'static', 'replaced with --force');
+  const inst = (...extra) => runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit,plan-first', '--yes', ...extra]);
+  const cfg = () => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8'));
+  assert.strictEqual(inst('--ai', 'review=code+ollama').status, 0); assert.deepStrictEqual(cfg(), { review: ['code', 'ollama'] });
+  inst('--ai', 'review=unified'); assert.deepStrictEqual(cfg().review, ['code', 'ollama'], 'kept without --force');
+  inst('--ai', 'goldfish=kaggle+unified'); assert.deepStrictEqual(cfg(), { review: ['code', 'ollama'], goldfish: ['kaggle', 'unified'] }, 'a new feature merges in');
+  inst('--ai', 'review=unified+code', '--force'); assert.deepStrictEqual(cfg().review, ['code', 'unified'], 'replaced with --force, in the fixed order');
+  inst('--ai', 'goldfish=none', '--force'); assert.deepStrictEqual(cfg().goldfish, [], 'none means an empty list');
+});
+
+t('ai backends: a feature whose skill is not installed is not written', () => {
+  const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
+  const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', '--ai', 'goldfish=unified']);
+  assert.strictEqual(r.status, 0);
+  assert.ok(!fs.existsSync(path.join(root, '.claude', 'ai-backends.json')));
 });
 
 t('numbered prompts: numbers outside 1..N are refused with a hint, in-range ones accepted', () => {

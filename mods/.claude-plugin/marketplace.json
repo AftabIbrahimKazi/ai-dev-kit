@@ -93,7 +93,7 @@
     {
       "name": "state-audit",
       "source": "./state-audit",
-      "description": "After each Edit or Write of UI code, runs the implicit-state-audit skill's scan.js (no model) and shows the model only hidden-state findings: boolean flags that allow impossible states, scattered DOM state, timer-sequenced state. A second reviewer (Gemini, then local Ollama) runs only when the project sets one in .claude/state-audit.json, and only for a flagged file. A clean file adds nothing. Reminds only; fails open."
+      "description": "After each Edit or Write of UI code, runs the implicit-state-audit skill's scan.js (no model) and shows the model only hidden-state findings: boolean flags that allow impossible states, scattered DOM state, timer-sequenced state. A second reviewer (Ollama, Kaggle or the Unified API) runs only when the project lists one under review in .claude/ai-backends.json, and only for a flagged file. A clean file adds nothing. Reminds only; fails open."
     },
     {
       "name": "feature-usage",

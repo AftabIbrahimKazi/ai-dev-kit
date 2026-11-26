@@ -8,6 +8,7 @@
 - `extensions/kit-status`: a VS Code extension that draws a `kit: N` status-bar counter and a short flash the first time each skill, command or script is used in a session. The Claude chat panel draws no mod UI, so it reads the `feature-usage` log directly (no model, no tokens). Install with `node extensions/kit-status/install.js`, remove with `--remove`. Setting `kitStatus.popup` swaps the flash for a notification; `kitStatus.allProjects` counts every folder.
 
 ### Changed
+- Hidden-state review and goldfish now run on the shared backend cascade (`plan-first/backends.js`): the project ticks which outside models may help (free script scan, Ollama, Kaggle GPU, Unified API), they are tried in a fixed order and Claude is always the last step. Choices live in `.claude/ai-backends.json`; the installer asks them as tick boxes (`--yes` ticks nothing) and takes `--ai review=code+ollama` / `--ai goldfish=unified`. The Gemini backend is removed; an old `reviewer` setting still works and maps to Ollama. `state-audit` skips the scan when `code` is not ticked. Goldfish with no model allowed prints HANDOFF and exits 3 so Claude runs `prepare`.
 - `feature-usage` notices are now ON by default (the one-line toast on first use of a feature per session). The toast costs no tokens. A config file that says `"notify": false` still wins; `/kit-usage notify off` turns it off. The installer question now defaults to yes and says the VS Code panel does not draw toasts (use `/kit-usage report` there).
 
 ## 2026-11-25

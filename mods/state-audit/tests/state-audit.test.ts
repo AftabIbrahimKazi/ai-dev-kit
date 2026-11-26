@@ -3,15 +3,16 @@ import { expect, test } from 'claude-code/testing'
 const norm = (p: string) => p.split(String.fromCharCode(92)).join('/')
 const FAIL_OUT = 'FAIL src/a.tsx:3  bool-flags  isLoading, isError, isSuccess\n     impossible: { isLoading: true, isSuccess: true }\n     fix: one state variable'
 
-function world(on: any, opts: { engine?: boolean; scanExit?: number; scanOut?: string; config?: string; reviewerExit?: number; reviewerOut?: string; throwRun?: boolean; result?: any } = {}) {
+function world(on: any, opts: { engine?: boolean; scanExit?: number; scanOut?: string; config?: string; backends?: string; reviewerExit?: number; reviewerOut?: string; throwRun?: boolean; result?: any } = {}) {
   const runs: string[][] = []
   on('env.get', () => ({ value: undefined }))
   on('fs.exists', (_$: any, e: any) => {
     const p = norm(e.path)
+    if (p.endsWith('.claude/ai-backends.json')) return { value: opts.backends !== undefined }
     if (p.endsWith('.claude/state-audit.json')) return { value: opts.config !== undefined }
     return { value: opts.engine !== false && /(implicit-state-audit\/(scan\.js|ask\.txt)|plan-first\/reviewer\.js)$/.test(p) }
   })
-  on('fs.read', () => ({ value: opts.config ?? '' }))
+  on('fs.read', (_$: any, e: any) => ({ value: (norm(e.path).endsWith('ai-backends.json') ? opts.backends : opts.config) ?? '' }))
   on('process.run', (_$: any, e: any) => {
     runs.push([...e.argv])
     if (opts.throwRun) return { deny: 'cannot start' }
@@ -82,6 +83,59 @@ test('a reviewer that finds nothing (down, or PASS) leaves only the scan finding
   world(on, { scanExit: 1, scanOut: FAIL_OUT, config: '{"reviewer":"auto"}', reviewerExit: 0, reviewerOut: '' })
   const r = await edit($)
   expect(r.context[0]).not.toContain('Second reviewer')
+})
+
+test('ai-backends "code" plus a model: the scan runs first, the model reads only the flagged file', async ($, on) => {
+  const runs = world(on, { scanExit: 1, scanOut: FAIL_OUT, backends: '{"review":["code","unified"]}', reviewerExit: 1, reviewerOut: 'FAIL (unified)\nflags overlap' })
+  const r = await edit($)
+  expect(runs.length).toBe(2)
+  expect(runs[0]).toContain('--hook')
+  expect(r.context[0]).toContain('Second reviewer')
+})
+
+test('ai-backends "code" plus a model, clean file: no model call', async ($, on) => {
+  const runs = world(on, { scanExit: 0, backends: '{"review":["code","kaggle"]}' })
+  await edit($)
+  expect(runs.length).toBe(1)
+})
+
+test('ai-backends with only models: the scan is skipped and the model reads the edited file', async ($, on) => {
+  const runs = world(on, { backends: '{"review":["ollama"]}', reviewerExit: 1, reviewerOut: 'WARN (ollama)\nindependent flags' })
+  const r = await edit($)
+  expect(runs.length).toBe(1)
+  expect(runs[0].some((a: string) => norm(a).endsWith('reviewer.js'))).toBe(true)
+  expect(r.context[0]).toContain('independent flags')
+})
+
+test('ai-backends with only models and nothing found: no context, no tokens', async ($, on) => {
+  const runs = world(on, { backends: '{"review":["unified"]}', reviewerExit: 0, reviewerOut: '' })
+  const r = await edit($)
+  expect(runs.length).toBe(1)
+  expect(r.context).toBeUndefined()
+})
+
+test('ai-backends "code" alone: the scan only, never a model', async ($, on) => {
+  const runs = world(on, { scanExit: 1, scanOut: FAIL_OUT, backends: '{"review":["code"]}', reviewerExit: 1, reviewerOut: 'FAIL x' })
+  await edit($)
+  expect(runs.length).toBe(1)
+})
+
+test('ai-backends with an empty list: the scan only', async ($, on) => {
+  const runs = world(on, { scanExit: 1, scanOut: FAIL_OUT, backends: '{"review":[]}', reviewerExit: 1, reviewerOut: 'FAIL x' })
+  await edit($)
+  expect(runs.length).toBe(1)
+})
+
+test('ai-backends with no review key: the scan only', async ($, on) => {
+  const runs = world(on, { scanExit: 1, scanOut: FAIL_OUT, backends: '{}', reviewerExit: 1, reviewerOut: 'FAIL x' })
+  await edit($)
+  expect(runs.length).toBe(1)
+})
+
+test('ai-backends wins over an old state-audit.json reviewer', async ($, on) => {
+  const runs = world(on, { scanExit: 1, scanOut: FAIL_OUT, config: '{"reviewer":"ollama"}', backends: '{"review":["code"]}', reviewerExit: 1, reviewerOut: 'FAIL x' })
+  await edit($)
+  expect(runs.length).toBe(1)
 })
 
 test('without the engine the result is returned as is', async ($, on) => {

@@ -18,7 +18,7 @@ Only Kaggle moved: it is new, so no installed project needs a migration. The res
 |---|---|---|
 | `mcp/mcp-manager.image-gen.*` | Google Gemini and Cloudflare Workers AI image APIs | stays: it is a server companion of `mcp-manager` (installed as `mcp-manager/image-gen.js`, selected with `mcp-manager:stitch+image-gen`); a move would break that install interface and every installed project's paths |
 | `mcp/mcp-manager.stitch.md` | Google Stitch MCP | stays: same reason, a server companion |
-| `workflow/plan-first.reviewer.*` | Gemini backend next to Ollama and static | stays: one reviewer file serves all three backends |
+| `workflow/plan-first.reviewer.*` | Kaggle and Unified API backends next to Ollama, through the shared `plan-first.backends` cascade | stays: one reviewer file serves every backend |
 | `addons/diagram.cli.*` | public icon sources (svgl, devicon), optional | stays: optional downloads |
 | `addons/figma-code.cli.*` | Google Fonts download, optional | stays: optional downloads |
 | `addons/narrate.setup.*` | one-time voice download from Hugging Face | stays |

@@ -12,13 +12,14 @@ exports.runLocal = runLocal;
 // prompts below are this kit's own wording. Plain Node, no dependencies.
 //
 //   node goldfish.js prepare <plan.md> [--root <dir>]   write the bundle and the five stage prompts, print how to run them
-//   node goldfish.js local   <plan.md> [--root <dir>] [--delay <seconds>]   run the stages on Gemini or Ollama (no Claude tokens)
+//   node goldfish.js local   <plan.md> [--root <dir>] [--delay <seconds>]   run the stages on the allowed outside models (no Claude tokens)
 //
 // prepare: for the Claude path. It prints the dispatch text; Claude runs the stages inline, one after another (the kit's
 //   agent-usage policy: no subagents unless the user asks). Same-context reviews are weaker than fresh-context ones; say so.
 //   If the user asks for subagents, one FRESH subagent per stage (Read, Grep and Glob only, no CLAUDE.md, no conversation).
-// local: the cheap path. The same prompts go to Gemini (if allowed), then Ollama, through plan-first/reviewer.js, and the
-//   reports are written next to the bundle. Needs a reviewer other than "static" in .claude/state-audit.json.
+// local: the cheap path. The same prompts go to the models listed under "goldfish" in .claude/ai-backends.json (fixed order:
+//   ollama, kaggle, unified), through plan-first/reviewer.js, and the reports are written next to the bundle. With none listed
+//   it prints HANDOFF and exits 3: Claude runs the stages itself with `prepare`.
 // Files go to ~/.ai-dev-kit/goldfish/<plan>-<hash>/ (AI_DEV_KIT_HOME moves it), never into the project. Secret-looking files
 //   and CLAUDE.md, AGENTS.md and handover notes are never put in the bundle.
 // Exit codes: 0 done, 1 error, 2 bad usage, 3 blocked (no reviewer).
@@ -94,9 +95,10 @@ function dispatchText(p) {
     return lines.join('\n');
 }
 async function runLocal(root, planFile, delayMs, env = process.env) {
-    const cfg = { ...rev.readConfig(root), timeoutMs: rev.readConfig(root).timeoutMs ?? 240000 }; // a CPU model needs minutes, not a hook's 25 s
-    if (cfg.reviewer === 'static')
-        return { blocked: 'No reviewer model is turned on for this project. Set "reviewer" to "ollama" or "auto" in .claude/state-audit.json, or run install-kit with --reviewer ollama. (The Claude path needs no setting: use goldfish prepare.)' };
+    const base = rev.readConfig(root, 'goldfish');
+    const cfg = { ...base, timeoutMs: base.timeoutMs ?? 240000 }; // a CPU model needs minutes, not a hook's 25 s
+    if (!cfg.backends.some((b) => b !== 'code'))
+        return { blocked: 'HANDOFF: no outside model is allowed for goldfish in this project (.claude/ai-backends.json "goldfish", or run install-kit again). Run `goldfish prepare <plan>` and do the stages yourself.' };
     const p = prepare(root, planFile);
     const reports = [];
     const done = new Map();
@@ -108,7 +110,7 @@ async function runLocal(root, planFile, delayMs, env = process.env) {
         const r = await rev.generate(s.prompt, `${material}${earlier ? '\n\n' + earlier : ''}`, cfg, env);
         if (!('text' in r)) {
             if (!reports.length)
-                return { blocked: `No model answered (${r.note}). Start Ollama, or set GEMINI_API_KEY in your shell.` };
+                return { blocked: `HANDOFF: no allowed model answered (${r.note}). Run \`goldfish prepare <plan>\` and do the stages yourself.` };
             reports.push({ stage: s, text: `(no answer: ${r.note})`, backend: 'none' });
             continue;
         }

@@ -1,7 +1,7 @@
 {
   "name": "state-audit",
   "version": "0.1.0",
-  "description": "After each Edit or Write of UI code, runs the implicit-state-audit skill's scan.js (no model) and shows the model only the hidden-state findings: boolean flags that allow impossible states, scattered DOM state, timer-sequenced state. Optional second reviewer (Gemini, then local Ollama) only when the project sets one in .claude/state-audit.json, and only for a file the scan flagged. Adds nothing when the file is clean. Never blocks; fails open. Reads no env.",
+  "description": "After each Edit or Write of UI code, runs the implicit-state-audit skill's scan.js (no model) and shows the model only the hidden-state findings: boolean flags that allow impossible states, scattered DOM state, timer-sequenced state. Optional second reviewer (Ollama, Kaggle or the Unified API) only when the project lists one under review in .claude/ai-backends.json, and only for a file the scan flagged. Adds nothing when the file is clean. Never blocks; fails open. Reads no env.",
   "author": {
     "name": "Aftab Ibrahim Kazi"
   }

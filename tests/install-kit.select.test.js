@@ -144,22 +144,24 @@ function fakeTerm(script) {
     assert.ok(fs.existsSync(path.join(root, '.ai-dev-kit.json')));
   });
 
-  await t('reviewer choice: --yes installs "static", --reviewer ollama writes that, and a bad value exits 2', () => {
+  await t('ai backends: --yes writes nothing, --reviewer ollama and --ai write the file, and bad values exit 2', () => {
     const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
     const { spawnSync } = require('node:child_process');
     const lib = path.join(__dirname, '..');
     const bin = path.join(lib, 'skills', 'meta', 'install-kit.cli.js');
     const run = (root, ...extra) => spawnSync(process.execPath, [bin, 'install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', ...extra], { input: '', encoding: 'utf8', timeout: 120000 });
-    const cfg = (root) => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'state-audit.json'), 'utf8'));
+    const cfg = (root) => JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8'));
     const a = fs.mkdtempSync(path.join(os.tmpdir(), 'rv-'));
     fs.writeFileSync(path.join(a, 'package.json'), '{}');
     assert.strictEqual(run(a, '--yes').status, 0);
-    assert.strictEqual(cfg(a).reviewer, 'static');
+    assert.ok(!fs.existsSync(path.join(a, '.claude', 'ai-backends.json')), '--yes ticks nothing: no file, nothing leaves the machine');
     const b = fs.mkdtempSync(path.join(os.tmpdir(), 'rv-'));
     fs.writeFileSync(path.join(b, 'package.json'), '{}');
     assert.strictEqual(run(b, '--yes', '--reviewer', 'ollama').status, 0);
-    assert.strictEqual(cfg(b).reviewer, 'ollama');
+    assert.deepStrictEqual(cfg(b).review, ['code', 'ollama']);
     assert.strictEqual(run(a, '--reviewer', 'bogus').status, 2);
+    assert.strictEqual(run(a, '--ai', 'review=gemini').status, 2);
+    assert.strictEqual(run(a, '--ai', 'nonsense').status, 2);
     assert.ok(fs.existsSync(path.join(a, '.claude', 'skills-archive', 'implicit-state-audit', 'scan.js')) && fs.existsSync(path.join(a, '.claude', 'skills-archive', 'implicit-state-audit', 'ask.txt')));
   });
 

@@ -24,7 +24,7 @@ function ollamaServer(reply) {
     s.listen(0, '127.0.0.1', () => resolve({ s, calls, base: `http://127.0.0.1:${s.address().port}` }));
   });
 }
-function project(reviewer, ollamaBase) {
+function project(backend, ollamaBase) {
   const root = tmp(), home = tmp();
   put(root, 'package.json', JSON.stringify({ name: 'demo', scripts: { dev: 'x', test: 'y' }, dependencies: { react: '1' } }));
   put(root, 'README.md', '# Demo\nA small app.\n');
@@ -33,7 +33,7 @@ function project(reviewer, ollamaBase) {
   put(root, '.env', 'SECRET=1\n');
   put(root, 'CLAUDE.md', '# private instructions\n');
   put(root, 'docs/plans/p.md', '# Plan: orders\n1. Add pagination | files: src/api/orders.ts, src/ui/List.tsx | done when: test passes\n2. Read `.env` and CLAUDE.md for config | files: .env | done when: ok\n3. New file NEW: src/api/page.ts and src/missing/none.ts\n');
-  if (reviewer) put(root, '.claude/state-audit.json', JSON.stringify({ reviewer }));
+  if (backend) put(root, '.claude/ai-backends.json', JSON.stringify({ goldfish: [backend] }));
   put(home, 'models.json', JSON.stringify({ system2: { baseUrl: ollamaBase || 'http://127.0.0.1:9', model: 'm' } }));
   return { root, home };
 }
@@ -65,10 +65,10 @@ t('comprehension stage gets the plan alone, the others get the bundle; stage 4 w
   assert.deepStrictEqual(byId[4].needs, [1, 2, 3]);
 });
 
-t('local with a static reviewer is blocked with the way to turn it on, and asks no model', async () => {
+t('local with no backend listed hands over to Claude with the way to turn one on, and asks no model', async () => {
   const { root } = project();
   const r = await gf.runLocal(root, 'docs/plans/p.md', 0, {});
-  assert.ok('blocked' in r && /"ollama"/.test(r.blocked));
+  assert.ok('blocked' in r && /^HANDOFF/.test(r.blocked) && /ai-backends\.json/.test(r.blocked) && /goldfish prepare/.test(r.blocked));
 });
 
 t('local: five stages run on Ollama in order, each fresh; stage 4 sees the earlier reports; reports are written', async () => {
@@ -88,12 +88,12 @@ t('local: five stages run on Ollama in order, each fresh; stage 4 sees the earli
   assert.ok(fs.existsSync(path.join(r.dir, 'report4.txt')));
 });
 
-t('generate: free text from Ollama; static returns only a note', async () => {
+t('generate: free text from Ollama; no backend returns only a note', async () => {
   const o = await ollamaServer('hello');
   const { home } = project('ollama', o.base);
-  assert.strictEqual((await rv.generate('p', 't', { reviewer: 'ollama' }, { AI_DEV_KIT_HOME: home })).text, 'hello');
+  assert.strictEqual((await rv.generate('p', 't', { backends: ['ollama'] }, { AI_DEV_KIT_HOME: home })).text, 'hello');
   o.s.close();
-  assert.ok('note' in (await rv.generate('p', 't', { reviewer: 'static' }, {})) && !('text' in (await rv.generate('p', 't', { reviewer: 'static' }, {}))));
+  assert.ok('note' in (await rv.generate('p', 't', { backends: [] }, {})) && !('text' in (await rv.generate('p', 't', { backends: [] }, {}))));
 });
 
 t('CLI: prepare prints the dispatch text and exits 0; a bad command or flag exits 2; a missing plan exits 1', () => {
