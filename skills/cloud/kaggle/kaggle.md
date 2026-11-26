@@ -1,6 +1,6 @@
 ---
 name: kaggle
-description: Opt-in add-on. Use when the user wants to run a finished plan's coding tasks on a free Kaggle GPU (qwen3-coder) instead of spending Claude tokens, or asks about /kaggle. Load this BEFORE writing a plan meant for it or running any GPU job.
+description: Opt-in. Use to run a finished plan's coding tasks on a free Kaggle GPU (qwen3-coder) instead of Claude tokens, or on /kaggle. Load BEFORE writing a plan for it or running a GPU job.
 ---
 
 # Kaggle executor — plan on Claude, code on a free GPU

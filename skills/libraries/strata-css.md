@@ -1,6 +1,6 @@
 ---
 name: strata-css
-description: Strata CSS (user's framework): utilities, safe CSS-to-utility conversion, debugging. Trigger on using, installing, migrating to or debugging strata-css, Strata classes or strata.config.js.
+description: Strata CSS (user's framework): utilities, CSS-to-utility conversion, debugging. Trigger on strata-css, Strata classes or strata.config.js.
 ---
 
 # Strata CSS — Author's-Own-Framework Protocol

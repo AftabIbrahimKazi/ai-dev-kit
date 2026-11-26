@@ -1,6 +1,6 @@
 ---
 name: figma-code
-description: Opt-in add-on. Use whenever the user wants an exported Figma SVG turned into HTML and CSS, or a page checked pixel for pixel against a design export. Load this BEFORE writing markup or CSS from a design by hand.
+description: Opt-in. Use to turn an exported Figma SVG into HTML and CSS, or pixel-check a page against a design export. Load BEFORE hand-writing markup or CSS from a design.
 ---
 
 # Figma Code: Exported SVG to Pixel-Matched HTML, No Model in the Loop

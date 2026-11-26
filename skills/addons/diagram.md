@@ -1,6 +1,6 @@
 ---
 name: diagram
-description: Opt-in add-on. Use whenever the user asks for an architecture, stack or project-structure diagram, or a diagram for a README or website. Load this BEFORE drawing or hand-writing SVG or HTML.
+description: Opt-in. Use for an architecture, stack or project-structure diagram, or one for a README or website. Load BEFORE drawing or hand-writing SVG or HTML.
 ---
 
 # Diagram — Script-Drawn Stack and Structure Diagrams

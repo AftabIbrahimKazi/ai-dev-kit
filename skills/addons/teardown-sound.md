@@ -1,6 +1,6 @@
 ---
 name: teardown-sound
-description: Opt-in add-on to teardown. Use when the user asks for sound, music or a score for a teardown simulator or its video. Load this BEFORE writing any audio or synth code.
+description: Opt-in add-on to teardown. Use for sound, music or a score for a teardown simulator or its video. Load BEFORE writing audio or synth code.
 ---
 
 # Teardown Sound — A Score Built From the Tour's Timeline

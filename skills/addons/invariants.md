@@ -1,6 +1,6 @@
 ---
 name: invariants
-description: Opt-in add-on. Use when the user wants a project rule proven by a check that is shown to fail when the code is broken (e.g. "never charge twice"), or asks whether a rule's check is real or stale. Load before writing or editing invariants/invariants.json.
+description: Opt-in. Use to prove a project rule with a check shown to fail when the code is broken (e.g. "never charge twice"), or to test whether a check is real. Load before editing invariants/invariants.json.
 ---
 
 # Invariants — Checks Proven Able to Fail

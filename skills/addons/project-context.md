@@ -1,6 +1,6 @@
 ---
 name: project-context
-description: Opt-in add-on. Use whenever the user asks to set up project docs (requirements, brand, design), or a project-context/ folder exists. Load this BEFORE reading it.
+description: Opt-in. Use to set up project docs (requirements, brand, design), or when a project-context/ folder exists. Load BEFORE reading it.
 ---
 
 # Project Context — Private Project Docs, Indexed for Few Tokens

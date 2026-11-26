@@ -1,6 +1,6 @@
 ---
 name: teardown
-description: Opt-in add-on. Use whenever the user asks for a 3D simulator, cutaway, exploded view or interactive explainer of any machine, mechanism or 3D model. Load this BEFORE writing any scene code.
+description: Opt-in. Use for a 3D simulator, cutaway, exploded view or interactive explainer of a machine, mechanism or 3D model. Load BEFORE writing scene code.
 ---
 
 # Teardown — Interactive 3D Simulators of Any Machine or Model, Built on Triforge

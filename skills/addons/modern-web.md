@@ -1,6 +1,6 @@
 ---
 name: modern-web
-description: Opt-in add-on. Use whenever the user asks to modernize a codebase, find legacy web patterns (jQuery modals, float layouts, old APIs), or check what the platform now does natively. Load this BEFORE listing or rewriting legacy patterns.
+description: Opt-in. Use to modernize a codebase or find legacy web patterns (jQuery modals, float layouts, old APIs). Load BEFORE listing or rewriting them.
 ---
 
 # Modern Web — legacy-pattern scan from Chrome's guidance

@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Use whenever about to edit or create CSS, HTML, JS/TS or framework files in a project with a coding-standards/ folder, or when standards, conventions or compliance come up. Load this BEFORE the first edit.
+description: Use when editing or creating CSS, HTML, JS/TS or framework files in a project with a coding-standards/ folder, or when standards or compliance come up. Load BEFORE the first edit.
 ---
 
 # Coding Standards — Load the Chain, Then Edit

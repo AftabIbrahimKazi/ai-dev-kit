@@ -1,6 +1,6 @@
 ---
 name: opencode-all-models
-description: Route tasks across open-weight models in OpenCode (GLM, DeepSeek, Kimi, Qwen3-Coder, MiniMax, Big Pickle, MiMo, Devstral, gpt-oss, local small models), hosted vs local; holds the per-model protocols. Trigger on any OpenCode or open-weight model choice or setup.
+description: Route tasks across open-weight models in OpenCode (GLM, DeepSeek, Kimi, Qwen3-Coder, local small models); holds the per-model protocols. Trigger on any OpenCode or open-weight model choice or setup.
 ---
 
 # OpenCode Open Models — Fleet Protocol
