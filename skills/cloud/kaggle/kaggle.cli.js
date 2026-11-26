@@ -313,16 +313,17 @@ function stageResults(outDir, tasks, stage) {
             for (const g of gateFile(x.path, x.content))
                 row.findings.push(`${x.path}: ${g}`);
         }
-        if (!row.findings.length) {
-            const c = runCheck(t.check, stage);
-            if (c)
-                row.findings.push(c);
-        }
         for (const tg of t.targets)
             if (!row.files.includes(tg.replace(/\\/g, '/')))
                 row.findings.push(`missing Target ${tg}`);
         rows.push(row);
     }
+    // Checks run once every task's files are staged: a Check often needs a file another task writes (the test for a helper).
+    rows.forEach((row, i) => { if (!row.findings.length) {
+        const c = runCheck(tasks[i].check, stage);
+        if (c)
+            row.findings.push(c);
+    } });
     return rows;
 }
 const CHECK_TIMEOUT_MS = 120000;

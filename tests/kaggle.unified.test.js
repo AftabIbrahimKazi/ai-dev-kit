@@ -152,6 +152,26 @@ t('a router that fails is reported per task and the plan still ends with a repor
   assert.ok(/task 1: error/.test(x.out) && /0 of 2/.test(x.out), x.out);
 });
 
+t('a Check that needs a file a later task writes still passes: checks run after every task is staged', async () => {
+  const plan = [
+    '## Task 1: Helper', 'Target: src/h.js', 'Check: node --test tests/h.test.js',
+    'Write src/h.js exporting h() that returns the number one, CommonJS, module.exports = h. No dependencies.', '',
+    '## Task 2: Test', 'Target: tests/h.test.js', 'Check: none',
+    'Write tests/h.test.js with node:test checking that h() returns one, CommonJS, requiring ../src/h.js.', '',
+  ].join('\n');
+  const fence = '```';
+  const impl = `FILE: src/h.js\n${fence}js\nfunction h() { return 1; }\nmodule.exports = h;\n${fence}\n`;
+  const test = `FILE: tests/h.test.js\n${fence}js\nconst t = require("node:test"); const a = require("node:assert"); const h = require("../src/h.js");\nt("h is one", () => a.strictEqual(h(), 1));\n${fence}\n`;
+  const r = await router((prompt) => (/Write src\/h\.js/.test(prompt) ? impl : test));
+  const p = tmp();
+  fs.writeFileSync(path.join(p, 'plan.md'), plan);
+  fs.mkdirSync(path.join(p, '.claude'));
+  fs.writeFileSync(path.join(p, '.claude', 'ai-backends.json'), JSON.stringify({ coding: ['unified'] }));
+  const x = await cli(['run', 'plan.md'], p, { UNIFIED_API_BASE: r.base, UNIFIED_API_KEY: 'k' });
+  r.s.close();
+  assert.ok(/2 of 2 task\(s\) passed/.test(x.out), x.out);
+});
+
 t('a secret in a Context file never reaches the router', async () => {
   const r = await router(byTask());
   const p = project(['unified']);
