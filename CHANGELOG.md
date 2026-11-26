@@ -5,6 +5,8 @@
 ### Added
 - `api-mode` command and `/api-mode`: switches Claude Code between the free unified router and the subscription by rewriting the nine router env keys in `~/.claude/settings.json` as one unit. The change applies from the NEXT session; a session already running keeps the backend it launched with. Entering the opposite word flips back — the safety valve when either side's limit runs out. `free` reads `UNIFIED_API_KEY` from `~/.ai-dev-kit/.env` at run time and refuses if the settings point at another gateway; `claude` strips all nine keys or none; no argument prints the current mode; a backup (`settings.json.api-mode.bak`) is written beside the settings before every change. Kit scripts need no edits — they run unchanged in both modes.
 
+- `extensions/kit-status`: a VS Code extension that draws a `kit: N` status-bar counter and a short flash the first time each skill, command or script is used in a session. The Claude chat panel draws no mod UI, so it reads the `feature-usage` log directly (no model, no tokens). Install with `node extensions/kit-status/install.js`, remove with `--remove`. Setting `kitStatus.popup` swaps the flash for a notification; `kitStatus.allProjects` counts every folder.
+
 ### Changed
 - `feature-usage` notices are now ON by default (the one-line toast on first use of a feature per session). The toast costs no tokens. A config file that says `"notify": false` still wins; `/kit-usage notify off` turns it off. The installer question now defaults to yes and says the VS Code panel does not draw toasts (use `/kit-usage report` there).
 

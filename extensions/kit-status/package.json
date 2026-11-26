@@ -1,0 +1,24 @@
+{
+  "name": "kit-status",
+  "displayName": "AI Dev Kit Status",
+  "description": "A status-bar counter and a short flash when an ai-dev-kit skill, command or script is used. Reads the feature-usage log; no model, no tokens.",
+  "version": "0.1.0",
+  "publisher": "ai-dev-kit",
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "kitStatus.show", "title": "AI Dev Kit: Show features used in this window" },
+      { "command": "kitStatus.toggleNotices", "title": "AI Dev Kit: Usage notices on / off" }
+    ],
+    "configuration": {
+      "title": "AI Dev Kit Status",
+      "properties": {
+        "kitStatus.popup": { "type": "boolean", "default": false, "description": "Show a notification popup on first use of a feature instead of a short flash in the status bar." },
+        "kitStatus.allProjects": { "type": "boolean", "default": false, "description": "Count features used in any project, not only the folder open in this window." }
+      }
+    }
+  }
+}

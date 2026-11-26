@@ -255,6 +255,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
 | On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
+| See which kit features fire (VS Code) | A `kit: N` status-bar counter and a short flash on first use of each feature; reads the usage log, no tokens | `extensions/kit-status` |
 | Replies use a chosen persona | A SessionStart hook adds a short persona text | `personality` add-on |
 
 **You ask for it**
@@ -822,6 +823,7 @@ Add or change docs later? Run `company sync` again. Check where things stand wit
 | Git hooks | `<repo>/.git/hooks/` | one repository | `node pre-commit/install-hook.js uninstall` |
 | Narration hook, voices, settings | `~/.claude/settings.json`, `~/.claude/voices/`, `~/.claude/narrate.json` | this device and user, every project | `/narration mute`, or remove the Stop hook |
 | VS Code controls | `~/.vscode/extensions/ai-dev-kit.narrate-buttons-*` | this device and user | `node extensions/narrate-buttons/install.js --remove` |
+| VS Code status counter | `~/.vscode/extensions/ai-dev-kit.kit-status-*` | this device and user | `node extensions/kit-status/install.js --remove` |
 | Laya server (started by `prefilter-rank`) | `~/.ai-dev-kit/laya/`, about 2 GB of RAM while loaded, unloads after 10 minutes idle | this device, never per project | `node system1-prefilter/laya-ctl.js stop`, or remove the mod |
 | Persona choice | `~/.claude/personality.json` (project override in `.claude/personality.json`) | user, or one project | `/persona off` |
 | MCP tools, models, keys | `~/.ai-dev-kit/` | this device, never per project | remove the MCP entry from your tool's config |
@@ -866,6 +868,7 @@ skills/
   commands/        ← opt-in slash-command templates (/audit, /commit-check, /quiet, /stale, /githooks, /pickup, /wrap-up, /next, /eta, /resolve-conflicts, /responsive-check, /optimize-assets, /version-bump, /perf, /e2e, /recon, /untrack, /ctx, /figma, /narration, /persona, /kit); each runs a kit script or is a plain instruction template (/eta, /kit)
 mods/              ← optional Claude Code mods (budget-ledger, precommit-gate, guard, edit-check, debug-nudge, standards-chain, output-compact, prefilter-rank, batch, eta-nudge, design-audit-offer, marker-guard, gap-log, learnings-inject, aiignore-guard, skill-hint, session-journal, feature-usage, state-audit), a local marketplace; each wraps a tool-agnostic script from a skill, a loopback-only local call (prefilter-rank), or a few pure rules (eta-nudge)
 extensions/        ← optional VS Code extension (narrate-buttons): footer tray, sidebar and Play button for narration and persona; `node extensions/narrate-buttons/install.js`
+                   ← and kit-status: status-bar counter and first-use flash for kit features; `node extensions/kit-status/install.js`
 tests/             ← tests for the kit's scripts (node tests/<name>.test.js) plus real captured logs under fixtures/
 migrations/
   RENAMES.md       ← skill rename ledger — install-kit reads it to migrate old installs (never delete)
