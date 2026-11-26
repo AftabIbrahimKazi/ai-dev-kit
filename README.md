@@ -4,7 +4,7 @@
 
 **Agent skills, optional MCP tools, and layered coding standards for AI-assisted development — Claude Code, OpenCode, Codex, and any coding agent that reads markdown.**
 
-**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 72 reusable `SKILL.md` agent skills (the OpenCode router also carries 10 per-model files), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 39 opt-in slash commands, 19 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. A full Claude Code install adds about 3,900 tokens of always-on context (estimated).
+**AI Dev Kit** is a free, MIT-licensed toolkit that makes AI coding agents behave consistently and spend fewer tokens. It ships 70 reusable `SKILL.md` agent skills (the OpenCode router also carries 10 per-model files), layered coding standards for CSS, HTML, JavaScript, TypeScript, accessibility, SEO, performance, Git and QA, 39 opt-in slash commands, 19 Claude Code mods that enforce the rules in code, and opt-in local MCP servers. Measured always-on context for a Claude Code install with the standards: about 3,200 tokens for the 13 pinned skills, about 5,500 for the default install and about 7,400 with every skill kept active (estimates, see [what an install costs](#what-an-install-costs)).
 
 Portable `SKILL.md` agent skills, framework-agnostic coding standards, opt-in slash commands, git hooks and Claude Code mods that enforce the rules in code, opt-in free/local MCP servers (UI prototyping, image reading, image generation, file pre-filtering), an opt-in offline text-to-speech add-on that reads Claude's replies aloud, and opt-in reply personas, for teams building with AI pair programmers. One clone. Drop two folders into any project. Every session works your way — and gets better at it with use.
 
@@ -235,6 +235,23 @@ Run as `node <path-to-ai-dev-kit>/skills/meta/install-kit.cli.js <command> [flag
 
 Details, including per-skill manual installs: [skills/README.md → Installing into a new project](skills/README.md#installing-into-a-new-project).
 
+### What an install costs
+
+Measured 2026-11-27 by installing each profile into an empty folder (`install --yes --standards`, then `verify`). Tokens are an estimate: characters of the always-loaded text (skill names and descriptions, command descriptions, the `CLAUDE.md` index) divided by 4, times 1.5; no tokenizer was run. Time is one run on one Windows machine, so read it as a rough order. "Published" is `origin/main` before this update; "Current" is this tree.
+
+| Profile | Version | Skills active / archived | Commands | Files | Size | Always-on tokens | Install time | `verify` |
+|---|---|---|---|---|---|---|---|---|
+| Lean: the 13 pinned skills only | Published | 13 / 0 | 15 | 161 | 706 KB | 3,197 | 0.32 s | pass |
+| Lean: the 13 pinned skills only | Current | 13 / 0 | 16 | 164 | 723 KB | 3,227 | 0.33 s | pass |
+| Default: every skill, fresh-install archiving | Published | 51 / 19 | 38 | 331 | 1,983 KB | 6,319 | 1.99 s | pass |
+| Default: every skill, fresh-install archiving | Current | 40 / 30 | 39 | 337 | 2,026 KB | 5,542 | 1.85 s | pass |
+| Full: every skill, `--keep-active` | Published | 70 / 0 | 38 | 331 | 1,982 KB | 7,532 | 0.56 s | pass |
+| Full: every skill, `--keep-active` | Current | 70 / 0 | 39 | 337 | 2,025 KB | 7,372 | 0.66 s | pass |
+
+What the numbers say: the default install is now 12% lighter than the published one (5,542 against 6,319), because 11 more niche skills are archived at install; that archiving is also why the default install takes a second or two longer than the full one. The lean profile costs the same as before (+30 tokens, the new `/api-mode` command). The standards documents (about 410,000 characters) are not in these figures: they load only for the file being edited, a median file is about 1,350 tokens.
+
+Correctness, run over each tree's own `tests/` folder (every file started with `node --test`, both trees at the same time): published 72 of 74 files pass (1,247 checks), current 76 of 79 (1,341 checks). The failures were environment, not code, in the scratch copies (`skill-hint.triggers` needs the `typescript` module, which the copies do not have; `media-harness.guard` fails its `bench.py` check there, cause not chased); both pass in the real repository. The third current failure, `install-kit.usage`, was a real stale test (it still expected feature-usage notices off after the default flipped to on) and is fixed in this update.
+
 ## Everything the kit does, at a glance
 
 You do not need to read the code to use the kit. This section says what exists, what happens by itself, and what you have to ask for. Details for each item are in the sections below.
@@ -251,7 +268,7 @@ You do not need to read the code to use the kit. This section says what exists, 
 | Noisy command output is shortened | The `output-compact` mod shrinks test and build logs and keeps every failure line | `output-compact` mod |
 | Token use is recorded | The `budget-ledger` mod writes one row per turn; `/budget` reads it | `budget-ledger` mod |
 | Reminders at the right moment | `debug-nudge` (failed fix), `eta-nudge` (long or backgrounded task), `skill-hint` (a skill that may apply), `prefilter-rank` (ranked read order) | those mods |
-| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 960 tokens from every turn (measured: the 19 per-session skills a fresh install archives, descriptions only, chars/4). | `skill-scope` (pinned), Claude Code hooks |
+| Only the skills a task needs are loaded | Nothing moves on its own. `/next <task>` archives what the task does not need and restores what it does; `/archive <name>` and `/unarchive <name>` move single skills; `/wrap-up` and `/pickup` list what moved. Archiving the optional set removes about 1,800 tokens from every turn (measured 2026-11-27: the 30 skills a fresh install archives, descriptions only, chars/4 x 1.5). | `skill-scope` (pinned), Claude Code hooks |
 | Notes that grow without limit are flagged | A session-start hook runs `handover/size.js`, which stays silent unless `handover.md` is over 120 lines or has stacked session sections, or a `learnings.md` is over 30 bullets. | `handover` (pinned), Claude Code hook |
 | Replies are read aloud | A Stop hook keeps each reply; press Play to hear it (like claude.ai), or switch to auto to speak every reply | `narrate` add-on |
 | On-screen controls for narration and persona | A footer tray, sidebar and Play button in VS Code | `extensions/narrate-buttons` |
@@ -906,9 +923,14 @@ npm run dev
 
 ## Recent additions
 
+- **`/api-mode` switches the router.** `/api-mode free|claude|--status` rewrites the nine router keys in `~/.claude/settings.json` as one unit, backs the file up first and applies from the next session; the key is read from `~/.ai-dev-kit/.env` at run time, never stored.
+- **Outside models share one cascade.** The hidden-state reviewer, `goldfish`, `test-run`, `image-gen` and `/kaggle run` try the models the project allows in a fixed order (free script scan, Ollama, Kaggle GPU, Unified API) and Claude is always last. Choices live in `.claude/ai-backends.json` (`install --ai ...`). The client retries a timeout, 429 or 5xx up to four times inside a total budget; remote backends get 60 to 70 s.
+- **Install-time text stripping.** A skill can mark blocks for one install answer; the installer keeps only the matching text, in plain code with no model, and `update` re-renders from the same answers.
+- **Fresh installs archive 30 skills, not 19.** Eleven niche skills joined the archived-by-default set; the default install is about 12% lighter (5,542 against 6,319 tokens, [measured](#what-an-install-costs)). Feature-usage notices are on by default and cost no tokens. The README's old "about 3,900 tokens" figure is replaced by measured numbers per profile.
+
 - **MCP 2026-07-28 support in the local servers.** `image-gen` and `local-vision` answer the new stateless protocol (version and capabilities in each request's `_meta`, `server/discover`, `-32022` for an unknown version, `resultType` on every result) and still accept the old `initialize` handshake. `tests/mcp-protocol.test.js` runs 14 cases against both.
 - **`test-run` and `/test`.** The script runs your tests first and hands the agent a verdict plus failures grouped by cause, instead of the raw log.
-- **A fresh install starts lean.** `install` archives the 19 per-session skills at once (about 960 tokens less per turn, measured); `/next <task>`, `/role` or the `skill-hint` mod bring back what a task needs, and `--keep-active` opts out. `/audit --save` keeps dated audit reports, and 35 commands carry an `argument-hint`.
+- **A fresh install starts lean.** `install` archives the 30 per-session and niche skills at once (about 1,800 tokens less per turn, measured 2026-11-27; it was 19 skills and about 1,200 tokens before the 11 niche skills joined); `/next <task>`, `/role` or the `skill-hint` mod bring back what a task needs, and `--keep-active` opts out. `/audit --save` keeps dated audit reports, and 35 commands carry an `argument-hint`.
 - **Usage tracking works from the first session.** `install --usage on` now installs and enables the `feature-usage` mod itself and checks `settings.json`; a failed step prints the commands to run by hand. `install --yes` alone does not turn tracking on.
 - **Role loadouts and `/role`.** `skill-scope/role.js` maps twelve job roles to the skills, standards files and commands each needs. `/role` with no argument lists them, `/role <name>` restores that role's archived skills, and `skill-hint` attaches one role line per session.
 - **`invariants` add-on and `/invariants`.** Proves a rule's check can fail by breaking the code on purpose, probes a script for edits no check notices, and flags rules whose code changed since they were last verified. Opt-in, a script, no model.

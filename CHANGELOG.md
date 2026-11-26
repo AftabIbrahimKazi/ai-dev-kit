@@ -2,6 +2,12 @@
 
 ## 2026-11-27
 
+### Measured
+- Install profiles measured 2026-11-27 (published origin/main against this tree, empty folder, `install --yes --standards`): lean 13 pinned skills 3,197 to 3,227 always-on tokens; default 6,319 to 5,542 (-12%, 11 more skills archived); full 7,532 to 7,372. Table in the README under "What an install costs". Tokens are chars/4 x 1.5, no tokenizer.
+
+### Fixed
+- `tests/install-kit.usage.test.js` expected feature-usage notices off after the default flipped to on; it now expects on.
+
 ### Added
 - `api-mode` command and `/api-mode`: switches Claude Code between the free unified router and the subscription by rewriting the nine router env keys in `~/.claude/settings.json` as one unit. The change applies from the NEXT session; a session already running keeps the backend it launched with. Entering the opposite word flips back — the safety valve when either side's limit runs out. `free` reads `UNIFIED_API_KEY` from `~/.ai-dev-kit/.env` at run time and refuses if the settings point at another gateway; `claude` strips all nine keys or none; no argument prints the current mode; a backup (`settings.json.api-mode.bak`) is written beside the settings before every change. Kit scripts need no edits — they run unchanged in both modes.
 
