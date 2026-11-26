@@ -728,13 +728,13 @@ export function batchMod(root: string, library: string | undefined, paired: bool
 
 // Which outside models a feature may use. The project lists them in .claude/ai-backends.json; scripts try them in a fixed order
 // (code, ollama, kaggle, unified) and Claude is always the last step. Nothing listed means Claude (or, for the review, the free scan).
-export type AiFeature = 'review' | 'goldfish';
+export type AiFeature = 'review' | 'goldfish' | 'tests';
 export type AiBackend = 'code' | 'ollama' | 'kaggle' | 'unified';
 export const AI_BACKENDS: AiBackend[] = ['code', 'ollama', 'kaggle', 'unified'];
-const AI_NEEDS: Record<AiFeature, string> = { review: 'implicit-state-audit', goldfish: 'plan-first' };
+const AI_NEEDS: Record<AiFeature, string> = { review: 'implicit-state-audit', goldfish: 'plan-first', tests: 'test-run' };
 
 export function parseAiFlag(v: string): { feature: AiFeature; list: AiBackend[] } | null {
-  const m = /^(review|goldfish)=(.*)$/.exec(v || '');
+  const m = /^(review|goldfish|tests)=(.*)$/.exec(v || '');
   if (!m) return null;
   const words = m[2] === 'none' || m[2] === '' ? [] : m[2].split(/[+,]/);
   if (!words.every((w) => (AI_BACKENDS as string[]).includes(w))) return null;
@@ -1564,6 +1564,9 @@ const askReviewer = (args: CliArgs): Promise<void> => askBackends(args, 'review'
 const askGoldfish = (args: CliArgs): Promise<void> => askBackends(args, 'goldfish',
   'Goldfish plan review: fresh reviewers read a plan before it runs. By default Claude does it itself. Tick models to run the five stages on them instead (free, slower); they are tried in the order listed, then Claude. The plan text leaves this machine for Kaggle and Unified.',
   'Who runs the goldfish plan review? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
+const askTests = (args: CliArgs): Promise<void> => askBackends(args, 'tests',
+  'Test runs: a script runs your tests and Claude sees only a short digest. A model can first condense a long failure digest (free, slower); the ticked ones are tried in the order listed, then Claude. Kaggle and Unified send the digest off this machine, secrets masked. Nothing ticked: Claude only.',
+  'Who condenses long test-failure digests? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
 
 async function askSignature(args: CliArgs): Promise<void> {
   if (args.signature !== undefined) return;
@@ -1778,6 +1781,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       // last, so the questions above keep their order; the answer only writes a small file in the home folder
       steps.push(() => askReviewer(args));
       steps.push(() => askGoldfish(args));
+      steps.push(() => askTests(args));
       steps.push(() => askUsage(args));
     }
 
@@ -1825,7 +1829,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--keep-active') a.keepActive = true;
     else if (k === '--yes' || k === '-y') a.yes = true;
     else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.ai = { ...a.ai, review: v === 'static' ? ['code'] : ['code', 'ollama'] }; } // legacy: auto used to try Gemini first
-    else if (k === '--ai') { const v = parseAiFlag(argv[++i]); if (!v) { console.error(red('error: --ai must look like review=code+ollama or goldfish=unified (backends: code, ollama, kaggle, unified; none for an empty list)')); process.exit(2); } a.ai = { ...a.ai, [v.feature]: v.list }; }
+    else if (k === '--ai') { const v = parseAiFlag(argv[++i]); if (!v) { console.error(red('error: --ai must look like review=code+ollama, goldfish=unified or tests=ollama+unified (backends: code, ollama, kaggle, unified; none for an empty list)')); process.exit(2); } a.ai = { ...a.ai, [v.feature]: v.list }; }
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Run tests outside the model loop and hand back a verdict plus capped failure excerpts, never the raw log.
-//   node cli.js [<case words>] [--model auto|none|local|kaggle|claude] [--cmd "<command>"] [--log <file>] [--max-lines n]
+//   node cli.js [<case words>] [--model auto|none|local|kaggle|unified|claude] [--cmd "<command>"] [--log <file>] [--max-lines n]
 //   node cli.js gate            Stop-hook mode: reads the hook JSON on stdin, runs once per changed working tree
 // The script ALWAYS runs first: on all tests, or only the files matching the case words ("login expired token").
 // A pass ends there: one line, no model. Only a failure can involve a model, and --model is the one thing you choose:
@@ -9,8 +9,11 @@
 //   local   a local Ollama model condenses a long digest.
 //   kaggle  the same against LOCAL_LLM_URL: any remote Ollama-compatible endpoint (a Kaggle tunnel); the digest leaves
 //           this machine, secrets masked.
+//   unified the same through the free router (UNIFIED_API_KEY): the digest leaves this machine, secrets masked.
 //   claude  a brief for ONE Claude subagent to read the saved log and return the failure (the command spawns it).
-//   auto    (default) the chain, never skipped, never reordered: local, then kaggle/remote, then a Claude subagent. A step
+//   auto    (default) the chain, never skipped, never reordered: local, then kaggle/remote, then unified, then a Claude subagent.
+//           With a "tests" list in .claude/ai-backends.json (ollama, kaggle, unified) only the listed steps run; an empty list
+//           means Claude only. Without the list: local and kaggle as before, never unified (it needs your opt-in). A step
 //           that is unreachable or fails hands over to the next. A digest of 25 lines or fewer stays as is, and a Claude
 //           subagent only joins when the digest was cut off (its 5k cold start costs more than reading a short, complete
 //           digest). A condensed answer is kept only if it names every distinct error and copies only lines from the log.
@@ -31,6 +34,20 @@ const http = require("node:http");
 const https = require("node:https");
 const crypto = require("node:crypto");
 const { spawnSync } = require("node:child_process");
+
+// The shared cascade module sits beside this file once installed (backends.js; in the kit repo test-run.backends.js).
+function backends() {
+    for (const f of ["./backends.js", "./test-run.backends.js"]) { try { return require(f); } catch { /* try the next */ } }
+    return null;
+}
+// The steps the project allows: null when ai-backends.json has no "tests" list (the old default), else a Set of local|kaggle|unified.
+function allowedSteps(cwd) {
+    try {
+        const c = JSON.parse(fs.readFileSync(path.join(cwd, ".claude", "ai-backends.json"), "utf8"));
+        if (!Array.isArray(c.tests)) return null;
+        return new Set(c.tests.map((b) => (b === "ollama" ? "local" : b)).filter((b) => ["local", "kaggle", "unified"].includes(b)));
+    } catch { return null; }
+}
 
 // ---- digest ----
 // node --test lists every failure in a "failing tests" section: "test at <file:line>", "✖ <title> (<ms>)", then the error.
@@ -169,6 +186,12 @@ function endpoint(via) {
 
 const PROMPT = "You condense a failing test report. Output at most 5 lines: each failing test name, file:line if shown, and the exact error message. Add nothing else. Copy text; do not guess.\n\n";
 async function condense(text, via) {
+    if (via === "unified") {
+        const bk = backends();
+        if (!bk) return { note: "unified: the shared backends module is missing; digest kept" };
+        const r = await bk.ask(PROMPT, text, ["unified"], { timeoutMs: 60000, maxTokens: 300 });
+        return "text" in r ? { text: r.text.trim(), model: "the unified router" } : { note: `unified model unavailable (${r.notes.join("; ")}); digest kept` };
+    }
     const ep = endpoint(via);
     if (ep.error) return { note: ep.error };
     try {
@@ -241,6 +264,7 @@ async function timed(url, ms, init) {
     try { return await fetch(url, { ...init, signal: ac.signal }); } finally { clearTimeout(t); }
 }
 async function reachable(model) {
+    if (model === "unified") { const bk = backends(); return bk ? bk.reachable("unified", process.env) : false; }
     const ep = endpoint(model);
     if (ep.error) return false;
     try { return (await timed(`${ep.base}/api/tags`, 800)).ok; } catch { return false; }
@@ -251,8 +275,10 @@ async function choose(body, io = { reachable }, hints = {}) {
     const tk = tokens(body);
     if (lines <= COST.smallLines) return { model: "none", chain: [], why: `digest is ${lines} lines (~${tk} tokens): reading it costs less than any model call` };
     const chain = [];
-    if (await io.reachable("local")) chain.push("local");
-    if (process.env.LOCAL_LLM_URL && (await io.reachable("kaggle"))) chain.push("kaggle");
+    const ok = (step) => (hints.allowed ? hints.allowed.has(step) : step !== "unified");
+    if (ok("local") && (await io.reachable("local"))) chain.push("local");
+    if (ok("kaggle") && process.env.LOCAL_LLM_URL && (await io.reachable("kaggle"))) chain.push("kaggle");
+    if (ok("unified") && (await io.reachable("unified"))) chain.push("unified");
     // The digest already groups failures by cause, so a subagent adds something only when the digest was cut off.
     if (hints.truncated) chain.push("claude");
     if (!chain.length) return { model: "none", chain, why: `~${tk} tokens, no free model reachable, and the digest is complete with few distinct errors: a subagent (~${COST.subagentColdStart} cold start) costs more than reading it` };
@@ -281,7 +307,7 @@ async function runCase(argv, cwd = process.cwd(), io) {
     }
     if (/^claude:fable/i.test(o.model || "")) return { code: 2, out: "fable is not used: too costly, and most plans lack it. Use claude, claude:haiku, claude:sonnet or claude:opus." };
     const forced = (/^claude:(haiku|sonnet|opus)$/.exec(o.model || "") || [])[1];
-    if (!["auto", "none", "local", "kaggle", "claude"].includes(o.model) && !forced) return { code: 2, out: "usage: --model auto|none|local|kaggle|claude[:haiku|sonnet|opus]" };
+    if (!["auto", "none", "local", "kaggle", "unified", "claude"].includes(o.model) && !forced) return { code: 2, out: "usage: --model auto|none|local|kaggle|unified|claude[:haiku|sonnet|opus]" };
     if (o.allow && !parseAllow(o.allow)) return { code: 2, out: "usage: --allow haiku|sonnet:low|medium|high" };
     const allow = parseAllow(o.allow) || configAllow(cwd) || {};
     const words = o.words.join(" ").trim();
@@ -315,12 +341,12 @@ ${body}` };
     let steps;
     let why = "chosen by you";
     if (o.model === "auto") {
-        const c = await choose(body, io, { truncated: /more lines \(use --log/.test(body), distinct });
+        const c = await choose(body, io, { truncated: /more lines \(use --log/.test(body), distinct, allowed: allowedSteps(cwd) });
         steps = c.chain;
         why = c.why;
     } else steps = [forced ? "claude" : o.model];
     for (const step of steps) {
-        if (step === "local" || step === "kaggle") {
+        if (step === "local" || step === "kaggle" || step === "unified") {
             const c = await condense(body, step);
             const bad = c.text ? rejectCondensed(c.text, r.text) : null;
             if (c.text && bad) c.note = `${step} output rejected (${bad}); next step`;

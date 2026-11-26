@@ -926,6 +926,15 @@ t('ai backends: a feature already in ai-backends.json is kept unless --force; ot
   inst('--ai', 'goldfish=none', '--force'); assert.deepStrictEqual(cfg().goldfish, [], 'none means an empty list');
 });
 
+t('ai backends: tests=... is written when test-run is installed and ships the shared module beside it', () => {
+  const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
+  const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'test-run', '--yes', '--ai', 'tests=ollama+unified']);
+  assert.strictEqual(r.status, 0);
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8')), { tests: ['ollama', 'unified'] });
+  assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'test-run', 'backends.js')), 'backends.js installed next to cli.js');
+  assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'test-run', 'cli.js')));
+});
+
 t('ai backends: a feature whose skill is not installed is not written', () => {
   const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
   const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', '--ai', 'goldfish=unified']);

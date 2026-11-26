@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasModel = exports.mask = exports.neverSend = exports.ORDER = void 0;
 exports.readBackends = readBackends;
 exports.ask = ask;
+exports.reachable = reachable;
 // Shared cascade for every kit feature that can hand work to a cheaper model so Claude spends fewer tokens.
 // The project lists which backends it allows per feature in <root>/.claude/ai-backends.json:
 //   { "review": ["code", "ollama", "unified"], "tests": ["ollama"], "goldfish": [], "coding": ["kaggle"] }
@@ -64,7 +65,7 @@ async function postJson(url, body, headers, timeoutMs) {
     }
 }
 const why = (e) => (e.name === 'AbortError' ? 'timeout' : e.message);
-async function ollama(prompt, text, env, t, cap) {
+function ollamaSettings(env) {
     let base = 'http://127.0.0.1:11434', model = 'qwen2.5:1.5b';
     try {
         const m = JSON.parse(fs.readFileSync(path.join(homeOf(env), 'models.json'), 'utf8'));
@@ -72,6 +73,10 @@ async function ollama(prompt, text, env, t, cap) {
         model = m.system2?.model || model;
     }
     catch { /* defaults */ }
+    return { base, model };
+}
+async function ollama(prompt, text, env, t, cap) {
+    const { base, model } = ollamaSettings(env);
     if (!/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?/i.test(base))
         return 'ollama base URL is not loopback; not used';
     try {
@@ -136,6 +141,32 @@ async function ask(prompt, text, backends, opts = {}, env = process.env) {
         notes.push(`${b} reply was not usable`);
     }
     return { handoff: true, notes };
+}
+// A quick "is it up" probe for one backend, so a caller can skip a dead step without waiting for its full timeout.
+async function reachable(b, env = process.env, ms = 800) {
+    if (b === 'code')
+        return true;
+    const get = async (url, headers = {}) => {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), ms);
+        try {
+            return (await fetch(url, { headers, signal: ctl.signal })).ok;
+        }
+        catch {
+            return false;
+        }
+        finally {
+            clearTimeout(timer);
+        }
+    };
+    if (b === 'unified') {
+        const key = unifiedKey(env);
+        return key ? get(`${(env.UNIFIED_API_BASE || 'http://127.0.0.1:31415').replace(/\/$/, '')}/v1/models`, { authorization: `Bearer ${key}` }) : false;
+    }
+    if (b === 'kaggle')
+        return env.LOCAL_LLM_URL ? get(`${env.LOCAL_LLM_URL.replace(/\/$/, '')}/api/tags`) : false;
+    const { base } = ollamaSettings(env);
+    return /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?/i.test(base) ? get(`${base.replace(/\/$/, '')}/api/tags`) : false;
 }
 const hasModel = (backends) => backends.some((b) => b !== 'code');
 exports.hasModel = hasModel;

@@ -99,6 +99,19 @@ const json = (res, code, o) => { res.writeHead(code, { 'content-type': 'applicat
   check('long input is cut to the cap', JSON.parse(uni.calls[0].body).messages[0].content.length < 61000);
   check('secret-looking files are never sent', b.neverSend('.env') && b.neverSend('a/id_rsa') && b.neverSend('x/secret.txt') && !b.neverSend('src/app.js'));
 
+  // reachable: a quick probe per backend
+  fs.writeFileSync(path.join(home, 'models.json'), JSON.stringify({ system2: { baseUrl: oll.base } }));
+  check('code is always reachable', await b.reachable('code', {}));
+  check('ollama reachable on loopback', await b.reachable('ollama', { AI_DEV_KIT_HOME: home }));
+  fs.writeFileSync(path.join(home, 'models.json'), JSON.stringify({ system2: { baseUrl: 'http://203.0.113.5:11434' } }));
+  check('non-loopback ollama is never probed as reachable', !(await b.reachable('ollama', { AI_DEV_KIT_HOME: home })));
+  check('kaggle reachable with LOCAL_LLM_URL, not without', (await b.reachable('kaggle', { LOCAL_LLM_URL: kag.base })) && !(await b.reachable('kaggle', {})));
+  check('unified reachable with a key, not without', (await b.reachable('unified', env)) && !(await b.reachable('unified', { AI_DEV_KIT_HOME: path.join(home, 'none'), UNIFIED_API_BASE: uni.base })));
+  const gone = await server((req, res) => res.end()); const goneBase = gone.base; gone.s.close();
+  check('a dead endpoint is not reachable, fast', !(await b.reachable('unified', { UNIFIED_API_BASE: goneBase, UNIFIED_API_KEY: 'k' }, 500)));
+
+  // every consumer carries a byte-identical copy (scripts/sync-backends.js, run by npm run build)
+  for (const c of ['test-run.backends.js']) check('copy ' + c + ' matches the source', fs.readFileSync(path.join(__dirname, '..', 'skills', 'workflow', c)).equals(fs.readFileSync(path.join(__dirname, '..', 'skills', 'workflow', 'plan-first.backends.js'))));
   for (const x of [oll, kag, uni, bad]) x.s.close();
   if (failed) process.exit(1);
 })();

@@ -238,3 +238,82 @@ test("a condensed answer that drops a distinct error or invents a line is reject
     assert.match(rejectCondensed("Error: alpha problem here\nError: beta problem here\nsomething the model made up", log), /not in the log/);
     assert.strictEqual(rejectCondensed("Error: alpha problem here\nError: beta problem here", log), null);
 });
+
+// ---- unified step and the "tests" list in .claude/ai-backends.json ----
+const http = require("node:http");
+const bigDigest = (n) => Array.from({ length: n }, (_, i) => `✖ case ${i}\n  Error: distinct failure k${i}`).join("\n");
+function withBackends(d, tests) {
+    fs.mkdirSync(path.join(d, ".claude"), { recursive: true });
+    fs.writeFileSync(path.join(d, ".claude", "ai-backends.json"), JSON.stringify({ tests }));
+}
+function router(reply) {
+    return new Promise((resolve) => {
+        const calls = [];
+        const s = http.createServer((req, res) => {
+            let body = "";
+            req.on("data", (c) => (body += c));
+            req.on("end", () => { calls.push({ url: req.url, auth: req.headers.authorization, body }); res.setHeader("content-type", "application/json"); res.end(req.method === "POST" ? JSON.stringify({ choices: [{ message: { content: reply } }] }) : JSON.stringify({ data: [] })); });
+        });
+        s.listen(0, "127.0.0.1", () => resolve({ s, calls, base: `http://127.0.0.1:${s.address().port}` }));
+    });
+}
+const withEnv = (vars, fn) => async () => {
+    const prev = {};
+    for (const k of Object.keys(vars)) { prev[k] = process.env[k]; if (vars[k] === null) delete process.env[k]; else process.env[k] = vars[k]; }
+    try { await fn(); } finally { for (const k of Object.keys(vars)) { if (prev[k] === undefined) delete process.env[k]; else process.env[k] = prev[k]; } }
+};
+
+test("choose: the chain is local, kaggle, unified in that order; unified only when the project allows it", async () => {
+    const all = { reachable: async () => true };
+    process.env.LOCAL_LLM_URL = "http://127.0.0.1:1";
+    try {
+        assert.deepStrictEqual((await choose(bigDigest(60), all, { allowed: new Set(["local", "kaggle", "unified"]) })).chain, ["local", "kaggle", "unified"]);
+        assert.deepStrictEqual((await choose(bigDigest(60), all, { allowed: new Set(["unified"]) })).chain, ["unified"]);
+        assert.deepStrictEqual((await choose(bigDigest(60), all, {})).chain, ["local", "kaggle"], "no list: the old default, never unified");
+        assert.deepStrictEqual((await choose(bigDigest(60), all, { allowed: new Set(), truncated: true })).chain, ["claude"], "an empty list leaves Claude only");
+        assert.strictEqual((await choose(bigDigest(60), { reachable: async (m) => m !== "unified" }, { allowed: new Set(["unified"]) })).model, "none", "an unreachable unified is skipped");
+    } finally { delete process.env.LOCAL_LLM_URL; }
+});
+
+test("a project with tests: [] probes nothing and sends nothing to any model", async () => {
+    const d = project({ "a.test.js": manyFail(40) });
+    withBackends(d, []);
+    const r = await runCase([], d, { reachable: async () => { throw new Error("must not probe"); } });
+    assert.match(r.out, /^\[claude\]/);
+});
+
+test("unified step: the digest goes to the router with model auto, and a complete answer replaces it", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
+    const d = project({ "a.test.js": manyFail(40) });
+    withBackends(d, ["unified"]);
+    const reply = Array.from({ length: 40 }, (_, i) => `Error: distinct failure k${i}`).join("\n");
+    const rt = await router(reply);
+    process.env.UNIFIED_API_BASE = rt.base;
+    try {
+        const r = await runCase([], d);
+        assert.match(r.out, /^\[unified\]/);
+        assert.match(r.out, /condensed by the unified router/);
+        const post = rt.calls.find((c) => c.url === "/v1/chat/completions");
+        assert.ok(post && post.auth === "Bearer k-test-1" && JSON.parse(post.body).model === "auto");
+    } finally { delete process.env.UNIFIED_API_BASE; rt.s.close(); }
+}));
+
+test("unified step: an answer that invents a line is rejected and the chain continues to Claude", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
+    const d = project({ "a.test.js": manyFail(40) });
+    withBackends(d, ["unified"]);
+    const rt = await router("Error: a line the model made up\n" + Array.from({ length: 40 }, (_, i) => `Error: distinct failure k${i}`).join("\n"));
+    process.env.UNIFIED_API_BASE = rt.base;
+    try {
+        const r = await runCase([], d);
+        assert.match(r.out, /^\[claude\]|NEEDS APPROVAL/);
+        assert.match(r.out, /unified output rejected/);
+    } finally { delete process.env.UNIFIED_API_BASE; rt.s.close(); }
+}));
+
+test("--model unified without a key keeps the digest and says why; usage lists unified", withEnv({ UNIFIED_API_KEY: null, AI_DEV_KIT_HOME: fs.mkdtempSync(path.join(os.tmpdir(), "no-key-")) }, async () => {
+    const d = project({ "a.test.js": fail("no key here") });
+    const r = await runCase(["--model", "unified"], d);
+    assert.strictEqual(r.code, 1);
+    assert.match(r.out, /UNIFIED_API_KEY/);
+    assert.match(r.out, /no key here/);
+    assert.match((await runCase(["--model", "gpt"], process.cwd())).out, /unified/);
+}));

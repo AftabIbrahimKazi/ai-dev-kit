@@ -3,7 +3,7 @@
   "private": true,
   "description": "Build tooling for the kit library itself. Never installed into a target project -- see skills/meta/install-kit.md.",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/sync-backends.js",
     "build:watch": "tsc --watch"
   },
   "devDependencies": {

@@ -59,12 +59,17 @@ async function postJson(url: string, body: unknown, headers: Record<string, stri
 type Raw = string | { text: string };
 const why = (e: unknown): string => ((e as Error).name === 'AbortError' ? 'timeout' : (e as Error).message);
 
-async function ollama(prompt: string, text: string, env: NodeJS.ProcessEnv, t: number, cap: number): Promise<Raw> {
+function ollamaSettings(env: NodeJS.ProcessEnv): { base: string; model: string } {
   let base = 'http://127.0.0.1:11434', model = 'qwen2.5:1.5b';
   try {
     const m = JSON.parse(fs.readFileSync(path.join(homeOf(env), 'models.json'), 'utf8')) as { system2?: { baseUrl?: string; model?: string } };
     base = m.system2?.baseUrl || base; model = m.system2?.model || model;
   } catch { /* defaults */ }
+  return { base, model };
+}
+
+async function ollama(prompt: string, text: string, env: NodeJS.ProcessEnv, t: number, cap: number): Promise<Raw> {
+  const { base, model } = ollamaSettings(env);
   if (!/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?/i.test(base)) return 'ollama base URL is not loopback; not used';
   try {
     const r = await postJson(`${base.replace(/\/$/, '')}/api/generate`, { model, prompt: `${prompt}\n\n${text}`, stream: false, think: false, options: { temperature: 0, num_predict: cap } }, {}, t);
@@ -113,6 +118,23 @@ export async function ask(prompt: string, text: string, backends: Backend[], opt
     notes.push(`${b} reply was not usable`);
   }
   return { handoff: true, notes };
+}
+
+// A quick "is it up" probe for one backend, so a caller can skip a dead step without waiting for its full timeout.
+export async function reachable(b: Backend, env: NodeJS.ProcessEnv = process.env, ms = 800): Promise<boolean> {
+  if (b === 'code') return true;
+  const get = async (url: string, headers: Record<string, string> = {}): Promise<boolean> => {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), ms);
+    try { return (await fetch(url, { headers, signal: ctl.signal })).ok; } catch { return false; } finally { clearTimeout(timer); }
+  };
+  if (b === 'unified') {
+    const key = unifiedKey(env);
+    return key ? get(`${(env.UNIFIED_API_BASE || 'http://127.0.0.1:31415').replace(/\/$/, '')}/v1/models`, { authorization: `Bearer ${key}` }) : false;
+  }
+  if (b === 'kaggle') return env.LOCAL_LLM_URL ? get(`${env.LOCAL_LLM_URL.replace(/\/$/, '')}/api/tags`) : false;
+  const { base } = ollamaSettings(env);
+  return /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?/i.test(base) ? get(`${base.replace(/\/$/, '')}/api/tags`) : false;
 }
 
 export const hasModel = (backends: Backend[]): boolean => backends.some((b) => b !== 'code');
