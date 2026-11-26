@@ -143,7 +143,7 @@ export const ADDONS_GUIDE: ModuleGuide = {
       hl: "name:kaggle",
       line: "Claude plans and reviews; a free Kaggle GPU model writes the files.",
       rows: [
-        { label: "Does", text: "Runs a plan's coding tasks in a private Kaggle notebook with qwen3-coder:30b on two T4 GPUs. Files land in a staging folder, never the repo, and local gates check placeholders, syntax and missing files. Failed tasks retry twice, then Claude takes over." },
+        { label: "Does", text: "Runs a plan's coding tasks in a private Kaggle notebook with qwen3-coder:30b on two T4 GPUs. Files land in a staging folder, never the repo, and local gates check placeholders, syntax and missing files. Failed tasks retry twice, then Claude takes over. With coding set to unified in .claude/ai-backends.json, /kaggle run can write the code on the free Unified API instead (--via auto|kaggle|unified); auto tries Kaggle first." },
         { label: "You", text: "Make a free Kaggle account with a verified phone, save the API token in .env, then /kaggle setup, /kaggle plan plan.md (free) and /kaggle run plan.md. You start every step." },
         { label: "AI", text: "Writes the plan in the task format, reviews every staged file, fixes what is left and copies files into the repo only after checking them." },
       ],

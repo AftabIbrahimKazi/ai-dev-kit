@@ -1,4 +1,4 @@
-import type { GuideChapter, GuideFinderRow, GuideMode, GuideType } from "@/types/skills-guide";
+import type { GuideChapter, GuideFinderRow, GuideMode, GuideType, InstallCostProfile } from "@/types/skills-guide";
 
 export const GUIDE_HEADER = {
   title: "Skills",
@@ -179,7 +179,7 @@ export const GUIDE_TYPES: readonly GuideType[] = [
       },
       {
         name: "test-run",
-        does: "Runs the project tests through a script and returns a verdict plus the failures grouped by cause, so the agent reads a short digest instead of a long log.",
+        does: "Runs the project tests through a script and returns a verdict plus the failures grouped by cause, so the agent reads a short digest instead of a long log. A model is used only after a failure, in this order: local, Kaggle, the Unified API, then Claude, limited to what the project allows.",
         when: "You ask to run the tests, or a change needs checking against the suite.",
         mode: "auto",
         you: "Name the test or say run the tests.",
@@ -603,4 +603,17 @@ export const GUIDE_FINDER: readonly GuideFinderRow[] = [
   { situation: "You want a session to resume cold", skill: "handover" },
   { situation: "You want to set up MCP servers", skill: "mcp-manager" },
   { situation: "You want replies read aloud", skill: "narrate" },
+];
+
+export const INSTALL_COST_PROFILES: readonly InstallCostProfile[] = [
+  { id: "lean", name: "Lean", line: "The 13 pinned skills only.", tokensBefore: 3197, tokensNow: 3227, skills: "13 active, 0 archived", commands: "15 to 16", files: "161 to 164", size: "706 to 723 KB", seconds: "0.32 to 0.33 s" },
+  { id: "default", name: "Default", line: "Every skill, with fresh-install archiving.", tokensBefore: 6319, tokensNow: 5542, skills: "40 active, 30 archived (was 51 and 19)", commands: "38 to 39", files: "331 to 337", size: "1,983 to 2,026 KB", seconds: "1.99 to 1.85 s" },
+  { id: "full", name: "Full", line: "Every skill, all kept active with --keep-active.", tokensBefore: 7532, tokensNow: 7372, skills: "70 active, 0 archived", commands: "38 to 39", files: "331 to 337", size: "1,982 to 2,025 KB", seconds: "0.56 to 0.66 s" },
+];
+
+export const INSTALL_COST_NOTES: readonly string[] = [
+  "How it was measured (2026-11-27): each profile was installed into an empty folder with install --yes --standards, then verified. Every profile passed verify, before and now.",
+  "Tokens are an estimate: the characters of the text a session always loads (skill names and descriptions, command descriptions, the CLAUDE.md index) divided by 4, times 1.5. No tokenizer was run. Time is one run on one Windows machine, so read it as a rough order.",
+  "The default install archives more skills at install time, which is why it takes a second or two longer than the full one. The standards documents, about 410,000 characters, are not counted: they load only for the file being edited, and a median file is about 1,350 tokens.",
+  "Tests, run over each tree's own tests folder: 72 of 74 files passed before (1,247 checks) and 76 of 79 now (1,341 checks). The scratch-copy failures were environment, not code, and pass in the real repository; one real stale test (feature-usage notices default) was fixed.",
 ];

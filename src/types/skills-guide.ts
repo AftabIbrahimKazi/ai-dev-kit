@@ -30,6 +30,19 @@ export interface GuideChapter {
   more: readonly string[];
 }
 
+export interface InstallCostProfile {
+  id: string;
+  name: string;
+  line: string;
+  tokensBefore: number;
+  tokensNow: number;
+  skills: string;
+  commands: string;
+  files: string;
+  size: string;
+  seconds: string;
+}
+
 export interface GuideMode {
   mode: SkillMode;
   label: string;

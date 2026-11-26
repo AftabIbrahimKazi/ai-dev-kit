@@ -29,7 +29,7 @@ export const KIT_MODULES: readonly KitModule[] = [
     metaDescription: "Slash commands you type to run an AI Dev Kit action, such as archiving skills or picking up a handover. Each command is listed with what it does.",
     source: "kit repository skills/commands/ folder",
     parts: [
-      "archive", "audit", "commit-check", "ctx", "diagram", "device", "dupe", "e2e", "eta", "figma", "figma-code", "format", "githooks", "goldfish", "kaggle", "kit", "modern-web", "narration", "next",
+      "api-mode", "archive", "audit", "commit-check", "ctx", "diagram", "device", "dupe", "e2e", "eta", "figma", "figma-code", "format", "githooks", "goldfish", "kaggle", "kit", "modern-web", "narration", "next",
       "optimize-assets", "perf", "persona", "pickup", "quiet", "recon", "resolve-conflicts", "responsive-check", "role", "stale", "state-audit", "teardown", "teardown-film",
       "teardown-sound", "test", "unarchive", "untrack", "version-bump", "wrap-up",
     ],

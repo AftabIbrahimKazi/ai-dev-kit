@@ -30,7 +30,7 @@ export const MCP_PORTS: readonly McpPort[] = [
     id: "image-gen",
     name: "image-gen",
     does: "Generates images for sites and apps.",
-    cost: "Gemini needs billing. The Cloudflare fallback has a free allowance of about 173 images a day.",
+    cost: "Free through the router (UNIFIED_API_KEY); the router owns its quota.",
     source: "README, mcp table, image-gen row",
   },
   {

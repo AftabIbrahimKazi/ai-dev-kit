@@ -7,6 +7,8 @@ import {
   GUIDE_HEADER,
   GUIDE_MODES,
   GUIDE_MODE_NOTE,
+  INSTALL_COST_NOTES,
+  INSTALL_COST_PROFILES,
   GUIDE_TYPES,
 } from "@/content/skills-guide";
 import { SKILLS_SCENE, hlGroup, hlName } from "@/content/skills-scene";
@@ -39,6 +41,7 @@ const RAIL_STOPS: readonly RailStop[] = [
   { label: "Start", ids: ["skills-hero"] },
   ...GUIDE_CHAPTERS.map((chapter) => ({ label: chapter.kicker, ids: [chapter.id] })),
   { label: "Modes", ids: ["modes"] },
+  { label: "Cost", ids: ["cost"] },
   { label: "Shelves", ids: ["types", ...GUIDE_TYPES.map((type) => `type-${type.id}`)] },
   { label: "Finder", ids: ["finder"] },
   { label: "Next", ids: ["next"] },
@@ -83,7 +86,32 @@ export default function SkillsPage() {
         <p className="fs-[var(--font-size-sm)] mt-[var(--space-sm)] text-[var(--color-text-muted)]">{GUIDE_MODE_NOTE}</p>
       </Chapter>
 
-      <Chapter id="types" kicker="Chapter 5" title="Nine shelves" line="Every skill in the kit lives on one of them.">
+      <Chapter id="cost" kicker="Chapter 5" title="What an install costs" line="Measured, per profile: the always-on tokens, before this update and now.">
+        <ul className={GRID}>
+          {INSTALL_COST_PROFILES.map((profile) => (
+            <li key={profile.id} data-hl="all:skills" data-act="does" className={`${CARD} rk-hl-ts`}>
+              <p className="fs-[var(--font-size-lg)] fw-[var(--font-weight-bold)]">{profile.name}</p>
+              <p className="fs-[var(--font-size-sm)] text-[var(--color-text-muted)]">{profile.line}</p>
+              <p className="fs-[var(--font-size-xl)] fw-[var(--font-weight-black)] mt-[var(--space-xs)]">
+                {profile.tokensNow.toLocaleString("en-US")} <span className="fs-[var(--font-size-sm)] fw-[var(--font-weight-regular)]">tokens now, {profile.tokensBefore.toLocaleString("en-US")} before</span>
+              </p>
+              <dl className="fs-[var(--font-size-sm)] mt-[var(--space-xs)]">
+                {[["Skills", profile.skills], ["Commands", profile.commands], ["Files", profile.files], ["Size", profile.size], ["Install time", profile.seconds]].map(([label, value]) => (
+                  <div key={label} className="d-flex flex-wrap justify-content-between col-gap-[var(--space-sm)]">
+                    <dt className="text-[var(--color-text-muted)]">{label}</dt>
+                    <dd className="ms-[0]">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        {INSTALL_COST_NOTES.map((note) => (
+          <p key={note} className="fs-[var(--font-size-sm)] max-w-[var(--measure-text)] mt-[var(--space-sm)] text-[var(--color-text-muted)]">{note}</p>
+        ))}
+      </Chapter>
+
+      <Chapter id="types" kicker="Chapter 6" title="Nine shelves" line="Every skill in the kit lives on one of them.">
         <ul className={GRID}>
           {GUIDE_TYPES.map((type) => (
             <li key={type.id}>

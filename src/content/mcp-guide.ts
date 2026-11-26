@@ -38,9 +38,9 @@ export const MCP_GUIDE: ModuleGuide = {
       hl: "name:mcp-manager.image-gen",
       line: "Generates images for sites and apps.",
       rows: [
-        { label: "Does", act: "does", text: "Image generation for websites and apps. It also has enhance_image, which grades, levels and sharpens an existing photo with ImageMagick and no AI, and ai_edit_image for small AI edits." },
-        { label: "You", act: "you", text: "Set at least one set of keys: GEMINI_API_KEY (needs billing), or CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN, which have a free allowance of about 173 images a day." },
-        { label: "AI", act: "ai", text: "Tries Gemini, then Cloudflare FLUX.1 schnell, then a labelled placeholder. It tells you about every switch and pause." },
+        { label: "Does", act: "does", text: "Image generation for websites and apps. It also has enhance_image, which grades, levels and sharpens an existing photo with ImageMagick and no AI, The old ai_edit_image tool was removed: the router has no image-edit endpoint." },
+        { label: "You", act: "you", text: "Put UNIFIED_API_KEY in ~/.ai-dev-kit/.env and allow it for images, either in the installer or with \"image\": [\"unified\"] in .claude/ai-backends.json. Without that line you get the labelled placeholder." },
+        { label: "AI", act: "ai", text: "Generates through the free router (the Unified API), and falls back to a labelled placeholder on any failure. A 429, 401 or 403 pauses the router for an hour, and every pause is reported as a notice. The router owns its quota, so the per-provider daily caps are gone." },
       ],
     },
     {
