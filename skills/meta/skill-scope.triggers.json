@@ -26,6 +26,17 @@
     "command-writer": ["command", "slash"],
     "cli-writer": ["cli", "installer", "script"],
     "readme-writer": ["readme"],
-    "implicit-state-audit": ["state-audit", "state machine", "boolean flag*", "isloading", "implicit state"]
+    "implicit-state-audit": ["state-audit", "state machine", "boolean flag*", "isloading", "implicit state"],
+    "fable-5-1": ["fable", "mythos"],
+    "haiku-5-5": ["haiku"],
+    "opus-5-5": ["opus"],
+    "sonnet-5-5": ["sonnet"],
+    "claude-all-models": ["model choice", "which model", "cost optimi*", "delegat*", "cache discipline"],
+    "triforge": ["triforge", "@triforge"],
+    "strata-css": ["strata*"],
+    "threejs-scene": ["threejs", "three.js", "shader*", "mesh*", "webgl"],
+    "astro-page": ["astro"],
+    "shopify-toolkit-install": ["shopify"],
+    "opencode-all-models": ["opencode", "open-weight"]
   }
 }
