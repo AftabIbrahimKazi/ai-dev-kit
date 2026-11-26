@@ -230,7 +230,7 @@ function runTests(cmd, cwd) {
 // dump (0.81/0.39), a one-line typo failure (0.82/0.50) and five logic failures (0.91/0.10); the hardest case scored
 // most noise and least reasoning. It routes skills well, but cannot judge a test report, so size and reachability decide.
 const tokens = (t) => Math.ceil((t.length / 4) * 1.5);
-const COST = { subagentColdStart: 5000, condensedRead: 150, smallLines: 25, haikuMaxLogTokens: 40000, sonnetLowMaxLogTokens: 120000, haikuMaxDistinct: 3, sonnetLowMaxDistinct: 12 };
+const COST = { subagentColdStart: 5000, condensedRead: 150, smallLines: 25, haikuMaxLogTokens: 40000, sonnetLowMaxLogTokens: 120000, haikuMaxDistinct: 3, sonnetLowMaxDistinct: 12, condenseMaxDistinct: 5 };
 const EFFORT_RANK = { low: 0, medium: 1, high: 2 };
 // Distinct error messages in a log, digits folded so "x at line 4" and "x at line 9" count once.
 function distinctErrors(text) {
@@ -275,6 +275,12 @@ async function choose(body, io = { reachable }, hints = {}) {
     const tk = tokens(body);
     if (lines <= COST.smallLines) return { model: "none", chain: [], why: `digest is ${lines} lines (~${tk} tokens): reading it costs less than any model call` };
     const chain = [];
+    // The condense prompt asks for at most 5 lines, so a log with more distinct errors can never pass the completeness check: the
+    // model steps would only burn a call (18 s on the router, measured live) before being rejected. Go straight to the next tier.
+    if (hints.distinct > COST.condenseMaxDistinct) {
+        if (hints.truncated) chain.push("claude");
+        return { model: chain[0] || "none", chain, why: `~${tk} tokens, ${hints.distinct} distinct errors: more than a ${COST.condenseMaxDistinct}-line answer can name, so no condenser is tried` };
+    }
     const ok = (step) => (hints.allowed ? hints.allowed.has(step) : step !== "unified");
     if (ok("local") && (await io.reachable("local"))) chain.push("local");
     if (ok("kaggle") && process.env.LOCAL_LLM_URL && (await io.reachable("kaggle"))) chain.push("kaggle");

@@ -23,13 +23,13 @@ node <skill-root>/test-run/cli.js [<case words>] [--model auto|none|local|kaggle
 <!--if ai.tests~unified-->
     - the free router (`unified`; the digest leaves the machine, secrets masked)
 <!--/if-->
-    - then one Claude subagent. A digest of 25 lines or fewer stays as is; the subagent joins only when it was cut off or holds 4+ distinct errors.
+    - then one Claude subagent. A digest of 25 lines or fewer stays as is, and no model condenses a log with over 5 distinct errors (a 5-line answer cannot name them); the subagent joins only when the digest was cut off.
   - Claude tier in auto: haiku at low effort; sonnet at low effort when the log is over 40k tokens or has 4+ distinct errors. Never fable. Opus only by explicit `--model claude:opus`.
   - Anything above sonnet low (higher effort) is never started on its own: the script prints NEEDS APPROVAL (exit 4). Ask the user, then rerun with `--from-log <saved log> --model claude --allow sonnet:medium` (no tests rerun). Ask at the planning stage when a plan includes test runs, so the answer can be stored once as `"allow": "sonnet:medium"` in `.claude/test-gate.json`; if that was skipped, this stop is the fallback ask.
   - `none`, `local`, `kaggle`, `unified`, `claude[:...]` force one step, no chain.
 - A pass never starts an agent or a model: the script decides from its own output, and a pass has nothing to condense.
 
-Laya was tried for tier choice and cannot judge a test report. The model arms and the tier thresholds are unmeasured: no A/B has shown they beat the digest alone.
+The model arms and the tier thresholds are unmeasured; the digest alone is the baseline.
 
 ## Stop hook (optional)
 Register `node <skill-root>/test-run/cli.js gate` as a Stop hook. It runs the tests once per changed working tree, stays silent on a pass, and blocks the stop with the digest on a failure. It never re-enters (`stop_hook_active`) and skips unchanged trees. Without a configured command it does nothing.

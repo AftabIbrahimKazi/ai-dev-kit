@@ -46,7 +46,10 @@ function parseVerdict(text) {
         return null;
     return { status: first, findings: lines.slice(1).join('\n').trim() };
 }
-const opts = (cfg, accept, cap) => ({ timeoutMs: cfg.timeoutMs ?? 25000, maxTokens: cfg.maxTokens ?? cap, accept });
+// A local model answers or fails fast; the router can need a minute on a first call (a slow provider, then failover), so a remote
+// backend gets 60 s unless the project set timeoutMs. The state-audit hook allows the reviewer 70 s.
+const remote = (cfg) => cfg.backends.some((b) => b === 'unified' || b === 'kaggle');
+const opts = (cfg, accept, cap) => ({ timeoutMs: cfg.timeoutMs ?? (remote(cfg) ? 60000 : 25000), maxTokens: cfg.maxTokens ?? cap, accept });
 async function run(prompt, text, cfg, env, accept, cap) {
     if (!bk.hasModel(cfg.backends))
         return { note: 'no model backend is allowed for this feature: no model was asked' };

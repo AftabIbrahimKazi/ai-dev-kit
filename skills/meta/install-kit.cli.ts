@@ -1612,7 +1612,7 @@ const askCoding = (args: CliArgs): Promise<void> => askBackends(args, 'coding',
   'Coding tasks from a finished plan: a model writes the files, Claude plans and reviews, so Claude spends far fewer tokens. Kaggle GPU: your own notebook, free about 30 hours a week, 5 minutes to start. Unified API: the free router from this machine, no setup beyond the key. Both are tried in that order, then Claude. The plan text leaves this machine, secrets masked. Nothing ticked: Claude writes the code.',
   'Who writes the code for your plans? (Space to tick, Enter to confirm)', ['kaggle', 'unified']);
 const askTests = (args: CliArgs): Promise<void> => askBackends(args, 'tests',
-  'Test runs: a script runs your tests and Claude sees only a short digest. A model can first condense a long failure digest (free, slower); the ticked ones are tried in the order listed, then Claude. Kaggle and Unified send the digest off this machine, secrets masked. Nothing ticked: Claude only.',
+  'Test runs: a script runs your tests and Claude sees only a short digest. A model can first condense a long failure digest (free, slower), but only for a log with 5 or fewer distinct errors, which is rare: the digest is already grouped by cause. The ticked ones are tried in the order listed, then Claude. Kaggle and Unified send the digest off this machine, secrets masked. Nothing ticked: Claude only.',
   'Who condenses long test-failure digests? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
 
 async function askSignature(args: CliArgs): Promise<void> {

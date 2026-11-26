@@ -174,16 +174,19 @@ function deadLocal() {
 }
 const manyFail = (n) => 'const test=require("node:test");\n' + Array.from({ length: n }, (_, i) => 'test("case ' + i + '",()=>{throw new Error("distinct failure k' + i + '");});').join("\n");
 
-test("chain never breaks: local reachable but failing hands over to claude, which names haiku or sonnet at low", async () => {
+test("a forced local model that fails keeps the digest and says why; auto on a 40-error log goes straight to claude and asks before anything above low", async () => {
     const undo = deadLocal();
     try {
         const d = project({ "a.test.js": manyFail(40) });
-        const r = await runCase([], d, { reachable: async (m) => m === "local" });
+        const forced = await runCase(["--model", "local"], d);
+        assert.strictEqual(forced.code, 1);
+        assert.match(forced.out, /local model unreachable/);
+        assert.match(forced.out, /distinct failure k0/, "the digest is kept");
+        const r = await runCase([], d, { reachable: async () => { throw new Error("must not probe: 40 distinct errors cannot be condensed to 5 lines"); } });
         assert.strictEqual(r.code, 4); // 40 distinct causes want more than sonnet low, so the agent waits for approval
         assert.match(r.out, /^\[claude\]/);
-        assert.match(r.out, /local model unreachable/);
         assert.match(r.out, /NEEDS APPROVAL before any agent starts/);
-        const ok = await runCase(["--allow", "sonnet:medium"], d, { reachable: async (m) => m === "local" });
+        const ok = await runCase(["--allow", "sonnet:medium"], d, { reachable: async () => false });
         assert.strictEqual(ok.code, 1);
         assert.match(ok.out, /DELEGATE to ONE Claude subagent with model=sonnet effort=medium/);
     } finally { undo(); }
@@ -282,14 +285,14 @@ test("a project with tests: [] probes nothing and sends nothing to any model", a
     assert.match(r.out, /^\[claude\]/);
 });
 
-test("unified step: the digest goes to the router with model auto, and a complete answer replaces it", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
+test("unified step (forced): the digest goes to the router with model auto, and a complete answer replaces it", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
     const d = project({ "a.test.js": manyFail(40) });
     withBackends(d, ["unified"]);
     const reply = Array.from({ length: 40 }, (_, i) => `Error: distinct failure k${i}`).join("\n");
     const rt = await router(reply);
     process.env.UNIFIED_API_BASE = rt.base;
     try {
-        const r = await runCase([], d);
+        const r = await runCase(["--model", "unified"], d);
         assert.match(r.out, /^\[unified\]/);
         assert.match(r.out, /condensed by the unified router/);
         const post = rt.calls.find((c) => c.url === "/v1/chat/completions");
@@ -297,15 +300,16 @@ test("unified step: the digest goes to the router with model auto, and a complet
     } finally { delete process.env.UNIFIED_API_BASE; rt.s.close(); }
 }));
 
-test("unified step: an answer that invents a line is rejected and the chain continues to Claude", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
+test("unified step (forced): an answer that invents a line is rejected and the digest is kept", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
     const d = project({ "a.test.js": manyFail(40) });
     withBackends(d, ["unified"]);
     const rt = await router("Error: a line the model made up\n" + Array.from({ length: 40 }, (_, i) => `Error: distinct failure k${i}`).join("\n"));
     process.env.UNIFIED_API_BASE = rt.base;
     try {
-        const r = await runCase([], d);
-        assert.match(r.out, /^\[claude\]|NEEDS APPROVAL/);
+        const r = await runCase(["--model", "unified"], d);
+        assert.match(r.out, /^\[none\]/);
         assert.match(r.out, /unified output rejected/);
+        assert.match(r.out, /distinct failure k0/, "the digest is kept");
     } finally { delete process.env.UNIFIED_API_BASE; rt.s.close(); }
 }));
 
@@ -317,3 +321,13 @@ test("--model unified without a key keeps the digest and says why; usage lists u
     assert.match(r.out, /no key here/);
     assert.match((await runCase(["--model", "gpt"], process.cwd())).out, /unified/);
 }));
+
+test("choose: more than 5 distinct errors skips every condenser (a 5-line answer cannot name them) and keeps the Claude tier", async () => {
+    const all = { reachable: async () => { throw new Error("must not probe"); } };
+    const cut = await choose(bigDigest(60), all, { allowed: new Set(["local", "kaggle", "unified"]), distinct: 6, truncated: true });
+    assert.deepStrictEqual(cut.chain, ["claude"]);
+    assert.match(cut.why, /6 distinct errors/);
+    assert.deepStrictEqual((await choose(bigDigest(60), all, { distinct: 6 })).chain, [], "complete digest, nothing to add");
+    const five = await choose(bigDigest(60), { reachable: async () => true }, { allowed: new Set(["unified"]), distinct: 5 });
+    assert.deepStrictEqual(five.chain, ["unified"], "five or fewer still tries the condenser");
+});
