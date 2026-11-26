@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const SOURCE = 'skills/workflow/plan-first.backends.js';
-const COPIES = ['skills/workflow/test-run.backends.js'];
+const COPIES = ['skills/workflow/test-run.backends.js', 'skills/mcp/mcp-manager.backends.js'];
 
 const src = fs.readFileSync(path.join(root, SOURCE));
 for (const c of COPIES) {

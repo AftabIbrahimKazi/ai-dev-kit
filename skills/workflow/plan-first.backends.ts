@@ -37,7 +37,7 @@ export function readBackends(root: string, feature: Feature): Backend[] {
   } catch { return []; }
 }
 
-function unifiedKey(env: NodeJS.ProcessEnv): string {
+export function unifiedKey(env: NodeJS.ProcessEnv): string {
   if (env.UNIFIED_API_KEY) return env.UNIFIED_API_KEY.trim();
   try {
     const m = /^UNIFIED_API_KEY=(.*)$/m.exec(fs.readFileSync(path.join(homeOf(env), '.env'), 'utf8'));
@@ -118,6 +118,26 @@ export async function ask(prompt: string, text: string, backends: Backend[], opt
     notes.push(`${b} reply was not usable`);
   }
   return { handoff: true, notes };
+}
+
+// One image from the router. Only the unified backend makes images (ollama and kaggle are text-only here). The router picks the
+// model and the provider; both come back so the caller can say who made it. A failed call returns a note, never throws, and the
+// HTTP status so the caller can tell a quota or auth error (pause the step) from a temporary one.
+export type ImageResult = { data: Buffer; mime: string; model: string; provider: string } | { note: string; status?: number };
+export async function askImage(prompt: string, size: string | undefined, env: NodeJS.ProcessEnv = process.env, timeoutMs = 120000): Promise<ImageResult> {
+  const key = unifiedKey(env);
+  if (!key) return { note: 'unified: no UNIFIED_API_KEY (set it in your shell or ~/.ai-dev-kit/.env)' };
+  const base = (env.UNIFIED_API_BASE || 'http://127.0.0.1:31415').replace(/\/$/, '');
+  try {
+    const r = await postJson(`${base}/v1/images/generations`, { model: 'auto', n: 1, prompt: mask(prompt).slice(0, 2048), ...(size ? { size } : {}) }, { authorization: `Bearer ${key}` }, timeoutMs);
+    if (!r.ok) return { note: `unified HTTP ${r.status}`, status: r.status };
+    const j = r.json as { data?: { b64_json?: string }[]; model?: string; provider?: string } | null;
+    const b64 = j?.data?.[0]?.b64_json;
+    if (!b64) return { note: 'unified returned no image (possibly blocked by a safety filter)', status: 200 };
+    const data = Buffer.from(b64, 'base64');
+    const mime = data[0] === 0xff && data[1] === 0xd8 ? 'image/jpeg' : data[0] === 0x52 && data[1] === 0x49 ? 'image/webp' : 'image/png';
+    return { data, mime, model: j?.model || 'auto', provider: j?.provider || 'router' };
+  } catch (e) { return { note: 'unified unreachable: ' + why(e) }; }
 }
 
 // A quick "is it up" probe for one backend, so a caller can skip a dead step without waiting for its full timeout.

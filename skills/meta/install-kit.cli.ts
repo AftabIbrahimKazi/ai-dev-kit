@@ -305,7 +305,7 @@ function parseSkillToken(token: string): ParsedToken {
 }
 
 // Companions that always install with their skill, even when a companion filter names only some (mcp-manager:stitch).
-const CORE_COMPANIONS: Record<string, string[]> = { 'mcp-manager': ['config'] };
+const CORE_COMPANIONS: Record<string, string[]> = { 'mcp-manager': ['config', 'backends'] };
 
 function companionStem(targetName: string): string {
   // "install-hook.js" -> "install-hook"; "roles.example.json" -> "roles.example"
@@ -728,13 +728,13 @@ export function batchMod(root: string, library: string | undefined, paired: bool
 
 // Which outside models a feature may use. The project lists them in .claude/ai-backends.json; scripts try them in a fixed order
 // (code, ollama, kaggle, unified) and Claude is always the last step. Nothing listed means Claude (or, for the review, the free scan).
-export type AiFeature = 'review' | 'goldfish' | 'tests';
+export type AiFeature = 'review' | 'goldfish' | 'tests' | 'image';
 export type AiBackend = 'code' | 'ollama' | 'kaggle' | 'unified';
 export const AI_BACKENDS: AiBackend[] = ['code', 'ollama', 'kaggle', 'unified'];
-const AI_NEEDS: Record<AiFeature, string> = { review: 'implicit-state-audit', goldfish: 'plan-first', tests: 'test-run' };
+const AI_NEEDS: Record<AiFeature, string> = { review: 'implicit-state-audit', goldfish: 'plan-first', tests: 'test-run', image: 'mcp-manager' };
 
 export function parseAiFlag(v: string): { feature: AiFeature; list: AiBackend[] } | null {
-  const m = /^(review|goldfish|tests)=(.*)$/.exec(v || '');
+  const m = /^(review|goldfish|tests|image)=(.*)$/.exec(v || '');
   if (!m) return null;
   const words = m[2] === 'none' || m[2] === '' ? [] : m[2].split(/[+,]/);
   if (!words.every((w) => (AI_BACKENDS as string[]).includes(w))) return null;
@@ -1552,7 +1552,8 @@ const AI_TITLES: Record<AiBackend, string> = {
   unified: 'Unified API -- the free router (needs UNIFIED_API_KEY; the text leaves this machine, secrets masked; free tiers may keep inputs)',
 };
 async function askBackends(args: CliArgs, feature: AiFeature, intro: string, message: string, offer: AiBackend[]): Promise<void> {
-  if (args.ai?.[feature] !== undefined || !args.skills.some((s) => parseSkillToken(s).name === AI_NEEDS[feature])) return;
+  const wants = (s: string): boolean => { const t = parseSkillToken(s); return t.name === AI_NEEDS[feature] && (feature !== 'image' || !t.only || t.only.has('image-gen')); };
+  if (args.ai?.[feature] !== undefined || !args.skills.some(wants)) return;
   if (autoYes) return;
   console.log(dim(intro));
   const picked = await askMultiselect(message, offer.map((b) => ({ title: AI_TITLES[b].replace(/ -- (.*)$/, (_m, d: string) => ` ${dim('-- ' + d)}`), value: b })));
@@ -1564,6 +1565,9 @@ const askReviewer = (args: CliArgs): Promise<void> => askBackends(args, 'review'
 const askGoldfish = (args: CliArgs): Promise<void> => askBackends(args, 'goldfish',
   'Goldfish plan review: fresh reviewers read a plan before it runs. By default Claude does it itself. Tick models to run the five stages on them instead (free, slower); they are tried in the order listed, then Claude. The plan text leaves this machine for Kaggle and Unified.',
   'Who runs the goldfish plan review? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
+const askImageGen = (args: CliArgs): Promise<void> => askBackends(args, 'image',
+  'Image generation: a model makes your site images, not Claude, so no Claude tokens are spent. Only the Unified API makes images here; your prompt goes to it. Nothing ticked: a labelled placeholder instead of an image.',
+  'May the Unified API generate your site images? (Space to tick, Enter to confirm)', ['unified']);
 const askTests = (args: CliArgs): Promise<void> => askBackends(args, 'tests',
   'Test runs: a script runs your tests and Claude sees only a short digest. A model can first condense a long failure digest (free, slower); the ticked ones are tried in the order listed, then Claude. Kaggle and Unified send the digest off this machine, secrets masked. Nothing ticked: Claude only.',
   'Who condenses long test-failure digests? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
@@ -1782,6 +1786,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       steps.push(() => askReviewer(args));
       steps.push(() => askGoldfish(args));
       steps.push(() => askTests(args));
+      steps.push(() => askImageGen(args));
       steps.push(() => askUsage(args));
     }
 
@@ -1829,7 +1834,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (k === '--keep-active') a.keepActive = true;
     else if (k === '--yes' || k === '-y') a.yes = true;
     else if (k === '--reviewer') { const v = argv[++i]; if (v !== 'auto' && v !== 'ollama' && v !== 'static') { console.error(red('error: --reviewer must be auto, ollama or static')); process.exit(2); } a.ai = { ...a.ai, review: v === 'static' ? ['code'] : ['code', 'ollama'] }; } // legacy: auto used to try Gemini first
-    else if (k === '--ai') { const v = parseAiFlag(argv[++i]); if (!v) { console.error(red('error: --ai must look like review=code+ollama, goldfish=unified or tests=ollama+unified (backends: code, ollama, kaggle, unified; none for an empty list)')); process.exit(2); } a.ai = { ...a.ai, [v.feature]: v.list }; }
+    else if (k === '--ai') { const v = parseAiFlag(argv[++i]); if (!v) { console.error(red('error: --ai must look like review=code+ollama, goldfish=unified, tests=ollama+unified or image=unified (backends: code, ollama, kaggle, unified; none for an empty list)')); process.exit(2); } a.ai = { ...a.ai, [v.feature]: v.list }; }
     else if (k === '--script-standard') a.scriptStandard = argv[++i] as 'js' | 'ts' | 'js-and-ts';
     else if (k === '--active-standards') { const v = argv[++i]; a.activeStandardsKeys = v === 'all' ? undefined : v === 'none' ? [] : v.split(',').filter(Boolean); }
     else if (k === '--comment-style-level') a.commentStyleLevel = argv[++i];

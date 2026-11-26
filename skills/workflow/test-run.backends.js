@@ -3,7 +3,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasModel = exports.mask = exports.neverSend = exports.ORDER = void 0;
 exports.readBackends = readBackends;
+exports.unifiedKey = unifiedKey;
 exports.ask = ask;
+exports.askImage = askImage;
 exports.reachable = reachable;
 // Shared cascade for every kit feature that can hand work to a cheaper model so Claude spends fewer tokens.
 // The project lists which backends it allows per feature in <root>/.claude/ai-backends.json:
@@ -141,6 +143,27 @@ async function ask(prompt, text, backends, opts = {}, env = process.env) {
         notes.push(`${b} reply was not usable`);
     }
     return { handoff: true, notes };
+}
+async function askImage(prompt, size, env = process.env, timeoutMs = 120000) {
+    const key = unifiedKey(env);
+    if (!key)
+        return { note: 'unified: no UNIFIED_API_KEY (set it in your shell or ~/.ai-dev-kit/.env)' };
+    const base = (env.UNIFIED_API_BASE || 'http://127.0.0.1:31415').replace(/\/$/, '');
+    try {
+        const r = await postJson(`${base}/v1/images/generations`, { model: 'auto', n: 1, prompt: (0, exports.mask)(prompt).slice(0, 2048), ...(size ? { size } : {}) }, { authorization: `Bearer ${key}` }, timeoutMs);
+        if (!r.ok)
+            return { note: `unified HTTP ${r.status}`, status: r.status };
+        const j = r.json;
+        const b64 = j?.data?.[0]?.b64_json;
+        if (!b64)
+            return { note: 'unified returned no image (possibly blocked by a safety filter)', status: 200 };
+        const data = Buffer.from(b64, 'base64');
+        const mime = data[0] === 0xff && data[1] === 0xd8 ? 'image/jpeg' : data[0] === 0x52 && data[1] === 0x49 ? 'image/webp' : 'image/png';
+        return { data, mime, model: j?.model || 'auto', provider: j?.provider || 'router' };
+    }
+    catch (e) {
+        return { note: 'unified unreachable: ' + why(e) };
+    }
 }
 // A quick "is it up" probe for one backend, so a caller can skip a dead step without waiting for its full timeout.
 async function reachable(b, env = process.env, ms = 800) {

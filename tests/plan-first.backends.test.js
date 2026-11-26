@@ -111,7 +111,7 @@ const json = (res, code, o) => { res.writeHead(code, { 'content-type': 'applicat
   check('a dead endpoint is not reachable, fast', !(await b.reachable('unified', { UNIFIED_API_BASE: goneBase, UNIFIED_API_KEY: 'k' }, 500)));
 
   // every consumer carries a byte-identical copy (scripts/sync-backends.js, run by npm run build)
-  for (const c of ['test-run.backends.js']) check('copy ' + c + ' matches the source', fs.readFileSync(path.join(__dirname, '..', 'skills', 'workflow', c)).equals(fs.readFileSync(path.join(__dirname, '..', 'skills', 'workflow', 'plan-first.backends.js'))));
+  for (const c of ['workflow/test-run.backends.js', 'mcp/mcp-manager.backends.js']) check('copy ' + c + ' matches the source', fs.readFileSync(path.join(__dirname, '..', 'skills', c)).equals(fs.readFileSync(path.join(__dirname, '..', 'skills', 'workflow', 'plan-first.backends.js'))));
   for (const x of [oll, kag, uni, bad]) x.s.close();
   if (failed) process.exit(1);
 })();

@@ -16,8 +16,7 @@ This repository (skills, standards, scripts) is [MIT-licensed](LICENSE). It buil
 
 | Service | Operated by | Used for | Terms |
 |---|---|---|---|
-| FLUX.1 [schnell] (model, Apache-2.0) on Cloudflare Workers AI | Black Forest Labs (model); Cloudflare (hosting) | `image-gen` fallback | [Cloudflare terms](https://www.cloudflare.com/service-specific-terms-application-services/), [model card](https://huggingface.co/black-forest-labs/FLUX.1-schnell) |
-| Gemini "Nano Banana" image models | Google | `image-gen` first choice (needs billing) | [Gemini API terms](https://ai.google.dev/gemini-api/terms) |
+| FLUX.1 [schnell] (model, Apache-2.0) on Cloudflare Workers AI | Black Forest Labs (model); Cloudflare (hosting) | `image-gen`, served by the free router | [Cloudflare terms](https://www.cloudflare.com/service-specific-terms-application-services/), [model card](https://huggingface.co/black-forest-labs/FLUX.1-schnell) |
 | Google Stitch MCP | Google | `stitch` — UI prototyping | [stitch.withgoogle.com](https://stitch.withgoogle.com) |
 | placehold.co | its maintainers | labelled placeholder images when every generator is exhausted | [placehold.co](https://placehold.co) — fetched at runtime; falls back to a local SVG if unreachable |
 

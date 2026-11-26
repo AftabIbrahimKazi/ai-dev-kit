@@ -350,7 +350,7 @@ function parseSkillToken(token) {
     return { name: name.trim(), only };
 }
 // Companions that always install with their skill, even when a companion filter names only some (mcp-manager:stitch).
-const CORE_COMPANIONS = { 'mcp-manager': ['config'] };
+const CORE_COMPANIONS = { 'mcp-manager': ['config', 'backends'] };
 function companionStem(targetName) {
     // "install-hook.js" -> "install-hook"; "roles.example.json" -> "roles.example"
     const dot = targetName.lastIndexOf('.');
@@ -749,9 +749,9 @@ function batchMod(root, library, paired, want) {
     return r;
 }
 exports.AI_BACKENDS = ['code', 'ollama', 'kaggle', 'unified'];
-const AI_NEEDS = { review: 'implicit-state-audit', goldfish: 'plan-first', tests: 'test-run' };
+const AI_NEEDS = { review: 'implicit-state-audit', goldfish: 'plan-first', tests: 'test-run', image: 'mcp-manager' };
 function parseAiFlag(v) {
-    const m = /^(review|goldfish|tests)=(.*)$/.exec(v || '');
+    const m = /^(review|goldfish|tests|image)=(.*)$/.exec(v || '');
     if (!m)
         return null;
     const words = m[2] === 'none' || m[2] === '' ? [] : m[2].split(/[+,]/);
@@ -1671,7 +1671,8 @@ const AI_TITLES = {
     unified: 'Unified API -- the free router (needs UNIFIED_API_KEY; the text leaves this machine, secrets masked; free tiers may keep inputs)',
 };
 async function askBackends(args, feature, intro, message, offer) {
-    if (args.ai?.[feature] !== undefined || !args.skills.some((s) => parseSkillToken(s).name === AI_NEEDS[feature]))
+    const wants = (s) => { const t = parseSkillToken(s); return t.name === AI_NEEDS[feature] && (feature !== 'image' || !t.only || t.only.has('image-gen')); };
+    if (args.ai?.[feature] !== undefined || !args.skills.some(wants))
         return;
     if (autoYes)
         return;
@@ -1681,6 +1682,7 @@ async function askBackends(args, feature, intro, message, offer) {
 }
 const askReviewer = (args) => askBackends(args, 'review', 'Hidden-state bugs: the free scan needs no model. Models can also read the files, so Claude spends no tokens on them; they are tried in the order listed, then Claude. Models other than Ollama send the file off this machine. With only models ticked, a model reads every edited UI file (slower). Nothing ticked: the free scan only.', 'Who reads your UI code for hidden-state bugs? (Space to tick, Enter to confirm)', ['code', 'ollama', 'kaggle', 'unified']);
 const askGoldfish = (args) => askBackends(args, 'goldfish', 'Goldfish plan review: fresh reviewers read a plan before it runs. By default Claude does it itself. Tick models to run the five stages on them instead (free, slower); they are tried in the order listed, then Claude. The plan text leaves this machine for Kaggle and Unified.', 'Who runs the goldfish plan review? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
+const askImageGen = (args) => askBackends(args, 'image', 'Image generation: a model makes your site images, not Claude, so no Claude tokens are spent. Only the Unified API makes images here; your prompt goes to it. Nothing ticked: a labelled placeholder instead of an image.', 'May the Unified API generate your site images? (Space to tick, Enter to confirm)', ['unified']);
 const askTests = (args) => askBackends(args, 'tests', 'Test runs: a script runs your tests and Claude sees only a short digest. A model can first condense a long failure digest (free, slower); the ticked ones are tried in the order listed, then Claude. Kaggle and Unified send the digest off this machine, secrets masked. Nothing ticked: Claude only.', 'Who condenses long test-failure digests? (Space to tick, Enter to confirm)', ['ollama', 'kaggle', 'unified']);
 async function askSignature(args) {
     if (args.signature !== undefined)
@@ -1933,6 +1935,7 @@ async function fillInteractive(cmd, args) {
             steps.push(() => askReviewer(args));
             steps.push(() => askGoldfish(args));
             steps.push(() => askTests(args));
+            steps.push(() => askImageGen(args));
             steps.push(() => askUsage(args));
         }
         if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
@@ -2004,7 +2007,7 @@ function parseArgs(argv) {
         else if (k === '--ai') {
             const v = parseAiFlag(argv[++i]);
             if (!v) {
-                console.error(red('error: --ai must look like review=code+ollama, goldfish=unified or tests=ollama+unified (backends: code, ollama, kaggle, unified; none for an empty list)'));
+                console.error(red('error: --ai must look like review=code+ollama, goldfish=unified, tests=ollama+unified or image=unified (backends: code, ollama, kaggle, unified; none for an empty list)'));
                 process.exit(2);
             }
             a.ai = { ...a.ai, [v.feature]: v.list };
