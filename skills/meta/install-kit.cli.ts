@@ -761,8 +761,8 @@ export function ensureUsageMod(library: string | undefined): { state: 'enabled' 
 export function setUsageTracking(track?: 'on' | 'off', notify?: 'on' | 'off'): UsageResult | undefined {
   if (track === undefined && notify === undefined) return undefined;
   const file = path.join(process.env.AI_DEV_KIT_HOME || os.homedir(), '.ai-dev-kit', 'usage', 'config.json');
-  const cur = { track: true, notify: false };
-  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); cur.track = j.track !== false; cur.notify = j.notify === true; } catch { /* no config yet: the defaults */ }
+  const cur = { track: true, notify: true };
+  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); cur.track = j.track !== false; cur.notify = j.notify !== false; } catch { /* no config yet: the defaults */ }
   if (track !== undefined) cur.track = track === 'on';
   if (notify !== undefined) cur.notify = notify === 'on';
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -1512,7 +1512,7 @@ async function askUsage(args: CliArgs): Promise<void> {
   if (args.usage !== undefined || autoYes) return; // --yes alone is no request for tracking: it must not install the mod
   console.log(dim('Usage tracking: a script, not the AI (so it costs no tokens), writes one local line each time a skill loads, a slash command is typed or a kit script runs. Names only, never your prompts, files or code, and nothing leaves this machine. It needs the optional feature-usage mod (Claude Code only). See it with /kit-usage report; turn it off any time with /kit-usage off.'));
   args.usage = (await askYesNo('Keep track of which kit features get used?', true)) ? 'on' : 'off';
-  if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only)', false)) ? 'on' : 'off';
+  if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only; in the VS Code panel use /kit-usage report)', true)) ? 'on' : 'off';
 }
 
 // Reviewer for hidden-state bugs. Asked only when implicit-state-audit is being installed. Auto is pre-selected, but it sends a

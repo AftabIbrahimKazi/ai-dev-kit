@@ -30,8 +30,8 @@ export const slug = (cwd: string): string => cwd.replace(/[^A-Za-z0-9]+/g, '-').
 export function readConfig(): { config: Config; fromFile: boolean } {
   try {
     const j = JSON.parse(fs.readFileSync(configFile(), 'utf8')) as Partial<Config>;
-    return { config: { track: j.track !== false, notify: j.notify === true }, fromFile: true };
-  } catch { return { config: { track: true, notify: false }, fromFile: false }; }
+    return { config: { track: j.track !== false, notify: j.notify !== false }, fromFile: true };
+  } catch { return { config: { track: true, notify: true }, fromFile: false }; }
 }
 export function writeConfig(c: Config): void {
   fs.mkdirSync(usageDir(), { recursive: true });

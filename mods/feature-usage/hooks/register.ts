@@ -4,13 +4,13 @@ import { scriptsIn, slug } from './match'
 // Records which kit features get used, so nobody has to ask the model whether it used one. One row per skill that loads,
 // slash command that is typed, or kit script that runs, appended to <home>/.ai-dev-kit/usage/log/<date>-<session>.jsonl.
 // Observes only: it never changes a prompt, a tool call or a result and adds no model-visible text, so it costs no tokens.
-// The switch is <home>/.ai-dev-kit/usage/config.json ({ track, notify }); no file means tracking on, notices off. The
+// The switch is <home>/.ai-dev-kit/usage/config.json ({ track, notify }); no file means tracking on, notices on. The
 // session-budget skill's usage.js turns the log into a report and flips the same switch; /kit-usage does both.
 // A file per session keeps parallel sessions apart; the queue keeps this session's own writes in order; the log is never
 // read back, so $.fs.read's 4 MiB limit cannot stop it. Names only: never prompts, arguments, paths or file contents.
 type Kind = 'skill' | 'command' | 'script'
 type Config = { track: boolean; notify: boolean }
-const DEFAULTS: Config = { track: true, notify: false }
+const DEFAULTS: Config = { track: true, notify: true }
 const PART_MAX = 1024 * 1024
 
 const parts = new Map<string, { n: number; text: string }>()
@@ -28,7 +28,7 @@ async function readConfig($: any, home: string): Promise<{ config: Config; exist
   try {
     if (!(await $.fs.exists(file))) return { config: DEFAULTS, exists: false }
     const j = JSON.parse(await $.fs.read(file)) as Partial<Config>
-    return { config: { track: j.track !== false, notify: j.notify === true }, exists: true }
+    return { config: { track: j.track !== false, notify: j.notify !== false }, exists: true }
   } catch {
     return { config: DEFAULTS, exists: false } // a damaged config means the defaults
   }

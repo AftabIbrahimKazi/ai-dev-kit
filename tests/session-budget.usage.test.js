@@ -29,9 +29,9 @@ const project = () => {
 
 t('with no config file tracking is ON by default; off and on write the config and keep the notice setting', () => {
   const h = mkHome();
-  assert.match(run(h, 'status').stdout, /tracking ON \(default, no config file yet\), notices OFF/);
-  assert.match(run(h, 'off').stdout, /tracking OFF, notices OFF/);
-  assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(h, '.ai-dev-kit', 'usage', 'config.json'), 'utf8')), { track: false, notify: false });
+  assert.match(run(h, 'status').stdout, /tracking ON \(default, no config file yet\), notices ON/);
+  assert.match(run(h, 'off').stdout, /tracking OFF, notices ON/);
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(h, '.ai-dev-kit', 'usage', 'config.json'), 'utf8')), { track: false, notify: true });
   run(h, 'notify', 'on');
   assert.match(run(h, 'on').stdout, /tracking ON, notices ON/);
   assert.strictEqual(JSON.parse(run(h, 'status', '--json').stdout).config.notify, true);

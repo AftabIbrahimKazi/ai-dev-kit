@@ -40,10 +40,10 @@ exports.slug = slug;
 function readConfig() {
     try {
         const j = JSON.parse(fs.readFileSync((0, exports.configFile)(), 'utf8'));
-        return { config: { track: j.track !== false, notify: j.notify === true }, fromFile: true };
+        return { config: { track: j.track !== false, notify: j.notify !== false }, fromFile: true };
     }
     catch {
-        return { config: { track: true, notify: false }, fromFile: false };
+        return { config: { track: true, notify: true }, fromFile: false };
     }
 }
 function writeConfig(c) {
