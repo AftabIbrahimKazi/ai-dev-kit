@@ -50,13 +50,13 @@ t('a bad value exits 2 with one error line and writes nothing', () => {
   assert.ok(!fs.existsSync(cfg(home)));
 });
 
-t('interactive: the install asks about usage tracking (Enter takes yes, and no notices) and writes the answer', () => {
+t('interactive: the install asks about usage tracking (Enter takes yes, notices default on) and writes the answer', () => {
   const home = tmp('uhome '), root = tmp('uroot ');
   const r = run(home, base(root), { input: '\n'.repeat(30), env: { AI_DEV_KIT_INTERACTIVE: '1' } });
   assert.strictEqual(r.status, 0, r.stderr + r.stdout);
   assert.match(r.stdout + r.stderr, /Keep track of which kit features get used\?/);
   assert.match(r.stdout + r.stderr, /costs no tokens/);
-  assert.deepStrictEqual(JSON.parse(fs.readFileSync(cfg(home), 'utf8')), { track: true, notify: false });
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(cfg(home), 'utf8')), { track: true, notify: true });
 });
 
 t('interactive: a flag already given is never asked again', () => {
@@ -64,5 +64,5 @@ t('interactive: a flag already given is never asked again', () => {
   const r = run(home, [...base(root), '--usage', 'off'], { input: '\n'.repeat(30), env: { AI_DEV_KIT_INTERACTIVE: '1' } });
   assert.strictEqual(r.status, 0, r.stderr + r.stdout);
   assert.ok(!/Keep track of which kit features get used\?/.test(r.stdout + r.stderr));
-  assert.deepStrictEqual(JSON.parse(fs.readFileSync(cfg(home), 'utf8')), { track: false, notify: false });
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(cfg(home), 'utf8')), { track: false, notify: true });
 });
