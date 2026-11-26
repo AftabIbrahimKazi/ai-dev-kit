@@ -57,7 +57,6 @@ exports.ROWS = [
     { situation: 'About to commit', use: '`/commit-check` (optional: `--message "feat: x"`)', keys: ['commit', 'before commit', 'staged', 'stage', 'ready to commit', 'secrets in'] },
     { situation: 'Keep files out of the Changes tree', use: '`/untrack hide <paths>` (`show` to undo, `list` to see)', keys: ['untrack', 'stop tracking', 'hide files', 'changes tree', 'gitignore a tracked', 'hide from git'] },
     { situation: 'Session feels expensive', use: 'the mod\'s `/budget` (Claude Code)', keys: ['expensive', 'budget', 'tokens', 'cost', 'spend', 'usage'] },
-    { situation: 'Subscription limit or the free router quota ran out — switch runners', use: '`/api-mode free` or `/api-mode claude` (applies next session; needs `UNIFIED_API_KEY` in `~/.ai-dev-kit/.env` for free)', keys: ['api mode', 'switch backend', 'free api', 'subscription limit', 'unified api', 'router', 'quota ran out', 'switch runner', 'free mode', 'claude mode'] },
     { situation: 'A noisy test or build run', use: '`/quiet npm test`', keys: ['noisy', 'quiet', 'verbose output', 'too much output', 'long output'] },
     { situation: 'Something fails, cause unknown', use: '`/debug-protocol <what happened>`', keys: ['fails', 'failing', 'broken', 'bug', 'crash', 'error', 'not working', 'cause unknown', 'debug'] },
     { situation: 'Big or many-file task', use: '`/plan-first <task>`', keys: ['big task', 'many files', 'refactor', 'migrate', 'migration', 'rewrite', 'plan first', 'large change'] },
@@ -93,6 +92,7 @@ exports.ROWS = [
     { situation: 'Will the local models and media add-ons run on this machine', use: '`/device` (optional: `--preset lite|standard|full`, `--json`); read-only, downloads nothing', keys: ['device', 'my machine', 'hardware', 'gpu check', 'ram', 'disk space', 'what can i install', 'preset', 'first run'] },
     { situation: "Load only one job role's skills (frontend, backend, seo, devops, qa...)", use: '`/kit role <name>` (no name lists the roles); `/role <name>` adds without archiving the rest', keys: ['role', 'job role', 'only the skills for', 'load only', 'frontend dev', 'backend dev'] },
     { situation: 'Set up or update a project', use: 'run `install-kit` from the ai-dev-kit repo; it removes its own copy from a project once setup verifies clean', keys: ['install', 'set up the kit', 'setup', 'update the kit', 'install-kit', 'new project'] },
+    { situation: 'Subscription limit or the free router quota ran out — switch runners', use: '`/api-mode free` or `/api-mode claude` (applies next session; needs `UNIFIED_API_KEY` in `~/.ai-dev-kit/.env` for free)', keys: ['api mode', 'switch backend', 'free api', 'subscription limit', 'unified api', 'router', 'quota ran out', 'switch runner', 'free mode', 'claude mode'] },
 ];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const hit = (text, k) => new RegExp('(?<![a-z0-9])' + esc(k) + (/\s|-/.test(k) ? '' : '(?:e?s)?') + '(?![a-z0-9])', 'i').test(text);
