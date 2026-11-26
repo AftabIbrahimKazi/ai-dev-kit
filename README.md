@@ -533,6 +533,7 @@ Slash commands are shortcuts **you** type; the agent never runs them on its own.
 | `/figma <folder>` | Turns exported Figma PNG/SVG files into `project-context/design/figma.md`: frame sizes, colors, fonts, type sizes, text. No MCP, no Figma account tokens, no connector cost | a folder or files of exports, optional `--link <figma url>`, `--write` to save | `project-context` |
 | `/narration <setting>` | Controls reply narration without opening a file | `mute`, `unmute`, `stop`, `replay`, `status`, `voice male|female`, `volume 0-100`, `speed 0.5-2`, `pitch -12..12`, `maxSeconds 30-1800` | `narrate` |
 | `/persona <setting>` | Chooses how replies are worded; applies from the next session | `set female|male novice|mid|pro`, `off`, `status`, `list` | `personality` |
+| `/api-mode <mode>` | Switches Claude Code between the free unified router and the subscription; applies from the next session, running sessions keep their backend | `free`, `claude`, none (current mode) | none; needs `UNIFIED_API_KEY` in `~/.ai-dev-kit/.env` for `free` |
 | `/device` | Scans RAM, disk, GPU, Python, ffmpeg, Laya, local-vision, Ollama and Kaggle; prints Have / Missing / Next and a `lite`, `standard` or `full` preset. Read-only, downloads nothing | `--json`, `--preset lite\|standard\|full` | none |
 | `/kit` | This cheat sheet | optional: describe your situation | none |
 | `/eta` | Restates the active task's time estimate and checkpoint, no script | none | `plan-first` |

@@ -166,6 +166,7 @@ Not skills: plain command files that `install-kit` copies to `.claude/commands/`
 | `/recon` | security recon map with file:line | `security-audit` |
 | `/ctx` | set up, analyze and check the project-context docs folder | `project-context` |
 | `/persona` | choose the reply persona: gender and skill level, off, status | `personality` |
+| `/api-mode` | switch Claude Code between the free unified router and the subscription; applies next session | `skill-scope` |
 | `/narration` | mute, voice, volume, speed, pitch for reply narration | `narrate` |
 | `/invariants` | prove rule checks can fail, probe for thin checks, flag stale rules | `invariants` |
 | `/diagram` | detect, check and build stack or structure diagrams (light/dark SVG and HTML) | `diagram` |

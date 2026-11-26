@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-27
+
+### Added
+- `api-mode` command and `/api-mode`: switches Claude Code between the free unified router and the subscription by rewriting the nine router env keys in `~/.claude/settings.json` as one unit. The change applies from the NEXT session; a session already running keeps the backend it launched with. Entering the opposite word flips back — the safety valve when either side's limit runs out. `free` reads `UNIFIED_API_KEY` from `~/.ai-dev-kit/.env` at run time and refuses if the settings point at another gateway; `claude` strips all nine keys or none; no argument prints the current mode; a backup (`settings.json.api-mode.bak`) is written beside the settings before every change. Kit scripts need no edits — they run unchanged in both modes.
+
 ## 2026-11-25
 
 ### Added
