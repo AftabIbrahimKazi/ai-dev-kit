@@ -47,13 +47,15 @@ export function parseVerdict(text: string): { status: 'PASS' | 'WARN' | 'FAIL'; 
 
 type Reply = { text: string; backend: Exclude<Backend, 'code'>; note?: string } | { note: string };
 // A local model answers or fails fast; the router can need a minute on a first call (a slow provider, then failover), so a remote
-// backend gets 60 s unless the project set timeoutMs. The state-audit hook allows the reviewer 70 s.
+// backend gets 60 s (75 s for a pinned verdict) unless the project set timeoutMs. The state-audit hook allows the reviewer 90 s.
 const remote = (cfg: ReviewConfig): boolean => cfg.backends.some((b) => b === 'unified' || b === 'kaggle');
-const opts = (cfg: ReviewConfig, accept: (t: string) => boolean, cap: number): BackendsModule.AskOpts => ({ timeoutMs: cfg.timeoutMs ?? (remote(cfg) ? 60000 : 25000), maxTokens: cfg.maxTokens ?? cap, accept });
+// A verdict is short, so the router is asked for the models measured fastest (qwen first, 2 s), one per try, and the loop moves to
+// the next on a stuck call. Goldfish and other long answers keep the router's own pick.
+const opts = (cfg: ReviewConfig, accept: (t: string) => boolean, cap: number, pin = false): BackendsModule.AskOpts => ({ timeoutMs: cfg.timeoutMs ?? (remote(cfg) ? (pin ? 75000 : 60000) : 25000), maxTokens: cfg.maxTokens ?? cap, accept, ...(pin ? { models: bk.FAST_MODELS, slices: bk.FAST_SLICES } : {}) });
 
-async function run(prompt: string, text: string, cfg: ReviewConfig, env: NodeJS.ProcessEnv, accept: (t: string) => boolean, cap: number): Promise<Reply> {
+async function run(prompt: string, text: string, cfg: ReviewConfig, env: NodeJS.ProcessEnv, accept: (t: string) => boolean, cap: number, pin = false): Promise<Reply> {
   if (!bk.hasModel(cfg.backends)) return { note: 'no model backend is allowed for this feature: no model was asked' };
-  const r = await bk.ask(prompt, text, cfg.backends, opts(cfg, accept, cap), env);
+  const r = await bk.ask(prompt, text, cfg.backends, opts(cfg, accept, cap, pin), env);
   if ('handoff' in r) return { note: r.notes.join('; ') };
   return { text: r.text, backend: r.backend, note: r.notes.length ? r.notes.join('; ') : undefined };
 }
@@ -64,7 +66,7 @@ export async function generate(prompt: string, text: string, cfg: ReviewConfig, 
 }
 
 export async function review(prompt: string, text: string, cfg: ReviewConfig, env: NodeJS.ProcessEnv = process.env): Promise<ReviewResult> {
-  const r = await run(prompt, text, cfg, env, (t) => parseVerdict(t) !== null, 600);
+  const r = await run(prompt, text, cfg, env, (t) => parseVerdict(t) !== null, 600, true);
   if (!('text' in r)) return { status: 'UNAVAILABLE', findings: '', backend: 'static', note: r.note };
   const v = parseVerdict(r.text)!;
   return { ...v, backend: r.backend, note: r.note };

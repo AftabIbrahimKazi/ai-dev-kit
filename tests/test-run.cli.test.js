@@ -285,7 +285,7 @@ test("a project with tests: [] probes nothing and sends nothing to any model", a
     assert.match(r.out, /^\[claude\]/);
 });
 
-test("unified step (forced): the digest goes to the router with model auto, and a complete answer replaces it", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
+test("unified step (forced): the digest goes to the router (fastest pinned model first), and a complete answer replaces it", withEnv({ UNIFIED_API_KEY: "k-test-1" }, async () => {
     const d = project({ "a.test.js": manyFail(40) });
     withBackends(d, ["unified"]);
     const reply = Array.from({ length: 40 }, (_, i) => `Error: distinct failure k${i}`).join("\n");
@@ -296,7 +296,7 @@ test("unified step (forced): the digest goes to the router with model auto, and 
         assert.match(r.out, /^\[unified\]/);
         assert.match(r.out, /condensed by the unified router/);
         const post = rt.calls.find((c) => c.url === "/v1/chat/completions");
-        assert.ok(post && post.auth === "Bearer k-test-1" && JSON.parse(post.body).model === "auto");
+        assert.ok(post && post.auth === "Bearer k-test-1" && JSON.parse(post.body).model === "qwen3.8-27b", "the fastest measured model is asked first");
     } finally { delete process.env.UNIFIED_API_BASE; rt.s.close(); }
 }));
 

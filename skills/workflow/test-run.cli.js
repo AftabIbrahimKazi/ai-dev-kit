@@ -189,7 +189,7 @@ async function condense(text, via) {
     if (via === "unified") {
         const bk = backends();
         if (!bk) return { note: "unified: the shared backends module is missing; digest kept" };
-        const r = await bk.ask(PROMPT, text, ["unified"], { timeoutMs: 60000, maxTokens: 300 });
+        const r = await bk.ask(PROMPT, text, ["unified"], { timeoutMs: 75000, maxTokens: 300, models: bk.FAST_MODELS, slices: bk.FAST_SLICES });
         return "text" in r ? { text: r.text.trim(), model: "the unified router" } : { note: `unified model unavailable (${r.notes.join("; ")}); digest kept` };
     }
     const ep = endpoint(via);

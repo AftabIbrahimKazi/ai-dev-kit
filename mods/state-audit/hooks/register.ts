@@ -58,7 +58,7 @@ export const register: Register = (on) => {
         const reviewer = await find($, 'plan-first/reviewer.js')
         const prompt = await find($, 'implicit-state-audit/ask.txt')
         if (reviewer && prompt) {
-          const v = await $.process.run(['node', reviewer, '--prompt', prompt, '--file', e.file_path], { timeoutMs: 70000 })
+          const v = await $.process.run(['node', reviewer, '--prompt', prompt, '--file', e.file_path], { timeoutMs: 90000 })
           if (v.exitCode === 1 && v.stdout.trim()) extra = `\nSecond reviewer:\n${v.stdout.trim()}`
         }
       }

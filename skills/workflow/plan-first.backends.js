@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hasModel = exports.mask = exports.neverSend = exports.ORDER = void 0;
+exports.hasModel = exports.FAST_SLICES = exports.FAST_MODELS = exports.mask = exports.neverSend = exports.ORDER = void 0;
 exports.readBackends = readBackends;
 exports.unifiedKey = unifiedKey;
 exports.ask = ask;
@@ -105,14 +105,15 @@ async function kaggle(prompt, text, env, t, cap) {
         return 'kaggle unreachable: ' + why(e);
     }
 }
-// The router always gets model "auto": a pinned model has no failover and timed out for 60 s in a probe.
-async function unified(prompt, text, env, t, cap) {
+// The router gets model "auto" unless the caller pins one: auto picks a different model per request and often lands on a slow
+// reasoning model, while a pinned model has no failover (so the loop below moves to the next pinned model on any failure).
+async function unified(prompt, text, env, t, cap, model = 'auto') {
     const key = unifiedKey(env);
     if (!key)
         return 'unified: no UNIFIED_API_KEY (set it in your shell or ~/.ai-dev-kit/.env)';
     const base = (env.UNIFIED_API_BASE || 'http://127.0.0.1:31415').replace(/\/$/, '');
     try {
-        const r = await postJson(`${base}/v1/chat/completions`, { model: 'auto', temperature: 0, max_tokens: cap, messages: [{ role: 'user', content: `${prompt}\n\n${(0, exports.mask)(text)}` }] }, { authorization: `Bearer ${key}` }, t);
+        const r = await postJson(`${base}/v1/chat/completions`, { model, temperature: 0, max_tokens: cap, messages: [{ role: 'user', content: `${prompt}\n\n${(0, exports.mask)(text)}` }] }, { authorization: `Bearer ${key}` }, t);
         if (!r.ok)
             return `unified HTTP ${r.status}`;
         return { text: r.json?.choices?.[0]?.message?.content || '' };
@@ -122,6 +123,45 @@ async function unified(prompt, text, env, t, cap) {
     }
 }
 const CALL = { ollama, kaggle, unified };
+const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
+const RETRYABLE = /timeout|HTTP (429|5\d\d)/;
+// The router picks a different model on every request: one call can land on a fast model (0.5 s) and the next on a slow reasoning
+// model (50 s, no verdict). So the router is asked in a loop, not once: a short window, an abort, a short pause, a longer window,
+// until the total budget (timeoutMs) or the try cap is spent. Only a timeout, a 429, a 5xx or an unusable reply is retried; a
+// missing key, a rejected key or a router that is down ends the loop at once. The window scales with the budget (a goldfish
+// stage or a coding task is allowed a long answer) and never drops below 15 s, so a normal answer is not cut off.
+// With `models` the attempts walk that list in order (one model per attempt, each with its own window from `slices`), so a short
+// answer can pin the models measured to answer fast. A pinned model that is renamed or unserved (400 or 404) moves on to the next.
+async function unifiedLoop(prompt, body, env, total, cap, accept, o) {
+    const end = Date.now() + total;
+    const maxTries = o.tries ?? (o.models ? o.models.length : 4);
+    let slice = o.sliceMs ?? Math.min(total, Math.max(15000, total / 4));
+    let last = 'unified: no attempt fit in the time budget';
+    let n = 0;
+    while (n < maxTries && end - Date.now() > 200) {
+        const window = Math.min(o.slices?.[n] ?? slice, end - Date.now());
+        const r = await unified(prompt, body, env, window, cap, o.models?.[n % o.models.length] ?? 'auto');
+        n++;
+        if (typeof r !== 'string') {
+            if (accept(r.text))
+                return { text: r.text };
+            last = 'unified reply was not usable';
+        }
+        else {
+            last = r;
+            if (!RETRYABLE.test(r) && !(o.models && /HTTP (400|404)/.test(r)))
+                break;
+        }
+        await sleep(Math.min(500 * n, 2000, end - Date.now()));
+        slice = Math.min(Math.floor(slice * 1.5), total);
+    }
+    return n > 1 ? `${last} (after ${n} tries)` : last;
+}
+// Models measured on the router for a short verdict (2026-11-27, one sample each): qwen3.8-27b answered in 2 s, llama-3.3-70b in 19 s,
+// deepseek-v4-flash in 22 s; auto, qwen3.8-flash, gemini-3.8-flash and gpt-5.6-luna timed out at 40 s. Each gets a window that fits its
+// speed. Names change: an unserved one is skipped (400 or 404), and the list is short enough to re-measure with one script.
+exports.FAST_MODELS = ['qwen3.8-27b', 'qwen3.8-27b', 'llama-3.3-70b', 'deepseek-v4-flash'];
+exports.FAST_SLICES = [8000, 8000, 26000, 30000];
 // Try each allowed model backend in the fixed order. First usable reply wins; if none does, the caller hands over to Claude.
 // "code" is skipped here: it is the caller's own free scan, which runs before any model is asked.
 async function ask(prompt, text, backends, opts = {}, env = process.env) {
@@ -134,6 +174,13 @@ async function ask(prompt, text, backends, opts = {}, env = process.env) {
     for (const b of exports.ORDER) {
         if (b === 'code' || !backends.includes(b))
             continue;
+        if (b === 'unified') {
+            const u = await unifiedLoop(prompt, body, env, t, cap, accept, { sliceMs: opts.sliceMs, tries: opts.tries, models: opts.models, slices: opts.slices });
+            if (typeof u !== 'string')
+                return { text: u.text, backend: b, notes };
+            notes.push(u);
+            continue;
+        }
         const r = await CALL[b](prompt, body, env, t, cap);
         if (typeof r === 'string') {
             notes.push(r);

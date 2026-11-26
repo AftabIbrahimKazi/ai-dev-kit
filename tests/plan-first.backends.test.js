@@ -99,6 +99,66 @@ const json = (res, code, o) => { res.writeHead(code, { 'content-type': 'applicat
   check('long input is cut to the cap', JSON.parse(uni.calls[0].body).messages[0].content.length < 61000);
   check('secret-looking files are never sent', b.neverSend('.env') && b.neverSend('a/id_rsa') && b.neverSend('x/secret.txt') && !b.neverSend('src/app.js'));
 
+  // the router loop: abort a stuck call, pause, try again; only retryable failures loop
+  const ok200 = (res, text) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ choices: [{ message: { content: text } }] })); };
+  const sequence = async (steps) => {
+    let n = 0;
+    return server((req, res) => { const step = steps[Math.min(n++, steps.length - 1)]; if (step === 'hang') return; if (typeof step === 'number') { res.statusCode = step; return res.end('{}'); } ok200(res, step); });
+  };
+  const loopEnv = (s) => ({ AI_DEV_KIT_HOME: home, UNIFIED_API_BASE: s.base, UNIFIED_API_KEY: 'k' });
+  let t0 = Date.now();
+  let s1 = await sequence(['hang', 'second try answers']);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 6000, sliceMs: 400 }, loopEnv(s1));
+  check('a stuck call is aborted and the next try answers', r.backend === 'unified' && r.text === 'second try answers' && s1.calls.length === 2 && Date.now() - t0 < 4000, JSON.stringify({ calls: s1.calls.length, ms: Date.now() - t0 }));
+  s1.s.close();
+  s1 = await sequence(['Let me analyze this', 'PASS']);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 6000, sliceMs: 2000, accept: (x) => /^(PASS|WARN|FAIL)/.test(x) }, loopEnv(s1));
+  check('an unusable reply is retried, since the router may pick another model', r.text === 'PASS' && s1.calls.length === 2);
+  s1.s.close();
+  s1 = await sequence([503, 429, 'finally']);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 8000, sliceMs: 2000 }, loopEnv(s1));
+  check('a 5xx and a 429 are retried', r.text === 'finally' && s1.calls.length === 3);
+  s1.s.close();
+  s1 = await sequence(['hang']);
+  t0 = Date.now();
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 1500, sliceMs: 400 }, loopEnv(s1));
+  check('a router that never answers ends within the budget with a hand-over and the try count', r.handoff === true && Date.now() - t0 < 3000 && /after \d tries/.test(r.notes[0]), JSON.stringify({ ms: Date.now() - t0, notes: r.notes }));
+  s1.s.close();
+  s1 = await sequence([500]);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 20000, sliceMs: 2000 }, loopEnv(s1));
+  check('the try cap stops a router that keeps failing long before the budget', r.handoff === true && s1.calls.length === 4 && /after 4 tries/.test(r.notes[0]), String(s1.calls.length));
+  s1.s.close();
+  s1 = await sequence([401]);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 20000, sliceMs: 2000 }, loopEnv(s1));
+  check('a rejected key is not retried', r.handoff === true && s1.calls.length === 1 && /HTTP 401/.test(r.notes[0]));
+  s1.s.close();
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 20000 }, { AI_DEV_KIT_HOME: path.join(home, 'none'), UNIFIED_API_BASE: 'http://127.0.0.1:1' });
+  check('no key means no loop', r.handoff === true && /UNIFIED_API_KEY/.test(r.notes[0]) && !/tries/.test(r.notes[0]));
+  const dead2 = await server((q, res) => res.end()); const dead2Base = dead2.base; dead2.s.close();
+  t0 = Date.now();
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 20000, sliceMs: 2000 }, { AI_DEV_KIT_HOME: home, UNIFIED_API_BASE: dead2Base, UNIFIED_API_KEY: 'k' });
+  check('a router that is down is not retried', r.handoff === true && Date.now() - t0 < 1500 && !/tries/.test(r.notes[0]), r.notes.join('; '));
+
+  // pinned models: one per try, in order; an unserved one is skipped, a stuck one is aborted, the third answers
+  const seen = [];
+  const pinned = await server((req, res, body) => {
+    const m = JSON.parse(body).model; seen.push(m);
+    if (m === 'gone-model') { res.statusCode = 404; return res.end('{}'); }
+    if (m === 'slow-model') return;
+    ok200(res, 'PASS from ' + m);
+  });
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 8000, models: ['gone-model', 'slow-model', 'good-model', 'never-reached'], slices: [1000, 400, 2000, 2000] }, loopEnv(pinned));
+  check('pinned models are tried in order, skipping an unserved one and aborting a stuck one', r.text === 'PASS from good-model' && JSON.stringify(seen) === JSON.stringify(['gone-model', 'slow-model', 'good-model']), JSON.stringify(seen));
+  seen.length = 0;
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 8000 }, loopEnv(pinned));
+  check('without pinned models the router is asked for auto', r.backend === 'unified' && seen[0] === 'auto', JSON.stringify(seen));
+  check('the fast list is exported with a window for each model', b.FAST_MODELS.length === b.FAST_SLICES.length && b.FAST_MODELS[0] === 'qwen3.8-27b');
+  pinned.s.close();
+  s1 = await sequence([404]);
+  r = await b.ask('p', 't', ['unified'], { timeoutMs: 8000 }, loopEnv(s1));
+  check('without pinned models a 404 is not retried', r.handoff === true && s1.calls.length === 1);
+  s1.s.close();
+
   // reachable: a quick probe per backend
   fs.writeFileSync(path.join(home, 'models.json'), JSON.stringify({ system2: { baseUrl: oll.base } }));
   check('code is always reachable', await b.reachable('code', {}));
