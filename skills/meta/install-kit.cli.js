@@ -11,6 +11,7 @@ exports.mergeHooks = mergeHooks;
 exports.doMergeHooks = doMergeHooks;
 exports.hasKitHooks = hasKitHooks;
 exports.removeKitHooks = removeKitHooks;
+exports.variantCtxFor = variantCtxFor;
 exports.installOneSkill = installOneSkill;
 exports.stripTemplatePreamble = stripTemplatePreamble;
 exports.applyContextCode = applyContextCode;
@@ -87,6 +88,7 @@ const verifyModule = require("./install-kit.verify");
 const select = require("./install-kit.select");
 const company = require("./install-kit.company");
 const sig = require("./install-kit.signature");
+const variants = require("./install-kit.variants");
 const skill_scope_move_1 = require("./skill-scope.move");
 Object.defineProperty(exports, "readManifest", { enumerable: true, get: function () { return skill_scope_move_1.readManifest; } });
 Object.defineProperty(exports, "writeManifest", { enumerable: true, get: function () { return skill_scope_move_1.writeManifest; } });
@@ -468,6 +470,55 @@ function coreHooksOrNull(library) {
         return null;
     }
 }
+// Keeps the part of a variant block that matches this install (see install-kit.variants.ts). A malformed block leaves the text
+// as it is: extra text in a skill is better than missing text.
+function applyVariants(text, ctx) {
+    if (!ctx || !variants.hasVariants(text))
+        return text;
+    try {
+        return variants.renderVariants(text, ctx);
+    }
+    catch {
+        return text;
+    }
+}
+// What a render sees: this install's tool and OS, and the backend lists the project allows. The new --ai answers win over the file
+// only where writeAiBackends would write them (a key already in the file is kept unless --force), so install and update agree.
+function variantCtxFor(root, tool, ai, force) {
+    let cur = {};
+    try {
+        cur = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ai-backends.json'), 'utf8'));
+    }
+    catch { /* none yet */ }
+    const eff = { ...cur };
+    for (const [f, list] of Object.entries(ai || {}))
+        if (!(f in cur) || force)
+            eff[f] = list;
+    return variants.buildVariantCtx(tool, eff);
+}
+// Copies one companion file or folder, rendering variant blocks in the .md files. Returns whether anything changed on disk.
+function syncCompanion(src, dest, ctx) {
+    if (fs.statSync(src).isDirectory()) {
+        fs.mkdirSync(dest, { recursive: true });
+        let changed = false;
+        for (const name of fs.readdirSync(src))
+            if (syncCompanion(path.join(src, name), path.join(dest, name), ctx))
+                changed = true;
+        return changed;
+    }
+    if (ctx && /\.md$/i.test(src)) {
+        const text = applyVariants(fs.readFileSync(src, 'utf8'), ctx);
+        if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8') === text)
+            return false;
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, text);
+        return true;
+    }
+    if (!filesDiffer(src, dest))
+        return false;
+    copyRecursive(src, dest);
+    return true;
+}
 // Copies one skill (by name) from the library into the target skill root.
 function installOneSkill(libraryRoot, absSkillRoot, catalog, token, opts) {
     const { name, only } = parseSkillToken(token);
@@ -478,7 +529,7 @@ function installOneSkill(libraryRoot, absSkillRoot, catalog, token, opts) {
     const srcSkillFile = path.join(libraryRoot, 'skills', entry.dir, name + '.md');
     const destSkillFile = path.join(destDir, 'SKILL.md');
     let changed = false;
-    let newBody = fs.readFileSync(srcSkillFile, 'utf8');
+    let newBody = applyVariants(fs.readFileSync(srcSkillFile, 'utf8'), opts.variantCtx);
     if (name === 'comment-style') {
         const existing = fs.existsSync(destSkillFile) ? fs.readFileSync(destSkillFile, 'utf8') : null;
         const existingLevel = existing && ACTIVE_LEVEL_RE.exec(existing);
@@ -496,10 +547,8 @@ function installOneSkill(libraryRoot, absSkillRoot, catalog, token, opts) {
     for (const c of companions) {
         const src = path.join(libraryRoot, 'skills', entry.dir, c.src);
         const dest = path.join(destDir, c.target);
-        if (filesDiffer(src, dest)) {
-            copyRecursive(src, dest);
+        if (syncCompanion(src, dest, opts.variantCtx))
             changed = true;
-        }
     }
     return { name, changed, companions: companions.map((c) => c.target) };
 }
@@ -857,6 +906,7 @@ function doInstall(args) {
     for (const token of args.skills || []) {
         const r = installOneSkill(args.library, absSkillRoot, catalog, token, {
             commentStyleLevel: args.commentStyleLevel,
+            variantCtx: variantCtxFor(args.root, args.tool, args.ai, args.force),
         });
         results.push(r);
         if (!r.error) {
@@ -1007,6 +1057,7 @@ function doUpdate(args) {
         // An archived skill is refreshed where it sits; it stays archived.
         const r = installOneSkill(args.library, archived ? absArchiveRoot : absSkillRoot, catalog, token, {
             commentStyleLevel: args.commentStyleLevel || manifest.commentStyleLevel || undefined,
+            variantCtx: variantCtxFor(args.root, manifest.tool, args.ai, args.force),
         });
         results.push(r);
         if (!r.error)

@@ -13,7 +13,17 @@ node <skill-root>/test-run/cli.js [<case words>] [--model auto|none|local|kaggle
 
 - The script always runs first. No case words: the whole suite. Case words ("login expired token"): only the test files whose name or titles match; says so when none match, then write the test first.
 - A pass is one line and ends there. Only a failure can involve a model, and `--model` is the one choice:
-  - `auto` (default): the chain, never skipped: local Ollama, the `LOCAL_LLM_URL` endpoint (Kaggle tunnel; digest leaves the machine, secrets masked), the free router (`unified`), then one Claude subagent. An unreachable or failing step hands over to the next. `tests` in `.claude/ai-backends.json` limits the steps (empty: Claude only; no list: local and kaggle). A digest of 25 lines or fewer stays as is; the subagent joins only when it was cut off or holds 4+ distinct errors.
+  - `auto` (default): the chain, never skipped; an unreachable or failing step hands over to the next:
+<!--if ai.tests~ollama-->
+    - local Ollama
+<!--/if-->
+<!--if ai.tests~kaggle-->
+    - the `LOCAL_LLM_URL` endpoint (Kaggle tunnel; the digest leaves the machine, secrets masked)
+<!--/if-->
+<!--if ai.tests~unified-->
+    - the free router (`unified`; the digest leaves the machine, secrets masked)
+<!--/if-->
+    - then one Claude subagent. A digest of 25 lines or fewer stays as is; the subagent joins only when it was cut off or holds 4+ distinct errors.
   - Claude tier in auto: haiku at low effort; sonnet at low effort when the log is over 40k tokens or has 4+ distinct errors. Never fable. Opus only by explicit `--model claude:opus`.
   - Anything above sonnet low (higher effort) is never started on its own: the script prints NEEDS APPROVAL (exit 4). Ask the user, then rerun with `--from-log <saved log> --model claude --allow sonnet:medium` (no tests rerun). Ask at the planning stage when a plan includes test runs, so the answer can be stored once as `"allow": "sonnet:medium"` in `.claude/test-gate.json`; if that was skipped, this stop is the fallback ask.
   - `none`, `local`, `kaggle`, `unified`, `claude[:...]` force one step, no chain.

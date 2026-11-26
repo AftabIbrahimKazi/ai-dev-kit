@@ -953,6 +953,22 @@ t('ai backends: coding=... is written for kaggle and the add-on ships the shared
   assert.ok(fs.existsSync(path.join(root, '.claude', 'skills', 'kaggle', 'cli.js')));
 });
 
+t('variants: the installed kaggle text follows the coding answer, and update re-renders when the answer changes', () => {
+  const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
+  const body = () => fs.readFileSync(path.join(root, '.claude', 'skills', 'kaggle', 'SKILL.md'), 'utf8');
+  const inst = (...extra) => runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'kaggle', '--yes', ...extra]);
+  assert.strictEqual(inst('--ai', 'coding=unified').status, 0);
+  assert.ok(!/pip install kaggle/.test(body()) && /UNIFIED_API_KEY/.test(body()), 'unified only: no Kaggle setup steps');
+  assert.ok(!/<!--/.test(body()), 'no marker is left in the installed file');
+  const upd = (...extra) => runCli(['update', '--library', lib, '--root', root, ...extra]);
+  assert.strictEqual(upd().status, 0);
+  assert.ok(!/pip install kaggle/.test(body()), 'an update with the same answers keeps the same text');
+  assert.strictEqual(inst('--ai', 'coding=kaggle', '--force').status, 0);
+  assert.ok(/pip install kaggle/.test(body()) && !/Who writes the code/.test(body()), 'kaggle only: the setup steps are back, the router section is not');
+  assert.strictEqual(inst('--ai', 'coding=kaggle+unified', '--force').status, 0);
+  assert.ok(/pip install kaggle/.test(body()) && /Who writes the code/.test(body()), 'both: everything');
+});
+
 t('ai backends: a feature whose skill is not installed is not written', () => {
   const lib = path.join(__dirname, '..'); const root = tmp(); write(root, 'package.json', '{}');
   const r = runCli(['install', '--library', lib, '--root', root, '--tool', 'claude', '--skills', 'implicit-state-audit', '--yes', '--ai', 'goldfish=unified']);

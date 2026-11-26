@@ -30,7 +30,9 @@ Not machine-checked: a transition that ignores the current state, and state spli
 A WARN on flags that are truly independent (a drawer open and a map ready) is a false alarm: say so in one line and leave it.
 
 ## The reviewer (optional)
+<!--if ai.review~ollama|kaggle|unified-->
 `<skill-root>/implicit-state-audit/ask.txt` is the prompt for a second model. `<skill-root>/plan-first/reviewer.js --prompt <prompt> --file <file>` sends one file to the models the project allows (`"review"` in `.claude/ai-backends.json`) and prints only WARN or FAIL. A model that is down or rate-limited is skipped, never an error.
+<!--/if-->
 
 ## Rules
 - Run the scan on changed UI files before a UI task is called done; a FAIL blocks "done".
