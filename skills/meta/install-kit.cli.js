@@ -799,14 +799,19 @@ function applyAgentReady(root, protocolAbs) {
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify({ ...cfg, agentReady: true }, null, 2) + '\n');
 }
-function syncExternals(manifest, want, refresh, force) {
+function syncExternals(want, refreshPresent, force) {
     const ids = new Set(want || []);
-    if (refresh)
-        for (const id of Object.keys(manifest.external || {}))
-            ids.add(id);
+    if (refreshPresent) {
+        try {
+            for (const r of ext.loadRegistry())
+                if (r.fetch !== 'skill' && ext.detect(r).stale)
+                    ids.add(r.id);
+        }
+        catch { /* registry unreadable */ }
+    }
     if (!ids.size)
         return undefined;
-    const res = { ok: true, fetched: [], dropped: [], credits: [] };
+    const res = { ok: true, fetched: [], credits: [] };
     for (const id of ids) {
         const r = ext.findRef(id);
         if (!r) {
@@ -814,13 +819,15 @@ function syncExternals(manifest, want, refresh, force) {
             res.ok = false;
             continue;
         }
+        const have = ext.detect(r);
+        if (have.present && !have.stale && !force) {
+            res.fetched.push({ id, ok: true, path: have.where, ref: have.fetchedRef || have.pinned, credit: ext.creditLine(r), already: true });
+            continue;
+        }
         const out = ext.fetchRef(r, force);
         res.fetched.push(out);
-        if (out.ok) {
-            manifest.external = manifest.external || {};
-            manifest.external[id] = { ref: out.ref || r.ref, path: out.path, at: new Date().toISOString(), sha256: out.sha256, commit: out.commit };
+        if (out.ok)
             res.credits.push(out.credit);
-        }
         else
             res.ok = false;
     }
@@ -1090,7 +1097,7 @@ function doInstall(args) {
     if (args.contextCode && !standardsResult?.contextCodeFailed)
         manifest.contextCode = args.contextCode;
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: true });
-    const externalsResult = syncExternals(manifest, args.external, false, args.force);
+    const externalsResult = syncExternals(args.external, false, args.force);
     manifest.lastSeen = latestChangelogDate(args.library) ?? manifest.lastSeen;
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root, args.signature) : undefined;
@@ -1220,8 +1227,8 @@ function doUpdate(args) {
     company.refreshCompany(args.root, manifest);
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
-    // update re-pins: every opted-in tool is checked against the registry and re-fetched when its pin moved or its folder is gone
-    const externalsResult = syncExternals(manifest, args.external, true, args.force);
+    // update re-pins machine-wide tools that are present but behind the registry pin
+    const externalsResult = syncExternals(args.external, true, args.force);
     const news = whatsNew(args.library, manifest.lastSeen);
     if (news)
         manifest.lastSeen = news.latest;
@@ -1316,16 +1323,6 @@ function doUninstall(args) {
     }
     if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0)
         fs.rmdirSync(absArchiveRoot);
-    // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `install-kit.external.js remove <id>` deletes it.
-    for (const id of Object.keys(manifest.external || {})) {
-        if (args.all || (args.external || []).includes(id)) {
-            delete manifest.external[id];
-            removed.push('external/' + id + ' (tracking only)');
-            kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run install-kit.external.js remove ${id} to delete it`);
-        }
-    }
-    if (manifest.external && !Object.keys(manifest.external).length)
-        delete manifest.external;
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
     const cmd = pruneCommands(args.root, manifest, !!args.all, args.library || (() => { try {
@@ -1884,7 +1881,7 @@ async function askExternals(args) {
     }
     const pick = [];
     for (const r of offer) {
-        console.log(dim(`${r.name} (${r.licence}, ${r.repo}): fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/, shared by every project and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
+        console.log(dim(`${r.name} (${r.licence}, ${r.repo}): installed once for the whole machine (skipped if it is already there), fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/ and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
         if (await askYesNo(`Fetch ${r.name} now?`, false))
             pick.push(r.id);
     }
@@ -2445,6 +2442,9 @@ async function main() {
             console.error(red(`external ${f.id} FAILED: ${f.error}`));
         process.exit(1);
     }
+    if (ex)
+        for (const f of ex.fetched.filter((x) => x.ok && x.already))
+            console.error(`${f.id} is already installed on this machine (${f.path}); nothing to fetch`);
     if (ex)
         for (const c of ex.credits)
             console.error('credit: ' + c);

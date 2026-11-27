@@ -40,13 +40,28 @@ const cli = (args) => run(CLI, [...args, '--library', LIB, '--root', proj, '--to
 const manifest = () => JSON.parse(fs.readFileSync(path.join(proj, '.ai-dev-kit.json'), 'utf8'));
 const toolFile = path.join(home, 'external', 'fixture', 'tool.txt');
 
-t('install --external fetches, records, prints the credit', () => {
-  const r = cli(['install', '--skills', 'handover', '--standards', '--context-code', 'TST', '--external', 'fixture']);
+// External tools are machine-wide: no manifest record, no per-project verify, nothing to uninstall in the project.
+const STD = ['--skills', 'handover', '--standards', '--context-code', 'TST'];
+const rmTool = () => fs.rmSync(path.join(home, 'external', 'fixture'), { recursive: true, force: true });
+
+t('install --external fetches it once, machine-wide, prints the credit and records nothing in the project', () => {
+  const r = cli(['install', ...STD, '--external', 'fixture']);
   assert.strictEqual(r.status, 0, r.stderr);
   assert.ok(fs.existsSync(toolFile), 'tool not fetched');
-  assert.strictEqual(manifest().external.fixture.ref, 'v1.0.0');
   assert.ok(/credit: Fixture/.test(r.stderr), 'credit line missing: ' + r.stderr);
   assert.strictEqual(JSON.parse(r.stdout).verify.ok, true);
+  assert.ok(!('external' in manifest()), 'the project manifest must not track a machine-wide tool');
+});
+
+t('a second install, from any project, finds it present and fetches nothing', () => {
+  const before = fs.statSync(path.join(home, 'external', 'fixture', '.ref.json')).mtimeMs;
+  const proj2 = path.join(base, 'proj2');
+  fs.mkdirSync(proj2);
+  const r = run(CLI, ['install', '--library', LIB, '--root', proj2, '--tool', 'claude', ...STD, '--external', 'fixture']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stderr, /fixture is already installed on this machine/);
+  assert.ok(!/credit: Fixture/.test(r.stderr), 'no download means no new credit line');
+  assert.strictEqual(fs.statSync(path.join(home, 'external', 'fixture', '.ref.json')).mtimeMs, before, 'the folder was rewritten');
 });
 
 t('status sees it as present, with its pin', () => {
@@ -55,31 +70,38 @@ t('status sees it as present, with its pin', () => {
   assert.ok(f.present && f.pinned === 'v1.0.0' && !f.stale);
 });
 
-t('update re-fetches when the folder is gone', () => {
-  fs.rmSync(path.join(home, 'external', 'fixture'), { recursive: true, force: true });
-  const r = cli(['update', '--all']);
+t('a tool found on PATH counts as present: nothing is fetched', () => {
+  rmTool();
+  const bindir = path.join(base, 'bin');
+  fs.mkdirSync(bindir, { recursive: true });
+  fs.writeFileSync(path.join(bindir, process.platform === 'win32' ? 'tool.exe' : 'tool'), 'x');
+  fs.writeFileSync(registry, JSON.stringify({ refs: [{ ...entry('fixture', sha), marker: process.platform === 'win32' ? 'tool.exe' : 'tool' }] }));
+  const r = spawnSync(process.execPath, [CLI, 'install', '--library', LIB, '--root', proj, '--tool', 'claude', ...STD, '--external', 'fixture'], { cwd: elsewhere, env: { ...env, PATH: bindir + path.delimiter + process.env.PATH }, encoding: 'utf8' });
   assert.strictEqual(r.status, 0, r.stderr);
-  assert.ok(fs.existsSync(toolFile));
+  assert.match(r.stderr, /already installed on this machine/);
+  assert.ok(!fs.existsSync(toolFile), 'it was downloaded although it is on PATH');
+  fs.writeFileSync(registry, JSON.stringify({ refs: [entry('fixture', sha), entry('badhash', 'f'.repeat(64))] }));
 });
 
-t('update re-pins when the registry pin moves', () => {
-  const moved = { refs: [{ ...entry('fixture', sha), ref: 'v1.1.0' }] };
-  fs.writeFileSync(registry, JSON.stringify(moved));
+t('update re-pins a present tool when the registry pin moves, and leaves current ones alone', () => {
+  assert.strictEqual(cli(['install', ...STD, '--external', 'fixture']).status, 0);
+  const stamp = path.join(home, 'external', 'fixture', '.ref.json');
+  const before = fs.statSync(stamp).mtimeMs;
+  assert.strictEqual(cli(['update', '--all']).status, 0);
+  assert.strictEqual(fs.statSync(stamp).mtimeMs, before, 'an up-to-date tool must not be refetched');
+  fs.writeFileSync(registry, JSON.stringify({ refs: [{ ...entry('fixture', sha), ref: 'v1.1.0' }] }));
   assert.ok(JSON.parse(run(REFS, ['status', '--json']).stdout)[0].stale, 'should be stale');
   const r = cli(['update', '--all']);
   assert.strictEqual(r.status, 0, r.stderr);
-  assert.strictEqual(manifest().external.fixture.ref, 'v1.1.0');
+  assert.strictEqual(JSON.parse(fs.readFileSync(stamp, 'utf8')).ref, 'v1.1.0');
   fs.writeFileSync(registry, JSON.stringify({ refs: [entry('fixture', sha), entry('badhash', 'f'.repeat(64))] }));
-  assert.strictEqual(cli(['update', '--all', '--force']).status, 0);
 });
 
-t('verify fails loudly, exit 1, when the tool is missing', () => {
-  fs.rmSync(path.join(home, 'external', 'fixture'), { recursive: true, force: true });
-  const r = run(VERIFY, ['--root', proj, '--tool', 'claude']);
-  assert.strictEqual(r.status, 1);
-  assert.ok(/external tool fixture is recorded but missing/.test(r.stdout), r.stdout);
-  assert.strictEqual(cli(['update', '--all']).status, 0); // heals it
-  assert.strictEqual(run(VERIFY, ['--root', proj, '--tool', 'claude']).status, 0);
+t('update never installs a tool nobody asked for', () => {
+  rmTool();
+  const r = cli(['update', '--all']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.ok(!fs.existsSync(toolFile));
 });
 
 t('a hash mismatch installs nothing and exits non-zero', () => {
@@ -87,8 +109,7 @@ t('a hash mismatch installs nothing and exits non-zero', () => {
   assert.strictEqual(r.status, 1);
   assert.ok(/hash mismatch/.test(r.stderr), r.stderr);
   assert.ok(!fs.existsSync(path.join(home, 'external', 'badhash')), 'partial install left behind');
-  assert.ok(!fs.readdirSync(path.join(home, 'external')).some((d) => d.includes('.tmp-')), 'temp folder left behind');
-  assert.ok(!manifest().external.badhash);
+  assert.ok(!fs.existsSync(path.join(home, 'external')) || !fs.readdirSync(path.join(home, 'external')).some((d) => d.includes('.tmp-')), 'temp folder left behind');
 });
 
 t('an unknown id fails, it is not ignored', () => {
@@ -97,15 +118,14 @@ t('an unknown id fails, it is not ignored', () => {
   assert.ok(/unknown external tool/.test(r.stderr));
 });
 
-t('uninstall drops tracking and keeps the shared folder', () => {
-  const r = cli(['uninstall', '--all']);
-  assert.strictEqual(r.status, 0, r.stderr);
-  assert.ok(!manifest().external);
-  assert.ok(fs.existsSync(toolFile), 'shared folder must survive');
-  assert.ok(/shared folder .* kept/.test(r.stdout));
+t('uninstall leaves the machine-wide tool alone; external-refs remove deletes it', () => {
+  assert.strictEqual(cli(['install', ...STD, '--external', 'fixture']).status, 0);
+  assert.strictEqual(cli(['uninstall', '--all']).status, 0);
+  assert.ok(fs.existsSync(toolFile), 'uninstalling a project must not delete a shared tool');
   assert.strictEqual(JSON.parse(run(REFS, ['remove', 'fixture']).stdout).removed, true);
   assert.ok(!fs.existsSync(toolFile));
 });
+
 
 t('a stealth build is refused', () => {
   fs.writeFileSync(registry, JSON.stringify({ refs: [{ ...entry('s', sha), asset: 'x-stealth.zip' }] }));

@@ -114,21 +114,6 @@ function checkStandards(root: string, findings: Finding[]): void {
 export interface FinishResult { removed: string[]; kept: string[] }
 export interface VerifyResult { ok: boolean; findings: Finding[]; finish?: FinishResult }
 
-// An external tool the manifest says was installed must still be there, with its marker file when the registry names one.
-function checkExternals(root: string, findings: Finding[]): void {
-  let m: { external?: Record<string, { path: string }> };
-  try { m = JSON.parse(fs.readFileSync(path.join(root, '.ai-dev-kit.json'), 'utf8')); } catch { return; }
-  if (!m.external) return;
-  let markers: Record<string, string | undefined> = {};
-  try { markers = Object.fromEntries((JSON.parse(fs.readFileSync(path.join(__dirname, 'install-kit.external.json'), 'utf8')) as { refs: { id: string; marker?: string }[] }).refs.map((r) => [r.id, r.marker])); } catch { /* registry unreadable: check the folder only */ }
-  for (const [id, rec] of Object.entries(m.external)) {
-    const marker = markers[id];
-    if (!fs.existsSync(rec.path) || (marker && !fs.existsSync(path.join(rec.path, marker)))) {
-      findings.push({ level: 'fail', check: 'external', message: `external tool ${id} is recorded but missing at ${rec.path}; run: node install-kit.external.js fetch ${id} --force` });
-    }
-  }
-}
-
 export function verify(args: VerifyArgs): VerifyResult {
   const tool = ROOTS[args.tool as Tool];
   if (!tool) return { ok: false, findings: [{ level: 'fail', check: 'args', message: `--tool must be one of ${Object.keys(ROOTS).join('|')}` }] };
@@ -138,7 +123,6 @@ export function verify(args: VerifyArgs): VerifyResult {
   checkSessionProtocol(args.root, tool.protocol, findings);
   checkCommentStyle(skillFolders, findings);
   checkStandards(args.root, findings);
-  checkExternals(args.root, findings);
   return { ok: !findings.some((f) => f.level === 'fail'), findings };
 }
 

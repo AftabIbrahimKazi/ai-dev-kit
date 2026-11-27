@@ -745,7 +745,7 @@ export interface CliArgs {
   companyDefaults?: company.DefaultsMode;
   usage?: 'on' | 'off'; // feature-usage tracking (the feature-usage mod and session-budget/usage.js read the same file)
   usageNotify?: 'on' | 'off';
-  external?: string[]; // --external obscura: opt-in external tools (skills/meta/install-kit.external.json), fetched into ~/.ai-dev-kit/external/
+  external?: string[]; // --external obscura: make sure an external tool (skills/meta/install-kit.external.json) exists machine-wide; fetched into ~/.ai-dev-kit/external/ only when missing
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
   yes?: boolean; // --yes: accept every default, ask nothing
   ai?: Partial<Record<AiFeature, AiBackend[]>>; // outside models allowed per feature (--ai review=code+ollama, --reviewer legacy)
@@ -760,24 +760,25 @@ export interface CliArgs {
 
 export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; externals?: ExternalsResult }
 
-// External tools: a registry entry the project opted into is fetched once into the shared ~/.ai-dev-kit/external/<id>/ and recorded
-// in the manifest. A failed fetch is reported, never hidden: ok is false, the CLI exits non-zero and verify fails until it is fixed.
-export interface ExternalsResult { ok: boolean; fetched: ext.FetchResult[]; dropped: string[]; credits: string[] }
-export function syncExternals(manifest: Manifest, want: string[] | undefined, refresh: boolean, force?: boolean): ExternalsResult | undefined {
+// External tools are machine-wide, not per project: the CLI checks whether the tool is already there (fetched earlier by any project, or on
+// PATH) and only when it is not does it fetch it once into ~/.ai-dev-kit/external/<id>/. Nothing is recorded in the project. A failed fetch is
+// reported, never hidden: ok is false and the CLI exits non-zero. `update` also re-pins tools that are already present but behind the registry.
+export interface ExternalsResult { ok: boolean; fetched: (ext.FetchResult & { already?: boolean })[]; credits: string[] }
+export function syncExternals(want: string[] | undefined, refreshPresent: boolean, force?: boolean): ExternalsResult | undefined {
   const ids = new Set<string>(want || []);
-  if (refresh) for (const id of Object.keys(manifest.external || {})) ids.add(id);
+  if (refreshPresent) {
+    try { for (const r of ext.loadRegistry()) if (r.fetch !== 'skill' && ext.detect(r).stale) ids.add(r.id); } catch { /* registry unreadable */ }
+  }
   if (!ids.size) return undefined;
-  const res: ExternalsResult = { ok: true, fetched: [], dropped: [], credits: [] };
+  const res: ExternalsResult = { ok: true, fetched: [], credits: [] };
   for (const id of ids) {
     const r = ext.findRef(id);
     if (!r) { res.fetched.push({ id, ok: false, error: 'unknown external tool (not in install-kit.external.json)', credit: '' }); res.ok = false; continue; }
+    const have = ext.detect(r);
+    if (have.present && !have.stale && !force) { res.fetched.push({ id, ok: true, path: have.where, ref: have.fetchedRef || have.pinned, credit: ext.creditLine(r), already: true }); continue; }
     const out = ext.fetchRef(r, force);
     res.fetched.push(out);
-    if (out.ok) {
-      manifest.external = manifest.external || {};
-      manifest.external[id] = { ref: out.ref || r.ref, path: out.path!, at: new Date().toISOString(), sha256: out.sha256, commit: out.commit };
-      res.credits.push(out.credit);
-    } else res.ok = false;
+    if (out.ok) res.credits.push(out.credit); else res.ok = false;
   }
   return res;
 }
@@ -997,7 +998,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (args.contextCode && !standardsResult?.contextCodeFailed) manifest.contextCode = args.contextCode;
 
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
-  const externalsResult = syncExternals(manifest, args.external, false, args.force);
+  const externalsResult = syncExternals(args.external, false, args.force);
   manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
   writeManifest(args.root!, manifest);
   const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root!, args.signature) : undefined;
@@ -1106,8 +1107,8 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   company.refreshCompany(args.root!, manifest);
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
-  // update re-pins: every opted-in tool is checked against the registry and re-fetched when its pin moved or its folder is gone
-  const externalsResult = syncExternals(manifest, args.external, true, args.force);
+  // update re-pins machine-wide tools that are present but behind the registry pin
+  const externalsResult = syncExternals(args.external, true, args.force);
   const news = whatsNew(args.library!, manifest.lastSeen);
   if (news) manifest.lastSeen = news.latest;
   writeManifest(args.root!, manifest);
@@ -1195,11 +1196,6 @@ export function doUninstall(args: CliArgs): UninstallResult {
     }
   }
   if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0) fs.rmdirSync(absArchiveRoot);
-  // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `install-kit.external.js remove <id>` deletes it.
-  for (const id of Object.keys(manifest.external || {})) {
-    if (args.all || (args.external || []).includes(id)) { delete manifest.external![id]; removed.push('external/' + id + ' (tracking only)'); kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run install-kit.external.js remove ${id} to delete it`); }
-  }
-  if (manifest.external && !Object.keys(manifest.external).length) delete manifest.external;
   if (removeShieldIfUnneeded(absSkillRoot)) removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
 
   const cmd = pruneCommands(args.root!, manifest, !!args.all, args.library || (() => { try { return defaultLibraryGuess(); } catch { return undefined; } })());
@@ -1704,7 +1700,7 @@ async function askExternals(args: CliArgs): Promise<void> {
   try { offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present); } catch { return; }
   const pick: string[] = [];
   for (const r of offer) {
-    console.log(dim(`${r.name} (${r.licence}, ${r.repo}): fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/, shared by every project and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
+    console.log(dim(`${r.name} (${r.licence}, ${r.repo}): installed once for the whole machine (skipped if it is already there), fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/ and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
     if (await askYesNo(`Fetch ${r.name} now?`, false)) pick.push(r.id);
   }
   if (pick.length) args.external = pick;
@@ -2110,6 +2106,7 @@ async function main(): Promise<void> {
   }
   const ex = (res as { externals?: ExternalsResult }).externals;
   if (ex && !ex.ok) { for (const f of ex.fetched.filter((x) => !x.ok)) console.error(red(`external ${f.id} FAILED: ${f.error}`)); process.exit(1); }
+  if (ex) for (const f of ex.fetched.filter((x) => x.ok && x.already)) console.error(`${f.id} is already installed on this machine (${f.path}); nothing to fetch`);
   if (ex) for (const c of ex.credits) console.error('credit: ' + c);
   if (um && um.mod === 'failed') process.exitCode = 1;
 }
