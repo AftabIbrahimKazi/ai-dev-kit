@@ -18,3 +18,19 @@ Time: 93 s base against 79 s with the mod (-15%). Turns: 16 against 20, the mode
 Limits: n = 2 per cell, Haiku only, three questions, one machine, one provider seen. Native WebSearch's cost includes its server-side search pass, which is what is replaced. Snippets are shorter than native results, so questions that need page detail will cost an extra fetch.
 
 Verdict: ships as opt-in (`install-kit mods --web-search on`).
+
+## Context-size check (same day, stream-json, Haiku, 2 runs per arm)
+
+Task: a research question that needed 6 searches (Deno, Bun and Node.js latest major and 1.0 year). Averages per run.
+
+| | native | with the mod |
+| --- | --- | --- |
+| tool result per search | 2,836 chars | 2,571 chars (-9%) |
+| input tokens, last turn | 49,087 | 48,263 (-2%) |
+| input tokens, all turns summed | 415,951 | 455,332 (+9%) |
+| turns | 10 | 11 |
+| cost | 0.0772 | 0.0060 (-92%) |
+
+Finding: the mod does not shrink the context window. Hits are about 9% smaller, but one mod run took 2 more turns, so summed input tokens rose. The cost drop is billing, not context; the likely cause (inferred, not verified) is the per-search charge of native search that the router path does not have. Both arms found the same facts.
+
+To shrink context, lower the snippet size (now 360 characters per hit); that trades detail and needs its own test.
