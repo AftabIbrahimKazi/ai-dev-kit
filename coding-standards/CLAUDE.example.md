@@ -19,14 +19,13 @@ This file is auto-loaded by your coding tool (Claude Code, OpenCode, …) at the
 
 ## Session Start Protocol
 
-At the start of every session the AI assistant must:
+Every session:
 
-1. Begin every response with `[CX <Context code>]` (or bare `[CX]` if no code is set below) — it tells the user you have not forgotten the project context
-2. On the first response, declare standards as **not yet loaded**
-3. Read `coding-standards/index.md` — loads the full standards map — only on the first turn that actually touches a file (edit, create, or a request needing a convention). Conversational, planning, or review-only turns never trigger this read.
-4. Once loaded, confirm active standards below and declare them loaded from that point on
+1. Begin every response with `[CX <Context code>]` (bare `[CX]` if no code is set below).
+2. First response: declare standards **not yet loaded**.
+3. On the first turn that touches a file (edit, create, or a convention question), read `coding-standards/index.md`, then confirm the active standards below as loaded. Conversational, planning or review-only turns never trigger this read.
 
-If the token is ever missing from a response — or the Context code is missing or wrong — the session has lost context. Stop immediately, discard the response, and start a new session.
+A missing or wrong token means the session lost context: discard the response and start a new session.
 
 ---
 
@@ -88,7 +87,7 @@ If the token is ever missing from a response — or the Context code is missing 
 
 ## Skill Triggers
 
-Load the skill BEFORE the action (a skill not loaded is a rule not applied). Remove rows for skills not installed.
+Load the skill BEFORE the action. Remove rows for skills not installed.
 
 | Situation | Skill |
 |---|---|
