@@ -314,7 +314,16 @@ function listSkills(libraryRoot) {
             .map((e) => e.name)
             // .ts files are dev-time source for a compiled .js companion -- never an installable artifact.
             .filter((n) => !EXCLUDE_NAMES.has(n) && !isMeta(relDir, n) && !n.endsWith('.ts'));
-        const mdStems = names.filter((n) => n.endsWith('.md')).map((n) => n.slice(0, -3));
+        // A skill file opens with frontmatter; a bare .md (bench notes, prompt rules) is documentation, never installable.
+        const isSkillDoc = (n) => {
+            try {
+                return fs.readFileSync(path.join(absDir, n), 'utf8').replace(/^﻿/, '').startsWith('---');
+            }
+            catch {
+                return false;
+            }
+        };
+        const mdStems = names.filter((n) => n.endsWith('.md') && isSkillDoc(n)).map((n) => n.slice(0, -3));
         const skillNames = mdStems.filter((s) => !mdStems.some((other) => other !== s && s.startsWith(other + '.')));
         const claimed = new Set(skillNames.map((s) => s + '.md'));
         for (const skillName of skillNames) {
@@ -653,6 +662,36 @@ function applyActiveStandards(body, opts) {
     }
     return out;
 }
+// Fills the project rows the installer can detect: name (package.json "name", else the folder name), framework and CSS framework
+// (package.json dependencies), and the token prefix from the chosen signature. Anything it cannot detect stays a placeholder.
+const FRAMEWORK_PKGS = [['next', 'Next.js'], ['astro', 'Astro'], ['nuxt', 'Nuxt'], ['@sveltejs/kit', 'SvelteKit'], ['svelte', 'Svelte'], ['vue', 'Vue'], ['react', 'React'], ['@angular/core', 'Angular'], ['vite', 'Vite']];
+const CSS_PKGS = [['bootstrap', 'Bootstrap'], ['tailwindcss', 'Tailwind CSS']];
+function detectProject(root) {
+    const pkg = readJsonSafe(path.join(root, 'package.json')) || {};
+    const deps = { ...pkg.devDependencies, ...pkg.dependencies };
+    const raw = typeof pkg.name === 'string' && pkg.name.trim() ? pkg.name.replace(/^@[^/]+\//, '') : path.basename(path.resolve(root));
+    const name = raw.split(/[-_.\s]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+    const label = (list) => {
+        const hit = list.find(([p]) => deps[p]);
+        if (!hit)
+            return undefined;
+        const v = /\d+(\.\d+)*/.exec(String(deps[hit[0]]));
+        return hit[1] + (v ? ' ' + v[0] : '');
+    };
+    return { name, framework: label(FRAMEWORK_PKGS), css: label(CSS_PKGS) };
+}
+function applyProjectContext(body, root, protocolFile, signature) {
+    const d = detectProject(root);
+    let out = body.replace(/^# \[CLAUDE\.md \| AGENTS\.md\] — \[Project Name\]/m, `# ${protocolFile} — ${d.name}`);
+    out = out.replace('[Your project name]', d.name);
+    if (d.framework)
+        out = out.replace('[e.g. Astro 6.4.8 / Next.js / None]', d.framework);
+    if (d.css)
+        out = out.replace('[e.g. Bootstrap 5 / None]', d.css);
+    if (signature && !/^(none|off|no)$/i.test(signature))
+        out = out.replace('[e.g. `--ex-` / `--ct-` / `--my-`]', '`--' + sig.normalizeAlias(signature).replace(/-$/, '') + '-`');
+    return out;
+}
 function installStandards(libraryRoot, root, protocolFile, opts) {
     const result = { copied: [], protocolCreated: false, refused: false };
     const srcDir = path.join(libraryRoot, 'coding-standards');
@@ -688,7 +727,7 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
         }
         if (opts.activeStandards)
             body = applyActiveStandards(body, opts.activeStandards);
-        return body;
+        return applyProjectContext(body, root, protocolFile, opts.signature);
     };
     // Only the tool's OWN file is replaced or appended to: with tool claude an AGENTS.md (written for other tools) is never touched, a CLAUDE.md is
     // created beside it instead. The context code is still refreshed in every protocol file that carries the kit's markers.
@@ -1169,6 +1208,26 @@ function doInstall(args) {
             }
         }
     }
+    // Skills from an earlier install that this selection does not include: kept (default) or moved to skills-archive/ (restorable).
+    let replacedSkills = [];
+    if (args.existingSkills === 'replace' && args.skills?.length) {
+        const wanted = new Set(args.skills.map((s) => parseSkillToken(s).name));
+        const archiveRoot = archiveRootOf(args.root, manifest);
+        for (const name of Object.keys(manifest.skills).filter((n) => !wanted.has(n))) {
+            const src = path.join(absSkillRoot, name);
+            const dest = path.join(archiveRoot, name);
+            if (fs.existsSync(src)) {
+                fs.mkdirSync(archiveRoot, { recursive: true });
+                fs.rmSync(dest, { recursive: true, force: true });
+                fs.renameSync(src, dest);
+            }
+            manifest.archived[name] = manifest.skills[name];
+            delete manifest.skills[name];
+            replacedSkills.push(name);
+        }
+        if (replacedSkills.length)
+            console.error(`${replacedSkills.length} earlier skills not in this selection moved to ${path.relative(args.root, archiveRoot)}/ (restore with the unarchive command): ${replacedSkills.join(', ')}`);
+    }
     if ((0, skill_scope_move_1.ensureShield)(absSkillRoot))
         results.push({ name: '(shield)', changed: true });
     // "Don't install default standards": the kit defaults are skipped entirely; the company folder is all there is.
@@ -1181,6 +1240,7 @@ function doInstall(args) {
             : undefined;
         standardsResult = installStandards(args.library, args.root, tool.protocol, {
             contextCode: args.contextCode,
+            signature: args.signature,
             existing: args.existingProtocol,
             agentReady: args.agentReady,
             force: args.force,
@@ -2286,6 +2346,18 @@ async function fillInteractive(cmd, args) {
                 }
             });
             steps.push(async () => {
+                if (args.existingSkills)
+                    return;
+                const wanted = new Set(args.skills.map((s) => parseSkillToken(s).name));
+                const old = Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).filter((n) => !wanted.has(n));
+                if (!old.length)
+                    return;
+                args.existingSkills = await askSelect(`${old.length} skills from an earlier install are not in this selection (${old.slice(0, 6).join(', ')}${old.length > 6 ? ', ...' : ''}):`, [
+                    { title: 'Keep them ' + dim('— nothing is removed'), value: 'keep' },
+                    { title: 'Replace them with this selection ' + green('(recommended)') + ' ' + dim('— the old ones move to skills-archive/, restorable'), value: 'replace' },
+                ], 0);
+            });
+            steps.push(async () => {
                 if (!(args.standards || args.company) || args.existingProtocol)
                     return;
                 const found = findExistingProtocols(args.root, ROOTS[args.tool]?.protocol || 'CLAUDE.md');
@@ -2399,6 +2471,14 @@ function parseArgs(argv) {
             a.contextCode = argv[++i];
         else if (k === '--agent-ready')
             a.agentReady = true;
+        else if (k === '--existing-skills') {
+            const v = argv[++i];
+            if (v !== 'replace' && v !== 'keep') {
+                console.error(red('error: --existing-skills must be replace or keep'));
+                process.exit(2);
+            }
+            a.existingSkills = v;
+        }
         else if (k === '--existing-protocol') {
             const v = argv[++i];
             if (v !== 'replace' && v !== 'append' && v !== 'keep') {
