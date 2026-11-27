@@ -13,9 +13,9 @@ Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). A
 ## First run (a person typing, no experience needed)
 1. Check ffmpeg: type `ffmpeg -version` and press Enter. A version line means yes. On Windows, if you see "not recognised", type `winget install Gyan.FFmpeg`, then open a new terminal.
 2. Build the machine first with the `teardown` add-on: `/teardown sheet teardown/<name>`. That also writes the timeline the video follows.
-3. Type `/teardown-film status teardown/<name>`. It lists what is ready and what is missing.
-4. Type `/teardown-film film teardown/<name> --preview`. This is a quick low-resolution look. It writes `teardown-out/<name>/<name>.preview.mp4`.
-5. When the preview looks right, type `/teardown-film film teardown/<name>` for the full 1920x1080 video at 30 fps.
+3. Type `/teardown film status teardown/<name>`. It lists what is ready and what is missing.
+4. Type `/teardown film teardown/<name> --preview`. This is a quick low-resolution look. It writes `teardown-out/<name>/<name>.preview.mp4`.
+5. When the preview looks right, type `/teardown film teardown/<name>` for the full 1920x1080 video at 30 fps.
 If you see exit 3, the message names the missing tool. If a long video is slow, you have no graphics card: use `--preview`, or `--from` and `--to` to record a part.
 
 ## The tool

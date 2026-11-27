@@ -12,9 +12,9 @@ Apply `learnings.md` if the `learnings-inject` mod supplied it (never search). A
 
 ## First run (a person typing, no experience needed)
 1. Build the machine with the `teardown` add-on and run `/teardown sheet teardown/<name>` once. That writes the timeline the score follows.
-2. Type `/teardown-sound sound teardown/<name>`. It writes `teardown-out/<name>/score.wav` and prints its length, loudness and peak.
+2. Type `/teardown sound teardown/<name>`. It writes `teardown-out/<name>/score.wav` and prints its length, loudness and peak.
 3. Play the file. To change the take, add `--seed 2`: the structure stays, the noise changes.
-4. For a video with the score, type `/teardown-film film teardown/<name>`. It finds `score.wav` on its own.
+4. For a video with the score, type `/teardown film teardown/<name>`. It finds `score.wav` on its own.
 If you see "timeline.json not found", step 1 was skipped.
 
 ## The tool

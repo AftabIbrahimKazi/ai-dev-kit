@@ -614,10 +614,34 @@ function parseArgs(argv: string[]): { cmd: string; pos: string[]; f: Record<stri
   }
   return { cmd: pos[0] || '', pos: pos.slice(1), f };
 }
-const USAGE = 'usage: teardown <detect|init|check|build|sheet|probe> ...  (detect [--about "a gearbox..."] [--model file.glb], init <name>, check <dir>, build <dir>, sheet <dir>, probe <dir>)';
+const USAGE = 'usage: teardown <detect|init|check|build|sheet|probe|film|sound> ...  (detect [--about "a gearbox..."] [--model file.glb], init <name>, check <dir>, build <dir>, sheet <dir>, probe <dir>, film status [<dir>] | film <dir> [--preview], sound <dir> | sound measure <file.wav>)';
+
+// `film` and `sound` belong to two opt-in add-ons that sit on top of this one. They stay separate scripts (own tests, own installs);
+// this command only hands the rest of its arguments to the sibling script and returns its exit code. Installed layout:
+// skills/teardown/cli.js beside skills/teardown-film/cli.js; repo layout: both in skills/addons/ as <name>.cli.js.
+function sibling(name: string): string | null {
+  const c = [path.join(__dirname, '..', name, 'cli.js'), path.join(__dirname, `${name}.cli.js`)];
+  return c.find((p) => fs.existsSync(p)) || null;
+}
+// film status [<dir>]  ->  teardown-film status [<dir>];  film <dir> ...  ->  teardown-film film <dir> ...
+// sound measure <file> ->  teardown-sound measure <file>; sound <dir> ... ->  teardown-sound sound <dir> ...
+export function delegation(raw: string[]): { addon: 'teardown-film' | 'teardown-sound'; args: string[] } | null {
+  const [sub, ...rest] = raw;
+  if (sub === 'film') return { addon: 'teardown-film', args: rest[0] === 'status' ? rest : ['film', ...rest] };
+  if (sub === 'sound') return { addon: 'teardown-sound', args: rest[0] === 'measure' ? rest : ['sound', ...rest] };
+  return null;
+}
+function delegate(d: { addon: 'teardown-film' | 'teardown-sound'; args: string[] }): number {
+  const script = sibling(d.addon);
+  if (!script) { process.stderr.write(`teardown ${d.addon === 'teardown-film' ? 'film' : 'sound'} needs the ${d.addon} add-on, which is not installed here. Install it (install-kit install --skills ${d.addon}) and run again.\n`); return 2; }
+  const r = cp.spawnSync(process.execPath, [script, ...d.args], { stdio: 'inherit' });
+  return r.status ?? 1;
+}
 const printFindings = (fs_: Finding[]) => fs_.forEach((x) => warn(`${x.level}: ${x.file ? x.file + (x.line ? ':' + x.line : '') + ' ' : ''}${x.msg}`));
 
 async function main(): Promise<void> {
+  const handoff = delegation(process.argv.slice(2));
+  if (handoff) { process.exitCode = delegate(handoff); return; }
   let a;
   try { a = parseArgs(process.argv.slice(2)); } catch (e) { fail((e as Error).message + '\n' + USAGE, 2); return; }
   const { cmd, pos, f } = a;

@@ -411,6 +411,39 @@ t('init on a spec.json that is not valid JSON says so, with the parser message',
 	assert.ok(r.stderr.includes('spec.json is not valid JSON: ') && !r.stderr.includes('NaN'), r.stderr);
 });
 
+t('film and sound are modes of teardown: the arguments map onto the add-on scripts', () => {
+	assert.deepStrictEqual(T.delegation(['film', 'status', 'teardown/x']), { addon: 'teardown-film', args: ['status', 'teardown/x'] });
+	assert.deepStrictEqual(T.delegation(['film', 'teardown/x', '--preview']), { addon: 'teardown-film', args: ['film', 'teardown/x', '--preview'] });
+	assert.deepStrictEqual(T.delegation(['sound', 'measure', 'a.wav']), { addon: 'teardown-sound', args: ['measure', 'a.wav'] });
+	assert.deepStrictEqual(T.delegation(['sound', 'teardown/x', '--dry-run']), { addon: 'teardown-sound', args: ['sound', 'teardown/x', '--dry-run'] });
+	assert.strictEqual(T.delegation(['check', 'teardown/x']), null);
+	assert.strictEqual(T.delegation([]), null);
+});
+
+t('film and sound reach the sibling scripts and return their exit codes', () => {
+	const d = proj();
+	const film = cli(d, 'film');           // the film script's own usage error, exit 2
+	assert.strictEqual(film.status, 2, film.stderr);
+	assert.ok(/teardown-film/.test(film.stderr), film.stderr);
+	const sound = cli(d, 'sound');
+	assert.strictEqual(sound.status, 2, sound.stderr);
+	assert.ok(/teardown-sound/.test(sound.stderr), sound.stderr);
+});
+
+t('film without the teardown-film add-on installed says so and exits 2', () => {
+	const alone = fs.mkdtempSync(path.join(os.tmpdir(), 'td alone-'));
+	fs.copyFileSync(SCRIPT, path.join(alone, 'cli.js'));
+	const r = spawnSync('node', [path.join(alone, 'cli.js'), 'film', 'status'], { encoding: 'utf8' });
+	assert.strictEqual(r.status, 2, r.stderr);
+	assert.ok(/teardown film needs the teardown-film add-on/.test(r.stderr) && /install-kit install --skills teardown-film/.test(r.stderr), r.stderr);
+	const s = spawnSync('node', [path.join(alone, 'cli.js'), 'sound', 'measure', 'x.wav'], { encoding: 'utf8' });
+	assert.strictEqual(s.status, 2); assert.ok(/teardown sound needs the teardown-sound add-on/.test(s.stderr), s.stderr);
+});
+
+t('the usage line names film and sound', () => {
+	assert.ok(/film/.test(cli(proj(), 'bogus').stderr + cli(proj(), 'bogus').stdout));
+});
+
 // A step that awaits forever would end the process with exit code 0 and look like a pass: fail unless the run reached its end.
 let finished = false;
 process.on('exit', () => { if (!finished) { console.log('FAIL the test run never finished (something awaits forever)'); process.exitCode = 1; } });
