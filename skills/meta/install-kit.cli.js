@@ -20,6 +20,8 @@ exports.removeParallelSessionSection = removeParallelSessionSection;
 exports.applyActiveStandards = applyActiveStandards;
 exports.installStandards = installStandards;
 exports.findExistingProtocols = findExistingProtocols;
+exports.parseE2eDriver = parseE2eDriver;
+exports.writeE2eDrivers = writeE2eDrivers;
 exports.syncExternals = syncExternals;
 exports.batchMod = batchMod;
 exports.parseAiFlag = parseAiFlag;
@@ -799,6 +801,32 @@ function applyAgentReady(root, protocolAbs) {
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify({ ...cfg, agentReady: true }, null, 2) + '\n');
 }
+const E2E_DRIVER_FILE = ['.claude', 'e2e-drivers.json'];
+function parseE2eDriver(v) {
+    const s = v.trim().toLowerCase();
+    if (s === 'none' || s === 'off')
+        return [];
+    if (s === 'both')
+        return ['obscura', 'chrome'];
+    if (s === 'obscura' || s === 'chrome')
+        return [s];
+    throw new Error('--e2e-driver must be obscura, chrome, both or none');
+}
+function writeE2eDrivers(root, v, hasScaffold) {
+    if (v === undefined)
+        return undefined;
+    const drivers = parseE2eDriver(v);
+    const file = path.join(root, ...E2E_DRIVER_FILE);
+    if (!hasScaffold)
+        return { drivers, note: 'the e2e-scaffold skill is not installed here, so no driver choice was written; install it first' };
+    if (!drivers.length) {
+        fs.rmSync(file, { force: true });
+        return { drivers, note: 'no driver chosen; any earlier choice was removed' };
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({ drivers }, null, 2) + '\n');
+    return { file, drivers };
+}
 function syncExternals(want, refreshPresent, force) {
     const ids = new Set(want || []);
     if (refreshPresent) {
@@ -1097,7 +1125,12 @@ function doInstall(args) {
     if (args.contextCode && !standardsResult?.contextCodeFailed)
         manifest.contextCode = args.contextCode;
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: true });
-    const externalsResult = syncExternals(args.external, false, args.force);
+    const hasScaffold = !!(manifest.skills['e2e-scaffold'] || manifest.archived['e2e-scaffold']);
+    const e2eDrivers = writeE2eDrivers(args.root, args.e2eDriver, hasScaffold);
+    if (e2eDrivers?.note)
+        console.error('note: ' + e2eDrivers.note);
+    const wantExternals = e2eDrivers?.file && e2eDrivers.drivers.includes('obscura') ? Array.from(new Set([...(args.external || []), 'obscura'])) : args.external;
+    const externalsResult = syncExternals(wantExternals, false, args.force);
     manifest.lastSeen = latestChangelogDate(args.library) ?? manifest.lastSeen;
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root, args.signature) : undefined;
@@ -1137,7 +1170,7 @@ function doInstall(args) {
     if (keptOut)
         console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult };
+    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult, e2eDrivers };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -1323,6 +1356,10 @@ function doUninstall(args) {
     }
     if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0)
         fs.rmdirSync(absArchiveRoot);
+    if ((args.all || names.includes('e2e-scaffold')) && fs.existsSync(path.join(args.root, ...E2E_DRIVER_FILE))) {
+        fs.rmSync(path.join(args.root, ...E2E_DRIVER_FILE), { force: true });
+        removed.push(E2E_DRIVER_FILE.join('/'));
+    }
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
     const cmd = pruneCommands(args.root, manifest, !!args.all, args.library || (() => { try {
@@ -1869,12 +1906,21 @@ async function askUsage(args) {
 }
 // External tools the kit links but never bundles (install-kit.external.json). Opt-in, default No, and --yes asks nothing: a download is never a default.
 // Only tools that can be fetched on this machine and are not already there are offered.
+// Only offered when the e2e-scaffold skill is part of this install. Two yes/no questions (both default No) so each browser is its own opt-in.
+async function askE2eDriver(args, hasScaffold) {
+    if (args.e2eDriver !== undefined || autoYes || !hasScaffold)
+        return;
+    console.log(dim('Playwright tests can run on Obscura (a small headless browser, no browser download, quick to start), on the project\'s own browser (Chrome), or on both: Obscura first, Chrome taking over when a test fails there. Each is optional.'));
+    const o = await askYesNo('Run the Playwright suite on Obscura?', false);
+    const c = await askYesNo('Run the Playwright suite on the project\'s own browser (Chrome)?', false);
+    args.e2eDriver = o && c ? 'both' : o ? 'obscura' : c ? 'chrome' : 'none';
+}
 async function askExternals(args) {
     if (args.external !== undefined || autoYes)
         return;
     let offer = [];
     try {
-        offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present);
+        offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present && !(r.id === 'obscura' && /obscura|both/.test(args.e2eDriver || '')));
     }
     catch {
         return;
@@ -2165,6 +2211,7 @@ async function fillInteractive(cmd, args) {
             steps.push(() => askImageGen(args));
             steps.push(() => askCoding(args));
             steps.push(() => askUsage(args));
+            steps.push(() => askE2eDriver(args, args.skills.some((s) => /^e2e-scaffold(\b|:)/.test(s)) || !!(0, skill_scope_move_1.readManifest)(args.root).skills['e2e-scaffold']));
             steps.push(() => askExternals(args));
         }
         if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
@@ -2292,6 +2339,17 @@ function parseArgs(argv) {
                 a.usage = v;
             else
                 a.usageNotify = v;
+        }
+        else if (k === '--e2e-driver') {
+            const v = argv[++i] || '';
+            try {
+                parseE2eDriver(v);
+            }
+            catch (e) {
+                console.error(red('error: ' + e.message));
+                process.exit(2);
+            }
+            a.e2eDriver = v;
         }
         else if (k === '--external')
             a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);

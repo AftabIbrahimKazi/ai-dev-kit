@@ -196,3 +196,69 @@ t('--yes asks nothing about external tools and downloads nothing', () => {
   assert.strictEqual(r.status, 0, r.stderr);
   assert.ok(!/Fetch .* now\?/.test(r.stdout + r.stderr));
 });
+
+// ---- e2e browser drivers: opt-in, one or both, stored in the project
+const E2E = ['--skills', 'e2e-scaffold'];
+const e2eFile = (root) => path.join(root, '.claude', 'e2e-drivers.json');
+const driversOf = (root) => JSON.parse(fs.readFileSync(e2eFile(root), 'utf8')).drivers;
+
+t('--e2e-driver chrome writes the choice and fetches nothing', () => {
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const r = run(root, [...E2E, '--e2e-driver', 'chrome', '--json'], { AI_DEV_KIT_HOME: path.join(dir, 'home') });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(driversOf(root), ['chrome']);
+  assert.strictEqual(JSON.parse(r.stdout).externals, undefined, 'chrome alone must not touch external tools');
+});
+
+t('--e2e-driver both writes Obscura first and asks the external installer for Obscura (already there: nothing is fetched)', () => {
+  if (process.platform !== 'win32') return; // obscura is registered for win32 only today
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const home = path.join(dir, 'home');
+  const od = path.join(home, 'external', 'obscura');
+  fs.mkdirSync(od, { recursive: true });
+  fs.writeFileSync(path.join(od, 'obscura.exe'), 'x');
+  fs.writeFileSync(path.join(od, '.ref.json'), JSON.stringify({ ref: 'v0.2.7', path: od, at: 'now' }));
+  const r = run(root, [...E2E, '--e2e-driver', 'both', '--json'], { AI_DEV_KIT_HOME: home });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(driversOf(root), ['obscura', 'chrome']);
+  const ex = JSON.parse(r.stdout).externals;
+  assert.ok(ex && ex.fetched.some((f) => f.id === 'obscura' && f.already), JSON.stringify(ex));
+});
+
+t('--e2e-driver none removes an earlier choice; a bad value exits 2', () => {
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const env = { AI_DEV_KIT_HOME: path.join(dir, 'home') };
+  assert.strictEqual(run(root, [...E2E, '--e2e-driver', 'chrome'], env).status, 0);
+  assert.ok(fs.existsSync(e2eFile(root)));
+  assert.strictEqual(run(root, [...E2E, '--e2e-driver', 'none'], env).status, 0);
+  assert.ok(!fs.existsSync(e2eFile(root)));
+  const bad = run(root, [...E2E, '--e2e-driver', 'firefox'], env);
+  assert.strictEqual(bad.status, 2);
+  assert.match(bad.stderr, /must be obscura, chrome, both or none/);
+});
+
+t('without the e2e-scaffold skill the choice is not written and the reason is said', () => {
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const r = run(root, ['--skills', 'handover', '--e2e-driver', 'chrome'], { AI_DEV_KIT_HOME: path.join(dir, 'home') });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stderr, /e2e-scaffold skill is not installed/);
+  assert.ok(!fs.existsSync(e2eFile(root)));
+});
+
+t('uninstalling the e2e-scaffold skill removes the driver choice with it', () => {
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const env = { AI_DEV_KIT_HOME: path.join(dir, 'home') };
+  assert.strictEqual(run(root, [...E2E, '--e2e-driver', 'chrome'], env).status, 0);
+  const u = spawnSync(process.execPath, [CLI, 'uninstall', '--library', LIB, '--root', root, '--tool', 'claude', '--skills', 'e2e-scaffold'], { cwd: os.tmpdir(), encoding: 'utf8', env: { ...process.env, ...env } });
+  assert.strictEqual(u.status, 0, u.stderr);
+  assert.ok(!fs.existsSync(e2eFile(root)));
+});
+
+t('interactive: the install asks about each browser separately, both default No, and writes "none" when both are declined', () => {
+  const dir = tmp('e2e-'), root = tmp('prot-');
+  const r = spawnSync(process.execPath, [CLI, 'install', '--library', LIB, '--root', root, '--tool', 'claude', ...E2E, '--signature', 'none', '--usage', 'off'], { cwd: os.tmpdir(), encoding: 'utf8', input: '\n'.repeat(40), env: { ...process.env, AI_DEV_KIT_INTERACTIVE: '1', AI_DEV_KIT_HOME: path.join(dir, 'home'), CLAUDE_CONFIG_DIR: path.join(dir, 'cfg'), USERPROFILE: dir, HOME: dir } });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stdout + r.stderr, /Run the Playwright suite on Obscura\?/);
+  assert.match(r.stdout + r.stderr, /project's own browser \(Chrome\)\?/);
+  assert.ok(!fs.existsSync(e2eFile(root)), 'declined both means no file');
+});

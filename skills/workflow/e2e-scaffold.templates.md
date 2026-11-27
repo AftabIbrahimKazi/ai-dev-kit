@@ -35,7 +35,34 @@ export default defineConfig({
 
 `tests/e2e/fixtures.ts`:
 ```ts
-import { test as base, expect, type Page, type Locator } from '@playwright/test';
+import { test as playwrightBase, expect, type Page, type Locator } from '@playwright/test';
+
+/**
+ * Obscura driver. node e2e-scaffold/drive.js sets E2E_CDP (a loopback CDP address) when Obscura runs the suite; it is empty or unset for the
+ * project's own browser, and then none of this applies. With E2E_CDP the tests connect to Obscura instead of launching a browser, reuse its
+ * default context (so there are no per-test traces or screenshots: a failure is re-run on Chrome when both drivers are chosen), and relative
+ * goto() calls are resolved against baseURL (a reused context carries no baseURL option).
+ */
+const CDP = process.env.E2E_CDP;
+const base = CDP
+  ? playwrightBase.extend({
+      browser: [async ({ playwright }, use) => {
+        const b = await playwright.chromium.connectOverCDP(CDP);
+        await use(b);
+        await b.close();
+      }, { scope: 'worker', timeout: 0 }],
+      context: async ({ browser }, use) => { await use(browser.contexts()[0] ?? (await browser.newContext())); },
+      page: async ({ context, baseURL }, use) => {
+        const page = await context.newPage();
+        if (baseURL) {
+          const go = page.goto.bind(page);
+          page.goto = (url, options) => go(/^[a-z][a-z0-9+.-]*:/i.test(url) ? url : new URL(url, baseURL).toString(), options);
+        }
+        await use(page);
+        await page.close();
+      },
+    })
+  : playwrightBase;
 
 /**
  * Universal fixtures only. Feature-specific Page Objects (one *.pom.ts per feature

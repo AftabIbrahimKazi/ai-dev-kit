@@ -67,14 +67,15 @@ t('a second init is refused with exit 3; status reports the scaffold', () => {
   assert.match(run(d, 'status').stdout, /scaffold present/);
 });
 
-t('--dry-run writes nothing; --port and --command override detection; JS project gets .js files', () => {
+t('--dry-run writes nothing; --port and --command override detection; a JS project gets .ts files too (Playwright transpiles them; type syntax in a .js file cannot load)', () => {
   const d = proj();
   write(d, 'package.json', JSON.stringify({ scripts: { start: 'node server.js' } }));
   const r = run(d, 'init', '--dry-run', '--port', '9000', '--command', 'npm start');
   assert.strictEqual(r.status, 0);
-  assert.match(r.stdout, /would write playwright\.config\.js/);
+  assert.match(r.stdout, /would write playwright\.config\.ts/);
+  assert.ok(!/\.js\b/.test(r.stdout.split('\n').filter((l) => /would write/.test(l)).join('\n')), 'no .js file is written for the scaffold');
   assert.match(r.stdout, /port 9000/);
-  assert.ok(!fs.existsSync(path.join(d, 'playwright.config.js')));
+  assert.ok(!fs.existsSync(path.join(d, 'playwright.config.ts')));
   assert.ok(!fs.existsSync(path.join(d, '.gitignore')));
 });
 

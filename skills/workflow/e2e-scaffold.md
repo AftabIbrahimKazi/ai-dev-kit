@@ -56,6 +56,16 @@ has no coding-standards system, briefly note to the user that RULE QA-E2E-01–0
 discipline (specs updated in the same commit as the behaviour they cover, never left
 stale-but-green) still applies even without the file.
 
+## Browser drivers (optional)
+
+The suite can run on **Obscura** (a small headless browser: no browser download, about 0.5 s faster to start), on the project's own browser (**Chrome**), or on both. Each is an opt-in, chosen at install (`install-kit --e2e-driver obscura|chrome|both|none`, stored in `.claude/e2e-drivers.json`) or per run (`--drivers`). Run the suite with `node <skill-root>/e2e-scaffold/drive.js run [--double-check] [-- <playwright args>]` (or `/e2e run`):
+
+- **One driver:** that driver runs, straight through.
+- **Both:** Obscura first. If it passes everything, done. If any test fails or Obscura cannot start, Chrome takes over and re-runs only the failed tests; each is named `DIVERGED` (failed on Obscura, passed on Chrome: an Obscura limit) or `FAILED on both` (a real failure).
+- **`--double-check`** (both chosen only): everything runs on both and the results are compared.
+
+Obscura renders differently from Chrome and reports fewer browser-level errors (for example a missing favicon logs a console error in Chrome only), so a green Obscura run is a fast first answer, not a replacement for Chrome: use `--double-check` before a release. Obscura runs have no per-test trace or screenshot; a failure re-run on Chrome produces them.
+
 ## Step 5 — Verify, then stop
 
 Run `test:e2e` and confirm the smoke test passes before reporting done — an unverified

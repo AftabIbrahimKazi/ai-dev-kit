@@ -17,6 +17,7 @@ exports.init = init;
 // Exit codes: 0 done, 1 error, 2 bad usage, 3 scaffold already present.
 const fs = require("node:fs");
 const path = require("node:path");
+const childProcess = require("node:child_process");
 const FRAMEWORK_PORT = [
     [/\bnext\b/, 'next', 3000], [/\bnuxt\b/, 'nuxt', 3000], [/\bastro\b/, 'astro', 4321], [/\bvite\b/, 'vite', 5173],
     [/\bremix\b/, 'remix', 3000], [/\bsvelte-kit|\bvite dev\b/, 'sveltekit', 5173], [/\bgatsby\b/, 'gatsby', 8000],
@@ -88,10 +89,11 @@ function init(cwd, opt) {
         throw new Error('no dev/start/serve script in package.json: pass --command');
     const port = opt.port ?? stack.port;
     const tpl = readTemplates(opt.templatesDir ?? __dirname);
-    const useTs = stack ? stack.typescript : true;
     const wrote = [], skipped = [];
     for (const [rel, body] of Object.entries(tpl)) {
-        const target = useTs ? rel : rel.replace(/\.ts$/, '.js');
+        // Always .ts: the templates carry type annotations, and Playwright transpiles .ts itself (TypeScript need not be installed).
+        // A JavaScript project used to get the same text renamed to .js, which Playwright cannot load.
+        const target = rel;
         const abs = path.join(cwd, target);
         if (fs.existsSync(abs) && !opt.force) {
             skipped.push(target);
@@ -154,6 +156,18 @@ function renderInit(r, dry) {
 }
 function main() {
     const [cmd, ...rest] = process.argv.slice(2);
+    // `run` and `drivers` belong to the driver runner (drive.js, e2e-scaffold.drive.js in the library); /e2e reaches it through here.
+    if (cmd === 'run' || cmd === 'drivers') {
+        const drive = ['drive.js', 'e2e-scaffold.drive.js'].map((n) => path.join(__dirname, n)).find((p) => fs.existsSync(p));
+        if (!drive) {
+            console.error('error: the driver runner (drive.js) is not installed next to init.js');
+            process.exitCode = 1;
+            return;
+        }
+        const r = childProcess.spawnSync(process.execPath, [drive, cmd === 'drivers' ? 'status' : 'run', ...rest], { stdio: 'inherit' });
+        process.exitCode = r.status ?? 1;
+        return;
+    }
     const a = { cwd: process.cwd(), dryRun: false, force: false, json: false };
     let ok = cmd === 'status' || cmd === 'init';
     for (let i = 0; i < rest.length && ok; i++) {

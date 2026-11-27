@@ -745,6 +745,7 @@ export interface CliArgs {
   companyDefaults?: company.DefaultsMode;
   usage?: 'on' | 'off'; // feature-usage tracking (the feature-usage mod and session-budget/usage.js read the same file)
   usageNotify?: 'on' | 'off';
+  e2eDriver?: string; // --e2e-driver obscura|chrome|both|none: which browsers the Playwright suite may run on (opt-in; written to .claude/e2e-drivers.json)
   external?: string[]; // --external obscura: make sure an external tool (skills/meta/install-kit.external.json) exists machine-wide; fetched into ~/.ai-dev-kit/external/ only when missing
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
   yes?: boolean; // --yes: accept every default, ask nothing
@@ -758,7 +759,29 @@ export interface CliArgs {
   json?: boolean;
 }
 
-export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; externals?: ExternalsResult }
+export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; externals?: ExternalsResult; e2eDrivers?: E2eDriversResult }
+
+// Browser drivers for the Playwright suite (e2e-scaffold/drive.js). Both are opt-in. The choice is a small project file; Obscura, when chosen, is
+// a machine-wide external tool and is fetched only if missing. With both chosen Obscura runs first and Chrome (the project's own browser) is the fallback.
+export interface E2eDriversResult { file?: string; drivers: string[]; note?: string }
+const E2E_DRIVER_FILE = ['.claude', 'e2e-drivers.json'];
+export function parseE2eDriver(v: string): string[] {
+  const s = v.trim().toLowerCase();
+  if (s === 'none' || s === 'off') return [];
+  if (s === 'both') return ['obscura', 'chrome'];
+  if (s === 'obscura' || s === 'chrome') return [s];
+  throw new Error('--e2e-driver must be obscura, chrome, both or none');
+}
+export function writeE2eDrivers(root: string, v: string | undefined, hasScaffold: boolean): E2eDriversResult | undefined {
+  if (v === undefined) return undefined;
+  const drivers = parseE2eDriver(v);
+  const file = path.join(root, ...E2E_DRIVER_FILE);
+  if (!hasScaffold) return { drivers, note: 'the e2e-scaffold skill is not installed here, so no driver choice was written; install it first' };
+  if (!drivers.length) { fs.rmSync(file, { force: true }); return { drivers, note: 'no driver chosen; any earlier choice was removed' }; }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ drivers }, null, 2) + '\n');
+  return { file, drivers };
+}
 
 // External tools are machine-wide, not per project: the CLI checks whether the tool is already there (fetched earlier by any project, or on
 // PATH) and only when it is not does it fetch it once into ~/.ai-dev-kit/external/<id>/. Nothing is recorded in the project. A failed fetch is
@@ -998,7 +1021,11 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (args.contextCode && !standardsResult?.contextCodeFailed) manifest.contextCode = args.contextCode;
 
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
-  const externalsResult = syncExternals(args.external, false, args.force);
+  const hasScaffold = !!(manifest.skills['e2e-scaffold'] || manifest.archived['e2e-scaffold']);
+  const e2eDrivers = writeE2eDrivers(args.root!, args.e2eDriver, hasScaffold);
+  if (e2eDrivers?.note) console.error('note: ' + e2eDrivers.note);
+  const wantExternals = e2eDrivers?.file && e2eDrivers.drivers.includes('obscura') ? Array.from(new Set([...(args.external || []), 'obscura'])) : args.external;
+  const externalsResult = syncExternals(wantExternals, false, args.force);
   manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
   writeManifest(args.root!, manifest);
   const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root!, args.signature) : undefined;
@@ -1029,7 +1056,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   const keptOut = excludeKitFromGit(args.root!, args.library);
   if (keptOut) console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult };
+  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult, e2eDrivers };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
@@ -1196,6 +1223,10 @@ export function doUninstall(args: CliArgs): UninstallResult {
     }
   }
   if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0) fs.rmdirSync(absArchiveRoot);
+  if ((args.all || names.includes('e2e-scaffold')) && fs.existsSync(path.join(args.root!, ...E2E_DRIVER_FILE))) {
+    fs.rmSync(path.join(args.root!, ...E2E_DRIVER_FILE), { force: true });
+    removed.push(E2E_DRIVER_FILE.join('/'));
+  }
   if (removeShieldIfUnneeded(absSkillRoot)) removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
 
   const cmd = pruneCommands(args.root!, manifest, !!args.all, args.library || (() => { try { return defaultLibraryGuess(); } catch { return undefined; } })());
@@ -1694,10 +1725,19 @@ async function askUsage(args: CliArgs): Promise<void> {
 
 // External tools the kit links but never bundles (install-kit.external.json). Opt-in, default No, and --yes asks nothing: a download is never a default.
 // Only tools that can be fetched on this machine and are not already there are offered.
+// Only offered when the e2e-scaffold skill is part of this install. Two yes/no questions (both default No) so each browser is its own opt-in.
+async function askE2eDriver(args: CliArgs, hasScaffold: boolean): Promise<void> {
+  if (args.e2eDriver !== undefined || autoYes || !hasScaffold) return;
+  console.log(dim('Playwright tests can run on Obscura (a small headless browser, no browser download, quick to start), on the project\'s own browser (Chrome), or on both: Obscura first, Chrome taking over when a test fails there. Each is optional.'));
+  const o = await askYesNo('Run the Playwright suite on Obscura?', false);
+  const c = await askYesNo('Run the Playwright suite on the project\'s own browser (Chrome)?', false);
+  args.e2eDriver = o && c ? 'both' : o ? 'obscura' : c ? 'chrome' : 'none';
+}
+
 async function askExternals(args: CliArgs): Promise<void> {
   if (args.external !== undefined || autoYes) return;
   let offer: ext.ExternalRef[] = [];
-  try { offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present); } catch { return; }
+  try { offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present && !(r.id === 'obscura' && /obscura|both/.test(args.e2eDriver || ''))); } catch { return; }
   const pick: string[] = [];
   for (const r of offer) {
     console.log(dim(`${r.name} (${r.licence}, ${r.repo}): installed once for the whole machine (skipped if it is already there), fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/ and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
@@ -1955,6 +1995,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       steps.push(() => askImageGen(args));
       steps.push(() => askCoding(args));
       steps.push(() => askUsage(args));
+      steps.push(() => askE2eDriver(args, args.skills.some((s) => /^e2e-scaffold(\b|:)/.test(s)) || !!readManifest(args.root!).skills['e2e-scaffold']));
       steps.push(() => askExternals(args));
     }
 
@@ -2026,6 +2067,11 @@ function parseArgs(argv: string[]): CliArgs {
       const v = argv[++i];
       if (v !== 'on' && v !== 'off') { console.error(red(`error: ${k} must be on or off`)); process.exit(2); }
       if (k === '--usage') a.usage = v; else a.usageNotify = v;
+    }
+    else if (k === '--e2e-driver') {
+      const v = argv[++i] || '';
+      try { parseE2eDriver(v); } catch (e) { console.error(red('error: ' + (e as Error).message)); process.exit(2); }
+      a.e2eDriver = v;
     }
     else if (k === '--external') a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
     else if (k === '--batch') {
