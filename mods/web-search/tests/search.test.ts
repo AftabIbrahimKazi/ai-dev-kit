@@ -31,6 +31,15 @@ test('a sifted digest becomes one text result with the facts inside', async ($: 
   expect(r.result.results[0]).toContain('Fact one. https://a.com/x')
 })
 
+test('a cache id adds one line telling the model how to read more, and no id adds nothing', async ($: any, on: any) => {
+  world(on, { run: { exit: 0, out: JSON.stringify({ query: 'q', provider: 'p', durationMs: 1000, cacheId: 'ab12cd', hits: [{ title: 'T', url: 'https://a.com/x', snippet: 'S' }] }) } })
+  const r = await search($)
+  const last = r.result.results[r.result.results.length - 1]
+  expect(typeof last).toBe('string')
+  expect(last).toContain('ab12cd')
+  expect(last).toContain('more ab12cd --hit')
+})
+
 test('domain filters are passed to the script', async ($: any, on: any) => {
   const calls = world(on, {})
   await search($, { allowed_domains: ['a.com', 'b.org'], blocked_domains: ['x.com'] })

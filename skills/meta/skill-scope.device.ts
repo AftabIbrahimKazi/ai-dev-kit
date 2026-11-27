@@ -25,6 +25,9 @@ export interface Scan {
   verdicts?: { laya: string | null; vision: string | null };
   externals?: ExternalTool[];
   keyNames?: string[];
+  // What answers on loopback right now (skill-scope.backends.js): Ollama, LM Studio, llama.cpp, Laya, the free router.
+  reachable?: { id: string; label: string; url: string; reachable: boolean; count: number; models: string[] }[];
+  searchReady?: boolean;
 }
 export type Preset = 'lite' | 'standard' | 'full';
 export interface Row { item: string; status: 'have' | 'missing' | 'info'; note: string }
@@ -118,6 +121,11 @@ function scan(): Scan {
   };
   try { if (ext) s.externals = ext.status().filter((x) => !/own skill/.test(x.note || '')).map((x) => ({ id: x.id, name: x.name, present: x.present, where: x.where, pinned: x.pinned })); } catch { /* registry unreadable: skip the rows */ }
   s.keyNames = keyNamesIn(path.join(kitHome, '.env'));
+  const bk = findScript('skill-scope.backends.js', 'meta/skill-scope.backends.js') || findScript('backends.js', '');
+  if (bk) {
+    const r = spawnSync(process.execPath, [bk, '--json'], { encoding: 'utf8', timeout: 8000, windowsHide: true });
+    try { const j = JSON.parse(String(r.stdout || '')); if (Array.isArray(j.backends)) { s.reachable = j.backends; s.searchReady = !!j.searchReady; } } catch { /* no live rows */ }
+  }
   const nv = gpus.find((g) => g.vendor === 'nvidia');
   const layaFake = JSON.stringify({ cores: s.cores, ramGB: s.ramGB, freeDiskGB, nvidia: nv ? { name: nv.name, vramGB: nv.vramGB || 0 } : null });
   const visionFake = JSON.stringify({ platform: s.platform, arch: s.arch, cores: s.cores, ramGB: s.ramGB, freeDiskGB, gpus });
@@ -162,6 +170,8 @@ function build(s: Scan, forced?: Preset): Report {
   for (const x of s.externals || []) {
     rows.push({ item: 'External: ' + x.id, status: x.present ? 'have' : 'info', note: x.present ? `${x.name} ${x.pinned} at ${x.where}` : `${x.name} not fetched (optional): node install-kit.cli.js install --external ${x.id}` });
   }
+  for (const b of s.reachable || []) rows.push({ item: `${b.label} (running)`, status: b.reachable ? 'have' : 'info', note: b.reachable ? `answering at ${b.url}${b.count ? `, ${b.count} model${b.count === 1 ? '' : 's'}: ${b.models.slice(0, 3).join(', ')}` : ''}` : `not answering at ${b.url}` });
+  if (s.reachable) rows.push({ item: 'Web search via the router', status: s.searchReady ? 'have' : 'info', note: s.searchReady ? 'ready (the web-search mod can use it)' : 'not available (needs the router, UNIFIED_API_KEY and a search provider)' });
   if (s.keyNames) rows.push({ item: 'API keys (names only)', status: 'info', note: s.keyNames.length ? s.keyNames.join(', ') : 'none in ~/.ai-dev-kit/.env' });
   rows.push({ item: 'Hugging Face cache', status: 'info', note: s.state.hfCacheGB === null ? 'none' : `${s.state.hfCacheGB} GB` });
   if (s.verdicts) {

@@ -25,12 +25,14 @@ export const register: Register = (on) => {
       if (e.blocked_domains?.length) argv.push('--block', e.blocked_domains.join(','))
       const res = await $.process.run(argv, { timeoutMs: TIMEOUT_MS })
       if (res.exitCode !== 0) return next(e)
-      const out = JSON.parse(String(res.stdout ?? '').trim()) as { query: string; hits: { title: string; url: string; snippet: string }[]; digest?: string; durationMs: number }
+      const out = JSON.parse(String(res.stdout ?? '').trim()) as { query: string; hits: { title: string; url: string; snippet: string }[]; digest?: string; cacheId?: string; durationMs: number }
       if (!out.hits?.length) return next(e)
       // A sifted digest (the script's sift mode) is plain text with the source URLs inside it; otherwise the trimmed hit list.
-      const results = out.digest
+      const results: (string | { tool_use_id: string; content: { title: string; url: string; snippet: string }[] })[] = out.digest
         ? [`Relevant facts for "${out.query}", picked from the search results:\n${out.digest}`]
         : [{ tool_use_id: 'web-search', content: out.hits.map((h) => ({ title: h.title, url: h.url, snippet: h.snippet })) }]
+      // The full hits are saved on disk, outside the context. One short line tells the model how to read more of them.
+      if (out.cacheId) results.push(`Full results saved (id ${out.cacheId}). More: node ${file} more ${out.cacheId} --hit <n> (one full hit) or --ask "<question>" (best sentences from all hits for a new question).`)
       return {
         result: {
           query: out.query,

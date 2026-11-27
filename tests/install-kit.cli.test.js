@@ -1188,11 +1188,31 @@ t('web-search mod: same pairing rules, and says so when the router key is missin
     assert.strictEqual(on.ok, true, on.error); assert.strictEqual(on.enabled, true);
     assert.match(on.tools, /No UNIFIED_API_KEY/);
     assert.ok(fs.readFileSync(log, 'utf8').includes('plugin install web-search@ai-dev-kit-mods --scope project'));
-    fs.mkdirSync(path.join(home, '.ai-dev-kit'), { recursive: true });
-    fs.writeFileSync(path.join(home, '.ai-dev-kit', '.env'), 'UNIFIED_API_KEY=abc123\n');
+    fs.writeFileSync(path.join(home, '.env'), 'UNIFIED_API_KEY=abc123\n'); // AI_DEV_KIT_HOME is the kit folder itself, as in the scripts
     assert.strictEqual(webSearchMod(root, null, ['web-search']).tools, undefined, 'a key in the .env file counts');
     const off = webSearchMod(root, null, ['web-search'], 'off');
     assert.strictEqual(off.ok, true); assert.strictEqual(off.enabled, false);
+  } finally {
+    for (const k of keys) { if (old[k] === undefined) delete process.env[k]; else process.env[k] = old[k]; }
+  }
+});
+
+t('web-search sifter: the choice is written once to web-search.json (merged, not replaced) and warns without a key', () => {
+  const { setWebSearchSift } = require('../skills/meta/install-kit.cli.js');
+  const keys = ['AI_DEV_KIT_HOME', 'UNIFIED_API_KEY'];
+  const old = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  const home = tmp(); process.env.AI_DEV_KIT_HOME = home; delete process.env.UNIFIED_API_KEY;
+  try {
+    const a = setWebSearchSift('router');
+    assert.strictEqual(a.file, path.join(home, 'web-search.json'));
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(a.file, 'utf8')), { sift: 'router' });
+    assert.match(a.warning, /UNIFIED_API_KEY/);
+    fs.writeFileSync(a.file, JSON.stringify({ sift: 'router', other: 1 }));
+    const b = setWebSearchSift('off');
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(b.file, 'utf8')), { sift: 'off', other: 1 });
+    assert.strictEqual(b.warning, undefined);
+    process.env.UNIFIED_API_KEY = 'k';
+    assert.strictEqual(setWebSearchSift('router').warning, undefined);
   } finally {
     for (const k of keys) { if (old[k] === undefined) delete process.env[k]; else process.env[k] = old[k]; }
   }

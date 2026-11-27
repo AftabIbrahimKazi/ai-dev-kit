@@ -147,6 +147,50 @@ async function search(query: string, want: number): Promise<{ hits: RawHit[]; pr
   } finally { clearTimeout(timer); }
 }
 
+// ---- saved results: the full hits stay on disk (outside the context) so a later `more` call can read or re-sift them ----
+const cacheDir = (): string => path.join(home(), 'search-cache');
+const CACHE_KEEP = 40;
+const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
+
+export function saveCache(query: string, rows: Row[]): string {
+  try {
+    const id = require('node:crypto').createHash('sha1').update(query + Date.now()).digest('hex').slice(0, 6) as string;
+    fs.mkdirSync(cacheDir(), { recursive: true });
+    fs.writeFileSync(path.join(cacheDir(), `${id}.json`), JSON.stringify({ query, ts: Date.now(), rows }));
+    const files = fs.readdirSync(cacheDir()).filter((f) => /^[0-9a-f]{6}\.json$/.test(f)).map((f) => ({ f, t: fs.statSync(path.join(cacheDir(), f)).mtimeMs })).sort((a, b) => b.t - a.t);
+    files.forEach((x, i) => { if (i >= CACHE_KEEP || Date.now() - x.t > CACHE_MAX_AGE_MS) fs.rmSync(path.join(cacheDir(), x.f), { force: true }); });
+    return id;
+  } catch { return ''; }
+}
+
+export function readCache(id: string): { query: string; rows: Row[] } | null {
+  if (!/^[0-9a-f]{6}$/.test(id)) return null;
+  try { return JSON.parse(fs.readFileSync(path.join(cacheDir(), `${id}.json`), 'utf8')); } catch { return null; }
+}
+
+// `more <id>` lists the saved hits; `--hit n` prints one hit's full text (capped); `--ask "<question>"` picks the best sentences for a new question
+// from ALL saved hits with a larger budget. No network, no model.
+export function moreText(id: string, hit: number | undefined, ask: string | undefined): string | null {
+  const c = readCache(id);
+  if (!c) return null;
+  if (hit !== undefined) {
+    const r = c.rows[hit - 1];
+    return r ? `${r.title}\n${r.url}\n${flat(r.content).slice(0, 6000)}` : `no hit ${hit}; there are ${c.rows.length}`;
+  }
+  if (ask) {
+    const hits = shapeSentences(c.rows.map((r) => ({ title: r.title, url: r.url, content: r.content })), ask, 10, [], [], 4000, 6);
+    return hits.map((h) => `${h.title}\n${h.url}\n${h.snippet}`).join('\n\n');
+  }
+  return c.rows.map((r, i) => `${i + 1}. ${r.title} (${r.url}, ${flat(r.content).length} chars)`).join('\n');
+}
+
+// Setting chosen once at install (`install-kit mods --web-search-sift router|off`): ~/.ai-dev-kit/web-search.json. The env variable overrides it.
+function configuredMode(): string {
+  const env = process.env.WEB_SEARCH_MODE;
+  if (env) return env.toLowerCase();
+  try { return JSON.parse(fs.readFileSync(path.join(home(), 'web-search.json'), 'utf8')).sift === 'router' ? 'sift' : 'sentence'; } catch { return 'sentence'; }
+}
+
 const list = (v: string | undefined): string[] => (v || '').split(',').map((x) => x.trim().toLowerCase().replace(/^www\./, '')).filter(Boolean);
 
 async function main(): Promise<number> {
@@ -154,6 +198,15 @@ async function main(): Promise<number> {
   if (argv[0] === 'check') {
     console.log(`router key: ${key() ? 'set' : 'missing'}`);
     console.log(`router: ${base()}`);
+    return 0;
+  }
+  if (argv[0] === 'more') {
+    const id = argv[1] || '';
+    let hit: number | undefined, ask: string | undefined;
+    for (let i = 2; i < argv.length; i++) { if (argv[i] === '--hit') hit = parseInt(argv[++i], 10) || undefined; else if (argv[i] === '--ask') ask = argv.slice(++i).join(' '); }
+    const t = moreText(id, hit, ask);
+    if (t === null) { console.error('skip: no saved results with that id (they are kept for a day)'); return 2; }
+    console.log(t);
     return 0;
   }
   const words: string[] = [];
@@ -167,12 +220,14 @@ async function main(): Promise<number> {
   const query = words.join(' ').trim();
   if (!query) { console.error('usage: cli.js <query...> [--max n] [--allow a,b] [--block x] | check'); return 2; }
   const t0 = Date.now();
-  const mode = (process.env.WEB_SEARCH_MODE || 'sentence').toLowerCase(); // sentence (default), window (the older fixed window), sift (router model, slower)
+  const mode = configuredMode(); // sentence (default), window (the older fixed window), sift (router model, slower; chosen at install or by env)
   let res: { hits: RawHit[]; provider: string };
   try { res = await search(query, mode === 'sift' ? 8 : allow.length || block.length ? Math.min(10, max * 2) : max); } catch (e) { console.error('skip: ' + (e as Error).message); return 2; }
   const hits = mode === 'window' ? shape(res.hits, query, max, allow, block) : shapeSentences(res.hits, query, max, allow, block);
   if (!hits.length) { console.error('skip: no usable hits'); return 2; }
-  const out: { query: string; provider: string; hits: Hit[]; digest?: string; durationMs: number } = { query, provider: res.provider, hits, durationMs: 0 };
+  const out: { query: string; provider: string; hits: Hit[]; digest?: string; cacheId?: string; durationMs: number } = { query, provider: res.provider, hits, durationMs: 0 };
+  const cacheId = saveCache(query, pickRows(res.hits, 10, [], []));
+  if (cacheId) out.cacheId = cacheId;
   if (mode === 'sift') {
     const digest = await sift(query, pickRows(res.hits, 8, allow, block));
     if (digest) out.digest = digest; // empty: the sentence hits above stand in

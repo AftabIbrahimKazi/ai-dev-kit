@@ -747,6 +747,7 @@ export interface CliArgs {
   usageNotify?: 'on' | 'off';
   e2eDriver?: string; // --e2e-driver obscura|chrome|both|none: which browsers the Playwright suite may run on (opt-in; written to .claude/e2e-drivers.json)
   external?: string[]; // --external obscura: make sure an external tool (skills/meta/install-kit.external.json) exists machine-wide; fetched into ~/.ai-dev-kit/external/ only when missing
+  webSearchSift?: 'router' | 'off'; // --web-search-sift: which sifter the web-search script uses (default off = free sentence scoring)
   webSearch?: 'on' | 'off'; // the web-search mod (answers WebSearch with a compact hit list from the router): on installs it at project scope, off removes it
   webDigest?: 'on' | 'off'; // the web-digest mod (answers WebFetch with a short digest): on installs it at project scope, off removes it
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
@@ -761,7 +762,7 @@ export interface CliArgs {
   json?: boolean;
 }
 
-export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; webDigest?: WebDigestResult; webSearch?: WebDigestResult; externals?: ExternalsResult; e2eDrivers?: E2eDriversResult }
+export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; webDigest?: WebDigestResult; webSearch?: WebDigestResult; webSearchSift?: SiftResult; externals?: ExternalsResult; e2eDrivers?: E2eDriversResult }
 
 // Browser drivers for the Playwright suite (e2e-scaffold/drive.js). Both are opt-in. The choice is a small project file; Obscura, when chosen, is
 // a machine-wide external tool and is fetched only if missing. With both chosen Obscura runs first and Chrome (the project's own browser) is the fallback.
@@ -987,9 +988,24 @@ export function webSearchMod(root: string, library: string | undefined, installe
   if (r.enabled && !unifiedKeySet()) r.tools = 'No UNIFIED_API_KEY (shell or ~/.ai-dev-kit/.env), so every search falls through to Claude.';
   return r;
 }
+// The scripts' rule: AI_DEV_KIT_HOME IS the kit folder (default ~/.ai-dev-kit).
+const kitFolder = (): string => process.env.AI_DEV_KIT_HOME || path.join(os.homedir(), '.ai-dev-kit');
 function unifiedKeySet(): boolean {
   if (process.env.UNIFIED_API_KEY) return true;
-  try { return /^UNIFIED_API_KEY=\s*\S/m.test(fs.readFileSync(path.join(process.env.AI_DEV_KIT_HOME || os.homedir(), '.ai-dev-kit', '.env'), 'utf8')); } catch { return false; }
+  try { return /^UNIFIED_API_KEY=\s*\S/m.test(fs.readFileSync(path.join(kitFolder(), '.env'), 'utf8')); } catch { return false; }
+}
+// Which sifter the web-search script uses, chosen once: 'router' lets a free-router model copy out only the relevant facts (about 70% less text, about 3 times slower); 'off' (the default) keeps the free sentence scoring. Claude's own search is always the last fallback. Written to <kit folder>/web-search.json, the file the script reads.
+export interface SiftResult { file: string; sift: 'router' | 'off'; warning?: string }
+export function setWebSearchSift(v: 'router' | 'off'): SiftResult {
+  const file = path.join(kitFolder(), 'web-search.json');
+  let cur: Record<string, unknown> = {};
+  try { cur = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* none yet */ }
+  cur.sift = v;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(cur, null, 2) + '\n');
+  const r: SiftResult = { file, sift: v };
+  if (v === 'router' && !unifiedKeySet()) r.warning = 'the router sifter needs UNIFIED_API_KEY (shell or ~/.ai-dev-kit/.env); without it searches use the sentence scoring.';
+  return r;
 }
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
@@ -1092,6 +1108,8 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (webSearchResult?.error) console.error('web-search: ' + webSearchResult.error);
   if (webSearchResult?.warning) console.error(webSearchResult.warning);
   if (webSearchResult?.tools) console.error(webSearchResult.tools);
+  const siftResult = args.webSearchSift ? setWebSearchSift(args.webSearchSift) : undefined;
+  if (siftResult?.warning) console.error(siftResult.warning);
   // Outside-model choices live in one small file the scripts and mods read. Only written when a choice was made; delete a feature's
   // key (or the file) to go back to the default (Claude, or the free scan for the review). --force replaces an existing key.
   if (args.ai) writeAiBackends(args.root!, args.ai, Object.keys(manifest.skills), args.force);
@@ -1105,7 +1123,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   const keptOut = excludeKitFromGit(args.root!, args.library);
   if (keptOut) console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, webSearch: webSearchResult, externals: externalsResult, e2eDrivers };
+  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, webSearch: webSearchResult, webSearchSift: siftResult, externals: externalsResult, e2eDrivers };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
@@ -2123,6 +2141,11 @@ function parseArgs(argv: string[]): CliArgs {
       a.e2eDriver = v;
     }
     else if (k === '--external') a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
+    else if (k === '--web-search-sift') {
+      const v = argv[++i];
+      if (v !== 'router' && v !== 'off') { console.error(red('error: --web-search-sift must be router or off')); process.exit(2); }
+      a.webSearchSift = v;
+    }
     else if (k === '--web-search') {
       const v = argv[++i];
       if (v !== 'on' && v !== 'off') { console.error(red('error: --web-search must be on or off')); process.exit(2); }
@@ -2182,8 +2205,8 @@ async function main(): Promise<void> {
       if (isInteractive() && !args.json && action === 'sync') printCompany(res as company.CompanyResult);
     }
     else if (cmd === 'mods') {
-      if (!args.root) { console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off] [--web-search on|off]')); process.exit(2); return; }
-      res = { batch: batchMod(args.root, args.library, Object.keys(readManifest(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webDigest), webSearch: webSearchMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webSearch) };
+      if (!args.root) { console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off] [--web-search on|off] [--web-search-sift router|off]')); process.exit(2); return; }
+      res = { batch: batchMod(args.root, args.library, Object.keys(readManifest(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webDigest), webSearch: webSearchMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webSearch), webSearchSift: args.webSearchSift ? setWebSearchSift(args.webSearchSift) : undefined };
     }
     else if (cmd === 'list') res = listSkills(args.library!);
     else if (cmd === 'install') res = doInstall(args);

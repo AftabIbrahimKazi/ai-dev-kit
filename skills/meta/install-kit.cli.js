@@ -33,6 +33,7 @@ exports.ensureMod = ensureMod;
 exports.skillPairedMod = skillPairedMod;
 exports.webDigestMod = webDigestMod;
 exports.webSearchMod = webSearchMod;
+exports.setWebSearchSift = setWebSearchSift;
 exports.setUsageTracking = setUsageTracking;
 exports.doInstall = doInstall;
 exports.parseChangelog = parseChangelog;
@@ -1092,15 +1093,32 @@ function webSearchMod(root, library, installed, want) {
         r.tools = 'No UNIFIED_API_KEY (shell or ~/.ai-dev-kit/.env), so every search falls through to Claude.';
     return r;
 }
+// The scripts' rule: AI_DEV_KIT_HOME IS the kit folder (default ~/.ai-dev-kit).
+const kitFolder = () => process.env.AI_DEV_KIT_HOME || path.join(os.homedir(), '.ai-dev-kit');
 function unifiedKeySet() {
     if (process.env.UNIFIED_API_KEY)
         return true;
     try {
-        return /^UNIFIED_API_KEY=\s*\S/m.test(fs.readFileSync(path.join(process.env.AI_DEV_KIT_HOME || os.homedir(), '.ai-dev-kit', '.env'), 'utf8'));
+        return /^UNIFIED_API_KEY=\s*\S/m.test(fs.readFileSync(path.join(kitFolder(), '.env'), 'utf8'));
     }
     catch {
         return false;
     }
+}
+function setWebSearchSift(v) {
+    const file = path.join(kitFolder(), 'web-search.json');
+    let cur = {};
+    try {
+        cur = JSON.parse(fs.readFileSync(file, 'utf8'));
+    }
+    catch { /* none yet */ }
+    cur.sift = v;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(cur, null, 2) + '\n');
+    const r = { file, sift: v };
+    if (v === 'router' && !unifiedKeySet())
+        r.warning = 'the router sifter needs UNIFIED_API_KEY (shell or ~/.ai-dev-kit/.env); without it searches use the sentence scoring.';
+    return r;
 }
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
@@ -1230,6 +1248,9 @@ function doInstall(args) {
         console.error(webSearchResult.warning);
     if (webSearchResult?.tools)
         console.error(webSearchResult.tools);
+    const siftResult = args.webSearchSift ? setWebSearchSift(args.webSearchSift) : undefined;
+    if (siftResult?.warning)
+        console.error(siftResult.warning);
     // Outside-model choices live in one small file the scripts and mods read. Only written when a choice was made; delete a feature's
     // key (or the file) to go back to the default (Claude, or the free scan for the review). --force replaces an existing key.
     if (args.ai)
@@ -1246,7 +1267,7 @@ function doInstall(args) {
     if (keptOut)
         console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, webSearch: webSearchResult, externals: externalsResult, e2eDrivers };
+    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, webSearch: webSearchResult, webSearchSift: siftResult, externals: externalsResult, e2eDrivers };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -2429,6 +2450,14 @@ function parseArgs(argv) {
         }
         else if (k === '--external')
             a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
+        else if (k === '--web-search-sift') {
+            const v = argv[++i];
+            if (v !== 'router' && v !== 'off') {
+                console.error(red('error: --web-search-sift must be router or off'));
+                process.exit(2);
+            }
+            a.webSearchSift = v;
+        }
         else if (k === '--web-search') {
             const v = argv[++i];
             if (v !== 'on' && v !== 'off') {
@@ -2541,11 +2570,11 @@ async function main() {
         }
         else if (cmd === 'mods') {
             if (!args.root) {
-                console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off] [--web-search on|off]'));
+                console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off] [--web-search on|off] [--web-search-sift router|off]'));
                 process.exit(2);
                 return;
             }
-            res = { batch: batchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills), args.webDigest), webSearch: webSearchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills), args.webSearch) };
+            res = { batch: batchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills), args.webDigest), webSearch: webSearchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills), args.webSearch), webSearchSift: args.webSearchSift ? setWebSearchSift(args.webSearchSift) : undefined };
         }
         else if (cmd === 'list')
             res = listSkills(args.library);

@@ -69,8 +69,10 @@ t('scoreSentence ranks query words first, then digits and names, and penalises v
   assert.ok(ws.scoreSentence('a '.repeat(250), w) < ws.scoreSentence('a '.repeat(50), w));
 });
 
+// Every run gets its own AI_DEV_KIT_HOME so the search cache and config never touch the real ~/.ai-dev-kit.
+const SANDBOX = fs.mkdtempSync(path.join(os.tmpdir(), 'ws-home-'));
 function runAsync(args, env) {
-  return new Promise((resolve) => cp.execFile(process.execPath, [BIN, ...args], { env: { ...process.env, ...env }, timeout: 20000 }, (e, so, se) => resolve({ code: e ? e.code : 0, so, se })));
+  return new Promise((resolve) => cp.execFile(process.execPath, [BIN, ...args], { env: { ...process.env, AI_DEV_KIT_HOME: SANDBOX, ...env }, timeout: 20000 }, (e, so, se) => resolve({ code: e ? e.code : 0, so, se })));
 }
 
 t('check prints the two status lines; no query exits 2', async () => {
@@ -129,6 +131,47 @@ t('modes: window keeps the old shape, sift returns the model digest, and a faile
   chatStatus = 500;
   const dead = JSON.parse((await runAsync(['answer', 'forty'], { ...env, WEB_SEARCH_MODE: 'sift' })).so);
   assert.strictEqual(dead.digest, undefined); assert.ok(dead.hits.length >= 1, 'fallback keeps the hits');
+  srv.close();
+});
+
+t('saved results: a search returns a cache id, and more lists, reads one hit, answers a new question, and refuses a bad id', async () => {
+  const body = 'Padding sentence number one is here for length. '.repeat(8) + 'The capital of Australia is Canberra, not Sydney. ' + 'Padding sentence number two is here for length. '.repeat(8);
+  const srv = http.createServer((req, res) => { req.on('data', () => {}); req.on('end', () => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ provider: 'fake', results: [{ title: 'Geo', url: 'https://g.com/a', content: body }, { title: 'Two', url: 'https://g.com/b', content: 'Other page about something else entirely, long enough to count.' }] })); }); });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const env = { UNIFIED_API_KEY: 'k', UNIFIED_API_BASE: `http://127.0.0.1:${srv.address().port}` };
+  const out = JSON.parse((await runAsync(['capital', 'australia'], env)).so);
+  srv.close();
+  assert.ok(/^[0-9a-f]{6}$/.test(out.cacheId), out.cacheId);
+  const list = await runAsync(['more', out.cacheId], {});
+  assert.ok(/1\. Geo \(https:\/\/g\.com\/a/.test(list.so) && /2\. Two/.test(list.so), list.so);
+  const one = await runAsync(['more', out.cacheId, '--hit', '1'], {});
+  assert.ok(/Canberra/.test(one.so) && one.so.startsWith('Geo'), one.so.slice(0, 80));
+  assert.ok(/no hit 9/.test((await runAsync(['more', out.cacheId, '--hit', '9'], {})).so));
+  const ask = await runAsync(['more', out.cacheId, '--ask', 'what', 'is', 'the', 'capital', 'of', 'Australia'], {});
+  assert.ok(/Canberra/.test(ask.so), ask.so);
+  assert.strictEqual((await runAsync(['more', 'zzzzzz'], {})).code, 2);
+  assert.strictEqual((await runAsync(['more', '../../etc'], {})).code, 2);
+});
+
+t('the cache keeps at most 40 entries', async () => {
+  for (let i = 0; i < 43; i++) ws.saveCache('q' + i, [{ title: 't', url: 'https://a.com/' + i, content: 'c' }]);
+  const dir = path.join(SANDBOX, 'search-cache');
+  assert.ok(fs.readdirSync(dir).length <= 40, String(fs.readdirSync(dir).length));
+});
+
+t('web-search.json chooses the sifter once, and WEB_SEARCH_MODE overrides it', async () => {
+  const results = [{ title: 'One', url: 'https://a.com/1', content: 'Filler words here and there for padding the text. The answer is forty two exactly. More filler words follow after that.' }];
+  const srv = http.createServer((req, res) => { req.on('data', () => {}); req.on('end', () => { res.setHeader('content-type', 'application/json'); res.end(req.url === '/v1/search' ? JSON.stringify({ provider: 'f', results }) : JSON.stringify({ choices: [{ message: { content: 'Digest text.' } }] })); }); });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const env = { UNIFIED_API_KEY: 'k', UNIFIED_API_BASE: `http://127.0.0.1:${srv.address().port}`, WEB_SEARCH_MODE: '' };
+  const cfg = path.join(SANDBOX, 'web-search.json');
+  fs.writeFileSync(cfg, JSON.stringify({ sift: 'router' }));
+  assert.strictEqual(JSON.parse((await runAsync(['answer', 'forty'], env)).so).digest, 'Digest text.');
+  assert.strictEqual(JSON.parse((await runAsync(['answer', 'forty'], { ...env, WEB_SEARCH_MODE: 'window' })).so).digest, undefined, 'env wins');
+  fs.writeFileSync(cfg, JSON.stringify({ sift: 'off' }));
+  assert.strictEqual(JSON.parse((await runAsync(['answer', 'forty'], env)).so).digest, undefined);
+  fs.writeFileSync(cfg, '{not json');
+  assert.strictEqual(JSON.parse((await runAsync(['answer', 'forty'], env)).so).digest, undefined, 'a broken file means the default');
   srv.close();
 });
 
