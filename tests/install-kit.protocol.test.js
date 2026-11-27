@@ -175,3 +175,24 @@ t('the installer never spawns claude with shell and an args array (DEP0190)', ()
   assert.ok(/join\(' '\)/.test(shells[0]), 'that spawn must pass ONE quoted command string, not an args array');
   assert.ok(!src.includes('/.(c|m)?js$/'), 'the unescaped-dot regex is back');
 });
+
+// ---- the interactive question for external tools (default No; --yes never downloads)
+const askEnv = (dir) => ({ AI_DEV_KIT_INTERACTIVE: '1', AI_DEV_KIT_HOME: path.join(dir, 'home'), CLAUDE_CONFIG_DIR: path.join(dir, 'cfg'), USERPROFILE: dir, HOME: dir });
+const interactive = (root, dir, input, extra) => spawnSync(process.execPath, [CLI, 'install', '--library', LIB, '--root', root, '--tool', 'claude', '--skills', 'handover', '--signature', 'none', ...(extra || [])], { cwd: os.tmpdir(), encoding: 'utf8', input, env: { ...process.env, ...askEnv(dir) } });
+
+t('interactive install offers each optional external tool, Enter declines, nothing is downloaded', () => {
+  if (process.platform !== 'win32') return; // obscura is registered for win32 only today
+  const dir = tmp('ask-');
+  const r = interactive(tmp('prot-'), dir, '\n'.repeat(40), ['--usage', 'off']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stdout + r.stderr, /Fetch Obscura now\?/);
+  assert.match(r.stdout + r.stderr, /never bundled in this kit/);
+  assert.ok(!fs.existsSync(path.join(dir, 'home', '.ai-dev-kit', 'external', 'obscura')) && !fs.existsSync(path.join(dir, 'home', 'external', 'obscura')), 'declined means no download');
+});
+
+t('--yes asks nothing about external tools and downloads nothing', () => {
+  const dir = tmp('ask-');
+  const r = interactive(tmp('prot-'), dir, '', ['--yes']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.ok(!/Fetch .* now\?/.test(r.stdout + r.stderr));
+});

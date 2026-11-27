@@ -1696,6 +1696,20 @@ async function askUsage(args: CliArgs): Promise<void> {
   if (args.usage === 'on' && args.usageNotify === undefined) args.usageNotify = (await askYesNo('Also show a one-line notice the first time each feature is used in a session? (terminal and Desktop only; in the VS Code panel use /kit-usage report)', true)) ? 'on' : 'off';
 }
 
+// External tools the kit links but never bundles (install-kit.external.json). Opt-in, default No, and --yes asks nothing: a download is never a default.
+// Only tools that can be fetched on this machine and are not already there are offered.
+async function askExternals(args: CliArgs): Promise<void> {
+  if (args.external !== undefined || autoYes) return;
+  let offer: ext.ExternalRef[] = [];
+  try { offer = ext.loadRegistry().filter((r) => r.optIn && r.fetch !== 'skill' && (!r.platform || r.platform === process.platform) && !ext.detect(r).present); } catch { return; }
+  const pick: string[] = [];
+  for (const r of offer) {
+    console.log(dim(`${r.name} (${r.licence}, ${r.repo}): fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/, shared by every project and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
+    if (await askYesNo(`Fetch ${r.name} now?`, false)) pick.push(r.id);
+  }
+  if (pick.length) args.external = pick;
+}
+
 // Which outside models may do a job so Claude spends fewer tokens. Tick any; scripts try them in a fixed order and Claude is the
 // last step. --yes ticks nothing (no network, nothing leaves the machine), the same rule the old reviewer question had.
 const AI_TITLES: Record<AiBackend, string> = {
@@ -1945,6 +1959,7 @@ async function fillInteractive(cmd: string, args: CliArgs): Promise<void> {
       steps.push(() => askImageGen(args));
       steps.push(() => askCoding(args));
       steps.push(() => askUsage(args));
+      steps.push(() => askExternals(args));
     }
 
     if (['update', 'uninstall', 'archive', 'unarchive'].includes(cmd) && !args.all && !args.skills.length) {
@@ -2085,7 +2100,7 @@ async function main(): Promise<void> {
   console.log(JSON.stringify(res, null, 2));
   const vr = (res as { verify?: { ok: boolean; findings: { level: string; check: string; message: string }[] } }).verify;
   const um = (res as { usage?: UsageResult }).usage;
-  if (um && um.mod === 'failed') console.error(red('feature-usage mod NOT installed: ' + (um.warning || 'see above')));
+  if (um && um.mod === 'failed') console.error(red('feature-usage mod NOT installed (the commands to run by hand are in the message above).'));
   if (vr && !vr.ok) {
     // A skills-only install (no --standards) has no protocol file by choice, so that one finding is not an exit-code failure; every other fail is.
     const standardsAsked = !!(res as { standards?: unknown }).standards;
