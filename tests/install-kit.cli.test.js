@@ -1167,6 +1167,37 @@ t('web-digest mod: refuses without the skill, installs and verifies with it, lou
   }
 });
 
+t('web-search mod: same pairing rules, and says so when the router key is missing', () => {
+  const { webSearchMod } = require('../skills/meta/install-kit.cli.js');
+  const stub = path.join(tmp(), 'fake-claude.js');
+  fs.writeFileSync(stub, [
+    "const fs=require('fs'),path=require('path');const a=process.argv.slice(2);fs.appendFileSync(process.env.STUB_LOG,a.join(' ')+'\\n');",
+    "if(a[0]==='plugin'&&a[1]==='install'){const f=path.join(process.cwd(),'.claude','settings.json');fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,JSON.stringify({enabledPlugins:{[a[2]]:true}}))}",
+    "if(a[0]==='plugin'&&a[1]==='uninstall'){try{fs.rmSync(path.join(process.cwd(),'.claude','settings.json'))}catch{}}",
+  ].join('\n'));
+  const log = path.join(tmp(), 'log.txt');
+  const keys = ['AI_DEV_KIT_CLAUDE_BIN', 'STUB_LOG', 'CLAUDE_CONFIG_DIR', 'AI_DEV_KIT_HOME', 'UNIFIED_API_KEY'];
+  const old = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  process.env.AI_DEV_KIT_CLAUDE_BIN = stub; process.env.STUB_LOG = log; process.env.CLAUDE_CONFIG_DIR = tmp(); delete process.env.UNIFIED_API_KEY;
+  const home = tmp(); process.env.AI_DEV_KIT_HOME = home;
+  try {
+    const root = tmp();
+    const none = webSearchMod(root, null, ['handover'], 'on');
+    assert.strictEqual(none.ok, false); assert.match(none.error, /web-search skill is not installed/);
+    const on = webSearchMod(root, null, ['web-search'], 'on');
+    assert.strictEqual(on.ok, true, on.error); assert.strictEqual(on.enabled, true);
+    assert.match(on.tools, /No UNIFIED_API_KEY/);
+    assert.ok(fs.readFileSync(log, 'utf8').includes('plugin install web-search@ai-dev-kit-mods --scope project'));
+    fs.mkdirSync(path.join(home, '.ai-dev-kit'), { recursive: true });
+    fs.writeFileSync(path.join(home, '.ai-dev-kit', '.env'), 'UNIFIED_API_KEY=abc123\n');
+    assert.strictEqual(webSearchMod(root, null, ['web-search']).tools, undefined, 'a key in the .env file counts');
+    const off = webSearchMod(root, null, ['web-search'], 'off');
+    assert.strictEqual(off.ok, true); assert.strictEqual(off.enabled, false);
+  } finally {
+    for (const k of keys) { if (old[k] === undefined) delete process.env[k]; else process.env[k] = old[k]; }
+  }
+});
+
 t('the manifest and archive helpers are re-exported from skill-scope.move', () => {
   const me = require('../skills/meta/install-kit.cli.js'), mv = require('../skills/meta/skill-scope.move.js');
   for (const k of ['readManifest', 'writeManifest', 'doArchive', 'doUnarchive']) { assert.strictEqual(typeof me[k], 'function', k); assert.strictEqual(me[k], mv[k], k); assert.ok(Object.keys(me).includes(k), k + ' is enumerable'); }

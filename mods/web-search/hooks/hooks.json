@@ -1,0 +1,4 @@
+{
+  "description": "web-search hooks module",
+  "modules": ["./register.ts"]
+}

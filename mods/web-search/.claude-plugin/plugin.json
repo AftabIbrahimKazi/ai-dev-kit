@@ -1,0 +1,8 @@
+{
+  "name": "web-search",
+  "version": "0.1.0",
+  "description": "Answers a WebSearch call with a compact hit list instead of Claude's own search: the web-search skill script sends the query to the free router's /v1/search, trims title, url and a short snippet per hit in code (no model) and returns it. Any failure, no router key, or an extended (thorough) search lets Claude's own WebSearch run unchanged. Does nothing unless the web-search skill is installed. Reads .ai-dev-kit.json; the mod itself reads no env and makes no network call. Runs: node web-search/cli.js.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

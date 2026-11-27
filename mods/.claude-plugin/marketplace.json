@@ -104,6 +104,11 @@
       "name": "web-digest",
       "source": "./web-digest",
       "description": "Answers a WebFetch call with a short digest: the web-digest skill script fetches the public page with Obscura (text), trims it in code and asks the free router the question. Any failure, a private URL or a read-on request lets Claude's own WebFetch run unchanged. Needs the web-digest skill and Obscura; does nothing without them."
+    },
+    {
+      "name": "web-search",
+      "source": "./web-search",
+      "description": "Answers a WebSearch call with a compact hit list: the web-search skill script sends the query to the free router's /v1/search and trims title, url and a short snippet per hit in code (no model). Any failure, no router key or an extended search lets Claude's own WebSearch run unchanged. Needs the web-search skill and UNIFIED_API_KEY; does nothing without them."
     }
   ]
 }

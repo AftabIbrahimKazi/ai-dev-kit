@@ -747,6 +747,7 @@ export interface CliArgs {
   usageNotify?: 'on' | 'off';
   e2eDriver?: string; // --e2e-driver obscura|chrome|both|none: which browsers the Playwright suite may run on (opt-in; written to .claude/e2e-drivers.json)
   external?: string[]; // --external obscura: make sure an external tool (skills/meta/install-kit.external.json) exists machine-wide; fetched into ~/.ai-dev-kit/external/ only when missing
+  webSearch?: 'on' | 'off'; // the web-search mod (answers WebSearch with a compact hit list from the router): on installs it at project scope, off removes it
   webDigest?: 'on' | 'off'; // the web-digest mod (answers WebFetch with a short digest): on installs it at project scope, off removes it
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
   yes?: boolean; // --yes: accept every default, ask nothing
@@ -760,7 +761,7 @@ export interface CliArgs {
   json?: boolean;
 }
 
-export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; webDigest?: WebDigestResult; externals?: ExternalsResult; e2eDrivers?: E2eDriversResult }
+export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; webDigest?: WebDigestResult; webSearch?: WebDigestResult; externals?: ExternalsResult; e2eDrivers?: E2eDriversResult }
 
 // Browser drivers for the Playwright suite (e2e-scaffold/drive.js). Both are opt-in. The choice is a small project file; Obscura, when chosen, is
 // a machine-wide external tool and is fetched only if missing. With both chosen Obscura runs first and Chrome (the project's own browser) is the fallback.
@@ -957,22 +958,38 @@ export function ensureMod(name: string, scope: 'user' | 'project', cwd: string, 
 // The web-digest mod answers WebFetch with a short digest (the web-digest skill's script does the work). Project scope, opt-in: --web-digest on|off.
 // It needs the web-digest skill installed; with the skill missing the mod does nothing, so 'on' says so instead of installing a dead mod.
 export interface WebDigestResult { enabled: boolean; skill: boolean; action?: 'install' | 'uninstall'; ok?: boolean; warning?: string; error?: string; tools?: string }
-export function webDigestMod(root: string, library: string | undefined, installed: string[], want?: 'on' | 'off'): WebDigestResult {
-  const r: WebDigestResult = { enabled: false, skill: installed.includes('web-digest') };
+// A mod that only works with a same-named skill (its script does the work): project scope, opt-in, refuses 'on' without the skill.
+export function skillPairedMod(name: string, root: string, library: string | undefined, installed: string[], want?: 'on' | 'off'): WebDigestResult {
+  const r: WebDigestResult = { enabled: false, skill: installed.includes(name) };
   if (want === 'on') {
     r.action = 'install';
-    if (!r.skill) { r.ok = false; r.error = 'the web-digest skill is not installed here (install it first: install-kit install --skills web-digest), so the mod would do nothing'; }
-    else { const m = ensureMod('web-digest', 'project', root, library, () => modScope('web-digest', root) !== undefined); r.ok = m.state !== 'failed'; if (m.warning) r.error = m.warning; }
+    if (!r.skill) { r.ok = false; r.error = `the ${name} skill is not installed here (install it first: install-kit install --skills ${name}), so the mod would do nothing`; }
+    else { const m = ensureMod(name, 'project', root, library, () => modScope(name, root) !== undefined); r.ok = m.state !== 'failed'; if (m.warning) r.error = m.warning; }
   } else if (want === 'off') {
     r.action = 'uninstall';
-    const out = spawnClaude(['plugin', 'uninstall', 'web-digest@ai-dev-kit-mods', '--scope', 'project'], root);
+    const out = spawnClaude(['plugin', 'uninstall', `${name}@ai-dev-kit-mods`, '--scope', 'project'], root);
     r.ok = out.status === 0;
     if (!r.ok) r.error = String(out.error?.message || out.stderr || out.stdout || 'claude plugin uninstall failed').trim().split('\n')[0];
   }
-  r.enabled = modScope('web-digest', root) !== undefined;
-  if (r.enabled && !r.skill) r.warning = 'the web-digest mod is enabled but the web-digest skill is not installed, so it does nothing (WebFetch runs as normal). Install the skill.';
+  r.enabled = modScope(name, root) !== undefined;
+  if (r.enabled && !r.skill) r.warning = `the ${name} mod is enabled but the ${name} skill is not installed, so it does nothing (the built-in tool runs as normal). Install the skill.`;
+  return r;
+}
+// The web-digest mod answers WebFetch with a short digest. Needs Obscura to do anything; says so when it is missing.
+export function webDigestMod(root: string, library: string | undefined, installed: string[], want?: 'on' | 'off'): WebDigestResult {
+  const r = skillPairedMod('web-digest', root, library, installed, want);
   if (r.enabled) { const o = ext.findRef('obscura'); if (!o || !ext.detect(o).present) r.tools = 'Obscura is not installed, so every fetch falls through to Claude (install: node install-kit.cli.js install --external obscura).'; }
   return r;
+}
+// The web-search mod answers WebSearch with a compact hit list from the free router's /v1/search. Needs the router key; says so when it is missing.
+export function webSearchMod(root: string, library: string | undefined, installed: string[], want?: 'on' | 'off'): WebDigestResult {
+  const r = skillPairedMod('web-search', root, library, installed, want);
+  if (r.enabled && !unifiedKeySet()) r.tools = 'No UNIFIED_API_KEY (shell or ~/.ai-dev-kit/.env), so every search falls through to Claude.';
+  return r;
+}
+function unifiedKeySet(): boolean {
+  if (process.env.UNIFIED_API_KEY) return true;
+  try { return /^UNIFIED_API_KEY=\s*\S/m.test(fs.readFileSync(path.join(process.env.AI_DEV_KIT_HOME || os.homedir(), '.ai-dev-kit', '.env'), 'utf8')); } catch { return false; }
 }
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
@@ -1071,6 +1088,10 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (webDigestResult?.error) console.error('web-digest: ' + webDigestResult.error);
   if (webDigestResult?.warning) console.error(webDigestResult.warning);
   if (webDigestResult?.tools) console.error(webDigestResult.tools);
+  const webSearchResult = args.webSearch !== undefined || Object.keys(manifest.skills).includes('web-search') ? webSearchMod(args.root!, args.library, Object.keys(manifest.skills), args.webSearch) : undefined;
+  if (webSearchResult?.error) console.error('web-search: ' + webSearchResult.error);
+  if (webSearchResult?.warning) console.error(webSearchResult.warning);
+  if (webSearchResult?.tools) console.error(webSearchResult.tools);
   // Outside-model choices live in one small file the scripts and mods read. Only written when a choice was made; delete a feature's
   // key (or the file) to go back to the default (Claude, or the free scan for the review). --force replaces an existing key.
   if (args.ai) writeAiBackends(args.root!, args.ai, Object.keys(manifest.skills), args.force);
@@ -1084,7 +1105,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   const keptOut = excludeKitFromGit(args.root!, args.library);
   if (keptOut) console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, externals: externalsResult, e2eDrivers };
+  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, webSearch: webSearchResult, externals: externalsResult, e2eDrivers };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
@@ -2102,6 +2123,11 @@ function parseArgs(argv: string[]): CliArgs {
       a.e2eDriver = v;
     }
     else if (k === '--external') a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
+    else if (k === '--web-search') {
+      const v = argv[++i];
+      if (v !== 'on' && v !== 'off') { console.error(red('error: --web-search must be on or off')); process.exit(2); }
+      a.webSearch = v;
+    }
     else if (k === '--web-digest') {
       const v = argv[++i];
       if (v !== 'on' && v !== 'off') { console.error(red('error: --web-digest must be on or off')); process.exit(2); }
@@ -2156,8 +2182,8 @@ async function main(): Promise<void> {
       if (isInteractive() && !args.json && action === 'sync') printCompany(res as company.CompanyResult);
     }
     else if (cmd === 'mods') {
-      if (!args.root) { console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off]')); process.exit(2); return; }
-      res = { batch: batchMod(args.root, args.library, Object.keys(readManifest(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webDigest) };
+      if (!args.root) { console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off] [--web-search on|off]')); process.exit(2); return; }
+      res = { batch: batchMod(args.root, args.library, Object.keys(readManifest(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webDigest), webSearch: webSearchMod(args.root, args.library, Object.keys(readManifest(args.root).skills), args.webSearch) };
     }
     else if (cmd === 'list') res = listSkills(args.library!);
     else if (cmd === 'install') res = doInstall(args);
