@@ -77,15 +77,42 @@ function runMenu(io, spec) {
     const ticked = new Set(spec.multi ? spec.initial ?? [] : []);
     let cursor = spec.multi ? 0 : Math.min(Math.max(spec.initial?.[0] ?? 0, 0), n - 1);
     let drawn = 0;
+    const visible = (s) => s.replace(/\[[0-9;]*m/g, '').length;
+    function fit(s, cols) {
+        if (!cols || visible(s) <= cols)
+            return s;
+        let out = '', w = 0;
+        for (let i = 0; i < s.length && w < cols - 1; i++) {
+            const m = /^\[[0-9;]*m/.exec(s.slice(i));
+            if (m) {
+                out += m[0];
+                i += m[0].length - 1;
+            }
+            else {
+                out += s[i];
+                w++;
+            }
+        }
+        return out + (io.color ? '[0m' : '') + '…';
+    }
     function lines() {
+        const cols = io.output.columns ?? 0;
+        const rows = io.output.rows ?? 0;
+        const room = rows ? Math.max(3, rows - 5) : n; // header, question, footer, two scroll hints, prompt line
+        const start = n <= room ? 0 : Math.min(Math.max(cursor - Math.floor(room / 2), 0), n - room);
+        const end = Math.min(n, start + room);
         const out = [dim(spec.header), bold(spec.question)];
-        spec.items.forEach((it, i) => {
+        if (start > 0)
+            out.push(dim(`  ... ${start} more above`));
+        for (let i = start; i < end; i++) {
+            const it = spec.items[i];
             const mark = spec.multi ? (ticked.has(i) ? '[x]' : '[ ]') : i === cursor ? '(*)' : '( )';
-            const line = `${i === cursor ? cyan('>') : ' '} ${mark} ${it.title}${it.hint ? ' ' + dim('- ' + it.hint) : ''}`;
-            out.push(line);
-        });
+            out.push(`${i === cursor ? cyan('>') : ' '} ${mark} ${it.title}${it.hint ? ' ' + dim('- ' + it.hint) : ''}`);
+        }
+        if (end < n)
+            out.push(dim(`  ... ${n - end} more below`));
         out.push(dim((0, exports.footerFor)(spec)));
-        return out;
+        return out.map((l) => fit(l, cols));
     }
     function draw(first) {
         if (!first && drawn)
