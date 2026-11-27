@@ -1,0 +1,32 @@
+{
+  "_about": "External tools the kit references but never bundles. Fetched at install time, opt-in, into ~/.ai-dev-kit/external/<id>/. Every entry needs a CREDITS.md row. tests/external-refs.test.js enforces this. No keys, tokens or secrets in this file.",
+  "refs": [
+    {
+      "id": "shopify-toolkit",
+      "name": "Shopify AI Toolkit",
+      "repo": "https://github.com/Shopify/Shopify-AI-Toolkit",
+      "licence": "MIT",
+      "kind": "clone",
+      "ref": "live",
+      "refNote": "Live pull by design: skills are never stored here, so no pin. The installer records the commit it pulled.",
+      "usedBy": ["shopify-toolkit-install"],
+      "detect": "skills/stack/shopify-toolkit-install/get.js list",
+      "credit": "Shopify"
+    },
+    {
+      "id": "obscura",
+      "name": "Obscura",
+      "repo": "https://github.com/h4ckf0r0day/obscura",
+      "licence": "Apache-2.0",
+      "kind": "release-zip",
+      "ref": "v0.2.7",
+      "asset": "obscura-x86_64-windows.zip",
+      "sha256": "be983b663552e11faf8c1e07696578bad622dbeb48afb9f59036032ca8e97fb3",
+      "optIn": true,
+      "restrictions": ["default build only: never the stealth builds", "loopback only, never expose the CDP port"],
+      "usedBy": ["web-search (planned)", "e2e second driver (planned)"],
+      "detect": "obscura on PATH or ~/.ai-dev-kit/external/obscura/obscura.exe",
+      "credit": "Obscura"
+    }
+  ]
+}
