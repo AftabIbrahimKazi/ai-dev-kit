@@ -94,12 +94,7 @@ export function runMenu(io: MenuIO, spec: MenuSpec): Promise<MenuResult> {
   }
   function draw(first: boolean): void {
     const l = lines();
-    if (!first && drawn) {
-      // Clear exactly the number of lines we previously drew, plus handle potential terminal wrapping
-      for (let i = 0; i < drawn; i++) {
-        io.output.write('\x1b[2K\x1b[1A'); // clear line + move up
-      }
-    }
+    if (!first && drawn) io.output.write(`\x1b[${drawn}A\x1b[0J`);
     io.output.write(l.join('\n') + '\n');
     drawn = l.length;
   }

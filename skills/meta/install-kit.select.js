@@ -115,9 +115,9 @@ function runMenu(io, spec) {
         return out.map((l) => fit(l, cols));
     }
     function draw(first) {
+        const l = lines();
         if (!first && drawn)
             io.output.write(`\x1b[${drawn}A\x1b[0J`);
-        const l = lines();
         io.output.write(l.join('\n') + '\n');
         drawn = l.length;
     }
