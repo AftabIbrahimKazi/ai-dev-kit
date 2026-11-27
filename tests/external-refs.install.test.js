@@ -134,4 +134,40 @@ t('a stealth build is refused', () => {
   assert.ok(/stealth/.test(r.stdout));
 });
 
-fs.rmSync(base, { recursive: true, force: true });
+
+// ---- a clone-kind tool that is a local server (the free router): fetched from its repo only when nothing already answers on its port
+const net = require('node:net');
+const srcRepo = path.join(base, 'router-src');
+fs.mkdirSync(srcRepo);
+fs.writeFileSync(path.join(srcRepo, 'package.json'), '{"name":"router-fixture"}');
+const g = (...a) => spawnSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', ...a], { cwd: srcRepo, encoding: 'utf8' });
+g('init', '-q'); g('add', '-A'); g('commit', '-q', '-m', 'init'); g('tag', 'v1.0.0');
+const routerEntry = (port) => ({ id: 'router', name: 'Router Fixture', repo: srcRepo, licence: 'MIT', kind: 'clone', ref: 'v1.0.0', marker: 'src/package.json', detectPort: port, optIn: true, postInstall: 'start it by its README, then set the key', usedBy: ['test'], detect: 'x', credit: 'Router' });
+const freePort = () => new Promise((resolve) => { const sv = net.createServer(); sv.listen(0, '127.0.0.1', () => { const p = sv.address().port; sv.close(() => resolve(p)); }); });
+
+(async () => {
+  const closedPort = await freePort();
+  fs.writeFileSync(registry, JSON.stringify({ refs: [routerEntry(closedPort)] }));
+  t('router not running: its source is cloned at the pinned tag and the next-step note is printed', () => {
+    const r = run(CLI, ['install', '--library', LIB, '--root', proj, '--tool', 'claude', ...STD, '--external', 'router']);
+    assert.strictEqual(r.status, 0, r.stderr);
+    assert.ok(fs.existsSync(path.join(home, 'external', 'router', 'src', 'package.json')), 'source not cloned');
+    assert.ok(!fs.existsSync(path.join(home, 'external', 'router', 'src', '.git')), 'the .git folder should be dropped');
+    assert.match(r.stderr, /next \(router\): start it by its README/);
+    run(REFS, ['remove', 'router']);
+  });
+
+  const server = net.createServer(); await new Promise((res) => server.listen(0, '127.0.0.1', res));
+  const livePort = server.address().port;
+  fs.writeFileSync(registry, JSON.stringify({ refs: [routerEntry(livePort)] }));
+  t('router already running on its port: counts as installed, nothing is cloned', () => {
+    const st = JSON.parse(run(REFS, ['status', '--json']).stdout)[0];
+    assert.ok(st.present && /already running/.test(st.where), JSON.stringify(st));
+    const r = run(CLI, ['install', '--library', LIB, '--root', proj, '--tool', 'claude', ...STD, '--external', 'router']);
+    assert.strictEqual(r.status, 0, r.stderr);
+    assert.match(r.stderr, /router is already installed on this machine/);
+    assert.ok(!fs.existsSync(path.join(home, 'external', 'router')), 'cloned although a router is already running');
+  });
+  server.close();
+  fs.rmSync(base, { recursive: true, force: true });
+})();

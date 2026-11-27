@@ -30,6 +30,21 @@
       "usedBy": ["web-search (planned)", "e2e second driver (planned)"],
       "detect": "obscura on PATH or ~/.ai-dev-kit/external/obscura/obscura.exe",
       "credit": "Obscura"
+    },
+    {
+      "id": "freellmapi",
+      "name": "FreeLLMAPI",
+      "repo": "https://github.com/tashfeenahmed/freellmapi",
+      "licence": "MIT",
+      "kind": "clone",
+      "ref": "v0.16.49",
+      "marker": "src/package.json",
+      "detectPort": 31415,
+      "optIn": true,
+      "postInstall": "the kit only fetches the router's source. Start it by its own README (Quick start or Docker), then put its key in ~/.ai-dev-kit/.env as UNIFIED_API_KEY; /api-mode free reads it from there.",
+      "usedBy": ["api-mode (free mode)", "the unified-router backends"],
+      "detect": "something answering on 127.0.0.1:31415, or ~/.ai-dev-kit/external/freellmapi/src/package.json",
+      "credit": "FreeLLMAPI"
     }
   ]
 }

@@ -61,6 +61,18 @@ function onPath(bin) {
     }
     return undefined;
 }
+// A tool that is a local server counts as installed when something already answers on its port (Docker, a desktop app, a hand-started copy).
+function portOpen(port) {
+    if (!Number.isInteger(port) || port < 1 || port > 65535)
+        return false;
+    const js = `const s=require('net').connect(${port},'127.0.0.1');s.on('connect',()=>{process.stdout.write('1');process.exit(0)});s.on('error',()=>process.exit(1));setTimeout(()=>process.exit(1),1500)`;
+    try {
+        return childProcess.spawnSync(process.execPath, ['-e', js], { encoding: 'utf8', timeout: 4000 }).stdout === '1';
+    }
+    catch {
+        return false;
+    }
+}
 // Present means: fetched by us (stamp plus marker file) or, for binaries, found on PATH.
 function detect(r) {
     const base = { id: r.id, name: r.name, pinned: r.ref, credit: r.credit, repo: r.repo };
@@ -70,6 +82,8 @@ function detect(r) {
     if (st && (!r.marker || fs.existsSync(path.join(refDir(r.id), r.marker)))) {
         return { ...base, present: true, where: refDir(r.id), fetchedRef: st.ref, stale: st.ref !== r.ref && r.ref !== 'live' };
     }
+    if (r.detectPort && portOpen(r.detectPort))
+        return { ...base, present: true, where: `127.0.0.1:${r.detectPort} (already running)`, note: 'a server is already answering on that port; nothing to fetch' };
     if (r.marker) {
         const hit = onPath(path.basename(r.marker).replace(/\.exe$/i, ''));
         if (hit)
@@ -199,7 +213,7 @@ function fetchRef(r, force) {
             fs.rmSync(dir, { recursive: true, force: true });
             fs.mkdirSync(path.dirname(dir), { recursive: true });
             fs.renameSync(tmp, dir);
-            return { ...base, ok: true, path: dir, ref: r.ref, sha256: sha, commit };
+            return { ...base, ok: true, path: dir, ref: r.ref, sha256: sha, commit, note: r.postInstall };
         }
         catch (e) {
             fs.rmSync(tmp, { recursive: true, force: true });

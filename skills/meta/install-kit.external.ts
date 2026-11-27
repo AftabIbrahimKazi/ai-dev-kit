@@ -20,10 +20,10 @@ import childProcess = require('node:child_process');
 export interface ExternalRef {
   id: string; name: string; repo: string; licence: string; kind: 'clone' | 'release-zip' | 'pip' | 'npm-npx';
   ref: string; refNote?: string; asset?: string; sha256?: string; assetUrl?: string; platform?: string;
-  fetch?: 'skill'; optIn?: boolean; restrictions?: string[]; usedBy: string[]; detect: string; marker?: string; credit: string;
+  fetch?: 'skill'; detectPort?: number; postInstall?: string; optIn?: boolean; restrictions?: string[]; usedBy: string[]; detect: string; marker?: string; credit: string;
 }
 export interface RefState { id: string; name: string; present: boolean; where?: string; pinned: string; fetchedRef?: string; stale?: boolean; credit: string; repo: string; note?: string }
-export interface FetchResult { id: string; ok: boolean; path?: string; ref?: string; sha256?: string; commit?: string; error?: string; credit: string }
+export interface FetchResult { id: string; ok: boolean; note?: string; path?: string; ref?: string; sha256?: string; commit?: string; error?: string; credit: string }
 export interface ManifestExternal { ref: string; path: string; at: string; sha256?: string; commit?: string }
 
 const HERE = __dirname;
@@ -50,6 +50,13 @@ function onPath(bin: string): string | undefined {
   return undefined;
 }
 
+// A tool that is a local server counts as installed when something already answers on its port (Docker, a desktop app, a hand-started copy).
+function portOpen(port: number): boolean {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return false;
+  const js = `const s=require('net').connect(${port},'127.0.0.1');s.on('connect',()=>{process.stdout.write('1');process.exit(0)});s.on('error',()=>process.exit(1));setTimeout(()=>process.exit(1),1500)`;
+  try { return childProcess.spawnSync(process.execPath, ['-e', js], { encoding: 'utf8', timeout: 4000 }).stdout === '1'; } catch { return false; }
+}
+
 // Present means: fetched by us (stamp plus marker file) or, for binaries, found on PATH.
 export function detect(r: ExternalRef): RefState {
   const base = { id: r.id, name: r.name, pinned: r.ref, credit: r.credit, repo: r.repo };
@@ -58,6 +65,7 @@ export function detect(r: ExternalRef): RefState {
   if (st && (!r.marker || fs.existsSync(path.join(refDir(r.id), r.marker)))) {
     return { ...base, present: true, where: refDir(r.id), fetchedRef: st.ref, stale: st.ref !== r.ref && r.ref !== 'live' };
   }
+  if (r.detectPort && portOpen(r.detectPort)) return { ...base, present: true, where: `127.0.0.1:${r.detectPort} (already running)`, note: 'a server is already answering on that port; nothing to fetch' };
   if (r.marker) {
     const hit = onPath(path.basename(r.marker).replace(/\.exe$/i, ''));
     if (hit) return { ...base, present: true, where: hit, note: 'found on PATH (not fetched by the kit; pin not checked)' };
@@ -158,7 +166,7 @@ export function fetchRef(r: ExternalRef, force?: boolean): FetchResult {
       fs.rmSync(dir, { recursive: true, force: true });
       fs.mkdirSync(path.dirname(dir), { recursive: true });
       fs.renameSync(tmp, dir);
-      return { ...base, ok: true, path: dir, ref: r.ref, sha256: sha, commit };
+      return { ...base, ok: true, path: dir, ref: r.ref, sha256: sha, commit, note: r.postInstall };
     } catch (e) {
       fs.rmSync(tmp, { recursive: true, force: true });
       throw e;

@@ -2448,6 +2448,9 @@ async function main() {
     if (ex)
         for (const c of ex.credits)
             console.error('credit: ' + c);
+    if (ex)
+        for (const f of ex.fetched.filter((x) => x.ok && x.note && !x.already))
+            console.error(`next (${f.id}): ${f.note}`);
     if (um && um.mod === 'failed')
         process.exitCode = 1;
 }

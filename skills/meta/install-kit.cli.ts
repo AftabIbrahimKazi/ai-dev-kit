@@ -2108,6 +2108,7 @@ async function main(): Promise<void> {
   if (ex && !ex.ok) { for (const f of ex.fetched.filter((x) => !x.ok)) console.error(red(`external ${f.id} FAILED: ${f.error}`)); process.exit(1); }
   if (ex) for (const f of ex.fetched.filter((x) => x.ok && x.already)) console.error(`${f.id} is already installed on this machine (${f.path}); nothing to fetch`);
   if (ex) for (const c of ex.credits) console.error('credit: ' + c);
+  if (ex) for (const f of ex.fetched.filter((x) => x.ok && x.note && !(x as { already?: boolean }).already)) console.error(`next (${f.id}): ${f.note}`);
   if (um && um.mod === 'failed') process.exitCode = 1;
 }
 
