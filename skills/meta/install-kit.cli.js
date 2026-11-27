@@ -1323,6 +1323,9 @@ function doInstall(args) {
         if (fresh.length)
             archivedNow = (0, skill_scope_move_1.doArchive)({ root: args.root, skills: fresh, by: 'auto' }).archived;
     }
+    const leaned = (0, skill_scope_move_1.readManifest)(args.root);
+    leaned.lean = true;
+    (0, skill_scope_move_1.writeManifest)(args.root, leaned);
     const keptOut = excludeKitFromGit(args.root, args.library);
     if (keptOut)
         console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
@@ -1434,8 +1437,18 @@ function doUpdate(args) {
     }
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: false });
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
+    // An install made before the lean start kept every archivable skill active. Archive them once; the lean flag stops later updates from undoing a restore.
+    let archivedNow;
+    if (!manifest.lean && !args.keepActive) {
+        const active = Object.keys(manifest.skills).filter((n) => exports.ARCHIVABLE_SKILLS.includes(n));
+        if (active.length)
+            archivedNow = (0, skill_scope_move_1.doArchive)({ root: args.root, skills: active, by: 'auto' }).archived;
+        const leaned = (0, skill_scope_move_1.readManifest)(args.root);
+        leaned.lean = true;
+        (0, skill_scope_move_1.writeManifest)(args.root, leaned);
+    }
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
-    return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
+    return { archived: archivedNow, skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
 }
 function parseRenameLedger(libraryRoot) {
     const p = path.join(libraryRoot, 'migrations', 'RENAMES.md');

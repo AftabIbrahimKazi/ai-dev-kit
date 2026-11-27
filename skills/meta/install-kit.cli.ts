@@ -1169,6 +1169,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
     const fresh = results.filter((r) => !r.error && ARCHIVABLE_SKILLS.includes(r.name) && !knownBefore.has(r.name)).map((r) => r.name);
     if (fresh.length) archivedNow = doArchive({ root: args.root!, skills: fresh, by: 'auto' }).archived;
   }
+  const leaned = readManifest(args.root!); leaned.lean = true; writeManifest(args.root!, leaned);
   const keptOut = excludeKitFromGit(args.root!, args.library);
   if (keptOut) console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
@@ -1176,7 +1177,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
-export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; hooksRetired: string[]; commands?: CommandsResult; whatsNew?: WhatsNew; externals?: ExternalsResult }
+export interface DoUpdateResult { archived?: string[]; skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; hooksRetired: string[]; commands?: CommandsResult; whatsNew?: WhatsNew; externals?: ExternalsResult }
 
 // ---- What's new: CHANGELOG.md sections newer than the date this project last saw ----
 export interface NewsEntry { date: string; kind: string; headline: string }
@@ -1262,8 +1263,15 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   if (core && hasKitHooks(args.root!, core)) { const merged = mergeHooks(args.root!, core); hooksAdded = merged.added; hooksRetired = merged.retired; }
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: false });
   writeManifest(args.root!, manifest);
+  // An install made before the lean start kept every archivable skill active. Archive them once; the lean flag stops later updates from undoing a restore.
+  let archivedNow: string[] | undefined;
+  if (!manifest.lean && !args.keepActive) {
+    const active = Object.keys(manifest.skills).filter((n) => ARCHIVABLE_SKILLS.includes(n));
+    if (active.length) archivedNow = doArchive({ root: args.root!, skills: active, by: 'auto' }).archived;
+    const leaned = readManifest(args.root!); leaned.lean = true; writeManifest(args.root!, leaned);
+  }
   const verifyResult = verify({ root: args.root!, tool: manifest.tool });
-  return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
+  return { archived: archivedNow, skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
 }
 
 interface RenameRow { oldName: string; newName: string }

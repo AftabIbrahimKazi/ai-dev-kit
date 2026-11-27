@@ -39,3 +39,30 @@ t('a later install never archives a skill that was already active', () => {
   assert.deepStrictEqual(r.archived, ['perf-audit']);
   assert.ok(active(root).includes('code-audit'));
 });
+
+const cli = require(CLI);
+const update = (root, extra = []) => JSON.parse(spawnSync(process.execPath, [CLI, 'update', '--library', LIB, '--root', root, '--tool', 'claude', '--json', ...extra], { encoding: 'utf8', env: env() }).stdout);
+const legacy = (root) => { install(root, 'code-audit,perf-audit,plan-first,skill-scope', ['--keep-active']); const m = cli.readManifest(root); delete m.lean; cli.writeManifest(root, m); };
+t('an update archives the active archivable skills of a pre-lean install, once', () => {
+  const root = tmp();
+  legacy(root);
+  const r = update(root);
+  assert.deepStrictEqual([...r.archived].sort(), ['code-audit', 'perf-audit']);
+  assert.ok(active(root).includes('plan-first') && !active(root).includes('code-audit'));
+});
+t('an update never re-archives a skill the user restored after the lean start', () => {
+  const root = tmp();
+  legacy(root);
+  update(root);
+  cli.doUnarchive({ root, skills: ['code-audit'] });
+  const r = update(root);
+  assert.strictEqual(r.archived, undefined);
+  assert.ok(active(root).includes('code-audit'));
+});
+t('an install made with --keep-active is not archived by a later update', () => {
+  const root = tmp();
+  install(root, 'code-audit,plan-first,skill-scope', ['--keep-active']);
+  const r = update(root);
+  assert.strictEqual(r.archived, undefined);
+  assert.ok(active(root).includes('code-audit'));
+});
