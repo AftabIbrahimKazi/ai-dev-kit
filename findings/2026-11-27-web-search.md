@@ -34,3 +34,33 @@ Task: a research question that needed 6 searches (Deno, Bun and Node.js latest m
 Finding: the mod does not shrink the context window. Hits are about 9% smaller, but one mod run took 2 more turns, so summed input tokens rose. The cost drop is billing, not context; the likely cause (inferred, not verified) is the per-search charge of native search that the router path does not have. Both arms found the same facts.
 
 To shrink context, lower the snippet size (now 360 characters per hit); that trades detail and needs its own test.
+
+## Shaping variants (offline lab, then end to end)
+
+Question: can a cleverer script, or a filter model, put less text into the context without losing the answer?
+
+Offline lab (no Claude spend): 15 stable-fact questions, 8 raw router hits each, answer = a regex that every raw result set contains (ceiling 15/15).
+
+| variant | answer kept | avg chars sent | time |
+| --- | --- | --- | --- |
+| full 5 hits | 15/15 | 7,269 | 0 |
+| 360-char window (first version) | 15/15 | 2,351 | 0 |
+| 200-char window | 12/15 | 1,549 | 0 |
+| top 3 hits only | 14/15 | 1,391 | 0 |
+| sentence scoring (script) | 15/15 | 2,085 | 1 ms |
+| Laya sentence scoring | 14/15 | 1,998 | 8.7 s |
+| router-model sift | 15/15 | 528 | 5.1 s |
+
+Naive shrinking (smaller window, fewer hits) loses answers. Laya was slower and no better than the script, so it is rejected. n = 15, single-fact questions, one regex each: an easy test.
+
+End to end (Haiku, the 6-search research task, 2 runs per arm, averages):
+
+| | native | window | sentence | sift |
+| --- | --- | --- | --- | --- |
+| tool result per search | 2,937 chars | 2,570 | 2,142 (-27%) | 867 (-70%) |
+| last-turn input tokens | 49,268 | 48,010 | 47,281 (-4%) | 43,840 (-11%) |
+| cost per task | 0.0773 | 0.0060 | 0.0060 | 0.0053 |
+| time per task | 18 s | 14 s | 15 s | 45 s |
+| turns | 10 | 10 | 10 | 11 |
+
+All four arms found the same facts. Verdict: sentence scoring is the default (free, no latency, 27% smaller results). Sift shrinks context most but is about 3 times slower and one run needed 8 searches and 13 turns (summed input tokens +8% there), so it stays an advanced opt-in (`WEB_SEARCH_MODE=sift`). In this task the system prompt dominates the context (about 48k), so even sift saves only about 3k tokens per 6 searches.

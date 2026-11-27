@@ -25,12 +25,16 @@ export const register: Register = (on) => {
       if (e.blocked_domains?.length) argv.push('--block', e.blocked_domains.join(','))
       const res = await $.process.run(argv, { timeoutMs: TIMEOUT_MS })
       if (res.exitCode !== 0) return next(e)
-      const out = JSON.parse(String(res.stdout ?? '').trim()) as { query: string; hits: { title: string; url: string; snippet: string }[]; durationMs: number }
+      const out = JSON.parse(String(res.stdout ?? '').trim()) as { query: string; hits: { title: string; url: string; snippet: string }[]; digest?: string; durationMs: number }
       if (!out.hits?.length) return next(e)
+      // A sifted digest (the script's sift mode) is plain text with the source URLs inside it; otherwise the trimmed hit list.
+      const results = out.digest
+        ? [`Relevant facts for "${out.query}", picked from the search results:\n${out.digest}`]
+        : [{ tool_use_id: 'web-search', content: out.hits.map((h) => ({ title: h.title, url: h.url, snippet: h.snippet })) }]
       return {
         result: {
           query: out.query,
-          results: [{ tool_use_id: 'web-search', content: out.hits.map((h) => ({ title: h.title, url: h.url, snippet: h.snippet })) }],
+          results,
           durationSeconds: Math.max(0.1, Math.round(out.durationMs / 100) / 10),
           searchCount: 1,
         },

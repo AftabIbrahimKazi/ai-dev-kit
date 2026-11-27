@@ -13,7 +13,9 @@ description: Opt-in. Use for a quick web search answered from the free router's 
 3. You get one line of JSON with a `hits` list (title, url, a short snippet each). A line starting with `skip:` says why nothing came back (no key, router down, no hits). Nothing is broken; Claude's own search covers it.
 
 ## The tool
-`node <skill-root>/web-search/cli.js <query...> [--max 5] [--allow a.com,b.org] [--block x.com]` or `check`. Plain Node, no dependencies, no model call. Code does all the work: one POST to `<router>/v1/search`, tracking parameters stripped from URLs, duplicates dropped, domain filters applied, and each hit cut to the 360-character window of its page text that holds the most query words. Exit code 2 means "not done, let Claude's own tool run". A key is read, never printed.
+`node <skill-root>/web-search/cli.js <query...> [--max 5] [--allow a.com,b.org] [--block x.com]` or `check`. Plain Node, no dependencies, no model call. Code does all the work: one POST to `<router>/v1/search`, tracking parameters stripped from URLs, duplicates dropped, domain filters applied, and the page text cut down to the best sentences across all hits (scored by query words, digits and names; at most 3 per hit and 1,500 characters in total). Exit code 2 means "not done, let Claude's own tool run". A key is read, never printed.
+
+Advanced, off by default: set `WEB_SEARCH_MODE` in your shell. `window` is the older fixed 360-character window per hit. `sift` also asks a router model to copy out only the facts that answer the query (about 70% less text in context, but about 3 times slower per task, so it is not the default); if the model fails the sentence hits are used.
 
 ## The mod (optional, makes it automatic)
 `install-kit mods --root <project> --web-search on` installs the `web-search` mod at project scope. It answers a WebSearch call with this script's hit list and falls through to Claude's own WebSearch on any failure, no key, no hits, or an `extended` (thorough) search. `--web-search off` removes it. The mod does nothing without this skill installed.
@@ -21,7 +23,7 @@ description: Opt-in. Use for a quick web search answered from the free router's 
 ## Rules
 - **Hits, not answers.** You get titles, links and short snippets; open a page (WebFetch, or the `web-digest` add-on) when a snippet is not enough.
 - **Thorough searches stay with Claude.** A request marked extended is never taken over.
-- **Measured, not assumed.** In the kit's own A/B (Haiku, three fact questions, two runs each) total cost fell 74% with the mod, answers stayed correct 6 of 6 and wall time fell about 15%; the model made a few more tool calls (20 turns against 16). See `findings/2026-11-27-web-search.md`.
+- **Measured, not assumed.** In the kit's own A/B (Haiku, two runs per arm) total cost fell 74% on fact questions and 92% on a 6-search research task, with the same answers; the saving is billing (native search carries its own charge), not context. Tool results are 27% smaller than native with sentence scoring (70% with sift). See `findings/2026-11-27-web-search.md`.
 
 ## Credit
 The search engines sit behind FreeLLMAPI (MIT), which the kit uses as an external tool and never bundles. See `CREDITS.md`.

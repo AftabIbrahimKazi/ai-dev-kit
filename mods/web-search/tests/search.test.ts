@@ -24,6 +24,13 @@ test('answers the call itself with the hit list', async ($: any, on: any) => {
   expect(calls.length).toBe(1)
 })
 
+test('a sifted digest becomes one text result with the facts inside', async ($: any, on: any) => {
+  world(on, { run: { exit: 0, out: JSON.stringify({ query: 'q', provider: 'p', durationMs: 4000, digest: 'Fact one. https://a.com/x', hits: [{ title: 'T', url: 'https://a.com/x', snippet: 'S' }] }) } })
+  const r = await search($)
+  expect(typeof r.result.results[0]).toBe('string')
+  expect(r.result.results[0]).toContain('Fact one. https://a.com/x')
+})
+
 test('domain filters are passed to the script', async ($: any, on: any) => {
   const calls = world(on, {})
   await search($, { allowed_domains: ['a.com', 'b.org'], blocked_domains: ['x.com'] })

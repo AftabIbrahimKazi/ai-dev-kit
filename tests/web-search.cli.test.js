@@ -47,6 +47,28 @@ t('shape dedupes by cleaned url, applies allow and block lists, caps the count, 
   assert.deepStrictEqual(ws.shape(raw, 'q', 10, [], ['a.com', 'c.net']).map((h) => h.title), ['B', 'E']);
 });
 
+t('shapeSentences keeps the answer sentence, respects the per-hit and total caps, and falls back to windows when no sentence qualifies', () => {
+  const filler = 'This sentence is filler text about nothing in particular at all. '.repeat(30);
+  const raw = [
+    { title: 'Rust blog', url: 'https://blog.rust-lang.org/2015/05/15/Rust-1.0', content: filler + 'Rust 1.0 was released on May 15, 2015 by the Rust Core Team. ' + filler },
+    { title: 'Other', url: 'https://o.com/x', content: filler },
+  ];
+  const hits = ws.shapeSentences(raw, 'Rust 1.0 release date', 5, [], []);
+  assert.ok(hits.length >= 1 && /May 15, 2015/.test(hits[0].snippet), JSON.stringify(hits));
+  assert.ok(hits.reduce((n, h) => n + h.snippet.length, 0) <= 1500);
+  const one = ws.shapeSentences(raw, 'Rust 1.0 release date', 5, [], [], 1500, 1);
+  assert.strictEqual(one[0].snippet.split(/(?<=\.)\s/).length, 1, 'perHit 1 keeps one sentence');
+  const noSentence = ws.shapeSentences([{ title: 'T', url: 'https://t.com/a', content: 'x'.repeat(900) }], 'q', 5, [], []);
+  assert.strictEqual(noSentence.length, 1, 'falls back to the window result');
+});
+
+t('scoreSentence ranks query words first, then digits and names, and penalises very long text', () => {
+  const w = ['rust', 'release'];
+  assert.ok(ws.scoreSentence('Rust release notes for the team.', w) > ws.scoreSentence('Nothing relevant to see here at all.', w));
+  assert.ok(ws.scoreSentence('Released in 2015 by Mozilla Research.', []) > ws.scoreSentence('released quietly by someone, some day.', []));
+  assert.ok(ws.scoreSentence('a '.repeat(250), w) < ws.scoreSentence('a '.repeat(50), w));
+});
+
 function runAsync(args, env) {
   return new Promise((resolve) => cp.execFile(process.execPath, [BIN, ...args], { env: { ...process.env, ...env }, timeout: 20000 }, (e, so, se) => resolve({ code: e ? e.code : 0, so, se })));
 }
@@ -84,6 +106,30 @@ t('full path: fake router returns trimmed deduped hits, the key goes in the head
   assert.strictEqual(seen.auth, 'Bearer sekret-key-123');
   assert.strictEqual(seen.body.query, 'target words');
   assert.ok(!r.so.includes('sekret') && !r.se.includes('sekret'));
+});
+
+t('modes: window keeps the old shape, sift returns the model digest, and a failed sift falls back to the sentence hits', async () => {
+  const results = [{ title: 'One', url: 'https://a.com/1', content: 'Filler words here and there for padding the text. The answer is forty two exactly. More filler words follow after that.' }];
+  let chatStatus = 200, chatText = 'The answer is forty two. https://a.com/1';
+  const srv = http.createServer((req, res) => {
+    let b = ''; req.on('data', (d) => { b += d; });
+    req.on('end', () => {
+      res.setHeader('content-type', 'application/json');
+      if (req.url === '/v1/search') return res.end(JSON.stringify({ provider: 'fake', results }));
+      res.statusCode = chatStatus; res.end(JSON.stringify({ choices: [{ message: { content: chatText } }] }));
+    });
+  });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const env = { UNIFIED_API_KEY: 'k', UNIFIED_API_BASE: `http://127.0.0.1:${srv.address().port}` };
+  const win = JSON.parse((await runAsync(['answer', 'forty'], { ...env, WEB_SEARCH_MODE: 'window' })).so);
+  assert.strictEqual(win.digest, undefined);
+  const sift = JSON.parse((await runAsync(['answer', 'forty'], { ...env, WEB_SEARCH_MODE: 'sift' })).so);
+  assert.strictEqual(sift.digest, 'The answer is forty two. https://a.com/1');
+  assert.ok(sift.hits.length >= 1, 'sentence hits ride along');
+  chatStatus = 500;
+  const dead = JSON.parse((await runAsync(['answer', 'forty'], { ...env, WEB_SEARCH_MODE: 'sift' })).so);
+  assert.strictEqual(dead.digest, undefined); assert.ok(dead.hits.length >= 1, 'fallback keeps the hits');
+  srv.close();
 });
 
 t('failures exit 2 with a reason and print nothing on stdout: no key, router down, HTTP error, no hits', async () => {
