@@ -123,30 +123,40 @@ t('only obscura, but Obscura is not installed: exit 3 with the install hint', ()
   assert.match(r.stdout, /no fallback/);
 });
 
-t('both, Obscura passes everything: Chrome is not run', () => {
-  const dir = project({ obscura: ALL_PASS, chrome: { a: 'fail' } }, ['obscura', 'chrome']);
-  const r = run(dir, ['run']);
-  assert.strictEqual(r.status, 0, r.stdout);
-  assert.deepStrictEqual(calls(dir).map((c) => c.split(' ')[0]), ['obscura']);
-});
-
-t('both, Obscura fails two tests Chrome passes: Chrome re-runs only those, both are named DIVERGED, exit 0', () => {
-  const dir = project({ obscura: { a: 'fail', b: 'fail', c: 'pass' }, chrome: { a: 'pass', b: 'pass', c: 'pass' } }, ['obscura', 'chrome']);
+t('both, Obscura fully green: Chrome runs as a double check, both green, exit 0', () => {
+  const dir = project({ obscura: ALL_PASS, chrome: ALL_PASS }, ['obscura', 'chrome']);
   const r = run(dir, ['run']);
   assert.strictEqual(r.status, 0, r.stdout);
   const c = calls(dir);
   assert.deepStrictEqual(c.map((x) => x.split(' ')[0]), ['obscura', 'chrome']);
-  assert.match(c[1], /--last-failed/);
-  assert.strictEqual((r.stdout.match(/DIVERGED \(failed on obscura, passed on chrome\)/g) || []).length, 2);
-  assert.match(r.stdout, /chrome ran 2 test/);
+  assert.ok(!/--last-failed/.test(c[1]), 'the double check re-runs the whole suite, not only failures');
+  assert.match(r.stdout, /chrome \(double check\): 2 passed/);
+  assert.match(r.stdout, /0 diverged, 0 failed on both/);
 });
 
-t('both, a test fails on both: named FAILED on both, exit 1', () => {
-  const dir = project({ obscura: { a: 'fail', b: 'fail' }, chrome: { a: 'pass', b: 'fail' } }, ['obscura', 'chrome']);
+t('both, Obscura green but Chrome catches something: named DIVERGED (obscura passed, chrome failed), exit 1', () => {
+  const dir = project({ obscura: ALL_PASS, chrome: { a: 'pass', b: 'fail' } }, ['obscura', 'chrome']);
   const r = run(dir, ['run']);
   assert.strictEqual(r.status, 1);
-  assert.match(r.stdout, /DIVERGED .*a\.spec\.ts:1 > a/);
-  assert.match(r.stdout, /FAILED on both .*a\.spec\.ts:2 > b/);
+  assert.match(r.stdout, /1 diverged/);
+  assert.match(r.stdout, /DIVERGED .*a\.spec\.ts:2 > b.*\(obscura passed, chrome failed\)/);
+});
+
+t('both, Obscura has even ONE failure: do nothing more, Chrome is not run, exit 1', () => {
+  const dir = project({ obscura: { a: 'fail', b: 'pass', c: 'pass' }, chrome: { a: 'pass', b: 'pass', c: 'pass' } }, ['obscura', 'chrome']);
+  const r = run(dir, ['run']);
+  assert.strictEqual(r.status, 1);
+  assert.deepStrictEqual(calls(dir).map((x) => x.split(' ')[0]), ['obscura'], 'chrome must not run after an Obscura failure');
+  assert.match(r.stdout, /chrome is not run/);
+  assert.ok(!/DIVERGED|double check/.test(r.stdout));
+});
+
+t('--double-check after an Obscura failure is the explicit way to get the full comparison', () => {
+  const dir = project({ obscura: { a: 'fail', b: 'pass' }, chrome: { a: 'pass', b: 'pass' } }, ['obscura', 'chrome']);
+  const r = run(dir, ['run', '--double-check']);
+  assert.strictEqual(r.status, 1);
+  assert.deepStrictEqual(calls(dir).map((x) => x.split(' ')[0]), ['obscura', 'chrome']);
+  assert.match(r.stdout, /DIVERGED .*\(obscura failed, chrome passed\)/);
 });
 
 t('both, Obscura missing: everything runs on Chrome and the reason is said', () => {
@@ -155,22 +165,6 @@ t('both, Obscura missing: everything runs on Chrome and the reason is said', () 
   assert.strictEqual(r.status, 0, r.stdout);
   assert.match(r.stdout, /obscura was not found.*running everything on chrome instead/);
   assert.deepStrictEqual(calls(dir).map((c) => c.split(' ')[0]), ['chrome']);
-});
-
-t('double check: both pass, runs both fully, reports no divergence, exit 0', () => {
-  const dir = project({ obscura: ALL_PASS, chrome: ALL_PASS }, ['obscura', 'chrome']);
-  const r = run(dir, ['run', '--double-check']);
-  assert.strictEqual(r.status, 0, r.stdout);
-  assert.deepStrictEqual(calls(dir).map((c) => c.split(' ')[0]), ['obscura', 'chrome']);
-  assert.match(r.stdout, /0 diverged, 0 failed on both/);
-});
-
-t('double check: a divergence is listed with both verdicts and exits 1', () => {
-  const dir = project({ obscura: { a: 'pass', b: 'fail' }, chrome: ALL_PASS }, ['obscura', 'chrome']);
-  const r = run(dir, ['run', '--double-check']);
-  assert.strictEqual(r.status, 1);
-  assert.match(r.stdout, /1 diverged/);
-  assert.match(r.stdout, /DIVERGED .*\(obscura failed, chrome passed\)/);
 });
 
 t('double check needs both drivers: with one chosen it exits 2', () => {

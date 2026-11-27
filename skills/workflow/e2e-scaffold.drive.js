@@ -13,9 +13,10 @@ exports.drive = drive;
 //   node drive.js run [--drivers obscura,chrome] [--double-check] [-- <playwright test args>]
 //
 // One driver chosen: that driver runs, straight through, and its exit code is the answer.
-// Both chosen: Obscura runs first. If every test passes, done. If any fail (or Obscura cannot start) Chrome takes over: it re-runs only
-// the failed tests (Playwright --last-failed), and each failure is named as DIVERGED (failed on Obscura, passed on Chrome: an Obscura
-// limit, not a bug) or FAILED on both (a real failure). --double-check (both chosen only) runs everything on both and compares them.
+// Both chosen: Obscura runs first. If it is fully green, Chrome runs as a DOUBLE CHECK (Obscura misses some browser-level errors Chrome reports,
+// such as a missing favicon logging a console error) and any test Chrome fails is named DIVERGED. If Obscura has even ONE failure, nothing more
+// is done: Chrome does not run and the failure is reported as it is. If Obscura cannot start at all (not installed), that is not a test result,
+// so the suite runs on Chrome instead. --double-check (both chosen only) runs Chrome even after an Obscura failure and compares everything.
 // Obscura is started on 127.0.0.1 only, for the run, and stopped after. It is told to allow the private network because the suite
 // talks to the developer's own dev server; nothing is exposed. The test fixtures read E2E_CDP (see the scaffold's fixtures template).
 // Exit codes: 0 all good, 1 test failures, 2 bad usage or no driver chosen, 3 no chosen driver could run.
@@ -214,32 +215,26 @@ async function drive(opts) {
         return c.code === 0 ? 0 : 1;
     }
     line(sum('obscura', o));
-    if (doubleCheck) {
-        const c = runChrome(passArgs);
-        line(sum('chrome', c));
-        const keys = new Set([...Array.from(o.verdicts.keys()), ...Array.from(c.verdicts.keys())]);
-        const diverged = [], both = [];
-        keys.forEach((k) => {
-            const a = o.verdicts.get(k), b = c.verdicts.get(k);
-            if (a === 'failed' && b === 'failed')
-                both.push(k);
-            else if (a !== b && (a === 'failed' || b === 'failed' || a === undefined || b === undefined))
-                diverged.push(`${k}  (obscura ${a ?? 'did not run'}, chrome ${b ?? 'did not run'})`);
-        });
-        line(`double check: ${keys.size} tests, ${diverged.length} diverged, ${both.length} failed on both`);
-        diverged.forEach((d) => line(`  DIVERGED ${d}`));
-        both.forEach((b) => line(`  FAILED on both ${b}`));
-        return diverged.length || both.length || o.code !== 0 || c.code !== 0 ? 1 : 0;
+    // Even one red test on Obscura: do nothing more (unless --double-check asked for the full comparison).
+    if (o.code !== 0 && !doubleCheck) {
+        line('obscura reported failures: chrome is not run, the failures stand as reported above.');
+        return 1;
     }
-    if (o.code === 0)
-        return 0;
-    const failed = Array.from(o.verdicts.entries()).filter(([, v]) => v === 'failed').map(([k]) => k);
-    line(`fallback: ${failed.length || 'the'} failed test(s) on obscura re-run on chrome`);
-    const c = runChrome([...passArgs, ...(failed.length ? ['--last-failed'] : [])]);
-    line(sum('chrome', c));
-    const stillFailing = new Set(Array.from(c.verdicts.entries()).filter(([, v]) => v === 'failed').map(([k]) => k));
-    failed.forEach((k) => line(stillFailing.has(k) ? `  FAILED on both ${k}` : `  DIVERGED (failed on obscura, passed on chrome) ${k}`));
-    return c.code === 0 ? 0 : 1;
+    const c = runChrome(passArgs);
+    line(sum(o.code === 0 ? 'chrome (double check)' : 'chrome', c));
+    const keys = new Set([...Array.from(o.verdicts.keys()), ...Array.from(c.verdicts.keys())]);
+    const diverged = [], both = [];
+    keys.forEach((k) => {
+        const a = o.verdicts.get(k), b = c.verdicts.get(k);
+        if (a === 'failed' && b === 'failed')
+            both.push(k);
+        else if (a !== b && (a === 'failed' || b === 'failed' || a === undefined || b === undefined))
+            diverged.push(`${k}  (obscura ${a ?? 'did not run'}, chrome ${b ?? 'did not run'})`);
+    });
+    line(`double check: ${keys.size} tests, ${diverged.length} diverged, ${both.length} failed on both`);
+    diverged.forEach((x) => line(`  DIVERGED ${x}`));
+    both.forEach((x) => line(`  FAILED on both ${x}`));
+    return diverged.length || both.length || o.code !== 0 || c.code !== 0 ? 1 : 0;
 }
 function parseArgs(argv) {
     const a = { cmd: argv[0] || 'status', drivers: undefined, doubleCheck: false, pass: [], cwd: process.cwd() };
