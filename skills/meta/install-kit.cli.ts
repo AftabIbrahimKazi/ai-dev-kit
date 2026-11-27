@@ -909,7 +909,7 @@ function spawnClaude(args: string[], cwd: string): childProcess.SpawnSyncReturns
   const opts = { cwd, encoding: 'utf8' as const, timeout: 120000 };
   if (/\.(c|m)?js$/.test(bin)) return childProcess.spawnSync(process.execPath, [bin, ...args], opts);
   if (process.platform !== 'win32' || !/\.(cmd|bat)$/i.test(bin)) return childProcess.spawnSync(bin, args, opts);
-  const quote = (x: string): string => (/[\s"&|<>^()%!]/.test(x) ? '"' + x.replace(/"/g, '\\"') + '"' : x);
+  const quote = (x: string): string => (/[\s"&|<>^()%!]/.test(x) ? '"' + x.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1') + '"' : x);
   return childProcess.spawnSync([bin, ...args].map(quote).join(' '), { ...opts, shell: true });
 }
 function runClaude(args: string[], cwd: string): childProcess.SpawnSyncReturns<string> { return spawnClaude(args, cwd); }

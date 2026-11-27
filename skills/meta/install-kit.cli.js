@@ -988,7 +988,7 @@ function spawnClaude(args, cwd) {
         return childProcess.spawnSync(process.execPath, [bin, ...args], opts);
     if (process.platform !== 'win32' || !/\.(cmd|bat)$/i.test(bin))
         return childProcess.spawnSync(bin, args, opts);
-    const quote = (x) => (/[\s"&|<>^()%!]/.test(x) ? '"' + x.replace(/"/g, '\\"') + '"' : x);
+    const quote = (x) => (/[\s"&|<>^()%!]/.test(x) ? '"' + x.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1') + '"' : x);
     return childProcess.spawnSync([bin, ...args].map(quote).join(' '), { ...opts, shell: true });
 }
 function runClaude(args, cwd) { return spawnClaude(args, cwd); }
