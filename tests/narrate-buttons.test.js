@@ -54,6 +54,11 @@ process.on('exit', () => { if (finished !== 1) { console.log('FAIL the test run 
     assert.strictEqual(held.pause.label, 'Resume'); assert.strictEqual(held.pause.highlight, true);
     assert.match(held.alerts.description, /on: female voice/); assert.strictEqual(held.alertVoice.description, 'female');
   });
+  await t('buildTree: a Voice engine row shows the chosen engine and opens the picker', () => {
+    const row = (conf) => buildTree({ conf, muted: false, pending: false })[0].children.find((r) => r.id === 'engine');
+    assert.strictEqual(row({}).description, 'Piper'); assert.strictEqual(row({ engine: 'kitten' }).description, 'KittenTTS 2');
+    assert.match(row({ engine: 'auto' }).description, /auto/); assert.strictEqual(row({}).command, 'narrateButtons.pickEngine');
+  });
   await t('trayItems: grouped rows under separators; settings rows keep the tray open, actions close it; steppers have no command', () => {
     const rows = trayItems({ conf: { volume: 70 }, muted: false, pending: true, persona: 'Sam' });
     assert.deepStrictEqual(rows.filter((r) => r.separator).map((r) => r.label), ['Narration', 'Persona', 'More']);

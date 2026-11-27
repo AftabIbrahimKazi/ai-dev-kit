@@ -1808,6 +1808,7 @@ async function askExternals(args: CliArgs): Promise<void> {
   const pick: string[] = [];
   for (const r of offer) {
     console.log(dim(`${r.name} (${r.licence}, ${r.repo}): installed once for the whole machine (skipped if it is already there), fetched from its authors, hash-checked, kept in ~/.ai-dev-kit/external/ and never bundled in this kit. Used for: ${r.usedBy.join(', ')}.`));
+    if (r.licenceNote) console.log(dim(r.licenceNote));
     if (await askYesNo(`Fetch ${r.name} now?`, false)) pick.push(r.id);
   }
   if (pick.length) args.external = pick;

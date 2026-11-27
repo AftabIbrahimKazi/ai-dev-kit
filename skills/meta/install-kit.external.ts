@@ -5,6 +5,7 @@
 //
 //   node install-kit.external.js status [--json]            what is present, pinned where, credited to whom
 //   node install-kit.external.js fetch <id> [--force]       download or clone one tool (opt-in; prints its credit line)
+//   node install-kit.external.js check                      fresh-machine check: which prerequisites (git, a supported Python) are missing
 //   node install-kit.external.js remove <id>                delete the shared folder (other projects lose it too)
 //   node install-kit.external.js download <url> <dest>      internal: sync-safe download used by fetch
 //
@@ -20,7 +21,7 @@ import childProcess = require('node:child_process');
 export interface ExternalRef {
   id: string; name: string; repo: string; licence: string; kind: 'clone' | 'release-zip' | 'pip' | 'npm-npx';
   ref: string; refNote?: string; asset?: string; sha256?: string; assetUrl?: string; platform?: string;
-  fetch?: 'skill'; detectPort?: number; postInstall?: string; optIn?: boolean; restrictions?: string[]; usedBy: string[]; detect: string; marker?: string; credit: string;
+  fetch?: 'skill'; python?: { min: string; max: string }; packages?: string[]; models?: string[]; licenceNote?: string; detectPort?: number; postInstall?: string; optIn?: boolean; restrictions?: string[]; usedBy: string[]; detect: string; marker?: string; credit: string;
 }
 export interface RefState { id: string; name: string; present: boolean; where?: string; pinned: string; fetchedRef?: string; stale?: boolean; credit: string; repo: string; note?: string }
 export interface FetchResult { id: string; ok: boolean; note?: string; path?: string; ref?: string; sha256?: string; commit?: string; error?: string; credit: string }
@@ -123,6 +124,67 @@ function guardRestrictions(r: ExternalRef): void {
   if (/stealth/i.test(r.asset || '') || /stealth/i.test(r.assetUrl || '')) throw new Error('refusing a stealth build: ' + r.id);
 }
 
+// Prerequisites: what a fresh machine may lack. Each is checked before anything is fetched, and a missing one is named with how to get it,
+// so a first install stops with one clear line instead of a cryptic spawn error halfway through.
+const INSTALL_HINT: Record<string, string> = {
+  git: 'install Git (https://git-scm.com/downloads, or: winget install Git.Git / brew install git / apt install git)',
+  python: 'install Python (https://www.python.org/downloads/, or: winget install Python.Python.3.12 / brew install python@3.12 / apt install python3 python3-venv)',
+};
+const verOf = (v: string): number[] => v.split('.').map((n) => parseInt(n, 10) || 0);
+const verIn = (v: number[], min: string, max: string): boolean => {
+  const cmp = (a: number[], b: number[]): number => { for (let i = 0; i < 3; i++) { const d = (a[i] || 0) - (b[i] || 0); if (d) return d; } return 0; };
+  const hi = verOf(max); const top = [hi[0], hi[1], 999];
+  return cmp(v, verOf(min)) >= 0 && cmp(v, top) <= 0;
+};
+// A Python in the range the packages support (e.g. 3.10 to 3.12: newer ones often lack wheels for torch), looked up as the py launcher
+// first on Windows, then versioned names, then plain python3 / python. Returns the command and its leading arguments.
+export function findPython(min: string, max: string): { cmd: string; args: string[]; version: string } | undefined {
+  const tries: { cmd: string; args: string[] }[] = [];
+  if (process.platform === 'win32') for (const v of ['3.12', '3.11', '3.10', '3.13']) tries.push({ cmd: 'py', args: ['-' + v] });
+  for (const v of ['3.12', '3.11', '3.10', '3.13']) tries.push({ cmd: 'python' + v, args: [] });
+  tries.push({ cmd: 'python3', args: [] }, { cmd: 'python', args: [] });
+  for (const t of tries) {
+    const r = childProcess.spawnSync(t.cmd, [...t.args, '-c', 'import sys;print("%d.%d.%d" % sys.version_info[:3])'], { encoding: 'utf8', timeout: 15000 });
+    if (r.status === 0) { const v = (r.stdout || '').trim(); if (verIn(verOf(v), min, max)) return { ...t, version: v }; }
+  }
+  return undefined;
+}
+export function preflight(r: ExternalRef): string | undefined {
+  if (r.kind === 'clone' && childProcess.spawnSync('git', ['--version'], { stdio: 'ignore' }).status !== 0) return `git is not installed, and ${r.name} is fetched with it: ${INSTALL_HINT.git}`;
+  if (r.kind === 'pip') {
+    const py = r.python || { min: '3.10', max: '3.12' };
+    if (!findPython(py.min, py.max)) return `no Python ${py.min} to ${py.max} was found, and ${r.name} needs one: ${INSTALL_HINT.python}`;
+  }
+  return undefined;
+}
+export function venvPython(id: string): string { return path.join(refDir(id), 'venv', process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python'); }
+
+// kind "pip": a private virtual environment under the tool's own folder, the listed packages installed into it, then each listed model
+// downloaded from its official Hugging Face repository (the kit never hosts weights). The environment is built where it will live, since
+// a venv cannot be moved. A failed build removes it, and a re-run resumes: pip and the Hugging Face cache keep what already arrived.
+function fetchPip(r: ExternalRef, dir: string, base: { id: string; credit: string }): FetchResult {
+  const py = findPython((r.python || { min: '3.10', max: '3.12' }).min, (r.python || { min: '3.10', max: '3.12' }).max)!;
+  fs.mkdirSync(dir, { recursive: true });
+  const venv = path.join(dir, 'venv');
+  const keep = fs.existsSync(venv);
+  try {
+    if (!keep) { const v = run(py.cmd, [...py.args, '-m', 'venv', venv]); if (!v.ok) throw new Error('could not create the Python environment: ' + v.out.split('\n').pop() + (process.platform === 'linux' ? ' (on Debian or Ubuntu: apt install python3-venv)' : '')); }
+    const vp = venvPython(r.id);
+    const pip = run(vp, ['-m', 'pip', 'install', '-q', ...(r.packages || [])]);
+    if (!pip.ok) throw new Error('pip install failed: ' + pip.out.split('\n').pop());
+    for (const m of r.models || []) {
+      const dl = childProcess.spawnSync(vp, ['-c', 'import sys;from huggingface_hub import snapshot_download as d;d(sys.argv[1])', m], { encoding: 'utf8', timeout: 3600000, env: { ...process.env, HF_HUB_DISABLE_PROGRESS_BARS: '1', HF_HUB_DISABLE_SYMLINKS_WARNING: '1', HF_HUB_DISABLE_XET: '1' } });
+      if (dl.status !== 0) throw new Error(`model ${m} did not download (${(dl.stderr || '').trim().split('\n').pop()}); run the same command again to resume`);
+    }
+    const st: ManifestExternal = { ref: r.ref, path: dir, at: new Date().toISOString() };
+    fs.writeFileSync(path.join(dir, '.ref.json'), JSON.stringify(st, null, 2));
+    return { ...base, ok: true, path: dir, ref: r.ref, note: [r.licenceNote, r.postInstall].filter(Boolean).join(' ') || undefined };
+  } catch (e) {
+    if (!keep) fs.rmSync(dir, { recursive: true, force: true });
+    throw e;
+  }
+}
+
 export function fetchRef(r: ExternalRef, force?: boolean): FetchResult {
   const base = { id: r.id, credit: creditLine(r) };
   try {
@@ -131,7 +193,10 @@ export function fetchRef(r: ExternalRef, force?: boolean): FetchResult {
     if (r.platform && r.platform !== process.platform) return { ...base, ok: false, error: `${r.id} is registered for ${r.platform} only (this is ${process.platform})` };
     const cur = detect(r);
     if (cur.present && !cur.stale && cur.where === refDir(r.id) && !force) return { ...base, ok: true, path: cur.where, ref: cur.fetchedRef };
+    const missing = preflight(r);
+    if (missing) return { ...base, ok: false, error: missing };
     const dir = refDir(r.id);
+    if (r.kind === 'pip') return fetchPip(r, dir, base);
     const tmp = dir + '.tmp-' + process.pid;
     fs.rmSync(tmp, { recursive: true, force: true });
     fs.mkdirSync(tmp, { recursive: true });
@@ -185,6 +250,11 @@ export function removeRef(id: string): { removed: boolean; path: string } {
 
 function main(): void {
   const [cmd, a, b] = process.argv.slice(2);
+  if (cmd === 'check') { // fresh-machine report: what the registry's tools need and what is missing
+    const miss = loadRegistry().filter((r) => r.fetch !== 'skill' && (!r.platform || r.platform === process.platform)).map((r) => ({ id: r.id, problem: preflight(r) })).filter((x) => x.problem);
+    console.log(miss.length ? miss.map((x) => `${x.id}: ${x.problem}`).join('\n') : 'every external tool can be fetched on this machine');
+    process.exit(miss.length ? 1 : 0);
+  }
   const json = process.argv.includes('--json');
   const force = process.argv.includes('--force');
   if (cmd === 'download') {
@@ -205,7 +275,7 @@ function main(): void {
     process.exit(res.ok ? 0 : 1);
   }
   if (cmd === 'remove' && a) { console.log(JSON.stringify(removeRef(a))); return; }
-  console.error('usage: install-kit.external.js <status|fetch <id>|remove <id>> [--json] [--force]');
+  console.error('usage: install-kit.external.js <status|check|fetch <id>|remove <id>> [--json] [--force]');
   process.exit(2);
 }
 if (require.main === module) main();

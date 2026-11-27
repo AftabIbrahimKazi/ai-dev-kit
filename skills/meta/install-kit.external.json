@@ -10,7 +10,9 @@
       "fetch": "skill",
       "ref": "live",
       "refNote": "Live pull by design: skills are never stored here, so no pin. The installer records the commit it pulled.",
-      "usedBy": ["shopify-toolkit-install"],
+      "usedBy": [
+        "shopify-toolkit-install"
+      ],
       "detect": "skills/stack/shopify-toolkit-install/get.js list",
       "credit": "Shopify"
     },
@@ -26,8 +28,14 @@
       "marker": "obscura.exe",
       "sha256": "be983b663552e11faf8c1e07696578bad622dbeb48afb9f59036032ca8e97fb3",
       "optIn": true,
-      "restrictions": ["default build only: never the stealth builds", "loopback only, never expose the CDP port"],
-      "usedBy": ["web-digest", "e2e second driver (planned)"],
+      "restrictions": [
+        "default build only: never the stealth builds",
+        "loopback only, never expose the CDP port"
+      ],
+      "usedBy": [
+        "web-digest",
+        "e2e second driver (planned)"
+      ],
       "detect": "obscura on PATH or ~/.ai-dev-kit/external/obscura/obscura.exe",
       "credit": "Obscura"
     },
@@ -42,9 +50,44 @@
       "detectPort": 31415,
       "optIn": true,
       "postInstall": "the kit only fetches the router's source. Start it by its own README (Quick start or Docker), then put its key in ~/.ai-dev-kit/.env as UNIFIED_API_KEY; /api-mode free reads it from there.",
-      "usedBy": ["api-mode (free mode)", "the unified-router backends"],
+      "usedBy": [
+        "api-mode (free mode)",
+        "the unified-router backends"
+      ],
       "detect": "something answering on 127.0.0.1:31415, or ~/.ai-dev-kit/external/freellmapi/src/package.json",
       "credit": "FreeLLMAPI"
+    },
+    {
+      "id": "kitten-tts-2",
+      "name": "KittenTTS 2",
+      "repo": "https://huggingface.co/KittenML/kitten-tts-2",
+      "licence": "Stellon Labs Community License (weights), Apache-2.0 (code)",
+      "kind": "pip",
+      "ref": "0.9.8",
+      "python": {
+        "min": "3.10",
+        "max": "3.12"
+      },
+      "packages": [
+        "kittenml==0.9.8",
+        "soundfile"
+      ],
+      "models": [
+        "KittenML/kitten-tts-2"
+      ],
+      "marker": "venv/pyvenv.cfg",
+      "optIn": true,
+      "licenceNote": "The weights are under the Stellon Labs Community License: free for research and non-commercial use, commercial use needs registration with Stellon Labs, and apps must show \"Powered by KittenML\". Read it at https://huggingface.co/KittenML/kitten-tts-2/blob/main/LICENSE.md.",
+      "postInstall": "About 1 GB of weights and a few GB of Python packages (PyTorch) were downloaded into ~/.ai-dev-kit/external/kitten-tts-2/. Point narrate at it with a command engine whose Python is that folder's venv.",
+      "restrictions": [
+        "weights are fetched from the official KittenML repository only, never a mirror",
+        "never redistributed by this kit"
+      ],
+      "usedBy": [
+        "narrate (optional voice engine, off by default)"
+      ],
+      "detect": "~/.ai-dev-kit/external/kitten-tts-2/venv/pyvenv.cfg",
+      "credit": "KittenTTS"
     }
   ]
 }

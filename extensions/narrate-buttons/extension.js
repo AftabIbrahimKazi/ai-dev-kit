@@ -3,7 +3,7 @@
 // nothing depends on key capture. Narration plays on a Play button by default (like claude.ai); "auto" speaks every reply.
 const vscode = require('vscode');
 const { spawn } = require('node:child_process');
-const { findScript, readConf, readLast, isMuted, isPaused, alertVoiceOf, nudged, modeOf, parsePersonas, buildTree, trayItems, LIMITS } = require('./lib');
+const { engineOf, findScript, readConf, readLast, isMuted, isPaused, alertVoiceOf, nudged, modeOf, parsePersonas, buildTree, trayItems, LIMITS } = require('./lib');
 
 function activate(context) {
   const cfg = () => vscode.workspace.getConfiguration('narrateButtons');
@@ -102,6 +102,20 @@ function activate(context) {
   reg('narrateButtons.switchAlertVoice', async () => { await exec('speak', ['--alertVoice', alertVoiceOf(readConf()) === 'male' ? 'female' : 'male']); await exec('speak', ['--alert', 'This is the alert voice.']); refresh(); });
   reg('narrateButtons.toggleMute', async () => { await exec('speak', [isMuted() ? '--unmute' : '--mute']); refresh(); });
   reg('narrateButtons.toggleMode', async () => { const m = modeOf(readConf()) === 'auto' ? 'manual' : 'auto'; await exec('speak', ['--mode', m]); vscode.window.setStatusBarMessage(`Narration: ${m === 'auto' ? 'speaks every reply' : 'play button'}`, 3000); refresh(); });
+  reg('narrateButtons.pickEngine', async () => {
+    const cur = readConf().engine;
+    const picks = [
+      { label: 'Piper', description: 'small and fast on any computer' + (cur === 'piper' || !cur ? ' (current)' : ''), args: ['--engine', 'piper'] },
+      { label: 'KittenTTS 2', description: 'voice cloning, a bigger model: suits a GPU, slow on a CPU' + (cur === 'kitten' ? ' (current)' : ''), args: ['--engine', 'kitten'] },
+      { label: 'Auto', description: 'use whichever suits this computer (needs a benchmark or a GPU to choose Kitten)' + (cur === 'auto' ? ' (current)' : ''), args: ['--engine', 'auto'] },
+      { label: 'Benchmark the installed engines', description: 'times each one so Auto can choose; Kitten can take minutes without a GPU', args: ['--benchmark'] },
+    ];
+    const pick = await vscode.window.showQuickPick(picks, { placeHolder: 'Voice engine (' + engineOf(readConf()) + ')' });
+    if (!pick) return;
+    const r = await exec('speak', pick.args);
+    if (r.text) vscode.window.showInformationMessage('AI Dev Kit: ' + r.text.split(String.fromCharCode(10)).slice(-2).join(' '));
+    refresh();
+  });
   reg('narrateButtons.switchVoice', async () => { await exec('speak', ['--voice', readConf().gender === 'male' ? 'female' : 'male']); refresh(); });
   reg('narrateButtons.stepUp', (el) => el && LIMITS[el.key] && step(el.key, 1));
   reg('narrateButtons.stepDown', (el) => el && LIMITS[el.key] && step(el.key, -1));

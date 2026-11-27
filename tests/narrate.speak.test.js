@@ -419,3 +419,19 @@ t('--alertPrerender refuses when no custom engine is active', () => {
   const { env } = homeEnv();
   assert.ok(cli(env, '--alertPrerender').startsWith('no custom alert engine'));
 });
+
+// engine choice: piper stays the default, auto uses Kitten only when installed and fast enough, a missing Kitten falls back to Piper
+{
+  const { resolveEngine } = require('../skills/addons/narrate.speak.js');
+  const py = process.execPath; // any existing file stands in for the Kitten environment's python
+  const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
+  t('engine: a plain piper config is unchanged', () => assert.deepStrictEqual(resolveEngine({ engine: 'piper' }), { engine: 'piper', why: '' }));
+  t('engine: kitten or auto without Kitten installed use piper', () => {
+    for (const engine of ['kitten', 'auto']) assert.strictEqual(resolveEngine({ engine, kitten: { python: path.join(os.tmpdir(), 'no-such-python') } }).engine, 'piper');
+  });
+  t('engine: kitten installed is used when chosen', () => assert.strictEqual(resolveEngine({ engine: 'kitten', kitten: { python: py } }).engine, 'kitten'));
+  t('engine: auto follows the measured speed', () => {
+    assert.strictEqual(resolveEngine({ engine: 'auto', kitten: { python: py }, bench: { kittenRtf: 18.9 } }).engine, 'piper');
+    assert.strictEqual(resolveEngine({ engine: 'auto', kitten: { python: py }, bench: { kittenRtf: 0.6 } }).engine, 'kitten');
+  });
+}

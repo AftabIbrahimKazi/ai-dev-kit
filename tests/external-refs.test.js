@@ -73,7 +73,26 @@ t('parity: every fetchable entry is reachable from the installer docs and the ch
   assert.ok(kitMd.includes('--external'), 'install-kit.md does not mention --external');
   assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes('install-kit.external'), 'CHANGELOG has no install-kit.external line');
   for (const r of refs.filter((x) => x.fetch !== 'skill')) {
-    assert.ok(['release-zip', 'clone'].includes(r.kind), r.id + ': kind ' + r.kind + ' has no fetch support in install-kit.external.ts');
+    assert.ok(['release-zip', 'clone', 'pip'].includes(r.kind), r.id + ': kind ' + r.kind + ' has no fetch support in install-kit.external.ts');
     assert.ok(readme.includes(r.id), r.id + ' is not named in the README');
   }
 });
+
+// prerequisites and the pip kind
+const extMod = require(path.join(ROOT, 'skills', 'meta', 'install-kit.external.js'));
+t('pip entries name packages, models, a python range and a marker', () => {
+  for (const r of refs.filter((x) => x.kind === 'pip')) {
+    assert.ok(Array.isArray(r.packages) && r.packages.length, r.id + ' needs packages');
+    assert.ok(Array.isArray(r.models) && r.models.every((m) => /^[\w.-]+\/[\w.-]+$/.test(m)), r.id + ' models must be official owner/name repo ids');
+    assert.ok(r.python && r.python.min && r.python.max, r.id + ' needs a python range');
+    assert.ok(r.marker, r.id + ' needs a marker');
+    assert.ok(r.licenceNote && r.optIn, r.id + ' must show its licence and stay opt-in');
+  }
+});
+t('preflight names git when it is missing', () => {
+  const saved = process.env.PATH; process.env.PATH = '';
+  try { const msg = extMod.preflight({ id: 'x', name: 'X', kind: 'clone' }); assert.ok(msg && /git is not installed/.test(msg) && /install Git/.test(msg), String(msg)); }
+  finally { process.env.PATH = saved; }
+});
+t('findPython returns nothing for an impossible range', () => assert.strictEqual(extMod.findPython('9.0', '9.1'), undefined));
+t('preflight is quiet for a tool that needs nothing found missing', () => assert.strictEqual(extMod.preflight({ id: 'z', name: 'Z', kind: 'release-zip' }), undefined));

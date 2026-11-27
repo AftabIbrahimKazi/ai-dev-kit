@@ -32,6 +32,8 @@ The same settings are reachable as `/narration <setting>` (commands), from the V
 | `stop`, `status` | cut off speech now; show the current settings |
 | `play` / `replay` | read the latest reply (the play button); a reply is otherwise spoken exactly once |
 | `mode manual` / `mode auto` | `manual` (default, like the play button on claude.ai): the hook only keeps the reply until you play it; `auto`: every reply is spoken as soon as it arrives |
+| `engine piper` / `engine kitten` / `engine auto` | the voice engine. `piper` (default) is small and fast on any CPU. `kitten` is KittenTTS 2 (voice cloning, a bigger 1.7B model: good on a GPU, far slower than real time on a CPU), installed on request with `node install-kit.external.js fetch kitten-tts-2` (about 1 GB of weights, licence shown first; non-commercial unless registered with Stellon Labs, and the product shows "Powered by KittenML"). `auto` uses Kitten only when it is installed and fast enough here (a measured speed of at most real time, else a CUDA GPU with 16 GB of memory), otherwise Piper. A Kitten piece that fails or takes over 4 minutes falls back to Piper, so a reply is never lost. Voice and clone settings go in `narrate.json` under `kitten` (`voice`, `reference` = a 5 to 30 second wav) |
+| `benchmark` | times each installed engine on one sentence and keeps the speed in `narrate.json`, which `auto` then uses; Kitten can take minutes without a GPU |
 
 ## Spoken alerts
 For long sessions you leave running: when Claude ends a reply on a question to you, a second voice says so, so you do not sit at a prompt that is waiting for you.

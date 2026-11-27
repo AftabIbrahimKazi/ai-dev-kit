@@ -9,6 +9,7 @@ exports.alertText = alertText;
 exports.alertParts = alertParts;
 exports.idleSeconds = idleSeconds;
 exports.settings = settings;
+exports.resolveEngine = resolveEngine;
 exports.shape = shape;
 exports.wavSeconds = wavSeconds;
 exports.otherPlayer = otherPlayer;
@@ -190,13 +191,44 @@ function settings(cfg = config()) {
     // the alert voice is the other slot unless chosen, so it sounds like a different speaker; `voices.alert` is a file of its own
     const saved = typeof cfg.alertCommand === 'string' && cfg.alertCommand.trim() ? cfg.alertCommand.trim() : undefined; // the command stays saved while Piper is chosen
     const alertGender = cfg.alertGender === 'male' || cfg.alertGender === 'female' ? cfg.alertGender : gender === 'female' ? 'male' : 'female';
+    const resolved = resolveEngine(cfg);
     return {
         alerts: cfg.alerts === true || cfg.alerts === 'on' || cfg.alerts === 'true', alertCommand: cfg.alertEngine === 'piper' ? undefined : saved, alertCommandSaved: saved, alertGender, alertIdle: num('alertIdle', 30),
         alertModel: (cfg.voices && (cfg.voices.alert || cfg.voices[alertGender])) || (0, exports.defaultVoice)(alertGender), alertPhrases: Array.isArray(cfg.alertPhrases) ? cfg.alertPhrases : [],
-        mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: cfg.engine || 'sapi', gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
+        mode: cfg.mode === 'auto' ? 'auto' : 'manual', engine: resolved.engine, engineChoice: cfg.engine || 'sapi', engineWhy: resolved.why, gender, volume: num('volume', 100), speed: num('speed', 1), pitch: num('pitch', 0),
         max: Number(cfg.max) > 0 ? Number(cfg.max) : Math.min(MAX_CHARS, Math.round(num('maxSeconds', 1110) * CHARS_PER_SECOND * num('speed', 1))), model: (cfg.voices && cfg.voices[gender]) || (0, exports.defaultVoice)(gender),
         piper: cfg.piper || {}, command: cfg.command, voice: cfg.voice,
     };
+}
+// ---- engine choice: Piper (small, fast on any CPU), KittenTTS 2 (bigger model, better on a GPU) or auto -------------------------
+// KittenTTS 2 is installed by `install-kit.external.js fetch kitten-tts-2` into a private Python environment; this script only calls it.
+const KITTEN_PY = 'import os,sys\nimport soundfile as sf\nfrom kittenml import KittenTTS\n' +
+    't=sys.stdin.read().strip()\nsys.exit(1) if not t else None\nm=KittenTTS("KittenML/kitten-tts-2")\n' +
+    'r=os.environ.get("KITTEN_REF")\na=m.generate(t,reference=r) if r else m.generate(t,voice=os.environ.get("KITTEN_VOICE") or "Luna")\nsf.write(sys.argv[1],a,m.sample_rate)\n';
+function kittenPython(cfg) {
+    const k = (cfg.kitten || {});
+    const home = process.env.AI_DEV_KIT_HOME || path.join(os.homedir(), '.ai-dev-kit');
+    const p = k.python || path.join(home, 'external', 'kitten-tts-2', 'venv', process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python');
+    return fs.existsSync(p) ? p : undefined;
+}
+// Without a measurement, a machine counts as fast enough for Kitten only with a CUDA GPU and 16 GB or more of memory; a measurement
+// (`--benchmark`) overrides that: Kitten is used when it renders faster than real time.
+function kittenFastEnough(cfg) {
+    const b = (cfg.bench || {});
+    if (typeof b.kittenRtf === 'number')
+        return b.kittenRtf <= 1;
+    const gpu = spawnSync('nvidia-smi', ['-L'], { stdio: 'ignore', timeout: 5000 }).status === 0;
+    return gpu && os.totalmem() >= 16 * 1024 ** 3;
+}
+function resolveEngine(cfg) {
+    const choice = cfg.engine || 'sapi';
+    if (choice !== 'kitten' && choice !== 'auto')
+        return { engine: choice, why: '' };
+    if (!kittenPython(cfg))
+        return { engine: 'piper', why: 'KittenTTS 2 is not installed, using Piper' };
+    if (choice === 'kitten')
+        return { engine: 'kitten', why: '' };
+    return kittenFastEnough(cfg) ? { engine: 'kitten', why: 'auto: this machine renders Kitten fast enough' } : { engine: 'piper', why: 'auto: Kitten would be too slow here, using Piper' };
 }
 function setConfig(key, value) {
     const cfg = config();
@@ -375,7 +407,15 @@ function chunks(text, size = 350) {
 }
 // one piece to a wav file with the wav engines (piper, command); resolves true when the file was written.
 // timeoutMs ends a command that hangs (a model that never loads): the whole process tree is killed and it resolves false.
-function synth(text, s, wav, timeoutMs = 0) {
+async function synth(text, s, wav, timeoutMs = 0) {
+    if (s.engine !== 'kitten')
+        return synthOne(text, s, wav, timeoutMs);
+    if (await synthOne(text, s, wav, timeoutMs || KITTEN_TIMEOUT_MS))
+        return true;
+    return synthOne(text, { ...s, engine: 'piper' }, wav, timeoutMs); // a Kitten piece that fails or runs long falls back to Piper: a reply is never lost
+}
+const KITTEN_TIMEOUT_MS = 240000;
+function synthOne(text, s, wav, timeoutMs = 0) {
     return new Promise((resolve) => {
         const o = { stdio: ['pipe', 'ignore', 'ignore'], windowsHide: true };
         let child;
@@ -383,6 +423,10 @@ function synth(text, s, wav, timeoutMs = 0) {
             const factor = 2 ** (s.pitch / 12);
             const args = [...(s.piper.args || []), '--model', s.model, '--length-scale', String(factor / s.speed), '--output_file', wav];
             child = spawn(s.piper.exe || 'piper', args, o);
+        }
+        else if (s.engine === 'kitten') {
+            const k = (config().kitten || {});
+            child = spawn(kittenPython(config()), ['-c', KITTEN_PY, wav], { ...o, env: { ...process.env, KITTEN_VOICE: k.voice || '', KITTEN_REF: k.reference || '', HF_HUB_DISABLE_PROGRESS_BARS: '1', HF_HUB_DISABLE_SYMLINKS_WARNING: '1', HF_HUB_OFFLINE: '1', PYTHONIOENCODING: 'utf-8' } });
         }
         else
             child = spawn(s.command.replace(/\{wav\}/g, `"${wav}"`), { ...o, shell: true });
@@ -526,7 +570,7 @@ async function prerenderAlerts() {
 // runs inside the detached worker: speak one queued reply
 async function speak(text, s) {
     {
-        if (s.engine === 'piper' || s.engine === 'command') {
+        if (s.engine === 'piper' || s.engine === 'command' || s.engine === 'kitten') {
             await speakWav(text, s);
         }
         else if (process.platform === 'win32') {
@@ -611,11 +655,38 @@ function readStdin() {
         return '';
     }
 }
+// Times each installed engine on one sentence and keeps the real-time factor (render seconds per second of speech) in narrate.json;
+// `auto` then uses Kitten only when it renders faster than real time. Kitten can take minutes on a machine without a GPU.
+async function benchmark() {
+    const text = 'Orders needed. Should I delete the old build folder before the next run?';
+    const cfg = config();
+    const base = settings(cfg);
+    const out = {};
+    const engines = ['piper'].concat(kittenPython(cfg) ? ['kitten'] : []);
+    for (const e of engines) {
+        const wav = path.join(TMP, `narrate-bench-${process.pid}.wav`);
+        fs.mkdirSync(TMP, { recursive: true });
+        console.log(`timing ${e}${e === 'kitten' ? ' (this can take a few minutes without a GPU)' : ''} ...`);
+        const t = Date.now();
+        const ok = await synthOne(text, { ...base, engine: e }, wav, e === 'kitten' ? 600000 : 120000);
+        const secs = (Date.now() - t) / 1000;
+        const audio = ok ? wavSeconds(wav) / 1000 : 0;
+        rm(wav);
+        if (!ok || !audio) {
+            console.log(`${e}: failed`);
+            continue;
+        }
+        out[e + 'Rtf'] = Math.round((secs / audio) * 100) / 100;
+        console.log(`${e}: ${secs.toFixed(1)} s for ${audio.toFixed(1)} s of speech (${out[e + 'Rtf']}x real time)`);
+    }
+    setConfig('bench', { ...out, at: new Date().toISOString() });
+    console.log(status());
+}
 function status() {
     const s = settings();
     const how = s.alertCommand ? 'custom engine, Piper fallback in the narration voice' : `${s.alertCommandSaved ? 'Piper (custom engine saved, off), ' : ''}${s.alertGender} voice`;
     const alerts = s.alerts ? `alerts on (${how}, when away ${s.alertIdle} s)` : 'alerts off';
-    return `${isOff() ? 'muted' : isPaused() ? 'paused' : 'on'} | mode ${s.mode} | engine ${s.engine} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters | ${alerts}`;
+    return `${isOff() ? 'muted' : isPaused() ? 'paused' : 'on'} | mode ${s.mode} | engine ${s.engine}${s.engineChoice !== s.engine || s.engineWhy ? ` (${s.engineWhy || 'chosen: ' + s.engineChoice})` : ''} | voice ${s.gender} | volume ${s.volume} | speed ${s.speed} | pitch ${s.pitch} | reads up to ${s.max} characters | ${alerts}`;
 }
 function main(argv) {
     const [a, v] = argv;
@@ -729,6 +800,21 @@ function main(argv) {
         launch(alertParts(clean(q, 200), settings().alertPhrases).join('\n'), true, 'alertnow');
         return;
     }
+    if (a === '--engine') { // piper | kitten | auto (both installed: the one that suits this machine is used)
+        if (v !== 'piper' && v !== 'kitten' && v !== 'auto') {
+            console.log('use --engine piper, --engine kitten or --engine auto');
+            return;
+        }
+        if (v !== 'piper' && !kittenPython(config())) {
+            console.log('KittenTTS 2 is not installed: run  node install-kit.external.js fetch kitten-tts-2');
+            return;
+        }
+        setConfig('engine', v);
+        console.log(status());
+        return;
+    }
+    if (a === '--benchmark')
+        return benchmark();
     if (a === '--voice') {
         if (v !== 'male' && v !== 'female') {
             console.log('use --voice male or --voice female');

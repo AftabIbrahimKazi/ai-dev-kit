@@ -39,6 +39,8 @@ function nudged(key, conf, dir) {
 const alertVoiceOf = (conf) => (conf.alertGender === 'male' || conf.alertGender === 'female' ? conf.alertGender : conf.gender === 'male' ? 'female' : 'male');
 // Piper for everything, or the saved custom engine (e.g. a local cloned voice) for alerts only; replies are Piper either way
 const alertEngineOf = (conf) => (!conf.alertCommand ? 'Piper (no custom engine set)' : conf.alertEngine === 'piper' ? 'Piper (custom engine saved, off)' : 'custom engine, Piper fallback');
+// the voice engine the user chose: piper (small, fast on any CPU), kitten (KittenTTS 2, bigger, suits a GPU) or auto (the one that suits this machine)
+const engineOf = (conf) => (conf.engine === 'kitten' ? 'KittenTTS 2' : conf.engine === 'auto' ? 'auto (best for this machine)' : 'Piper');
 const modeOf = (conf) => (conf.mode === 'auto' ? 'auto' : 'manual'); // manual = a play button, like claude.ai
 
 // Persona choices from `inject.js --list` output ("female novice: Name" lines) for a quick pick.
@@ -57,6 +59,7 @@ function buildTree(s) {
     { id: 'mode', label: 'When to speak', description: modeOf(conf) === 'auto' ? 'auto: every reply' : 'play button (like claude.ai)', icon: 'broadcast', command: 'narrateButtons.toggleMode' },
     { id: 'mute', label: 'Narration', description: s.muted ? 'muted' : 'on', icon: s.muted ? 'mute' : 'unmute', command: 'narrateButtons.toggleMute' },
     { id: 'voice', label: 'Voice', description: conf.gender === 'male' ? 'male' : 'female', icon: 'account', command: 'narrateButtons.switchVoice' },
+    { id: 'engine', label: 'Voice engine', description: engineOf(conf), icon: 'mic', command: 'narrateButtons.pickEngine' },
     { id: 'alerts', label: 'Spoken alerts', description: conf.alerts === true ? `on: ${alertVoiceOf(conf)} voice, when you are away` : 'off', icon: conf.alerts === true ? 'bell' : 'bell-slash', command: 'narrateButtons.toggleAlerts' },
     { id: 'alertVoice', label: 'Alert voice', description: alertVoiceOf(conf), icon: 'megaphone', command: 'narrateButtons.switchAlertVoice' },
     { id: 'alertEngine', label: 'Alert engine', description: alertEngineOf(conf), icon: 'server-process', command: 'narrateButtons.toggleAlertEngine' },
@@ -81,4 +84,4 @@ function trayItems(state) {
   return out;
 }
 
-module.exports = { trayItems, findScript, findSpeak, readConf, readLast, isMuted, isPaused, alertVoiceOf, alertEngineOf, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };
+module.exports = { engineOf, trayItems, findScript, findSpeak, readConf, readLast, isMuted, isPaused, alertVoiceOf, alertEngineOf, nudged, modeOf, parsePersonas, buildTree, LIMITS, SCRIPTS };
