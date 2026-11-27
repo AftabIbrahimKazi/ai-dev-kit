@@ -27,7 +27,7 @@
       "sha256": "be983b663552e11faf8c1e07696578bad622dbeb48afb9f59036032ca8e97fb3",
       "optIn": true,
       "restrictions": ["default build only: never the stealth builds", "loopback only, never expose the CDP port"],
-      "usedBy": ["web-search (planned)", "e2e second driver (planned)"],
+      "usedBy": ["web-digest", "e2e second driver (planned)"],
       "detect": "obscura on PATH or ~/.ai-dev-kit/external/obscura/obscura.exe",
       "credit": "Obscura"
     },

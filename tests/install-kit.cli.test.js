@@ -1129,6 +1129,44 @@ t('batch mod: on and off call the claude command with the right action and repor
   }
 });
 
+t('web-digest mod: refuses without the skill, installs and verifies with it, loud on failure, off removes it', () => {
+  const { webDigestMod } = require('../skills/meta/install-kit.cli.js');
+  const stub = path.join(tmp(), 'fake-claude.js');
+  fs.writeFileSync(stub, [
+    "const fs=require('fs'),path=require('path');const a=process.argv.slice(2);fs.appendFileSync(process.env.STUB_LOG,a.join(' ')+'\\n');",
+    "if(process.env.STUB_FAIL){console.error('boom');process.exit(3)}",
+    "if(a[0]==='plugin'&&a[1]==='install'&&!process.env.STUB_NOENABLE){const f=path.join(process.cwd(),'.claude','settings.json');fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,JSON.stringify({enabledPlugins:{[a[2]]:true}}))}",
+    "if(a[0]==='plugin'&&a[1]==='uninstall'){const f=path.join(process.cwd(),'.claude','settings.json');try{fs.rmSync(f)}catch{}}",
+  ].join('\n'));
+  const log = path.join(tmp(), 'log.txt');
+  const keys = ['AI_DEV_KIT_CLAUDE_BIN', 'STUB_LOG', 'STUB_FAIL', 'STUB_NOENABLE', 'CLAUDE_CONFIG_DIR', 'AI_DEV_KIT_HOME'];
+  const old = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  process.env.AI_DEV_KIT_CLAUDE_BIN = stub; process.env.STUB_LOG = log; process.env.CLAUDE_CONFIG_DIR = tmp(); process.env.AI_DEV_KIT_HOME = tmp();
+  try {
+    const root = tmp();
+    const none = webDigestMod(root, null, ['handover'], 'on');
+    assert.strictEqual(none.ok, false); assert.match(none.error, /web-digest skill is not installed/);
+    assert.ok(!fs.existsSync(log), 'nothing is run when the skill is missing');
+    const on = webDigestMod(root, null, ['web-digest'], 'on');
+    assert.strictEqual(on.ok, true, on.error); assert.strictEqual(on.enabled, true);
+    assert.match(on.tools, /Obscura is not installed/);
+    const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
+    assert.ok(lines.some((l) => /^plugin marketplace add /.test(l)) && lines.includes('plugin install web-digest@ai-dev-kit-mods --scope project'), lines.join(' | '));
+    assert.strictEqual(webDigestMod(root, null, ['web-digest']).enabled, true, 'a read-only call sees it enabled');
+    assert.match(webDigestMod(root, null, ['handover']).warning, /does nothing/);
+    const off = webDigestMod(root, null, ['web-digest'], 'off');
+    assert.strictEqual(off.ok, true); assert.strictEqual(off.enabled, false);
+    process.env.STUB_NOENABLE = '1';
+    const dead = webDigestMod(tmp(), null, ['web-digest'], 'on');
+    assert.strictEqual(dead.ok, false); assert.match(dead.error, /not enabled in settings\.json after the install/);
+    delete process.env.STUB_NOENABLE; process.env.STUB_FAIL = '1';
+    const bad = webDigestMod(tmp(), null, ['web-digest'], 'on');
+    assert.strictEqual(bad.ok, false); assert.ok(bad.error);
+  } finally {
+    for (const k of keys) { if (old[k] === undefined) delete process.env[k]; else process.env[k] = old[k]; }
+  }
+});
+
 t('the manifest and archive helpers are re-exported from skill-scope.move', () => {
   const me = require('../skills/meta/install-kit.cli.js'), mv = require('../skills/meta/skill-scope.move.js');
   for (const k of ['readManifest', 'writeManifest', 'doArchive', 'doUnarchive']) { assert.strictEqual(typeof me[k], 'function', k); assert.strictEqual(me[k], mv[k], k); assert.ok(Object.keys(me).includes(k), k + ' is enumerable'); }

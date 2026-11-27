@@ -5,6 +5,9 @@
 ### Measured
 - Install profiles measured 2026-11-27 (published origin/main against this tree, empty folder, `install --yes --standards`): lean 13 pinned skills 3,197 to 3,227 always-on tokens; default 6,319 to 5,542 (-12%, 11 more skills archived); full 7,532 to 7,372. Table in the README under "What an install costs". Tokens are chars/4 x 1.5, no tokenizer.
 
+### Added
+- Opt-in `web-digest` add-on (`skills/addons/web-digest.{md,cli}`) and mod (`mods/web-digest`): the script fetches one public page with Obscura as text, trims it in code and asks the free router one question; the mod answers WebFetch calls with that digest and falls through to Claude's own tool on any failure, a private URL or a read-on request. Install with `install-kit mods --web-digest on` (project scope, refuses without the add-on, verifies settings.json after the install). Measured on Haiku, 3 real pages x 2 runs: total cost -33% (Wikipedia -55%, MDN -15%, short page equal), answers right 6 of 6, wall time +70%. Details in `findings/2026-11-27-web-digest.md`.
+
 ### Fixed
 - The e2e scaffold wrote TypeScript syntax into `.js` files for JavaScript projects, which Playwright cannot load; it now always writes `.ts` (Playwright transpiles it itself).
 - `tests/install-kit.usage.test.js` expected feature-usage notices off after the default flipped to on; it now expects on.

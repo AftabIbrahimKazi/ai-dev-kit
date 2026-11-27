@@ -29,6 +29,8 @@ exports.writeAiBackends = writeAiBackends;
 exports.claudeBin = claudeBin;
 exports.excludeKitFromGit = excludeKitFromGit;
 exports.ensureUsageMod = ensureUsageMod;
+exports.ensureMod = ensureMod;
+exports.webDigestMod = webDigestMod;
 exports.setUsageTracking = setUsageTracking;
 exports.doInstall = doInstall;
 exports.parseChangelog = parseChangelog;
@@ -1011,13 +1013,16 @@ function excludeKitFromGit(root, library) {
     }
 }
 function ensureUsageMod(library) {
-    if (usageModEnabled())
+    return ensureMod(USAGE_MOD, 'user', os.homedir(), library, usageModEnabled);
+}
+// Installs one mod of the kit's marketplace (add the marketplace, re-point it when another kit copy owns it, install, then confirm settings.json names it).
+function ensureMod(name, scope, cwd, library, isEnabled) {
+    if (isEnabled())
         return { state: 'enabled' };
     const market = path.join(library || '<ai-dev-kit>', 'mods');
-    const manual = `claude plugin marketplace add "${market}" then claude plugin install ${USAGE_MOD}@ai-dev-kit-mods --scope user`;
+    const manual = `claude plugin marketplace add "${market}" then claude plugin install ${name}@ai-dev-kit-mods --scope ${scope}`;
     if (!claudeBin())
-        return { state: 'failed', warning: `the feature-usage mod was NOT installed: the claude command was not found on PATH or in the VS Code extension. In a shell where claude works, run: ${manual}` };
-    const cwd = os.homedir();
+        return { state: 'failed', warning: `the ${name} mod was NOT installed: the claude command was not found on PATH or in the VS Code extension. In a shell where claude works, run: ${manual}` };
     const add = runClaude(['plugin', 'marketplace', 'add', market], cwd);
     const addText = String(add.stderr || add.stdout || '');
     if (add.status !== 0 && !/already/i.test(addText))
@@ -1033,12 +1038,44 @@ function ensureUsageMod(library) {
                 return { state: 'failed', warning: `the mods marketplace is registered from another kit copy and could not be re-pointed to ${market} (${String(again.stderr || again.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
         }
     }
-    const inst = runClaude(['plugin', 'install', `${USAGE_MOD}@ai-dev-kit-mods`, '--scope', 'user'], cwd);
+    const inst = runClaude(['plugin', 'install', `${name}@ai-dev-kit-mods`, '--scope', scope], cwd);
     if (inst.status !== 0 && !/already/i.test(String(inst.stderr || inst.stdout || '')))
-        return { state: 'failed', warning: `could not install the feature-usage mod (${String(inst.error?.message || inst.stderr || inst.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
-    if (!usageModEnabled())
-        return { state: 'failed', warning: `the feature-usage mod is not enabled in settings.json after the install. Run: ${manual}` };
+        return { state: 'failed', warning: `could not install the ${name} mod (${String(inst.error?.message || inst.stderr || inst.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
+    if (!isEnabled())
+        return { state: 'failed', warning: `the ${name} mod is not enabled in settings.json after the install. Run: ${manual}` };
     return { state: 'installed' };
+}
+function webDigestMod(root, library, installed, want) {
+    const r = { enabled: false, skill: installed.includes('web-digest') };
+    if (want === 'on') {
+        r.action = 'install';
+        if (!r.skill) {
+            r.ok = false;
+            r.error = 'the web-digest skill is not installed here (install it first: install-kit install --skills web-digest), so the mod would do nothing';
+        }
+        else {
+            const m = ensureMod('web-digest', 'project', root, library, () => modScope('web-digest', root) !== undefined);
+            r.ok = m.state !== 'failed';
+            if (m.warning)
+                r.error = m.warning;
+        }
+    }
+    else if (want === 'off') {
+        r.action = 'uninstall';
+        const out = spawnClaude(['plugin', 'uninstall', 'web-digest@ai-dev-kit-mods', '--scope', 'project'], root);
+        r.ok = out.status === 0;
+        if (!r.ok)
+            r.error = String(out.error?.message || out.stderr || out.stdout || 'claude plugin uninstall failed').trim().split('\n')[0];
+    }
+    r.enabled = modScope('web-digest', root) !== undefined;
+    if (r.enabled && !r.skill)
+        r.warning = 'the web-digest mod is enabled but the web-digest skill is not installed, so it does nothing (WebFetch runs as normal). Install the skill.';
+    if (r.enabled) {
+        const o = ext.findRef('obscura');
+        if (!o || !ext.detect(o).present)
+            r.tools = 'Obscura is not installed, so every fetch falls through to Claude (install: node install-kit.cli.js install --external obscura).';
+    }
+    return r;
 }
 // The on/off switch for feature-usage tracking, written to the file the mod and session-budget/usage.js read:
 // <home>/.ai-dev-kit/usage/config.json (AI_DEV_KIT_HOME replaces the home folder, for tests). Only the keys given change.
@@ -1154,6 +1191,13 @@ function doInstall(args) {
     const batchResult = args.batch !== undefined || batchPaired ? batchMod(args.root, args.library, batchPaired, args.batch) : undefined;
     if (batchResult?.warning)
         console.error(batchResult.warning);
+    const webDigestResult = args.webDigest !== undefined || Object.keys(manifest.skills).includes('web-digest') ? webDigestMod(args.root, args.library, Object.keys(manifest.skills), args.webDigest) : undefined;
+    if (webDigestResult?.error)
+        console.error('web-digest: ' + webDigestResult.error);
+    if (webDigestResult?.warning)
+        console.error(webDigestResult.warning);
+    if (webDigestResult?.tools)
+        console.error(webDigestResult.tools);
     // Outside-model choices live in one small file the scripts and mods read. Only written when a choice was made; delete a feature's
     // key (or the file) to go back to the default (Claude, or the free scan for the review). --force replaces an existing key.
     if (args.ai)
@@ -1170,7 +1214,7 @@ function doInstall(args) {
     if (keptOut)
         console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult, e2eDrivers };
+    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, webDigest: webDigestResult, externals: externalsResult, e2eDrivers };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -2353,6 +2397,14 @@ function parseArgs(argv) {
         }
         else if (k === '--external')
             a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
+        else if (k === '--web-digest') {
+            const v = argv[++i];
+            if (v !== 'on' && v !== 'off') {
+                console.error(red('error: --web-digest must be on or off'));
+                process.exit(2);
+            }
+            a.webDigest = v;
+        }
         else if (k === '--batch') {
             const v = argv[++i];
             if (v !== 'on' && v !== 'off') {
@@ -2449,11 +2501,11 @@ async function main() {
         }
         else if (cmd === 'mods') {
             if (!args.root) {
-                console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off]'));
+                console.error(red('usage: install-kit.cli.js mods --root <target> [--library <kit>] [--batch on|off] [--web-digest on|off]'));
                 process.exit(2);
                 return;
             }
-            res = { batch: batchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).includes('session-budget'), args.batch) };
+            res = { batch: batchMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills).includes('session-budget'), args.batch), webDigest: webDigestMod(args.root, args.library, Object.keys((0, skill_scope_move_1.readManifest)(args.root).skills), args.webDigest) };
         }
         else if (cmd === 'list')
             res = listSkills(args.library);

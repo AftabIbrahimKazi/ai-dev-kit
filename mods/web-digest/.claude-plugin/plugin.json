@@ -1,0 +1,8 @@
+{
+  "name": "web-digest",
+  "version": "0.1.0",
+  "description": "Answers a WebFetch call with a short digest instead of Claude's own page pass: the web-digest skill script fetches the public page with Obscura (text), trims it in code and asks the free router the question. Any failure, a private or loopback URL, or a read-on request lets Claude's own WebFetch run unchanged. Does nothing unless the web-digest skill and Obscura are installed. Reads .ai-dev-kit.json; the mod itself reads no env and makes no network call. Runs: node web-digest/cli.js.",
+  "author": {
+    "name": "Aftab Ibrahim Kazi"
+  }
+}

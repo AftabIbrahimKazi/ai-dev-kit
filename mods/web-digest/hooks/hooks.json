@@ -1,0 +1,4 @@
+{
+  "description": "web-digest hooks module",
+  "modules": ["./register.ts"]
+}
