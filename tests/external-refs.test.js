@@ -65,3 +65,15 @@ t('no secrets in the registry', () => {
   assert.ok(!/(api[_-]?key|token|secret|password|bearer)\s*"?\s*[:=]\s*"[^"]{8,}/i.test(raw), 'secret-looking value');
   assert.ok(!/\b(sk-|ghp_|AIza|xox[bp]-)[A-Za-z0-9_-]{10,}/.test(raw), 'key-shaped string');
 });
+
+t('parity: every fetchable entry is reachable from the installer docs and the changelog', () => {
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  const kitMd = fs.readFileSync(path.join(ROOT, 'skills', 'meta', 'install-kit.md'), 'utf8');
+  assert.ok(readme.includes('--external'), 'README does not document --external');
+  assert.ok(kitMd.includes('--external'), 'install-kit.md does not mention --external');
+  assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes('external-refs'), 'CHANGELOG has no external-refs line');
+  for (const r of refs.filter((x) => x.fetch !== 'skill')) {
+    assert.ok(['release-zip', 'clone'].includes(r.kind), r.id + ': kind ' + r.kind + ' has no fetch support in external-refs.ts');
+    assert.ok(readme.includes(r.id), r.id + ' is not named in the README');
+  }
+});

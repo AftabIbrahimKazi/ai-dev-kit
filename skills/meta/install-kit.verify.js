@@ -138,6 +138,29 @@ function checkStandards(root, findings) {
     if (!fs.existsSync(path.join(dir, 'index.md')))
         add(findings, 'fail', 'standards', 'coding-standards/ exists but index.md is missing -- an incomplete or corrupted copy');
 }
+// An external tool the manifest says was installed must still be there, with its marker file when the registry names one.
+function checkExternals(root, findings) {
+    let m;
+    try {
+        m = JSON.parse(fs.readFileSync(path.join(root, '.ai-dev-kit.json'), 'utf8'));
+    }
+    catch {
+        return;
+    }
+    if (!m.external)
+        return;
+    let markers = {};
+    try {
+        markers = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(__dirname, 'external-refs.json'), 'utf8')).refs.map((r) => [r.id, r.marker]));
+    }
+    catch { /* registry unreadable: check the folder only */ }
+    for (const [id, rec] of Object.entries(m.external)) {
+        const marker = markers[id];
+        if (!fs.existsSync(rec.path) || (marker && !fs.existsSync(path.join(rec.path, marker)))) {
+            findings.push({ level: 'fail', check: 'external', message: `external tool ${id} is recorded but missing at ${rec.path}; run: node external-refs.js fetch ${id} --force` });
+        }
+    }
+}
 function verify(args) {
     const tool = exports.ROOTS[args.tool];
     if (!tool)
@@ -148,6 +171,7 @@ function verify(args) {
     checkSessionProtocol(args.root, tool.protocol, findings);
     checkCommentStyle(skillFolders, findings);
     checkStandards(args.root, findings);
+    checkExternals(args.root, findings);
     return { ok: !findings.some((f) => f.level === 'fail'), findings };
 }
 function finish(root) {

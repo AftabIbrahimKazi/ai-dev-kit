@@ -20,6 +20,7 @@ exports.removeParallelSessionSection = removeParallelSessionSection;
 exports.applyActiveStandards = applyActiveStandards;
 exports.installStandards = installStandards;
 exports.findExistingProtocols = findExistingProtocols;
+exports.syncExternals = syncExternals;
 exports.batchMod = batchMod;
 exports.parseAiFlag = parseAiFlag;
 exports.writeAiBackends = writeAiBackends;
@@ -89,6 +90,7 @@ const select = require("./install-kit.select");
 const company = require("./install-kit.company");
 const sig = require("./install-kit.signature");
 const variants = require("./install-kit.variants");
+const ext = require("./external-refs");
 const skill_scope_move_1 = require("./skill-scope.move");
 Object.defineProperty(exports, "readManifest", { enumerable: true, get: function () { return skill_scope_move_1.readManifest; } });
 Object.defineProperty(exports, "writeManifest", { enumerable: true, get: function () { return skill_scope_move_1.writeManifest; } });
@@ -759,6 +761,33 @@ function applyAgentReady(root, protocolAbs) {
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify({ ...cfg, agentReady: true }, null, 2) + '\n');
 }
+function syncExternals(manifest, want, refresh, force) {
+    const ids = new Set(want || []);
+    if (refresh)
+        for (const id of Object.keys(manifest.external || {}))
+            ids.add(id);
+    if (!ids.size)
+        return undefined;
+    const res = { ok: true, fetched: [], dropped: [], credits: [] };
+    for (const id of ids) {
+        const r = ext.findRef(id);
+        if (!r) {
+            res.fetched.push({ id, ok: false, error: 'unknown external tool (not in external-refs.json)', credit: '' });
+            res.ok = false;
+            continue;
+        }
+        const out = ext.fetchRef(r, force);
+        res.fetched.push(out);
+        if (out.ok) {
+            manifest.external = manifest.external || {};
+            manifest.external[id] = { ref: out.ref || r.ref, path: out.path, at: new Date().toISOString(), sha256: out.sha256, commit: out.commit };
+            res.credits.push(out.credit);
+        }
+        else
+            res.ok = false;
+    }
+    return res;
+}
 const BATCH_ID = 'batch@ai-dev-kit-mods';
 // A mod is enabled when settings.enabledPlugins names it: project scope in <root>/.claude, user scope in the Claude config folder.
 function modScope(name, root) {
@@ -949,6 +978,7 @@ function doInstall(args) {
     if (args.contextCode && !standardsResult?.contextCodeFailed)
         manifest.contextCode = args.contextCode;
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: true });
+    const externalsResult = syncExternals(manifest, args.external, false, args.force);
     manifest.lastSeen = latestChangelogDate(args.library) ?? manifest.lastSeen;
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root, args.signature) : undefined;
@@ -985,7 +1015,7 @@ function doInstall(args) {
             archivedNow = (0, skill_scope_move_1.doArchive)({ root: args.root, skills: fresh, by: 'auto' }).archived;
     }
     const verifyResult = verify({ root: args.root, tool: args.tool });
-    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
+    return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult };
 }
 const NEWS_CAP = 12;
 function parseChangelog(text) {
@@ -1075,6 +1105,8 @@ function doUpdate(args) {
     company.refreshCompany(args.root, manifest);
     if (args.contextCode)
         manifest.contextCode = args.contextCode;
+    // update re-pins: every opted-in tool is checked against the registry and re-fetched when its pin moved or its folder is gone
+    const externalsResult = syncExternals(manifest, args.external, true, args.force);
     const news = whatsNew(args.library, manifest.lastSeen);
     if (news)
         manifest.lastSeen = news.latest;
@@ -1091,7 +1123,7 @@ function doUpdate(args) {
     const commandsResult = args.noCommands ? undefined : syncCommands(args.root, manifest, args.library, { force: args.force, install: false });
     (0, skill_scope_move_1.writeManifest)(args.root, manifest);
     const verifyResult = verify({ root: args.root, tool: manifest.tool });
-    return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news };
+    return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
 }
 function parseRenameLedger(libraryRoot) {
     const p = path.join(libraryRoot, 'migrations', 'RENAMES.md');
@@ -1169,6 +1201,16 @@ function doUninstall(args) {
     }
     if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0)
         fs.rmdirSync(absArchiveRoot);
+    // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `external-refs.js remove <id>` deletes it.
+    for (const id of Object.keys(manifest.external || {})) {
+        if (args.all || (args.external || []).includes(id)) {
+            delete manifest.external[id];
+            removed.push('external/' + id + ' (tracking only)');
+            kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run external-refs.js remove ${id} to delete it`);
+        }
+    }
+    if (manifest.external && !Object.keys(manifest.external).length)
+        delete manifest.external;
     if ((0, skill_scope_move_1.removeShieldIfUnneeded)(absSkillRoot))
         removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
     const cmd = pruneCommands(args.root, manifest, !!args.all, args.library || (() => { try {
@@ -2117,6 +2159,8 @@ function parseArgs(argv) {
             else
                 a.usageNotify = v;
         }
+        else if (k === '--external')
+            a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
         else if (k === '--batch') {
             const v = argv[++i];
             if (v !== 'on' && v !== 'off') {
@@ -2245,6 +2289,15 @@ async function main() {
         return;
     }
     console.log(JSON.stringify(res, null, 2));
+    const ex = res.externals;
+    if (ex && !ex.ok) {
+        for (const f of ex.fetched.filter((x) => !x.ok))
+            console.error(red(`external ${f.id} FAILED: ${f.error}`));
+        process.exit(1);
+    }
+    if (ex)
+        for (const c of ex.credits)
+            console.error('credit: ' + c);
 }
 if (require.main === module)
     void main();

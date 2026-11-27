@@ -33,6 +33,8 @@ export interface Manifest {
   company?: { mode: "keep" | "drop" | "auto"; dropped: string[]; restore: string[]; rows: Record<string, string>; skill: string | null; files: number; generatedAt: string };
   // Project signature chosen at install (2 to 6 letters): the watermark in selectors, data attributes and component names. See install-kit.signature.ts.
   signature?: { alias: string; row?: string };
+  // External tools (skills/meta/external-refs.json) this project opted into. The tool itself lives in ~/.ai-dev-kit/external/<id>/, shared across projects.
+  external?: Record<string, { ref: string; path: string; at: string; sha256?: string; commit?: string }>;
   scopeLog?: ScopeEvent[];
   // Timestamp of the last `report --mark` (run by /wrap-up); the report lists events after it.
   scopeMark?: string;

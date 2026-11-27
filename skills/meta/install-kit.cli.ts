@@ -50,6 +50,7 @@ import select = require('./install-kit.select');
 import company = require('./install-kit.company');
 import sig = require('./install-kit.signature');
 import variants = require('./install-kit.variants');
+import ext = require('./external-refs');
 import {
   MANIFEST_NAME, readManifest, writeManifest, ensureShield, removeShieldIfUnneeded, walkFiles, doArchive, doUnarchive,
   type Manifest,
@@ -716,6 +717,7 @@ export interface CliArgs {
   companyDefaults?: company.DefaultsMode;
   usage?: 'on' | 'off'; // feature-usage tracking (the feature-usage mod and session-budget/usage.js read the same file)
   usageNotify?: 'on' | 'off';
+  external?: string[]; // --external obscura: opt-in external tools (skills/meta/external-refs.json), fetched into ~/.ai-dev-kit/external/
   batch?: 'on' | 'off'; // the batch mod (mcp__batch__run): on installs it at project scope, off removes it
   yes?: boolean; // --yes: accept every default, ask nothing
   ai?: Partial<Record<AiFeature, AiBackend[]>>; // outside models allowed per feature (--ai review=code+ollama, --reviewer legacy)
@@ -728,7 +730,29 @@ export interface CliArgs {
   json?: boolean;
 }
 
-export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult }
+export interface DoInstallResult { archived?: string[]; skills: InstallOneResult[]; standards: StandardsResult | null; verify: ReturnType<typeof verify>; commands?: CommandsResult; company?: company.CompanyResult; signature?: sig.SignatureResult; usage?: UsageResult; batch?: BatchResult; externals?: ExternalsResult }
+
+// External tools: a registry entry the project opted into is fetched once into the shared ~/.ai-dev-kit/external/<id>/ and recorded
+// in the manifest. A failed fetch is reported, never hidden: ok is false, the CLI exits non-zero and verify fails until it is fixed.
+export interface ExternalsResult { ok: boolean; fetched: ext.FetchResult[]; dropped: string[]; credits: string[] }
+export function syncExternals(manifest: Manifest, want: string[] | undefined, refresh: boolean, force?: boolean): ExternalsResult | undefined {
+  const ids = new Set<string>(want || []);
+  if (refresh) for (const id of Object.keys(manifest.external || {})) ids.add(id);
+  if (!ids.size) return undefined;
+  const res: ExternalsResult = { ok: true, fetched: [], dropped: [], credits: [] };
+  for (const id of ids) {
+    const r = ext.findRef(id);
+    if (!r) { res.fetched.push({ id, ok: false, error: 'unknown external tool (not in external-refs.json)', credit: '' }); res.ok = false; continue; }
+    const out = ext.fetchRef(r, force);
+    res.fetched.push(out);
+    if (out.ok) {
+      manifest.external = manifest.external || {};
+      manifest.external[id] = { ref: out.ref || r.ref, path: out.path!, at: new Date().toISOString(), sha256: out.sha256, commit: out.commit };
+      res.credits.push(out.credit);
+    } else res.ok = false;
+  }
+  return res;
+}
 
 // The batch mod adds one read-only tool (mcp__batch__run). It is a Claude Code mod, so it is installed through the plugin
 // marketplace, not copied like a skill; this reports whether it is enabled, offers the install, and checks the pairing with the
@@ -894,6 +918,7 @@ export function doInstall(args: CliArgs): DoInstallResult {
   if (args.contextCode && !standardsResult?.contextCodeFailed) manifest.contextCode = args.contextCode;
 
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: true });
+  const externalsResult = syncExternals(manifest, args.external, false, args.force);
   manifest.lastSeen = latestChangelogDate(args.library!) ?? manifest.lastSeen;
   writeManifest(args.root!, manifest);
   const signatureResult = args.signature !== undefined && !/^(none|off|no)$/i.test(args.signature) ? sig.setSignature(args.root!, args.signature) : undefined;
@@ -922,11 +947,11 @@ export function doInstall(args: CliArgs): DoInstallResult {
     if (fresh.length) archivedNow = doArchive({ root: args.root!, skills: fresh, by: 'auto' }).archived;
   }
   const verifyResult = verify({ root: args.root!, tool: args.tool! });
-  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult };
+  return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult };
 }
 
 export interface MigrationEntry { oldName: string; newName: string; applied: boolean }
-export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; hooksRetired: string[]; commands?: CommandsResult; whatsNew?: WhatsNew }
+export interface DoUpdateResult { skills: InstallOneResult[]; migrations: MigrationEntry[]; verify: ReturnType<typeof verify>; hooksAdded: string[]; hooksRetired: string[]; commands?: CommandsResult; whatsNew?: WhatsNew; externals?: ExternalsResult }
 
 // ---- What's new: CHANGELOG.md sections newer than the date this project last saw ----
 export interface NewsEntry { date: string; kind: string; headline: string }
@@ -1000,6 +1025,8 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   company.refreshCompany(args.root!, manifest);
   if (args.contextCode) manifest.contextCode = args.contextCode;
 
+  // update re-pins: every opted-in tool is checked against the registry and re-fetched when its pin moved or its folder is gone
+  const externalsResult = syncExternals(manifest, args.external, true, args.force);
   const news = whatsNew(args.library!, manifest.lastSeen);
   if (news) manifest.lastSeen = news.latest;
   writeManifest(args.root!, manifest);
@@ -1011,7 +1038,7 @@ export function doUpdate(args: CliArgs): DoUpdateResult {
   const commandsResult = args.noCommands ? undefined : syncCommands(args.root!, manifest, args.library!, { force: args.force, install: false });
   writeManifest(args.root!, manifest);
   const verifyResult = verify({ root: args.root!, tool: manifest.tool });
-  return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news };
+  return { skills: results, migrations, verify: verifyResult, hooksAdded, hooksRetired, commands: commandsResult, whatsNew: news, externals: externalsResult };
 }
 
 interface RenameRow { oldName: string; newName: string }
@@ -1087,6 +1114,11 @@ export function doUninstall(args: CliArgs): UninstallResult {
     }
   }
   if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0) fs.rmdirSync(absArchiveRoot);
+  // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `external-refs.js remove <id>` deletes it.
+  for (const id of Object.keys(manifest.external || {})) {
+    if (args.all || (args.external || []).includes(id)) { delete manifest.external![id]; removed.push('external/' + id + ' (tracking only)'); kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run external-refs.js remove ${id} to delete it`); }
+  }
+  if (manifest.external && !Object.keys(manifest.external).length) delete manifest.external;
   if (removeShieldIfUnneeded(absSkillRoot)) removed.push(`${manifest.skillRoot}/package.json (shield, no longer needed)`);
 
   const cmd = pruneCommands(args.root!, manifest, !!args.all, args.library || (() => { try { return defaultLibraryGuess(); } catch { return undefined; } })());
@@ -1903,6 +1935,7 @@ function parseArgs(argv: string[]): CliArgs {
       if (v !== 'on' && v !== 'off') { console.error(red(`error: ${k} must be on or off`)); process.exit(2); }
       if (k === '--usage') a.usage = v; else a.usageNotify = v;
     }
+    else if (k === '--external') a.external = (argv[++i] || '').split(',').map((x) => x.trim()).filter(Boolean);
     else if (k === '--batch') {
       const v = argv[++i];
       if (v !== 'on' && v !== 'off') { console.error(red('error: --batch must be on or off')); process.exit(2); }
@@ -1969,6 +2002,9 @@ async function main(): Promise<void> {
     return;
   }
   console.log(JSON.stringify(res, null, 2));
+  const ex = (res as { externals?: ExternalsResult }).externals;
+  if (ex && !ex.ok) { for (const f of ex.fetched.filter((x) => !x.ok)) console.error(red(`external ${f.id} FAILED: ${f.error}`)); process.exit(1); }
+  if (ex) for (const c of ex.credits) console.error('credit: ' + c);
 }
 
 if (require.main === module) void main();
