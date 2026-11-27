@@ -76,8 +76,13 @@ export function runMenu(io: MenuIO, spec: MenuSpec): Promise<MenuResult> {
     return out;
   }
   function draw(first: boolean): void {
-    if (!first && drawn) io.output.write(`\x1b[${drawn}A\x1b[0J`);
     const l = lines();
+    if (!first && drawn) {
+      // Clear exactly the number of lines we previously drew, plus handle potential terminal wrapping
+      for (let i = 0; i < drawn; i++) {
+        io.output.write('\x1b[2K\x1b[1A'); // clear line + move up
+      }
+    }
     io.output.write(l.join('\n') + '\n');
     drawn = l.length;
   }
