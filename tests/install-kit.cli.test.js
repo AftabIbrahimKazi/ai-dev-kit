@@ -696,7 +696,8 @@ t('install copies commands whose skill is installed, renders {{skill-root}}, and
   const res = doInstall({ library: lib, root: target, tool: 'claude', skills: ['skill-scope', 'narrate'] });
   assert.deepStrictEqual(res.commands.added.sort(), ['kit', 'next']);
   const nextBody = fs.readFileSync(cmdFile(target, 'next'), 'utf8');
-  assert.ok(nextBody.includes(`node "$(node -p "let d=process.cwd();const f='.claude/skills/skill-scope/auto.js';`) && nextBody.includes(`d+'/'+f")" apply`), 'script path found by walking up to the install');
+  assert.ok(nextBody.includes(`node -e "let d=process.cwd(),f='.claude/skills/skill-scope/auto.js',p;`) && nextBody.includes(`process.argv.slice(1)`) && nextBody.includes(`" -- apply`), 'script path found by walking up to the install, one node process');
+  assert.ok(!/\$\(|`/.test((nextBody.split('\n').find((l) => l.startsWith('!')) || '').slice(2, -1)), 'no command substitution or backtick inside the injected line (PowerShell reads them differently)');
   assert.ok(!nextBody.includes('git rev-parse'), 'no git-root anchor');
   assert.ok(!fs.existsSync(cmdFile(target, 'audit')));
   assert.ok(!fs.existsSync(cmdFile(target, 'narration')));

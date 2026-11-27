@@ -136,13 +136,21 @@ function commandsDirOf(manifest) {
 // A `!` line runs in the shell's current folder, so a relative skill path breaks after a `cd` into a subfolder.
 // The git root is no anchor: a project nested inside a larger repo has its install below that root, not at it.
 // So node walks up from the current folder to the nearest one holding the installed file, falling back to the relative path.
+// `node <script> args` becomes ONE node process: `node -e "<walker>" -- args`. The older form nested a `$(node -p ...)` substitution inside the
+// command, which PowerShell reads differently (the first argument was taken as a module path and the command crashed). The walker holds no `$`,
+// backtick or double quote, so bash and PowerShell pass it through unchanged; `--` keeps flags like --write away from node itself.
+function nodeLauncher(rel) {
+    const js = `let d=process.cwd(),f='${rel}',p;for(;;){p=d+'/'+f;if(require('fs').existsSync(p))break;let u=require('path').dirname(d);if(u===d){p=f;break}d=u}process.exit(require('child_process').spawnSync(process.execPath,[p,...process.argv.slice(1)],{stdio:'inherit'}).status)`;
+    return `node -e "${js}" --`;
+}
 function anchored(rel) {
     const js = `let d=process.cwd();const f='${rel}';for(;;){if(require('fs').existsSync(d+'/'+f))break;const p=require('path').dirname(d);if(p===d){d='.';break}d=p}d+'/'+f`;
     return `"$(node -p "${js}")"`;
 }
 function renderCommand(body, manifest) {
     const root = manifest.skillRoot.split(path.sep).join('/');
-    return body.replace(/\{\{skill-root\}\}(\/[^\s`]*)/g, (_m, rest) => anchored(root + rest))
+    return body.replace(/\bnode \{\{skill-root\}\}(\/[^\s`]*)/g, (_m, rest) => nodeLauncher(root + rest))
+        .replace(/\{\{skill-root\}\}(\/[^\s`]*)/g, (_m, rest) => anchored(root + rest))
         .replace(/\{\{skill-root\}\}/g, root);
 }
 const sha = (text) => crypto.createHash('sha1').update(text).digest('hex');

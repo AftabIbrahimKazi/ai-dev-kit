@@ -1,6 +1,6 @@
 ---
 description: Switch Claude Code between the free unified router and the subscription (applies next session)
-argument-hint: '[free | claude]  (none = current mode)'
+argument-hint: '[free | claude | --doctor | --install-escape]  (none = current mode)'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---
