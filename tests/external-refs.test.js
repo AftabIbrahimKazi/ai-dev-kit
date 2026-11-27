@@ -4,7 +4,7 @@ const path = require('node:path');
 
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
 const ROOT = path.join(__dirname, '..');
-const FILE = path.join(ROOT, 'skills', 'meta', 'external-refs.json');
+const FILE = path.join(ROOT, 'skills', 'meta', 'install-kit.external.json');
 const raw = fs.readFileSync(FILE, 'utf8');
 const data = JSON.parse(raw);
 const refs = data.refs;
@@ -71,9 +71,9 @@ t('parity: every fetchable entry is reachable from the installer docs and the ch
   const kitMd = fs.readFileSync(path.join(ROOT, 'skills', 'meta', 'install-kit.md'), 'utf8');
   assert.ok(readme.includes('--external'), 'README does not document --external');
   assert.ok(kitMd.includes('--external'), 'install-kit.md does not mention --external');
-  assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes('external-refs'), 'CHANGELOG has no external-refs line');
+  assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes('install-kit.external'), 'CHANGELOG has no install-kit.external line');
   for (const r of refs.filter((x) => x.fetch !== 'skill')) {
-    assert.ok(['release-zip', 'clone'].includes(r.kind), r.id + ': kind ' + r.kind + ' has no fetch support in external-refs.ts');
+    assert.ok(['release-zip', 'clone'].includes(r.kind), r.id + ': kind ' + r.kind + ' has no fetch support in install-kit.external.ts');
     assert.ok(readme.includes(r.id), r.id + ' is not named in the README');
   }
 });

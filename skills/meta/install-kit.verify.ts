@@ -120,11 +120,11 @@ function checkExternals(root: string, findings: Finding[]): void {
   try { m = JSON.parse(fs.readFileSync(path.join(root, '.ai-dev-kit.json'), 'utf8')); } catch { return; }
   if (!m.external) return;
   let markers: Record<string, string | undefined> = {};
-  try { markers = Object.fromEntries((JSON.parse(fs.readFileSync(path.join(__dirname, 'external-refs.json'), 'utf8')) as { refs: { id: string; marker?: string }[] }).refs.map((r) => [r.id, r.marker])); } catch { /* registry unreadable: check the folder only */ }
+  try { markers = Object.fromEntries((JSON.parse(fs.readFileSync(path.join(__dirname, 'install-kit.external.json'), 'utf8')) as { refs: { id: string; marker?: string }[] }).refs.map((r) => [r.id, r.marker])); } catch { /* registry unreadable: check the folder only */ }
   for (const [id, rec] of Object.entries(m.external)) {
     const marker = markers[id];
     if (!fs.existsSync(rec.path) || (marker && !fs.existsSync(path.join(rec.path, marker)))) {
-      findings.push({ level: 'fail', check: 'external', message: `external tool ${id} is recorded but missing at ${rec.path}; run: node external-refs.js fetch ${id} --force` });
+      findings.push({ level: 'fail', check: 'external', message: `external tool ${id} is recorded but missing at ${rec.path}; run: node install-kit.external.js fetch ${id} --force` });
     }
   }
 }

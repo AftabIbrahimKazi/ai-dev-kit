@@ -9,7 +9,7 @@ const { spawnSync } = require('node:child_process');
 const t = (name, fn) => { try { fn(); console.log('ok   ' + name); } catch (e) { console.log('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } };
 const LIB = path.join(__dirname, '..');
 const CLI = path.join(LIB, 'skills', 'meta', 'install-kit.cli.js');
-const REFS = path.join(LIB, 'skills', 'meta', 'external-refs.js');
+const REFS = path.join(LIB, 'skills', 'meta', 'install-kit.external.js');
 const VERIFY = path.join(LIB, 'skills', 'meta', 'install-kit.verify.js');
 
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'extrefs-'));

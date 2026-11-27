@@ -154,3 +154,14 @@ t('real scan: free disk is measured from the nearest existing parent when the ho
 	const s = scanWith({}, { HOME: missing, USERPROFILE: missing });
 	assert.ok(typeof s.freeDiskGB === 'number' && s.freeDiskGB > 0, String(s.freeDiskGB));
 });
+
+t('external tools and key names show as rows (names only, never values)', () => {
+  const r = run(merge({
+    externals: [{ id: 'obscura', name: 'Obscura', present: false, pinned: 'v0.2.7' }, { id: 'other', name: 'Other', present: true, where: 'C:/x', pinned: 'v1' }],
+    keyNames: ['UNIFIED_API_KEY'],
+  }));
+  assert.strictEqual(status(r, 'External: obscura'), 'info');
+  assert.ok(/install --external obscura/.test(r.rows.find((x) => x.item === 'External: obscura').note));
+  assert.strictEqual(status(r, 'External: other'), 'have');
+  assert.strictEqual(r.rows.find((x) => x.item === 'API keys (names only)').note, 'UNIFIED_API_KEY');
+});

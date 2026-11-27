@@ -1,5 +1,5 @@
 {
-  "_about": "External tools the kit references but never bundles. Fetched at install time, opt-in, into ~/.ai-dev-kit/external/<id>/. Every entry needs a CREDITS.md row. tests/external-refs.test.js enforces this. No keys, tokens or secrets in this file.",
+  "_about": "External tools the kit references but never bundles. Fetched at install time, opt-in, into ~/.ai-dev-kit/external/<id>/. Every entry needs a CREDITS.md row. tests/install-kit.external.test.js enforces this. No keys, tokens or secrets in this file.",
   "refs": [
     {
       "id": "shopify-toolkit",

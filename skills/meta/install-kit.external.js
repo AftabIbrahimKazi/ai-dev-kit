@@ -11,14 +11,14 @@ exports.detect = detect;
 exports.status = status;
 exports.fetchRef = fetchRef;
 exports.removeRef = removeRef;
-// External tools the kit links to but never bundles. Reads external-refs.json (the registry), detects each tool,
+// External tools the kit links to but never bundles. Reads install-kit.external.json (the registry), detects each tool,
 // fetches it on request into ~/.ai-dev-kit/external/<id>/ (shared by every project, never inside a project tree),
 // checks the pinned hash, and records what it pulled. Plain Node, no npm deps.
 //
-//   node external-refs.js status [--json]            what is present, pinned where, credited to whom
-//   node external-refs.js fetch <id> [--force]       download or clone one tool (opt-in; prints its credit line)
-//   node external-refs.js remove <id>                delete the shared folder (other projects lose it too)
-//   node external-refs.js download <url> <dest>      internal: sync-safe download used by fetch
+//   node install-kit.external.js status [--json]            what is present, pinned where, credited to whom
+//   node install-kit.external.js fetch <id> [--force]       download or clone one tool (opt-in; prints its credit line)
+//   node install-kit.external.js remove <id>                delete the shared folder (other projects lose it too)
+//   node install-kit.external.js download <url> <dest>      internal: sync-safe download used by fetch
 //
 // Env: AI_DEV_KIT_HOME replaces ~/.ai-dev-kit (tests); AI_DEV_KIT_REGISTRY replaces the registry file (tests).
 // A `file://` or plain-path URL is copied instead of downloaded, so tests need no network.
@@ -29,7 +29,7 @@ const crypto = require("node:crypto");
 const https = require("node:https");
 const childProcess = require("node:child_process");
 const HERE = __dirname;
-function registryFile() { return process.env.AI_DEV_KIT_REGISTRY || path.join(HERE, 'external-refs.json'); }
+function registryFile() { return process.env.AI_DEV_KIT_REGISTRY || path.join(HERE, 'install-kit.external.json'); }
 function loadRegistry(file) {
     const data = JSON.parse(fs.readFileSync(file || registryFile(), 'utf8'));
     return data.refs;
@@ -247,7 +247,7 @@ function main() {
         console.log(JSON.stringify(removeRef(a)));
         return;
     }
-    console.error('usage: external-refs.js <status|fetch <id>|remove <id>> [--json] [--force]');
+    console.error('usage: install-kit.external.js <status|fetch <id>|remove <id>> [--json] [--force]');
     process.exit(2);
 }
 if (require.main === module)

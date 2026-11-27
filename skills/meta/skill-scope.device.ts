@@ -7,6 +7,9 @@ import childProcess = require('child_process');
 import fs = require('fs');
 import os = require('os');
 import path = require('path');
+// The registry module ships beside install-kit, not with this skill: an installed copy may not have it, so the rows are skipped then.
+let ext: typeof import('./install-kit.external') | null = null;
+try { ext = require('./install-kit.external'); } catch { /* not present: no external rows */ }
 
 const { spawnSync } = childProcess;
 const win = process.platform === 'win32';
@@ -14,10 +17,14 @@ const win = process.platform === 'win32';
 export interface Gpu { name: string; vendor: string; vramGB: number | null; discrete: boolean }
 export interface Tools { node: string | null; python: string | null; ffmpeg: boolean; git: boolean; cloudflared: boolean }
 export interface State { laya: boolean; vision: boolean; ollama: boolean; llamacpp: boolean; kaggleCli: boolean; kaggleCreds: boolean; hfCacheGB: number | null }
+// External tools from skills/meta/install-kit.external.json (present or not) and the NAMES of API keys set in ~/.ai-dev-kit/.env (never values).
+export interface ExternalTool { id: string; name: string; present: boolean; where?: string; pinned: string }
 export interface Scan {
   platform: string; arch: string; cores: number; ramGB: number; freeDiskGB: number | null;
   gpus: Gpu[]; tools: Tools; state: State;
   verdicts?: { laya: string | null; vision: string | null };
+  externals?: ExternalTool[];
+  keyNames?: string[];
 }
 export type Preset = 'lite' | 'standard' | 'full';
 export interface Row { item: string; status: 'have' | 'missing' | 'info'; note: string }
@@ -109,6 +116,8 @@ function scan(): Scan {
       hfCacheGB: fs.existsSync(hf) ? Math.round(dirSizeGB(hf) * 10) / 10 : null,
     },
   };
+  try { if (ext) s.externals = ext.status().filter((x) => !/own skill/.test(x.note || '')).map((x) => ({ id: x.id, name: x.name, present: x.present, where: x.where, pinned: x.pinned })); } catch { /* registry unreadable: skip the rows */ }
+  s.keyNames = keyNamesIn(path.join(kitHome, '.env'));
   const nv = gpus.find((g) => g.vendor === 'nvidia');
   const layaFake = JSON.stringify({ cores: s.cores, ramGB: s.ramGB, freeDiskGB, nvidia: nv ? { name: nv.name, vramGB: nv.vramGB || 0 } : null });
   const visionFake = JSON.stringify({ platform: s.platform, arch: s.arch, cores: s.cores, ramGB: s.ramGB, freeDiskGB, gpus });
@@ -117,6 +126,13 @@ function scan(): Scan {
     vision: verdictOf(findScript('mcp-manager.local-vision.js', 'mcp/mcp-manager.local-vision.js') || findScript('local-vision.js', ''), { VISION_FAKE_HW: visionFake }),
   };
   return s;
+}
+
+// Names only: a line NAME=value counts when the value is non-empty. The value is never kept.
+function keyNamesIn(file: string): string[] {
+  try {
+    return fs.readFileSync(file, 'utf8').split(/\r?\n/).map((l) => /^\s*([A-Z][A-Z0-9_]*(?:API_KEY|TOKEN|KEY))\s*=\s*\S/.exec(l)?.[1]).filter((x): x is string => !!x);
+  } catch { return []; }
 }
 
 const pyOk = (s: Scan): boolean => !!s.tools.python;
@@ -143,6 +159,10 @@ function build(s: Scan, forced?: Preset): Report {
   row('llama.cpp server', s.state.llamacpp, 'found', 'not found (local-vision installs its own)', true);
   row('Kaggle CLI', s.state.kaggleCli, 'found', 'not found (needed only for the media harness)', true);
   row('Kaggle credentials', s.state.kaggleCreds, 'present (contents not read)', 'not found (needed only for the media harness)', true);
+  for (const x of s.externals || []) {
+    rows.push({ item: 'External: ' + x.id, status: x.present ? 'have' : 'info', note: x.present ? `${x.name} ${x.pinned} at ${x.where}` : `${x.name} not fetched (optional): node install-kit.cli.js install --external ${x.id}` });
+  }
+  if (s.keyNames) rows.push({ item: 'API keys (names only)', status: 'info', note: s.keyNames.length ? s.keyNames.join(', ') : 'none in ~/.ai-dev-kit/.env' });
   rows.push({ item: 'Hugging Face cache', status: 'info', note: s.state.hfCacheGB === null ? 'none' : `${s.state.hfCacheGB} GB` });
   if (s.verdicts) {
     if (s.verdicts.laya) rows.push({ item: 'Laya preflight', status: 'info', note: s.verdicts.laya });

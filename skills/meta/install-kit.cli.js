@@ -90,7 +90,7 @@ const select = require("./install-kit.select");
 const company = require("./install-kit.company");
 const sig = require("./install-kit.signature");
 const variants = require("./install-kit.variants");
-const ext = require("./external-refs");
+const ext = require("./install-kit.external");
 const skill_scope_move_1 = require("./skill-scope.move");
 Object.defineProperty(exports, "readManifest", { enumerable: true, get: function () { return skill_scope_move_1.readManifest; } });
 Object.defineProperty(exports, "writeManifest", { enumerable: true, get: function () { return skill_scope_move_1.writeManifest; } });
@@ -772,7 +772,7 @@ function syncExternals(manifest, want, refresh, force) {
     for (const id of ids) {
         const r = ext.findRef(id);
         if (!r) {
-            res.fetched.push({ id, ok: false, error: 'unknown external tool (not in external-refs.json)', credit: '' });
+            res.fetched.push({ id, ok: false, error: 'unknown external tool (not in install-kit.external.json)', credit: '' });
             res.ok = false;
             continue;
         }
@@ -1201,12 +1201,12 @@ function doUninstall(args) {
     }
     if (fs.existsSync(absArchiveRoot) && fs.readdirSync(absArchiveRoot).length === 0)
         fs.rmdirSync(absArchiveRoot);
-    // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `external-refs.js remove <id>` deletes it.
+    // External tools: the project stops tracking them. The shared folder is kept (other projects may use it); `install-kit.external.js remove <id>` deletes it.
     for (const id of Object.keys(manifest.external || {})) {
         if (args.all || (args.external || []).includes(id)) {
             delete manifest.external[id];
             removed.push('external/' + id + ' (tracking only)');
-            kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run external-refs.js remove ${id} to delete it`);
+            kept.push(`${id}: shared folder ${ext.refDir(id)} kept; run install-kit.external.js remove ${id} to delete it`);
         }
     }
     if (manifest.external && !Object.keys(manifest.external).length)
