@@ -89,7 +89,7 @@ function checkCommonjsShield(root, skillsDir, skillFolders, findings) {
 function checkSessionProtocol(root, protocolFile, findings) {
     const abs = path.join(root, protocolFile);
     if (!fs.existsSync(abs)) {
-        add(findings, 'fail', 'session-protocol', `${protocolFile} is missing -- the detected tool will start every session with no contract`);
+        add(findings, 'fail', 'session-protocol', `${protocolFile} is missing at ${abs} (root: ${root}) -- the detected tool will start every session with no contract`);
         return;
     }
     const body = fs.readFileSync(abs, 'utf8');

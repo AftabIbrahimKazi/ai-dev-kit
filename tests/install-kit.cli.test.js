@@ -1158,10 +1158,11 @@ t('usage tracking: nothing is run when the mod is already enabled, or when track
   assert.ok(!fs.existsSync(log), 'claude was never called');
 });
 
-t('usage tracking: a failed install says so, names the commands to run by hand, and still exits 0', () => {
+t('usage tracking: a failed install says so loudly, names the commands to run by hand, and exits 1 (never a success-shaped exit 0)', () => {
   for (const mode of ['marketplace', 'install', 'silent']) {
     const r = runCli(['install', '--yes', '--library', LIBRARY, '--root', project(), '--tool', 'claude', '--skills', 'handover', '--usage', 'on', '--json'], { CLAUDE_CONFIG_DIR: tmp(), FAKE_CLAUDE_FAIL: mode });
-    assert.strictEqual(r.status, 0, mode + ' ' + r.stderr);
+    assert.strictEqual(r.status, 1, mode + ' ' + r.stderr);
+    assert.match(r.stderr, /feature-usage mod NOT installed/, mode);
     const u = JSON.parse(r.stdout).usage;
     assert.strictEqual(u.mod, 'failed', mode);
     assert.match(u.warning, /claude plugin marketplace add ".*mods" then claude plugin install feature-usage@ai-dev-kit-mods --scope user/, mode);

@@ -76,7 +76,7 @@ function checkCommonjsShield(root: string, skillsDir: string, skillFolders: stri
 
 function checkSessionProtocol(root: string, protocolFile: string, findings: Finding[]): void {
   const abs = path.join(root, protocolFile);
-  if (!fs.existsSync(abs)) { add(findings, 'fail', 'session-protocol', `${protocolFile} is missing -- the detected tool will start every session with no contract`); return; }
+  if (!fs.existsSync(abs)) { add(findings, 'fail', 'session-protocol', `${protocolFile} is missing at ${abs} (root: ${root}) -- the detected tool will start every session with no contract`); return; }
   const body = fs.readFileSync(abs, 'utf8');
   // A company-only install has no standards template, so its [CX] rule comes from the kit's own marked block (RULE AI-01 is a kit rule).
   if (!/\[CX/.test(body) && body.includes('ai-dev-kit:company-standards:start') && !fs.existsSync(path.join(root, 'coding-standards', 'index.md'))) {

@@ -24,6 +24,8 @@ exports.syncExternals = syncExternals;
 exports.batchMod = batchMod;
 exports.parseAiFlag = parseAiFlag;
 exports.writeAiBackends = writeAiBackends;
+exports.claudeBin = claudeBin;
+exports.excludeKitFromGit = excludeKitFromGit;
 exports.ensureUsageMod = ensureUsageMod;
 exports.setUsageTracking = setUsageTracking;
 exports.doInstall = doInstall;
@@ -681,7 +683,10 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
             body = applyActiveStandards(body, opts.activeStandards);
         return body;
     };
-    const existing = findExistingProtocols(root, protocolFile);
+    // Only the tool's OWN file is replaced or appended to: with tool claude an AGENTS.md (written for other tools) is never touched, a CLAUDE.md is
+    // created beside it instead. The context code is still refreshed in every protocol file that carries the kit's markers.
+    const all = findExistingProtocols(root, protocolFile);
+    const existing = all.filter((p) => path.basename(p).toLowerCase() === protocolFile.toLowerCase());
     let protocolAbs = path.join(root, protocolFile);
     if (!existing.length) {
         fs.writeFileSync(protocolAbs, buildBody());
@@ -713,9 +718,33 @@ function installStandards(libraryRoot, root, protocolFile, opts) {
             }
         }
     }
+    if (opts.contextCode) {
+        for (const p of all) {
+            if (p === protocolAbs)
+                continue;
+            const old = fs.readFileSync(p, 'utf8');
+            if (!/ai-dev-kit:cx:start|\|\s*Context code\s*\|/.test(old))
+                continue;
+            const next = ensureContextCode(old, opts.contextCode);
+            if (next !== old)
+                fs.writeFileSync(p, next);
+        }
+    }
     if (opts.agentReady)
         applyAgentReady(root, protocolAbs);
+    result.protocolFile = path.basename(protocolAbs);
+    if (isGitIgnored(root, result.protocolFile))
+        result.ignoredProtocol = result.protocolFile;
     return result;
+}
+// A protocol file the project's .gitignore hides (a blanket `*.md` rule) is installed but never reaches teammates or CI; say so.
+function isGitIgnored(root, rel) {
+    try {
+        return childProcess.spawnSync('git', ['check-ignore', '-q', '--', rel], { cwd: root, timeout: 15000 }).status === 0;
+    }
+    catch {
+        return false;
+    }
 }
 const APPEND_MARKER = '<!-- ai-dev-kit: coding-standards protocol appended below -->';
 function escapeRe(s) {
@@ -728,8 +757,9 @@ function findExistingProtocols(root, protocolFile) {
         names = fs.readdirSync(root);
     }
     catch { /* unreadable root */ }
-    const hits = names.filter((n) => /^(claude|agents)\.md$/i.test(n) && fs.statSync(path.join(root, n)).isFile());
-    const own = (n) => (n.toLowerCase() === protocolFile.toLowerCase() ? 0 : 1);
+    const hits = names.filter((n) => /^(claude|agents)(\.local)?\.md$/i.test(n) && fs.statSync(path.join(root, n)).isFile());
+    // the tool's own file first, then the other shared file, then a private .local file last
+    const own = (n) => (n.toLowerCase() === protocolFile.toLowerCase() ? 0 : /\.local\.md$/i.test(n) ? 2 : 1);
     hits.sort((a, b) => own(a) - own(b));
     return hits.map((n) => path.join(root, n));
 }
@@ -818,10 +848,7 @@ function batchMod(root, library, paired, want) {
     if (want) {
         r.action = want === 'on' ? 'install' : 'uninstall';
         // AI_DEV_KIT_CLAUDE_BIN replaces the claude command (tests); a .js file is run with node. The arguments are constants.
-        const bin = process.env.AI_DEV_KIT_CLAUDE_BIN || 'claude';
-        const viaNode = bin.endsWith('.js');
-        const args = ['plugin', r.action, BATCH_ID, '--scope', 'project'];
-        const out = childProcess.spawnSync(viaNode ? process.execPath : bin, viaNode ? [bin, ...args] : args, { cwd: root, encoding: 'utf8', timeout: 120000, shell: !viaNode && !process.env.AI_DEV_KIT_CLAUDE_BIN && process.platform === 'win32' });
+        const out = spawnClaude(['plugin', r.action, BATCH_ID, '--scope', 'project'], root);
         r.ok = out.status === 0;
         if (!r.ok)
             r.error = String(out.error?.message || out.stderr || out.stdout || `claude plugin ${r.action} failed`).trim().split('\n')[0];
@@ -881,23 +908,96 @@ function usageModEnabled() {
 // The tracking switch is only a file; the mod that reads it must be installed in Claude Code, or nothing is ever logged and no
 // notice ever shows. So turning tracking on installs the mod too (marketplace add, then plugin install at user scope) and checks the
 // result in settings.json, so the user never has to ask the AI to finish the job. A failure returns the two commands to run by hand.
-function runClaude(args, cwd) {
-    const bin = process.env.AI_DEV_KIT_CLAUDE_BIN || 'claude';
-    const viaNode = /.(c|m)?js$/.test(bin);
-    const shell = !viaNode && !process.env.AI_DEV_KIT_CLAUDE_BIN && process.platform === 'win32';
-    const a = shell ? args.map((x) => (/s/.test(x) ? '"' + x + '"' : x)) : args;
-    return childProcess.spawnSync(viaNode ? process.execPath : bin, viaNode ? [bin, ...a] : a, { cwd, encoding: 'utf8', timeout: 120000, shell });
+// The claude command: AI_DEV_KIT_CLAUDE_BIN (tests), then PATH, then the copy the VS Code extension ships (a shell that cannot find `claude`
+// still has it there). Returns null when none exists, so the caller says so plainly instead of printing a raw "not recognized" error.
+function claudeBin() {
+    if (process.env.AI_DEV_KIT_CLAUDE_BIN)
+        return process.env.AI_DEV_KIT_CLAUDE_BIN;
+    const names = process.platform === 'win32' ? ['claude.exe', 'claude.cmd', 'claude'] : ['claude'];
+    for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+        for (const n of names) {
+            try {
+                if (fs.statSync(path.join(dir, n)).isFile())
+                    return path.join(dir, n);
+            }
+            catch { /* next */ }
+        }
+    }
+    try {
+        const ext = path.join(os.homedir(), '.vscode', 'extensions');
+        const dirs = fs.readdirSync(ext).filter((d) => d.startsWith('anthropic.claude-code-')).sort().reverse();
+        for (const d of dirs) {
+            for (const n of ['claude.exe', 'claude']) {
+                const p = path.join(ext, d, 'resources', 'native-binary', n);
+                if (fs.existsSync(p))
+                    return p;
+            }
+        }
+    }
+    catch { /* no extensions folder */ }
+    return null;
+}
+// One spawn path for every claude call. A .js stand-in runs through node; a .cmd shim on Windows needs a shell, so it gets ONE fully quoted
+// command string (an args array plus shell:true is deprecated, DEP0190, and breaks on paths with spaces); everything else spawns directly.
+function spawnClaude(args, cwd) {
+    const bin = claudeBin();
+    if (!bin)
+        return { status: null, signal: null, output: [], pid: 0, stdout: '', stderr: '', error: new Error('the claude command was not found') };
+    const opts = { cwd, encoding: 'utf8', timeout: 120000 };
+    if (/\.(c|m)?js$/.test(bin))
+        return childProcess.spawnSync(process.execPath, [bin, ...args], opts);
+    if (process.platform !== 'win32' || !/\.(cmd|bat)$/i.test(bin))
+        return childProcess.spawnSync(bin, args, opts);
+    const quote = (x) => (/[\s"&|<>^()%!]/.test(x) ? '"' + x.replace(/"/g, '\\"') + '"' : x);
+    return childProcess.spawnSync([bin, ...args].map(quote).join(' '), { ...opts, shell: true });
+}
+function runClaude(args, cwd) { return spawnClaude(args, cwd); }
+// The kit cloned inside the project it installs into shows up as untracked and gets scanned by repo-wide skills: keep it out of git status.
+function excludeKitFromGit(root, library) {
+    if (!library)
+        return undefined;
+    const rel = path.relative(root, library);
+    if (!rel || rel.startsWith('..') || path.isAbsolute(rel))
+        return undefined;
+    try {
+        if (!fs.statSync(path.join(root, '.git')).isDirectory())
+            return undefined;
+        const file = path.join(root, '.git', 'info', 'exclude');
+        const entry = '/' + rel.split(path.sep).join('/') + '/';
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+        if (cur.split(/\r?\n/).includes(entry))
+            return undefined;
+        fs.appendFileSync(file, (cur && !cur.endsWith('\n') ? '\n' : '') + entry + '\n');
+        return entry;
+    }
+    catch {
+        return undefined;
+    }
 }
 function ensureUsageMod(library) {
     if (usageModEnabled())
         return { state: 'enabled' };
     const market = path.join(library || '<ai-dev-kit>', 'mods');
     const manual = `claude plugin marketplace add "${market}" then claude plugin install ${USAGE_MOD}@ai-dev-kit-mods --scope user`;
+    if (!claudeBin())
+        return { state: 'failed', warning: `the feature-usage mod was NOT installed: the claude command was not found on PATH or in the VS Code extension. In a shell where claude works, run: ${manual}` };
     const cwd = os.homedir();
     const add = runClaude(['plugin', 'marketplace', 'add', market], cwd);
     const addText = String(add.stderr || add.stdout || '');
     if (add.status !== 0 && !/already/i.test(addText))
-        return { state: 'failed', warning: `could not add the mods marketplace (${(add.error?.message || addText || 'claude not found').trim().split('\n')[0]}). Run: ${manual}` };
+        return { state: 'failed', warning: `could not add the mods marketplace (${(add.error?.message || addText || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
+    if (add.status !== 0) {
+        // "already registered" can mean ANOTHER copy of the kit (a different project's clone). Point it at this one when the list does not show this path.
+        const list = runClaude(['plugin', 'marketplace', 'list'], cwd);
+        const shown = String(list.stdout || '') + String(list.stderr || '');
+        if (list.status === 0 && !shown.replace(/\\/g, '/').toLowerCase().includes(market.replace(/\\/g, '/').toLowerCase())) {
+            runClaude(['plugin', 'marketplace', 'remove', 'ai-dev-kit-mods'], cwd);
+            const again = runClaude(['plugin', 'marketplace', 'add', market], cwd);
+            if (again.status !== 0)
+                return { state: 'failed', warning: `the mods marketplace is registered from another kit copy and could not be re-pointed to ${market} (${String(again.stderr || again.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
+        }
+    }
     const inst = runClaude(['plugin', 'install', `${USAGE_MOD}@ai-dev-kit-mods`, '--scope', 'user'], cwd);
     if (inst.status !== 0 && !/already/i.test(String(inst.stderr || inst.stdout || '')))
         return { state: 'failed', warning: `could not install the feature-usage mod (${String(inst.error?.message || inst.stderr || inst.stdout || 'unknown error').trim().split('\n')[0]}). Run: ${manual}` };
@@ -975,6 +1075,10 @@ function doInstall(args) {
         });
         manifest.standards = true;
     }
+    if (standardsResult?.protocolFile)
+        manifest.protocolFile = standardsResult.protocolFile; // the file actually written, so update refreshes the same one
+    if (standardsResult?.ignoredProtocol)
+        console.error(`warning: ${standardsResult.ignoredProtocol} is ignored by this project's .gitignore, so it will not be committed. Add an exception such as !${standardsResult.ignoredProtocol}`);
     if (args.commentStyleLevel)
         manifest.commentStyleLevel = args.commentStyleLevel;
     if (standardsResult?.replaced)
@@ -1022,6 +1126,9 @@ function doInstall(args) {
         if (fresh.length)
             archivedNow = (0, skill_scope_move_1.doArchive)({ root: args.root, skills: fresh, by: 'auto' }).archived;
     }
+    const keptOut = excludeKitFromGit(args.root, args.library);
+    if (keptOut)
+        console.error(`note: the kit is cloned inside the project; added ${keptOut} to .git/info/exclude so it stays out of git status. Move it outside the project when you can.`);
     const verifyResult = verify({ root: args.root, tool: args.tool });
     return { archived: archivedNow, skills: results, standards: standardsResult, verify: verifyResult, commands: commandsResult, company: companyResult, signature: signatureResult, usage: usageResult, batch: batchResult, externals: externalsResult };
 }
@@ -2297,6 +2404,19 @@ async function main() {
         return;
     }
     console.log(JSON.stringify(res, null, 2));
+    const vr = res.verify;
+    const um = res.usage;
+    if (um && um.mod === 'failed')
+        console.error(red('feature-usage mod NOT installed: ' + (um.warning || 'see above')));
+    if (vr && !vr.ok) {
+        // A skills-only install (no --standards) has no protocol file by choice, so that one finding is not an exit-code failure; every other fail is.
+        const standardsAsked = !!res.standards;
+        const hard = vr.findings.filter((x) => x.level === 'fail' && (x.check !== 'session-protocol' || standardsAsked));
+        for (const f of hard)
+            console.error(red(`verify FAILED ${f.check}: ${f.message}`));
+        if (hard.length)
+            process.exitCode = 1;
+    }
     const ex = res.externals;
     if (ex && !ex.ok) {
         for (const f of ex.fetched.filter((x) => !x.ok))
@@ -2306,6 +2426,8 @@ async function main() {
     if (ex)
         for (const c of ex.credits)
             console.error('credit: ' + c);
+    if (um && um.mod === 'failed')
+        process.exitCode = 1;
 }
 if (require.main === module)
     void main();
